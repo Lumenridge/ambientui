@@ -52,6 +52,12 @@
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
     --font-sans: 'Geist Variable', sans-serif;
+    /* THE MOTION SYSTEM: every transition-* utility defaults to the micro
+       role's duration and the configured character's easing; the Foundation
+       emits --motion-{role} / --motion-ease. Explicit sites use
+       duration-(--motion-{role}). */
+    --default-transition-duration: var(--motion-micro, 150ms);
+    --default-transition-timing-function: var(--motion-ease, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 :root {
@@ -79,6 +85,13 @@
     --chart-4: oklch(0.508 0.118 165.612);
     --chart-5: oklch(0.432 0.095 166.913);
     --radius: 0.45rem;
+    /* Motion-role base values (the Productive character at default pace);
+       the Foundation's compiled tag overrides them. */
+    --motion-micro: 120ms;
+    --motion-control: 180ms;
+    --motion-surface: 240ms;
+    --motion-page: 320ms;
+    --motion-ease: cubic-bezier(0.2, 0, 0, 1);
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.546 0.245 262.881);

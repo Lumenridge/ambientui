@@ -11,6 +11,7 @@ import {
   SHADCN_DEFAULT_COMPONENTS,
 } from "@/components/ds/ds-docs"
 import { ColorsPage } from "@/components/ds/colors-page"
+import { MotionPage } from "@/components/ds/motion-page"
 import { ShadowsPage } from "@/components/ds/shadows-page"
 import { SpacingPage } from "@/components/ds/spacing-page"
 import { FoundationPage } from "@/foundation/foundation-page"
@@ -45,7 +46,8 @@ export function DsPage() {
     selectedId === "foundation" ||
     selectedId === "spacing" ||
     selectedId === "colors" ||
-    selectedId === "shadows"
+    selectedId === "shadows" ||
+    selectedId === "motion"
       ? null
       : [...AMBIENT_COMPONENTS, ...SHADCN_DEFAULT_COMPONENTS].find(
           (c) => c.id === selectedId
@@ -64,7 +66,9 @@ export function DsPage() {
         ? "Colors"
         : selectedId === "shadows"
           ? "Shadows"
-          : "Foundation"
+          : selectedId === "motion"
+            ? "Motion"
+            : "Foundation"
   React.useEffect(() => {
     setPageChip({
       id: `ds-${selectedId}`,
@@ -136,6 +140,18 @@ export function DsPage() {
           >
             Shadows
           </button>
+          <button
+            type="button"
+            onClick={() => setSelectedId("motion")}
+            className={cn(
+              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
+              selectedId === "motion"
+                ? "bg-accent text-foreground font-medium"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+            )}
+          >
+            Motion
+          </button>
         </nav>
         <div className="px-2 pt-5 pb-1.5 text-xs font-medium">
           Ambient vocabulary
@@ -189,6 +205,8 @@ export function DsPage() {
             <ColorsPage />
           ) : selectedId === "shadows" ? (
             <ShadowsPage />
+          ) : selectedId === "motion" ? (
+            <MotionPage />
           ) : (
             <FoundationPage />
           )

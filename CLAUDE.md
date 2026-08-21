@@ -50,11 +50,15 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    Phosphor/Remix). No direct icon-library imports in components, no ad-hoc
    SVGs; the assistant's direct HugeIcons usages are grandfathered, fix on
    touch. New names must be mapped in every library.
-7. **Motion: CSS first, Framer Motion when CSS can't.** Keyframes in
-   `theme.css` + Tailwind transitions are the default; `framer-motion`
-   (sanctioned, DESIGN.md §5/§12) is for interruptible/gestural motion,
-   layout/presence transitions, and springs. No other animation
-   libraries; no one-off keyframes in component files.
+7. **Motion is a Foundation dimension — components consume MOTION ROLES,
+   never literal timings.** Four roles (`--motion-micro/control/surface/
+   page`); the configured character + pace decide the feel product-wide
+   (DESIGN.md §5). CSS: `transition-*` utilities default to the micro
+   role; explicit sites use `duration-(--motion-{role})`. Framer:
+   `useMotionTransition(role)` / `useMotionSpring()`. CSS first;
+   `framer-motion` (the one sanctioned library) for interruptible/
+   gestural/layout/presence motion. No other animation libraries, no
+   one-off keyframes in component files, no raw durations or springs.
 8. **The ambient layer contract (DESIGN.md §8) must not drift**: five modes,
    drag-as-mode-switch, page context via `setPageChip`, and the response-kit
    seam in `send()` stays empty until the kit exists. The beam glow was

@@ -1,5 +1,7 @@
 import * as React from "react"
 
+import { motion } from "framer-motion"
+
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
@@ -19,6 +21,8 @@ import {
   FONTS,
   GRAYS,
   ICON_LIBRARIES,
+  MOTION_CHARACTERS,
+  MOTION_PACES,
   RADIUS_STEPS,
   SCALINGS,
   SPACING_GRIDS,
@@ -404,6 +408,71 @@ export function FoundationPage() {
               })}
             </div>
           </SettingsRow>
+        </SettingsCard>
+      </SettingsSection>
+
+      <SettingsSection title="Motion">
+        <SettingsCard>
+          <SettingsRow
+            title="Character"
+            description="The feel of every transition, product-wide — easing, timing, and spring family. Hover a card to preview its move."
+          >
+            <div className="grid grid-cols-3 gap-2">
+              {MOTION_CHARACTERS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() =>
+                    setConfig({ motion: { ...config.motion, character: c.id } })
+                  }
+                  className={cn(
+                    "border-border flex flex-col items-start gap-2 rounded-lg border p-3 text-start transition-colors",
+                    config.motion.character === c.id
+                      ? "border-ring bg-accent/40"
+                      : "hover:bg-accent/40"
+                  )}
+                >
+                  <motion.span
+                    className="bg-primary block size-3 rounded-full"
+                    initial={false}
+                    whileHover={{
+                      x: 40,
+                      transition: {
+                        duration: c.durations.surface / 1000,
+                        ease: c.easeArr,
+                      },
+                    }}
+                  />
+                  <span className="text-sm font-medium">{c.name}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {c.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </SettingsRow>
+          <SettingsRow
+            title="Pace"
+            description="Scales every motion role's timing together — the character stays the same."
+            control={
+              <div className="flex gap-1.5">
+                {MOTION_PACES.map((p) => (
+                  <Button
+                    key={p.pct}
+                    size="sm"
+                    variant={
+                      config.motion.pace === p.pct ? "secondary" : "outline"
+                    }
+                    onClick={() =>
+                      setConfig({ motion: { ...config.motion, pace: p.pct } })
+                    }
+                  >
+                    {p.name}
+                  </Button>
+                ))}
+              </div>
+            }
+          />
         </SettingsCard>
       </SettingsSection>
 

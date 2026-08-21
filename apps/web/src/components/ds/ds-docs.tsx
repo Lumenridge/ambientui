@@ -837,11 +837,14 @@ function LifecycleSegment({
 function OrbLifecycleBar({
   progress,
   playing,
+  ended,
   onToggle,
   onSeek,
 }: {
   progress: MotionValue<number>
   playing: boolean
+  /** The run finished — the button reads as replay until the next action. */
+  ended: boolean
   onToggle: () => void
   onSeek: (p: number) => void
 }) {
@@ -858,10 +861,12 @@ function OrbLifecycleBar({
         size="xs"
         variant="outline"
         className="size-6 p-0"
-        aria-label={playing ? "Pause lifecycle" : "Play lifecycle"}
+        aria-label={
+          playing ? "Pause lifecycle" : ended ? "Replay lifecycle" : "Play lifecycle"
+        }
         onClick={onToggle}
       >
-        <Icon name={playing ? "pause" : "play"} size={12} />
+        <Icon name={playing ? "pause" : ended ? "replay" : "play"} size={12} />
       </Button>
       <div
         ref={trackRef}
@@ -892,6 +897,7 @@ function OrbPlayground() {
   // Lifecycle playback: progress runs 0..4 across the four states; the
   // integer part is the active state, so a run walks every transition.
   const [playing, setPlaying] = React.useState(false)
+  const [ended, setEnded] = React.useState(false)
   const progress = useMotionValue(0)
   const stateRef = React.useRef(state)
   stateRef.current = state
@@ -906,12 +912,14 @@ function OrbPlayground() {
     if (p >= ORB_STATES.length) {
       p = ORB_STATES.length
       setPlaying(false)
+      setEnded(true)
     }
     progress.set(p)
     syncState(p)
   })
   const seek = (p: number) => {
     setPlaying(false)
+    setEnded(false)
     progress.set(p)
     syncState(p)
   }
@@ -920,6 +928,7 @@ function OrbPlayground() {
       progress.set(0)
       syncState(0)
     }
+    setEnded(false)
     setPlaying((v) => !v)
   }
 
@@ -944,6 +953,7 @@ function OrbPlayground() {
           <OrbLifecycleBar
             progress={progress}
             playing={playing}
+            ended={ended}
             onToggle={togglePlay}
             onSeek={seek}
           />

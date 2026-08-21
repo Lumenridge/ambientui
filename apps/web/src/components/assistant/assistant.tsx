@@ -18,10 +18,16 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { sections } from "@/nav"
 
-import { useFoundation } from "@/foundation/foundation-context"
+import { AnimatePresence, motion } from "framer-motion"
+
+import {
+  useFoundation,
+  useMotionSpring,
+  useMotionTransition,
+} from "@/foundation/foundation-context"
 
 import { useAssistant, type ContextChip } from "./assistant-context"
-import { OrbCharacter } from "./orb-character"
+import { OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
 
 type Msg = {
@@ -67,6 +73,12 @@ function looksLikeQuestion(q: string) {
 }
 
 export function Assistant() {
+  // Surfaces move on the motion system (DESIGN.md §5): transforms ride the
+  // configured character's spring — instantly responsive, settles naturally —
+  // while opacity fades on the micro tween. Exits are a quick micro fade.
+  const microT = useMotionTransition("micro")
+  const surfaceSpring = useMotionSpring()
+  const enterT = { ...surfaceSpring, opacity: microT }
   const {
     mode,
     setMode,
@@ -203,14 +215,18 @@ export function Assistant() {
     // vocabulary → plan, streamed progress, and a composed answer.
   }
 
-  if (mode === "line") {
-    return <AssistantOrb />
-  }
+  let surfaceEl: React.ReactNode = null
 
   if (mode === "bar") {
-    return (
-      <div
-        className="fixed bottom-4 left-1/2 z-50 w-[620px] max-w-[90vw] -translate-x-1/2"
+    surfaceEl = (
+      <motion.div
+        key="bar"
+        className="fixed bottom-4 left-1/2 z-50 w-[620px] max-w-[90vw]"
+        style={{ x: "-50%" }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8, transition: microT }}
+        transition={enterT}
         onMouseLeave={() => {
           if (!input && messages.length === 0) setMode("line")
         }}
@@ -226,7 +242,7 @@ export function Assistant() {
           placeholder="Ask or search ambientui…"
           showKbd
         />
-      </div>
+      </motion.div>
     )
   }
 
@@ -416,14 +432,22 @@ export function Assistant() {
         removeChip(chips[chips.length - 1].id)
       }
     }
-    return (
-      <>
-      <div
+    surfaceEl = (
+      <motion.div
+        key="spotlight"
         className="fixed inset-0 z-50 bg-black/50"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0, transition: microT }}
+        transition={microT}
         onClick={() => setMode(messages.length ? "panel" : "line")}
       >
-        <div
+        <motion.div
           className="mx-auto mt-[9vh] w-[720px] max-w-[92vw]"
+          initial={{ opacity: 0, y: -10, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -8, scale: 0.99, transition: microT }}
+          transition={enterT}
           onClick={(e) => e.stopPropagation()}
         >
             <div className="bg-popover border-border flex max-h-[72vh] flex-col overflow-hidden rounded-xl border shadow-[0_32px_100px_-16px_rgba(0,0,0,0.6),0_8px_32px_-12px_rgba(0,0,0,0.4)]">
@@ -534,26 +558,36 @@ export function Assistant() {
             <span className="ms-auto">⌘K toggle</span>
           </div>
             </div>
-        </div>
-      </div>
-      </>
+        </motion.div>
+      </motion.div>
     )
   }
 
   if (mode === "dock") {
-    return (
-      <div className="fixed top-0 bottom-0 right-0 z-50 w-[420px] max-w-[90vw] shadow-[-24px_0_70px_-16px_rgba(0,0,0,0.4)]">
+    surfaceEl = (
+      <motion.div
+        key="dock"
+        className="fixed top-0 bottom-0 right-0 z-50 w-[420px] max-w-[90vw] shadow-[-24px_0_70px_-16px_rgba(0,0,0,0.4)]"
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 40, transition: microT }}
+        transition={enterT}
+      >
         {surface}
-      </div>
+      </motion.div>
     )
   }
 
   // panel — draggable, with snap zones for dock / spotlight
-  return (
-    <>
-      {panelDrag && <SnapZones hot={hotZone} />}
-      <div
+  if (mode === "panel") {
+    surfaceEl = (
+      <motion.div
+        key="panel"
         ref={panelRef}
+        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 12, scale: 0.99, transition: microT }}
+        transition={enterT}
         className="fixed z-50 h-[560px] max-h-[80vh] w-[440px] max-w-[92vw] overflow-hidden rounded-xl shadow-[0_32px_90px_-12px_rgba(0,0,0,0.5),0_8px_28px_-8px_rgba(0,0,0,0.35)]"
         style={
           panelPos
@@ -562,23 +596,35 @@ export function Assistant() {
         }
       >
         {surface}
+      </motion.div>
+    )
+  }
+
+  return (
+    <>
+      {/* The orb stays mounted across modes — remounting it means a fresh
+          WebGL context and shader compile mid-transition. */}
+      <div hidden={mode !== "line"}>
+        <AssistantOrb />
       </div>
+      {mode === "panel" && panelDrag && <SnapZones hot={hotZone} />}
+      <AnimatePresence>{surfaceEl}</AnimatePresence>
     </>
   )
 }
 
-/** The assistant's mark: the orb character itself, at surface scale. */
+/** The assistant's mark at surface scale — the CSS glyph, not the shader.
+    Each OrbCharacter is a WebGL context + shader compile + 60fps loop;
+    mounting those mid-entrance is what made surfaces stutter open. The
+    full character lives on the floating orb and the /ds playground. */
 function AssistantMark({ size }: { size: number }) {
-  const { orbState } = useAssistant()
   const { config } = useFoundation()
+  const core = config.orb.useAccent
+    ? undefined
+    : config.orb.colors[Math.min(1, config.orb.colors.length - 1)]
   return (
     <span className="inline-flex shrink-0">
-      <OrbCharacter
-        state={orbState}
-        size={size}
-        colors={config.orb.useAccent ? undefined : config.orb.colors}
-        speeds={config.orb.speeds}
-      />
+      <OrbGlyph size={size} color={core} />
     </span>
   )
 }

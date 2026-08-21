@@ -215,6 +215,103 @@ export const FONTS = [
   { id: "ibm-plex-sans", name: "IBM Plex Sans", family: "'IBM Plex Sans'", google: "IBM+Plex+Sans:wght@400;500;600;700" },
 ] as const
 
+/* -------------------------------- motion -------------------------------- */
+
+/**
+ * THE MOTION SYSTEM — motion is a Foundation dimension like color and
+ * spacing. Components consume MOTION ROLES (one named job each), never
+ * literal durations or springs; the configured CHARACTER and PACE decide
+ * what every role feels like, product-wide, on Save. CSS consumers ride
+ * the emitted --motion-* variables (the default transition duration and
+ * easing map onto them); Framer Motion consumers use useMotionTransition /
+ * useMotionSpring. The orb's identity springs are the one sanctioned
+ * exception (DESIGN.md §5).
+ */
+
+export type MotionRole = "micro" | "control" | "surface" | "page"
+
+export const MOTION_ROLES: {
+  role: MotionRole
+  label: string
+  description: string
+}[] = [
+  { role: "micro", label: "Micro feedback", description: "Hover, press, and focus feedback — the color and transform ticks on controls. The default for every transition-* utility." },
+  { role: "control", label: "Control state", description: "A control changing state — checks, switches, selection moving between items." },
+  { role: "surface", label: "Surface", description: "Menus, popovers, sheets, and tooltips entering and leaving." },
+  { role: "page", label: "Page", description: "Section and page-level moves — the largest transitions in the product." },
+]
+
+/** Easing + duration + spring families; ease arrays are the framer form of the CSS bezier. */
+export const MOTION_CHARACTERS = [
+  {
+    id: "productive",
+    name: "Productive",
+    description: "Quick and matter-of-fact — motion you feel more than see.",
+    ease: "cubic-bezier(0.2, 0, 0, 1)",
+    easeArr: [0.2, 0, 0, 1] as [number, number, number, number],
+    durations: { micro: 120, control: 180, surface: 240, page: 320 },
+    spring: { stiffness: 380, damping: 32 },
+  },
+  {
+    id: "smooth",
+    name: "Smooth",
+    description: "Longer, softer curves — calm and continuous.",
+    ease: "cubic-bezier(0.32, 0, 0.06, 1)",
+    easeArr: [0.32, 0, 0.06, 1] as [number, number, number, number],
+    durations: { micro: 160, control: 220, surface: 300, page: 420 },
+    spring: { stiffness: 220, damping: 30 },
+  },
+  {
+    id: "expressive",
+    name: "Expressive",
+    description: "Springy, with visible personality — a touch of overshoot.",
+    ease: "cubic-bezier(0.34, 1.36, 0.3, 1)",
+    easeArr: [0.34, 1.36, 0.3, 1] as [number, number, number, number],
+    durations: { micro: 140, control: 220, surface: 320, page: 440 },
+    spring: { stiffness: 280, damping: 20 },
+  },
+] as const
+
+/** Pace scales every role's timing: 80% runs slower, 125% brisker. */
+export const MOTION_PACES = [
+  { pct: 80, name: "Relaxed" },
+  { pct: 100, name: "Default" },
+  { pct: 125, name: "Brisk" },
+] as const
+
+export interface MotionConfig {
+  character: (typeof MOTION_CHARACTERS)[number]["id"]
+  pace: (typeof MOTION_PACES)[number]["pct"]
+}
+
+export function resolveMotion(config: FoundationConfig) {
+  const character =
+    MOTION_CHARACTERS.find((c) => c.id === config.motion.character) ??
+    MOTION_CHARACTERS[0]
+  // pace 125% = brisker = shorter durations
+  const timeScale = 100 / config.motion.pace
+  return { character, timeScale }
+}
+
+/** The framer-motion tween for a motion role, from the saved character and pace. */
+export function motionTransition(config: FoundationConfig, role: MotionRole) {
+  const { character, timeScale } = resolveMotion(config)
+  return {
+    duration: (character.durations[role] * timeScale) / 1000,
+    ease: character.easeArr,
+  }
+}
+
+/** The character's spring, time-scaled by pace (damping ratio preserved). */
+export function motionSpring(config: FoundationConfig) {
+  const { character, timeScale } = resolveMotion(config)
+  return {
+    type: "spring" as const,
+    stiffness: character.spring.stiffness / (timeScale * timeScale),
+    damping: character.spring.damping / timeScale,
+  }
+}
+
 export interface OrbPaletteConfig {
   /** Derive the orb's colors from the theme accent (--app-blue). */
   useAccent: boolean
@@ -240,6 +337,8 @@ export interface FoundationConfig {
   font: (typeof FONTS)[number]["id"]
   /** The orb character's palette — configured on its /ds page, saved with the theme. */
   orb: OrbPaletteConfig
+  /** The motion system: character (easing/duration/spring family) + pace. */
+  motion: MotionConfig
   figmaFileUrl: string | null
 }
 
@@ -257,6 +356,7 @@ export const DEFAULT_FOUNDATION: FoundationConfig = {
     colors: ["#8bd8ff", "#2563eb", "#0b1e55"],
     speeds: { still: 1, listening: 0.8, thinking: 2.8, answer: 0.5 },
   },
+  motion: { character: "productive", pace: 100 },
   figmaFileUrl: null,
 }
 
@@ -318,6 +418,15 @@ function migrate(raw: Record<string, unknown>): Partial<FoundationConfig> {
         : DEFAULT_FOUNDATION.orb.colors,
     speeds: { ...DEFAULT_FOUNDATION.orb.speeds, ...orb?.speeds },
   }
+  const motion = (out as { motion?: Partial<MotionConfig> }).motion
+  out.motion = {
+    character: MOTION_CHARACTERS.some((c) => c.id === motion?.character)
+      ? motion!.character!
+      : DEFAULT_FOUNDATION.motion.character,
+    pace: MOTION_PACES.some((p) => p.pct === motion?.pace)
+      ? motion!.pace!
+      : DEFAULT_FOUNDATION.motion.pace,
+  }
   return out as Partial<FoundationConfig>
 }
 
@@ -363,6 +472,19 @@ export function compileFoundationCss(config: FoundationConfig): string {
         ]
       : []),
   ]
+
+  // THE MOTION SYSTEM: one duration per role plus the character's easing.
+  // Tailwind's default transition duration/easing map onto --motion-micro/
+  // --motion-ease (globals.css), so every transition-* utility re-times on
+  // Save; explicit sites use duration-(--motion-{role}).
+  {
+    const { character, timeScale } = resolveMotion(config)
+    for (const { role } of MOTION_ROLES)
+      light.push(
+        `--motion-${role}: ${Math.round(character.durations[role] * timeScale)}ms;`
+      )
+    light.push(`--motion-ease: ${character.ease};`)
+  }
   const dark: string[] = [
     `--primary-foreground: ${accent.dark.primaryForeground};`,
     `--sidebar-primary-foreground: ${accent.dark.primaryForeground};`,
@@ -483,6 +605,18 @@ export function FoundationProvider({
       </IconLibraryProvider>
     </FoundationContext.Provider>
   )
+}
+
+/** The framer-motion tween for a motion role, live from the Foundation. */
+export function useMotionTransition(role: MotionRole) {
+  const { config } = useFoundation()
+  return motionTransition(config, role)
+}
+
+/** The configured character's spring, live from the Foundation. */
+export function useMotionSpring() {
+  const { config } = useFoundation()
+  return motionSpring(config)
 }
 
 export function useFoundation() {

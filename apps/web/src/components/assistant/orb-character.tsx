@@ -105,6 +105,48 @@ function accentRamp(): string[] {
   ]
 }
 
+/**
+ * The orb at glyph scale — a pure-CSS stand-in for marks and avatars
+ * (≤32px), where the shader's detail is invisible but its cost is not:
+ * every OrbCharacter is a fresh WebGL context, a shader compile, and a
+ * 60fps loop, which is exactly what made surfaces stutter on open. Same
+ * anatomy (glass shell, accent core), zero runtime cost.
+ */
+export function OrbGlyph({
+  size = 20,
+  color,
+  className,
+}: {
+  size?: number
+  /** Core color; defaults to the ambient accent. */
+  color?: string
+  className?: string
+}) {
+  const core = color ?? "var(--app-blue)"
+  return (
+    <span
+      aria-hidden
+      className={cn("relative inline-block shrink-0 rounded-full", className)}
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: "color-mix(in oklab, var(--popover) 60%, transparent)",
+        boxShadow:
+          "inset 0 0 0 1px color-mix(in oklab, var(--border) 70%, transparent)",
+      }}
+    >
+      <span
+        className="absolute rounded-full"
+        style={{
+          inset: "20%",
+          background: `radial-gradient(circle at 35% 30%, color-mix(in oklab, ${core} 55%, white), ${core} 58%, color-mix(in oklab, ${core} 62%, black))`,
+          filter: "blur(0.5px)",
+        }}
+      />
+    </span>
+  )
+}
+
 export interface OrbCharacterProps {
   state?: OrbState
   /** Diameter in px. */

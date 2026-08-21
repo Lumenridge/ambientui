@@ -12,6 +12,7 @@ import {
   PauseIcon,
   PlayIcon,
   PlusSignIcon,
+  ReplayIcon,
   Search01Icon,
   Settings01Icon,
   SidebarLeftIcon,
@@ -32,6 +33,7 @@ import {
   IconPlayerPause,
   IconPlayerPlay,
   IconPlus,
+  IconReload,
   IconSearch,
   IconSettings,
   IconSparkles,
@@ -40,6 +42,7 @@ import {
   IconX,
 } from "@tabler/icons-react"
 import {
+  ArrowCounterClockwise,
   CalendarBlank,
   CaretDown,
   CaretRight,
@@ -69,6 +72,7 @@ import {
   RiMoonLine,
   RiPauseLine,
   RiPlayLine,
+  RiRestartLine,
   RiSearchLine,
   RiSettings3Line,
   RiSparklingLine,
@@ -86,6 +90,7 @@ import {
   Pause as LPause,
   Play as LPlay,
   Plus as LPlus,
+  RotateCcw as LRotateCcw,
   Search as LSearch,
   Settings as LSettings,
   Sparkles as LSparkles,
@@ -116,6 +121,7 @@ export type IconName =
   | "moon"
   | "play"
   | "pause"
+  | "replay"
   | "sparkles"
   | "plus"
   | "calendar"
@@ -155,6 +161,7 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     moon: hi(Moon02Icon),
     play: hi(PlayIcon),
     pause: hi(PauseIcon),
+    replay: hi(ReplayIcon),
     sparkles: hi(SparklesIcon),
     plus: hi(PlusSignIcon),
     calendar: hi(Calendar01Icon),
@@ -173,6 +180,7 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     moon: lu(LMoon),
     play: lu(LPlay),
     pause: lu(LPause),
+    replay: lu(LRotateCcw),
     sparkles: lu(LSparkles),
     plus: lu(LPlus),
     calendar: lu(LCalendar),
@@ -191,6 +199,7 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     moon: tb(IconMoon),
     play: tb(IconPlayerPlay),
     pause: tb(IconPlayerPause),
+    replay: tb(IconReload),
     sparkles: tb(IconSparkles),
     plus: tb(IconPlus),
     calendar: tb(IconCalendar),
@@ -209,6 +218,7 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     moon: ph(Moon),
     play: ph(Play),
     pause: ph(Pause),
+    replay: ph(ArrowCounterClockwise),
     sparkles: ph(Sparkle),
     plus: ph(Plus),
     calendar: ph(CalendarBlank),
@@ -227,6 +237,7 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     moon: rx(RiMoonLine),
     play: rx(RiPlayLine),
     pause: rx(RiPauseLine),
+    replay: rx(RiRestartLine),
     sparkles: rx(RiSparklingLine),
     plus: rx(RiAddLine),
     calendar: rx(RiCalendarLine),
@@ -247,6 +258,7 @@ export const ICON_NAMES: IconName[] = [
   "moon",
   "play",
   "pause",
+  "replay",
   "sparkles",
   "plus",
   "calendar",

@@ -184,22 +184,43 @@ usages are grandfathered — fix on touch.)
 
 ## 5. Motion
 
-- Simple motion lives in **CSS**: keyframes in `apps/web/src/theme.css`
-  (`ambient-shimmer`) and Tailwind `transition-*` utilities. That remains
-  the default — reach for it first.
-- **Framer Motion is the sanctioned animation library** (added by owner
-  decision, §12) for motion CSS can't express: interruptible/gestural
-  animation, layout and presence transitions, springs. Use it through
-  `framer-motion` in `apps/web`; a CSS transition that does the job still
-  wins over a `motion` component.
+**Motion is a Foundation dimension**, configured like color and spacing and
+documented live at /ds → Motion.
+
+- **The four motion roles** — components consume a role, never a literal
+  duration, easing, or spring. A stated "200ms" is a request for the
+  nearest role:
+  | Role | Token | Job |
+  |---|---|---|
+  | Micro feedback | `--motion-micro` | hover/press/focus ticks — the default for every `transition-*` utility |
+  | Control state | `--motion-control` | checks, switches, selection moves |
+  | Surface | `--motion-surface` | menus, popovers, sheets, tooltips entering/leaving |
+  | Page | `--motion-page` | section- and page-level moves |
+- **Character + pace decide what every role feels like** (Foundation →
+  Motion): a character is an easing/duration/spring family (Productive /
+  Smooth / Expressive); pace scales all timings together. Saving restyles
+  every transition product-wide — the propagation rule applies to time.
+- **Consumption seams**: CSS rides the emitted variables — Tailwind's
+  default transition duration/easing map onto `--motion-micro` /
+  `--motion-ease` in `globals.css`, and explicit sites name their role
+  (`duration-(--motion-surface)` `ease-(--motion-ease)`). Framer Motion
+  consumers use `useMotionTransition(role)` / `useMotionSpring()` from
+  `foundation-context.tsx`. One-off keyframes in component files and raw
+  spring configs are governance events.
+- Simple motion still lives in **CSS first**: keyframes in
+  `apps/web/src/theme.css` (`ambient-shimmer`) and Tailwind `transition-*`
+  utilities. Framer Motion (sanctioned, §12) is for what CSS can't express:
+  interruptible/gestural animation, layout and presence transitions,
+  springs — timed through the motion roles above.
 - **The one sanctioned shader surface** is the OrbCharacter
   (`orb-character.tsx`), implemented with `@paper-design/shaders-react`
   (the heatmap shader wrapped around a circle), because the character's
-  fluid identity cannot be expressed in CSS. No other component may use
-  canvas/WebGL/shader libraries without governance.
+  fluid identity cannot be expressed in CSS. Its identity springs are the
+  one sanctioned exception to role-based timing (its cadence is its own
+  Foundation config). No other component may use canvas/WebGL/shader
+  libraries without governance.
 - The beam glow was removed by decision (§12) — no glow effects, on the
   assistant or anywhere else, without governance.
-- One-off `@keyframes` in a component file are a governance event.
 
 ## 6. Component inventory — the two vocabularies
 
@@ -390,6 +411,14 @@ rules, or states. ambientui does not have it yet; building it is logged debt.
 | 2026-08-22 | **Orb state transitions moved to Framer Motion springs** (first consumer of the sanctioned library): each shader parameter is a spring-driven motion value retargeted on state change, replacing the hand-rolled second-order easing loop; the answer bloom is a keyframe sequence from the current value. The /ds playground gained a lifecycle seek bar — play/scrub the whole still → listening → thinking → answer journey (~3s dwell per state); `play`/`pause` added to the icon vocabulary, mapped in all five libraries | Springs carry velocity across retargets, which is exactly what the second-order loop hand-built; interruption mid-transition stays smooth for free |
 
 | 2026-08-22 | **The role editor moved into the Foundation page** (Semantic mapping section, between Color and Shape and density); the Colors page keeps the palette grid and points there | User call: the Foundation is where ALL theme configuration lives — a config surface split across pages breaks the single-source story. `RoleEditor` is shared (colors-page exports it); Foundation embeds it without the inline save, the page footer's Save Theme commits |
+
+| 2026-08-22 | **The motion system**: motion became a Foundation dimension — four semantic roles (`--motion-micro/control/surface/page`) driven by a configured character (Productive/Smooth/Expressive: easing + duration + spring families) and pace (Relaxed/Default/Brisk). Tailwind's default transition duration/easing map onto the micro role so every `transition-*` utility re-times on Save; explicit sites converted to `duration-(--motion-{role})`; Framer consumers use `useMotionTransition`/`useMotionSpring`. Configured at Foundation → Motion, documented at /ds → Motion | User direction: "easier for anyone to configure overall motion system across pages and components micro interaction." Same shape as the role map: components name the job, the Foundation decides the feel |
+
+| 2026-08-22 | **Motion-role adoption audit** (user-requested): the assistant had NO transitions at all — every mode change (line/bar/panel/dock/spotlight) was a hard cut. All five surfaces now enter through the surface role via Framer (`useMotionTransition("surface")`); the orb's snap-to-anchor literal `duration-300` became the page role; a leftover `ease-linear` on the sidebar rail rejoined `--motion-ease`. Verified live: menus, buttons, and surfaces all compute their durations from the emitted `--motion-*` vars. Accepted non-role timings, each sanctioned: the orb's identity springs and answer bloom (§5 exception), the Foundation's character-preview demos (each demos its own preset by definition), and the infinite idle loops `ambient-shimmer`/`viz-pulse` (decorative cadence, not state transitions) | "The transition of the whole AI component seems to be not using it" — correct, and worse: it had none. Exit animations were completed the same day (see next entry) |
+
+| 2026-08-22 | **Assistant exits + spring entrances**: the per-mode early returns became one `AnimatePresence` over keyed surfaces, so every mode change animates out as well as in (verified: overlay opacity interpolates 1→0 before unmount). Entrance transforms moved from the surface tween to the configured character's spring (`useMotionSpring`), with opacity on the micro tween and quick micro-fade exits — springs respond instantly instead of the tween's perceptible drift | User feedback: ⌘K "feels like it is lagging rather than being smooth" — a 300ms soft-curve tween on transforms reads as drift; a spring reads as response. Enter slow-ish and settle, exit fast is the standard asymmetry |
+
+| 2026-08-22 | **Surface jank fixed at the source — `OrbGlyph`**: the AI's marks and avatars were full `OrbCharacter`s, so every surface open created fresh WebGL contexts + shader compiles + 60fps loops mid-entrance (measured: 2 new contexts per ⌘K). Marks ≤32px now render `OrbGlyph` — a pure-CSS twin (glass shell + accent core, zero runtime); the shader lives only on the 52px floating orb and the /ds playground, and the floating orb stays MOUNTED across mode changes (hidden, not unmounted) so closing a surface no longer recompiles it. Verified: one canvas total in any mode; a full open/close cycle shows a single ~51ms task | User: "the whole interaction of the AI still feels laggy." The lag wasn't the curve, it was work during the frames. Identity lives at identity scale; at glyph scale the anatomy is the identity |
 
 ## 13. Pattern watchlist
 

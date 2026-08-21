@@ -114,7 +114,11 @@ export function AssistantOrb() {
           )
         })}
       <div
-        className={cn("fixed z-50 touch-none select-none", !drag && "transition-all duration-300")}
+        className={cn(
+          "fixed z-50 touch-none select-none",
+          // snap-to-anchor rides the page role — the largest ambient move
+          !drag && "transition-all duration-(--motion-page) ease-(--motion-ease)"
+        )}
         style={{ left: pos.x, top: pos.y, width: ORB, height: ORB }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
