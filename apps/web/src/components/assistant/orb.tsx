@@ -8,12 +8,14 @@ import { useAssistant, type OrbAnchor } from "./assistant-context"
 import { OrbCharacter } from "./orb-character"
 
 const ORB = 52
-const MARGIN = 20
+/* One uniform inset on every edge — the eight anchors sit at the true
+   corners and edge midpoints of the viewport. */
+const MARGIN = 12
 const ANCHORS: OrbAnchor[] = ["tl", "tc", "tr", "ml", "mr", "bl", "bc", "br"]
 
 function anchorPoint(a: OrbAnchor, w: number, h: number) {
   const xs = { l: MARGIN, c: (w - ORB) / 2, r: w - ORB - MARGIN }
-  const ys = { t: MARGIN + 40, m: (h - ORB) / 2, b: h - ORB - MARGIN }
+  const ys = { t: MARGIN, m: (h - ORB) / 2, b: h - ORB - MARGIN }
   const map: Record<OrbAnchor, { x: number; y: number }> = {
     tl: { x: xs.l, y: ys.t },
     tc: { x: xs.c, y: ys.t },

@@ -22,15 +22,18 @@ to re-run.
 
 ## The collection model
 
+The palette of record is **Tailwind's** — so the file gets it verbatim as a
+primitive collection, and the Foundation aliases into it. That alias chain is
+what makes one hue/family change re-theme every component page.
+
 | tokens.json | Figma |
 |---|---|
-| `foundation.accents[<saved accent>]` | **Foundation** collection · `Color/Primary`, `Color/Primary Foreground`, `Color/Ring` · modes Light / Dark |
-| `foundation.grays[<saved gray>]` (applied surface set) | **Foundation** · `Color/Background`, `Color/Card`, `Color/Popover`, `Color/Muted`, `Color/Border`, `Color/Sidebar…` · modes Light / Dark |
-| `foundation.accents[<accent>].ambient` | **Foundation** · `Color/Ambient Accent` · modes Light / Dark (the assistant's `--app-blue`) |
-| `foundation.radius` (all five) + saved choice | **Radius** collection · `None/Small/Medium/Large/Full`, plus `Radius/Active` aliasing the saved step and derived steps (`sm…4xl` as ×0.6…×2.6 of active) |
-| `scale.space` | **Ambient Scale** collection · `Space/1…10` (px) |
-| `scale.text` × `foundation.scaling` (saved base) | **Ambient Scale** · `Text/1…9` (resolved px at the saved base size) |
-| `foundation.scaling` (saved) | **Ambient Scale** · `Base/Font size` |
+| `palette` (Tailwind, verbatim) | **Palette** collection · `{Family}/{50…950}` — the saved accent hue + gray family at minimum, ideally all families |
+| `foundation.roles.map` (accent roles, resolved through the saved config's `roles` overrides) | **Foundation** · `Color/Primary`, `Color/Primary Foreground`, `Color/Ring`, `Color/Ambient Accent` · modes Light / Dark — each an ALIAS into Palette (`{hue}/600`, `{hue}/500`, `{hue}/400`) |
+| `foundation.roles.map` (gray roles, resolved the same way) | **Foundation** · `Color/Background`, `Color/Card`, `Color/Muted`, `Color/Border`, `Color/Sidebar…` · modes Light / Dark — aliases into the gray family's steps |
+| `foundation.radius` | **Radius** collection · all steps, plus `Radius/Active` aliasing the saved step and derived steps (`sm…4xl` as ×0.6…×2.6 of active) |
+| `foundation.spacingUnits` (saved) × Tailwind steps | **Spacing** · `Step/0.5…16` (step × unit, resolved px at the saved base) + `Unit` |
+| `type.rampAtBase` × `foundation.scaling` (saved) | **Type** · `xs…4xl` (resolved px at the saved base) + `Base/Font size` |
 
 **The alias chain is the trick:** components bind to `Radius/Active` and the
 Foundation colors, so switching the saved config re-themes the file without
@@ -40,17 +43,20 @@ touching a single component.
 
 Run in order. Each returns the count of mutated variables.
 
-1. **Foundation colors** — write the saved accent's `primary` /
-   `primaryForeground` / `ring` and the gray-tinted surface set into the
-   Foundation collection, setting **both** Light and Dark modes. Include
-   `Color/Ambient Accent` from the accent's `ambient` pair.
-2. **Radius** — write all five presets and repoint `Radius/Active` (and its
+1. **Palette** — write the Tailwind ramps (at minimum the saved accent hue
+   and gray family, steps 50…950) into the Palette collection. Resolve the
+   values from the live CSS variables (`--color-{family}-{step}`), since
+   Tailwind is their source of truth.
+2. **Foundation aliases** — point `Color/Primary` / `Foreground` / `Ring` /
+   `Ambient Accent` and the full surface set at the Palette steps per the
+   tokens.json mapping, setting **both** Light and Dark modes.
+3. **Radius** — write all steps and repoint `Radius/Active` (and its
    derived steps) at the saved choice.
-3. **Ambient scale** — write `Space/1…10` (raw px) and `Text/1…9` resolved
-   against the saved base size, plus `Base/Font size`.
-4. **Typography family** — write `Typography/Font family/text` = Geist. Family
+4. **Spacing + Type** — write the Tailwind steps resolved against the saved
+   unit and base size, plus `Unit` and `Base/Font size`.
+5. **Typography family** — write `Typography/Font family/text` = Geist. Family
    only; weights are Figma style names and deliberately not synced.
-5. **Verify** — screenshot a component page in both modes and confirm the accent,
+6. **Verify** — screenshot a component page in both modes and confirm the accent,
    surfaces, and type scale.
 
 > **Preload fonts before ANY variable write — not just font-family writes.**
@@ -88,11 +94,11 @@ const probe = (collName, varName) => {
   return val?.type === "VARIABLE_ALIAS" ? byId.get(val.id)?.name : val
 }
 return {
-  primary: probe("Foundation", "Color/Primary"),
+  primary: probe("Foundation", "Color/Primary"),    // expect alias → Palette {hue}/600
   ambientAccent: probe("Foundation", "Color/Ambient Accent"),
   radiusActive: probe("Radius", "Radius/Active"),   // expect alias → saved step
-  space4: probe("Ambient Scale", "Space/4"),        // expect 16
-  text5: probe("Ambient Scale", "Text/5"),          // expect base px
+  space4: probe("Spacing", "Step/4"),               // expect 4 × unit
+  textBase: probe("Type", "base"),                  // expect the saved base px
 }
 ```
 

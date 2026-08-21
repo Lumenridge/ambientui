@@ -49,8 +49,10 @@ shadcn CSS variables (--primary, --background, --radius …)   ← the base cont
         ↑ overridden by
 Foundation config (accent / gray / radius / scaling)          ← one saved choice set,
                                                                 compiled to one <style> tag
-        + static scales in globals.css                        ← --ambient-space-1…10,
-                                                                --ambient-text-1…9
+        + Tailwind's own scales                               ← the full color palette,
+                                                                spacing × --spacing unit,
+                                                                the type scale (all emitted
+                                                                via theme(static))
         + ambient accent bridge                               ← --app-blue ties the
                                                                 assistant to the accent
 ```
@@ -63,6 +65,23 @@ Foundation config (accent / gray / radius / scaling)          ← one saved choi
   these values. Edits apply live; only Save persists. The saved config is what
   Figma Sync pushes.
 
+### ⛔ THE PRIMARY RULE — a reference is a request for a CONFIGURATION
+
+When anyone shows a target look — a screenshot, another product, "make it
+feel like Linear" — the answer is a **Foundation configuration**, never
+custom styling. Read the reference as config values: its accent hue, its
+gray family, its radius step, its density (spacing unit + scaling base),
+its appearance. Apply them, Save Theme, and the entire system — components,
+pages, ambient layer — moves there together.
+
+Precedent: the Linear look is `{ accent: indigo, gray: gray, radius: 4,
+spacingGrid: default, scaling: 95, light }`. Five values, zero CSS.
+
+If the configuration cannot reach the look, that is a **governance event**
+(extend the system's legal values), never a CSS patch on components. This
+is the layer's reason to exist: matching any look by selection keeps the
+AI, the theme, and Figma in one system; matching it by overrides is drift.
+
 ### ⛔ STRICT RULE — only values that exist on a scale
 
 Every dimension in component code MUST be a step on a defined scale. We do not
@@ -70,10 +89,11 @@ invent values.
 
 | Property | Legal values |
 |---|---|
-| color | shadcn semantic tokens (`--primary`, `--muted-foreground`, `--border`, …) or ambient tokens (`--app-blue`, `--viz-*`). Never a hex, never a raw oklch in component code |
-| spacing | `--ambient-space-1…10`: multipliers **0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8 × the saved spacing grid's unit** (Default 8 / Spacious 12). At the default grid: 2, 4, 8, 16, 24, 32, 40, 48, 56, 64. Tailwind: `p-ambient-3`, `gap-ambient-4`, … |
-| font size | `--ambient-text-1…9`: **11, 12, 13, 14, 16, 18, 20, 24, 30** (px at 16 base, defined in rem). Tailwind: `text-ambient-5` |
+| color | **Tailwind's color palette is the palette of record** — but components consume semantic roles only (`--primary`, `--muted-foreground`, `--border`, `--app-blue`, `--viz-*`). The Foundation maps roles to palette steps through the ROLE MAP — every semantic token's light/dark step is itself configurable in the live editor on the Foundation page (/ds → Foundation → Semantic mapping; defaults are shadcn's shape); the palette grid is documented at /ds → Colors. Never a hex, never a raw `--color-*` step in component code |
+| spacing | **Tailwind's spacing scale** (`p-N`, `gap-N`, `m-N`, `h-N` — every utility is step × `--spacing`). The Foundation sets the unit (Default 4px — Tailwind's own — or Spacious 6px), emitted in rem over the base. Arbitrary values (`p-[10px]`) are violations |
+| font size | **Tailwind's type scale** (`text-xs` 12 · `sm` 14 · `base` 16 · `lg` 18 · `xl` 20 · `2xl` 24 · `3xl` 30 · …, at the 100% base) — rem-based, rides the scaling preset |
 | radius | one step of the full ramp **0, 2, 4, 8, 12, 16, 20, 24** (px), chosen in Foundation — reached through `--radius` and its derived steps (`rounded-md/lg/xl/…`), never as a literal |
+| shadow | **Tailwind's shadow scale** (`shadow-2xs…2xl`), used as-is — documented at /ds → Shadows with per-step usage. Never a literal box-shadow |
 | blur | `--ambient-blur` — the one glass blur radius (`backdrop-blur-[var(--ambient-blur)]`). Never a literal blur value |
 
 **Why this is strict and not a preference.** Every scale step is mirrored into
@@ -90,14 +110,15 @@ Need a pill? That's a shape decision (`rounded-full`), not a new radius step.
 "Make the corners 8px", "48px padding", "a softer grey" describe the value someone
 wants to **see** — not permission to hardcode. The procedure, every time:
 
-1. **Pick the scale from the property** — spacing → ambient-space, text →
-   ambient-text, corners → the radius set, color → a semantic role.
-2. **Exact match → use that token.** 16px padding is `p-ambient-4`.
-3. **No exact match → nearest legal step, and say so.** "20px padding" has no step;
-   use `ambient-space-4` (16) or `-5` (24) and tell the user which you chose.
-   Never add a step to make a stated number fit.
-4. **Report the mapping back** — "8px → `--ambient-space-3`". The person asked for
-   a look; they're entitled to know which rung now carries it.
+1. **Pick the scale from the property** — spacing → Tailwind's spacing
+   utilities, text → Tailwind's type scale, corners → the radius set,
+   color → a semantic role over the Tailwind palette.
+2. **Exact match → use that step.** 16px padding is `p-4` (at the default unit).
+3. **No exact match → nearest legal step, and say so.** "10px padding" has no
+   step; use `p-2` or `p-3` and tell the user which you chose. Never reach for
+   an arbitrary value (`p-[10px]`) to make a stated number fit.
+4. **Report the mapping back** — "16px → `p-4`". The person asked for a look;
+   they're entitled to know which rung now carries it.
 
 For color: prefer the semantic role (`--muted-foreground`, not a gray literal).
 A stated hex is a starting point — map it to the nearest role or accent and say
@@ -118,9 +139,9 @@ out by being raw px.
 On top of that base, every dimension in component code must resolve from a
 foundation-driven variable —
 
-- **spacing**: Tailwind's core `--spacing` is driven by the saved grid
-  (unit ÷ 2, in rem), so `p-4`, `gap-2`, `h-9` in every component re-densify
-  when the grid changes; `--ambient-space-*` carries the named steps.
+- **spacing**: Tailwind's core `--spacing` is driven by the saved unit
+  (in rem), so `p-4`, `gap-2`, `h-9` in every component re-densify when
+  the unit changes.
 - **radius**: `--radius` and its derived `sm…4xl` steps.
 - **type**: rem sizes over the scaling preset's root font-size.
 - **color**: semantic tokens and the accent's paired foregrounds.
@@ -141,29 +162,41 @@ unrelated to the base theme is a rule violation.
 ## 3. Typography
 
 - One family: **Geist Variable** (`--font-sans`), loaded in `packages/ui`.
-- The ramp is `--ambient-text-1…9`, keyed by number. Numbered keys cannot go out
-  of order and map 1:1 onto `Typography/Font size/1…9` in Figma.
-- The ramp is **rem-based**: the Foundation scaling preset sets the root font-size
-  (90% → 12px … 100% → 16px … 110% → 20px), and the whole ramp follows.
-- Roles: 1–2 captions and meta, 3–4 UI body and controls, 5 body/default,
-  6–7 section titles, 8–9 page titles and display.
+- **The family is a Foundation choice**: Geist (local) or a curated Google
+  Fonts set (Inter, DM Sans, Manrope, Space Grotesk, IBM Plex Sans) —
+  `--font-sans` product-wide, loaded on demand via one managed `<link>`.
+- The ramp is **Tailwind's type scale** (`text-xs` … `text-4xl` and beyond),
+  rem-based: the Foundation scaling preset sets the root font-size
+  (90% → 12px … 100% → 16px … 110% → 20px) and the whole ramp follows.
+- Roles: `xs`–`sm` captions, meta, and UI controls; `base` body;
+  `lg`–`xl` section titles; `2xl`+ page titles and display.
 
 ## 4. Iconography
 
-**HugeIcons** (`@hugeicons/react` + `@hugeicons/core-free-icons`) via
-`<HugeiconsIcon icon={…} />` — the only icon set. Standard sizes 14/15/16 in
-controls, `strokeWidth={1.8}`. No other icon sets, no ad-hoc SVGs.
+**The icon library is a Foundation choice** — Lucide, Tabler, HugeIcons,
+Phosphor, or Remix. Components name icons **semantically** through
+`<Icon name="…" />` (`apps/web/src/components/icon.tsx`); the configured
+library draws them everywhere. A new icon name must be mapped in every
+library or it doesn't exist. Standard sizes 14/15/16 in controls,
+`strokeWidth={1.8}` where the library supports it. No direct library
+imports in components, no ad-hoc SVGs. (The assistant's direct HugeIcons
+usages are grandfathered — fix on touch.)
 
 ## 5. Motion
 
-- Motion lives in **CSS**: keyframes in `apps/web/src/theme.css`
-  (`ambient-shimmer`) and Tailwind `transition-*` utilities.
+- Simple motion lives in **CSS**: keyframes in `apps/web/src/theme.css`
+  (`ambient-shimmer`) and Tailwind `transition-*` utilities. That remains
+  the default — reach for it first.
+- **Framer Motion is the sanctioned animation library** (added by owner
+  decision, §12) for motion CSS can't express: interruptible/gestural
+  animation, layout and presence transitions, springs. Use it through
+  `framer-motion` in `apps/web`; a CSS transition that does the job still
+  wins over a `motion` component.
 - **The one sanctioned shader surface** is the OrbCharacter
   (`orb-character.tsx`), implemented with `@paper-design/shaders-react`
   (the heatmap shader wrapped around a circle), because the character's
   fluid identity cannot be expressed in CSS. No other component may use
-  canvas/WebGL/shader libraries without governance. There is deliberately **no animation library** in this
-  codebase — drag and snap are hand-rolled pointer events.
+  canvas/WebGL/shader libraries without governance.
 - The beam glow was removed by decision (§12) — no glow effects, on the
   assistant or anywhere else, without governance.
 - One-off `@keyframes` in a component file are a governance event.
@@ -230,17 +263,46 @@ render in the `/ds` Inspect rail.
 ## 9. Theming — the Foundation config
 
 - Foundation lives at `/ds` → Foundation. **Scaling comes first** — it is the
-  base layer every other dimension derives from. Then: accent (7, each with
-  paired light/dark foregrounds), gray tint (4), appearance (light/dark),
-  radius (the full 8-step ramp), spacing grid (Default 8px / Spacious 12px —
-  resolves the whole ambient-space scale). Customization means choosing among
-  all legal values — never typing one that isn't on a ramp.
+  base layer every other dimension derives from. Then: accent (all 17
+  Tailwind hues + neutral, each with paired foregrounds — light hues get
+  dark text), gray family (Tailwind's five — it defines every surface
+  token), appearance (light/dark), radius (the full 8-step ramp), spacing
+  unit (Tailwind's 4px default / 6px Spacious — drives `--spacing`).
+  Customization means choosing among all legal values — never typing one
+  that isn't on a ramp.
 - Compiled to **one injected `<style>` tag** by `foundation-context.tsx`. No other
   runtime theme mutation exists; never set theme variables ad hoc.
 - **Save semantics**: edits apply live; only **Save Theme** persists. Reload
   without saving returns to the last saved theme. The saved config is the input
   to Figma Sync.
 - Appearance (light/dark) is the theme provider's `.dark` class on `<html>`.
+
+### The role glossary — what each semantic token actually paints
+
+The role map (edited live on the Foundation page, Semantic mapping section) is the entire color contract between
+the Foundation and the UI. Each role is one visual job; changing its step
+changes every place that job appears, both vocabularies at once. Aliases are
+the same value under shadcn's other names — never set them independently.
+
+| Role | Token (+ aliases) | Draws from | What changes on screen |
+|---|---|---|---|
+| **Action color** | `--primary` + `--sidebar-primary` | accent hue | Filled buttons, switches and checks when on, the active nav accent — the color that marks the main action. `--primary-foreground` stays paired automatically (dark text on light hues) |
+| **Focus ring** | `--ring` | accent hue | The outline drawn around whichever control has keyboard focus |
+| **Ambient accent** | `--app-blue` | accent hue | The assistant layer's accent — its chips, links, and highlights bridge to the brand hue through this |
+| **Page background** | `--background` | gray family | The ground every screen sits on; everything else stacks above it |
+| **Primary text** | `--foreground` + `--card-foreground`, `--popover-foreground`, `--sidebar-foreground` | gray family | Headings and body copy everywhere — cards, popovers, and the sidebar inherit it |
+| **Raised surface** | `--card` + `--popover` | gray family | The face of anything lifted off the page — cards, popovers, menus, sheets |
+| **Quiet fill** | `--muted` + `--accent`, `--sidebar-accent` | gray family | The soft wash behind hover and selected states, subtle chips, and secondary surfaces |
+| **Secondary text** | `--muted-foreground` | gray family | Supporting copy — descriptions, captions, placeholders, section labels |
+| **Text on quiet fill** | `--accent-foreground` + `--sidebar-accent-foreground` | gray family | Text sitting on the quiet fill — a hovered menu item's label, a selected row's text |
+| **Hairline border** | `--border` + `--sidebar-border` | gray family | Every hairline — card edges, dividers, table rules |
+| **Field border** | `--input` | gray family | Form-control borders at rest — inputs, selects, checkboxes |
+| **Sidebar ground** | `--sidebar` | gray family | The navigation rail's tint, and the shell behind the inset content card |
+
+This table and `ROLE_DEFS` in `foundation-context.tsx` are the same list —
+the code carries each role's label and description, and the /ds editor renders
+them. Adding a role means adding it in both places plus `tokens/tokens.json`;
+they must not diverge.
 
 ## 10. Figma sync
 
@@ -303,6 +365,31 @@ rules, or states. ambientui does not have it yet; building it is logged debt.
 | 2026-08-21 | **Orb restyled as a pearl** (new reference studied): milky luminous core, ALL color at the boundary as thin-film iridescence drifting around the rim, interference micro-bands, bottom under-glow, soft-focus — no hard speculars. The reaction principles carry over: listening draws the film inward, thinking races and tightens it with core wisps, answer blooms one ring outward; transitions stay eased; custom colors become the iridescence stops | User direction with a second reference — the character's school changed from vortex-glass to bubble-pearl; the state semantics (the "orb reactions") are the invariant, the styling is the variable |
 | 2026-08-21 | **Orb glass + full configurability**: the dark body became frosted glass (translucent, page blurred behind via the new `--ambient-blur` token); state changes became continuous transitions (eased weights + tempo, never a cut); per-state speeds and the palette are user-configurable on the /ds page and persist with Save Theme — accent-linked by default, or custom crest/body/tail/streak colors (1-4, add/remove) with the accent link off | User asks: glass over opaque black, blur as a managed token, colors beyond (or without) the accent, transitions, per-state speed config. The character is itself a governed, themeable component — configuration over hardcoding is the product's own thesis |
 | 2026-08-21 | **OrbCharacter re-rendered as a WebGL fragment shader** (studied against the reference video frame by frame, then corrected against a still): the structure is ONE dominant spiral arm — phase = angle − k·radius, organically bent by slow low-frequency wobble — silver crest folding into accent body and deep tail around a dark core, fine comb teeth along the arm's edges, chromatic fringing per channel, fresnel rim + specular crescent. The one sanctioned shader surface; CSS-gradient version retired | fbm blobs read as marble, not the reference; the reference is a spiral-phase field. Bug learned: never loseContext() in a React cleanup — StrictMode remounts get the dead context back from getContext forever |
+
+| 2026-08-21 | **Tailwind became the system of record for color, spacing, and type.** The full Tailwind palette (emitted via `theme(static)`) replaces the hand-picked accents/grays: accents = all 17 hues + neutral (steps 600/500, ambient 600/400, paired foregrounds), the gray family defines every surface token (50–950 mapping); the custom `--ambient-space/text` scales are retired — spacing is Tailwind's scale × the Foundation's `--spacing` unit, type is Tailwind's text scale; /ds gained a Colors page (the full grid + the semantic mapping) and Spacing re-documents Tailwind's steps | Why maintain a parallel scale when the substrate ships one? The components already speak Tailwind — now the Foundation selects from it instead of overriding beside it. Gotcha: Tailwind v4 tree-shakes theme variables — `theme(static)` is required for the palette to exist as CSS vars |
+
+| 2026-08-21 | **The primary rule established: a reference is a request for a configuration.** Exercise: matched the Linear look purely by config — indigo accent, gray family, radius 4, default unit, 95% scaling, light — zero component styling touched | User direction: this IS the governance layer's job. Any target look is read as Foundation values; a look the config cannot reach extends the system, never patches components |
+
+| 2026-08-21 | **Three more Foundation dimensions**: shadows (later reverted to docs-only — see below), the icon library (Lucide/Tabler/HugeIcons/Phosphor/Remix via a semantic `<Icon name>` component), and the font (`--font-sans`: Geist local or Google Fonts loaded on demand) | User direction: every visual dimension a reference could differ on should be a config value — same propagation guarantees as color and spacing. Icons follow the same shape: semantic names, library selected once |
+
+| 2026-08-21 | **The settings-page pattern promoted** (`components/ds/settings-kit.tsx`: SettingsTitle / SettingsSection / SettingsCard / SettingsRow — title+description left, control right, or a full-width picker zone; hairline-divided cards per topic). The Foundation page rebuilt on it; the /ds rail moved to sentence-case group labels | Reference: Linear's preferences page. Note the primary rule held for the THEME (nothing recolored); the reference's page STRUCTURE is a pattern, and patterns get promoted through governance, not improvised |
+| 2026-08-21 | **Text tones became Foundation config**: primary text (gray-family step 950/900/800) and secondary text (600/500/400), driving --foreground/--card-foreground/--popover-foreground/--sidebar-foreground and --muted-foreground, with automatic dark-mode mirrors (950↔50 … 400↔500) | User request — text color is a foundation decision like everything else, and staying on the gray family's steps keeps it on-palette in both modes |
+
+| 2026-08-21 | **Shadow config reverted to documentation**: the elevation presets (Flat/Subtle/Default/Elevated) removed — components barely vary by them, so the knob had no payoff; Tailwind's shadow scale stands as-is, documented at /ds → Shadows with per-step semantics (2xs pressed controls → 2xl takeovers) | User call: "I wanted to just document the shadows properly." A config dimension must visibly propagate to earn its place; elevation choices belong to the components that make them |
+
+| 2026-08-21 | **The semantic mapping became a live editor** (`ROLE_DEFS` + `config.roles`): every semantic token's light/dark palette step is configurable on /ds → Colors with swatch previews and per-mode dropdowns; the Foundation's text-tone rows are quick presets over the same config; --primary-foreground stays auto-paired | User call: "this whole thing should be configurable visibly rather than just variables shown, or else the whole configurable purpose goes away." Documentation of a mapping IS the mapping's editor in this product |
+
+| 2026-08-21 | **Inset-card canvas promoted as the app-shell layout pattern** (via the watchlist): the page ground is `bg-sidebar` (rails consume the `--sidebar` role directly, no separating borders), and the content area is a `bg-background` card — `rounded-lg border` with a `p-2` gutter (shadowless by a later decision: the shell separates by tint and hairline alone). Rail group labels use the primary text tone; items stay muted until active | User asked for Linear-style separation between sidebar and content; the watchlist question was asked and answered yes. The separation is now pure config: retint it by editing the `--sidebar` role at /ds → Colors |
+
+| 2026-08-21 | **Every role in the map carries a human label and a plain-language description** (`RoleDef.label` / `RoleDef.description`): the /ds Colors editor leads with "Action color — filled buttons, switches…" and demotes the token name to a mono footnote; the same glossary is documented in §9 | User feedback: "it's hard to understand what the person is actually updating." A configurable mapping is only governable if the person configuring it can tell what each row does |
+
+| 2026-08-21 | **Config-layer audit — four propagation leaks fixed.** (1) Controls sat on the top of the radius ramp (`rounded-4xl` ≈ radius × 2.6), which exceeds half a control's height from step 8 up — the browser clamps to a pill, so most of the ramp looked dead. Buttons/inputs now use `rounded-lg` (= `--radius`), badges `rounded-md`, menus `rounded-xl`/`rounded-md`, cards `rounded-2xl`; the whole ramp now visibly restyles them. (2) The semantic `<Icon>` moved into `packages/ui` (`IconLibraryProvider` fed by the Foundation) and the primitives — checkbox, dropdown, sheet, sidebar — plus the /ds registry now draw through it; before, only the Foundation-page preview strips consumed the icon config. New names `chevron-right` and `sidebar` mapped in all five libraries. (3) Dropdown menus hard-coded a `dark` class — they ignored the appearance and the role map; removed. (4) ~50 `text-[10–13px]` labels in /ds and Foundation pages didn't ride the scaling base; converted to `text-xs`/`text-sm`. Foundation text-tone previews also now show the mirrored step in dark mode | User audit request: "the save buttons are not reacting based on the config of radius… do a complete audit check across the app if the config layer is working." A config dimension that doesn't visibly propagate is indistinguishable from a broken one. Assistant's stance-era px remain grandfathered (fix on touch) |
+
+| 2026-08-22 | **Framer Motion sanctioned as the animation library** (`framer-motion` in `apps/web`), amending the motion-is-CSS-only rule: CSS stays the default for simple transitions; Framer Motion is for interruptible/gestural motion, layout/presence transitions, and springs | Owner decision — installed at the user's direction. One library, not many: no other animation dependency without a new decision here |
+
+| 2026-08-22 | **Orb state transitions moved to Framer Motion springs** (first consumer of the sanctioned library): each shader parameter is a spring-driven motion value retargeted on state change, replacing the hand-rolled second-order easing loop; the answer bloom is a keyframe sequence from the current value. The /ds playground gained a lifecycle seek bar — play/scrub the whole still → listening → thinking → answer journey (~3s dwell per state); `play`/`pause` added to the icon vocabulary, mapped in all five libraries | Springs carry velocity across retargets, which is exactly what the second-order loop hand-built; interruption mid-transition stays smooth for free |
+
+| 2026-08-22 | **The role editor moved into the Foundation page** (Semantic mapping section, between Color and Shape and density); the Colors page keeps the palette grid and points there | User call: the Foundation is where ALL theme configuration lives — a config surface split across pages breaks the single-source story. `RoleEditor` is shared (colors-page exports it); Foundation embeds it without the inline save, the page footer's Save Theme commits |
 
 ## 13. Pattern watchlist
 

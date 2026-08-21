@@ -14,10 +14,19 @@ product's thesis applied to its own construction.
 
 ## Hard rules (non-negotiable)
 
-1. **Tokens only.** No hex colors, no raw px spacing/radius/font-size in component
-   code — shadcn semantic tokens, `--ambient-space-1…10`, `--ambient-text-1…9`,
-   radius via `--radius` steps. If a needed token doesn't exist, that's a
-   governance event, not a hardcode.
+**The primary rule: a reference is a request for a CONFIGURATION.** A target
+look ("make it feel like X", a screenshot) is answered by selecting
+Foundation values — accent hue, gray family, radius step, spacing unit,
+scaling, appearance — and saving. Never by styling components toward the
+reference. If the config cannot reach the look, extend the system through
+governance. (DESIGN.md §2, with the Linear precedent.)
+
+1. **Tokens only — and the scales of record are Tailwind's.** Colors: the
+   Tailwind palette, consumed through semantic roles (`--primary`,
+   `--muted-foreground`, …) — never a hex or raw `--color-*` step in
+   component code. Spacing: Tailwind utilities (`p-4`, `gap-2`) — never
+   arbitrary values. Type: Tailwind's text scale. Radius via `--radius`
+   steps. If a needed token doesn't exist, that's a governance event.
 2. **Saving the theme must restyle every component — propagation is a rule.**
    Every dimension resolves from a foundation-driven variable: the spacing
    grid drives Tailwind's `--spacing` (so `p-4`/`h-9` re-densify), radius
@@ -26,8 +35,8 @@ product's thesis applied to its own construction.
    grandfathered only in the assistant's stance-era code, fix on touch, never
    add new ones. (DESIGN.md §2.)
 3. **A stated pixel or colour is a request for a TOKEN, not a literal.** "16px
-   padding" means `p-ambient-4`. No exact step → nearest legal step, and say
-   which you picked. Full procedure: DESIGN.md §2.
+   padding" means `p-4`. No exact step → nearest legal step, and say which
+   you picked. Full procedure: DESIGN.md §2.
 4. **Sanctioned components only.** Product UI composes `packages/ui` components;
    ambient UI composes the assistant's parts. Known gaps are documented in the
    `/ds` registry (no Select/Switch/Textarea/Dialog — use the documented
@@ -36,9 +45,16 @@ product's thesis applied to its own construction.
    `apps/web/src/foundation/foundation-context.tsx` (one injected style tag,
    Save-to-persist). Never set theme variables ad hoc. New `--ambient-*` tokens
    must default to values derived from the base theme.
-6. **Icons: HugeIcons only** via `<HugeiconsIcon>`. No other sets, no ad-hoc SVGs.
-7. **Motion is CSS** — keyframes in `theme.css` + Tailwind transitions. No
-   animation libraries; no one-off keyframes in component files.
+6. **Icons via `<Icon name="…">`** (`packages/ui/src/components/icon.tsx`; the app re-exports it at `components/icon.tsx`) — semantic names,
+   drawn by the Foundation's configured library (Lucide/Tabler/HugeIcons/
+   Phosphor/Remix). No direct icon-library imports in components, no ad-hoc
+   SVGs; the assistant's direct HugeIcons usages are grandfathered, fix on
+   touch. New names must be mapped in every library.
+7. **Motion: CSS first, Framer Motion when CSS can't.** Keyframes in
+   `theme.css` + Tailwind transitions are the default; `framer-motion`
+   (sanctioned, DESIGN.md §5/§12) is for interruptible/gestural motion,
+   layout/presence transitions, and springs. No other animation
+   libraries; no one-off keyframes in component files.
 8. **The ambient layer contract (DESIGN.md §8) must not drift**: five modes,
    drag-as-mode-switch, page context via `setPageChip`, and the response-kit
    seam in `send()` stays empty until the kit exists. The beam glow was

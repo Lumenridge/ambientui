@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 
+import { IconLibraryProvider } from "@workspace/ui/components/icon"
+
 /**
  * The Foundation layer — the project's global design configuration and the
  * single source of truth for its design system.
@@ -16,112 +18,82 @@ import * as React from "react"
 export type Accent = {
   id: string
   name: string
-  /** Swatch shown in the picker (light-mode value). */
+  /** Swatch shown in the picker. */
   swatch: string
   light: { primary: string; primaryForeground: string }
   dark: { primary: string; primaryForeground: string }
-  /** The ambient layer's accent (assistant chips, sparkles, highlights). */
+  /** The ambient layer's accent (assistant surfaces, orb, highlights). */
   ambient: { light: string; dark: string }
 }
 
+/**
+ * The accents ARE the Tailwind color palette — every chromatic family,
+ * referenced as CSS variables Tailwind v4 already ships. Light hues pair
+ * with dark foregrounds (the token pair decides on-accent text).
+ */
+const TAILWIND_HUES = [
+  "red",
+  "orange",
+  "amber",
+  "yellow",
+  "lime",
+  "green",
+  "emerald",
+  "teal",
+  "cyan",
+  "sky",
+  "blue",
+  "indigo",
+  "violet",
+  "purple",
+  "fuchsia",
+  "pink",
+  "rose",
+] as const
+
+const DARK_FG_HUES = new Set(["amber", "yellow", "lime"])
+
 export const ACCENTS: Accent[] = [
+  ...TAILWIND_HUES.map((hue) => {
+    const fgLight = DARK_FG_HUES.has(hue)
+      ? "var(--color-neutral-950)"
+      : "var(--color-white)"
+    return {
+      id: hue,
+      name: hue.charAt(0).toUpperCase() + hue.slice(1),
+      swatch: `var(--color-${hue}-500)`,
+      light: {
+        primary: `var(--color-${hue}-600)`,
+        primaryForeground: fgLight,
+      },
+      dark: {
+        primary: `var(--color-${hue}-500)`,
+        primaryForeground: DARK_FG_HUES.has(hue)
+          ? "var(--color-neutral-950)"
+          : "var(--color-white)",
+      },
+      ambient: {
+        light: `var(--color-${hue}-600)`,
+        dark: `var(--color-${hue}-400)`,
+      },
+    }
+  }),
   {
-    id: "blue",
-    name: "Blue",
-    swatch: "oklch(0.488 0.243 264.376)",
-    light: {
-      primary: "oklch(0.488 0.243 264.376)",
-      primaryForeground: "oklch(0.97 0.014 254.604)",
-    },
-    dark: {
-      primary: "oklch(0.424 0.199 265.638)",
-      primaryForeground: "oklch(0.97 0.014 254.604)",
-    },
-    ambient: { light: "#2563eb", dark: "#4d9aff" },
-  },
-  {
-    id: "violet",
-    name: "Violet",
-    swatch: "oklch(0.541 0.281 293.009)",
-    light: {
-      primary: "oklch(0.541 0.281 293.009)",
-      primaryForeground: "oklch(0.969 0.016 293.756)",
-    },
-    dark: {
-      primary: "oklch(0.491 0.27 292.581)",
-      primaryForeground: "oklch(0.969 0.016 293.756)",
-    },
-    ambient: { light: "#7c3aed", dark: "#a78bfa" },
-  },
-  {
-    id: "rose",
-    name: "Rose",
-    swatch: "oklch(0.586 0.222 17.585)",
-    light: {
-      primary: "oklch(0.586 0.222 17.585)",
-      primaryForeground: "oklch(0.969 0.015 12.422)",
-    },
-    dark: {
-      primary: "oklch(0.514 0.222 16.935)",
-      primaryForeground: "oklch(0.969 0.015 12.422)",
-    },
-    ambient: { light: "#e11d48", dark: "#fb7185" },
-  },
-  {
-    id: "amber",
-    name: "Amber",
-    swatch: "oklch(0.666 0.179 58.318)",
-    light: {
-      primary: "oklch(0.666 0.179 58.318)",
-      primaryForeground: "oklch(0.145 0 0)",
-    },
-    dark: {
-      primary: "oklch(0.769 0.188 70.08)",
-      primaryForeground: "oklch(0.145 0 0)",
-    },
-    ambient: { light: "#d97706", dark: "#fbbf24" },
-  },
-  {
-    id: "emerald",
-    name: "Emerald",
-    swatch: "oklch(0.596 0.145 163.225)",
-    light: {
-      primary: "oklch(0.596 0.145 163.225)",
-      primaryForeground: "oklch(0.979 0.021 166.113)",
-    },
-    dark: {
-      primary: "oklch(0.508 0.118 165.612)",
-      primaryForeground: "oklch(0.979 0.021 166.113)",
-    },
-    ambient: { light: "#059669", dark: "#34d399" },
-  },
-  {
-    id: "teal",
-    name: "Teal",
-    swatch: "oklch(0.6 0.118 184.704)",
-    light: {
-      primary: "oklch(0.6 0.118 184.704)",
-      primaryForeground: "oklch(0.984 0.014 180.72)",
-    },
-    dark: {
-      primary: "oklch(0.511 0.096 186.391)",
-      primaryForeground: "oklch(0.984 0.014 180.72)",
-    },
-    ambient: { light: "#0d9488", dark: "#2dd4bf" },
-  },
-  {
-    id: "neutral",
+    id: "neutral-accent",
     name: "Neutral",
-    swatch: "oklch(0.205 0 0)",
+    swatch: "var(--color-neutral-900)",
     light: {
-      primary: "oklch(0.205 0 0)",
-      primaryForeground: "oklch(0.985 0 0)",
+      primary: "var(--color-neutral-900)",
+      primaryForeground: "var(--color-neutral-50)",
     },
     dark: {
-      primary: "oklch(0.922 0 0)",
-      primaryForeground: "oklch(0.205 0 0)",
+      primary: "var(--color-neutral-200)",
+      primaryForeground: "var(--color-neutral-900)",
     },
-    ambient: { light: "#404040", dark: "#d4d4d4" },
+    ambient: {
+      light: "var(--color-neutral-600)",
+      dark: "var(--color-neutral-400)",
+    },
   },
 ]
 
@@ -129,17 +101,16 @@ export type Gray = {
   id: string
   name: string
   swatch: string
-  /** Chroma/hue tint applied to every neutral surface token. */
-  chroma: number
-  hue: number
 }
 
-export const GRAYS: Gray[] = [
-  { id: "neutral", name: "Neutral", swatch: "oklch(0.556 0 0)", chroma: 0, hue: 0 },
-  { id: "slate", name: "Slate", swatch: "oklch(0.554 0.046 257.417)", chroma: 0.012, hue: 257 },
-  { id: "stone", name: "Stone", swatch: "oklch(0.553 0.013 58.071)", chroma: 0.008, hue: 58 },
-  { id: "sage", name: "Sage", swatch: "oklch(0.55 0.02 150)", chroma: 0.008, hue: 150 },
-]
+/** The five Tailwind gray families — the chosen one defines every surface. */
+export const GRAYS: Gray[] = ["slate", "gray", "zinc", "neutral", "stone"].map(
+  (id) => ({
+    id,
+    name: id.charAt(0).toUpperCase() + id.slice(1),
+    swatch: `var(--color-${id}-500)`,
+  })
+)
 
 /**
  * The full radius ramp — every legal corner value, on the same 2/4-starter
@@ -149,20 +120,18 @@ export const GRAYS: Gray[] = [
 export const RADIUS_STEPS = [0, 2, 4, 8, 12, 16, 20, 24] as const
 
 /**
- * The spacing grid is itself a foundation choice. Each grid resolves the
- * ten ambient-space steps as unit × multiplier, so the whole product (and
- * the Spacing page's documentation) re-derives from one decision.
+ * Spacing is Tailwind's own scale; the Foundation chooses its UNIT — the
+ * `--spacing` variable every utility (`p-4`, `gap-2`, `h-9`) derives from.
+ * Default is Tailwind's 4px unit; Spacious opens the whole product up.
+ * Units are nominal px at the 100% base and emitted in rem.
  */
-export const SPACING_MULTIPLIERS = [0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8] as const
-
 export const SPACING_GRIDS = [
-  { id: "default", name: "Default", unit: 8 },
-  { id: "spacious", name: "Spacious", unit: 12 },
+  { id: "default", name: "Default", unit: 4 },
+  { id: "spacious", name: "Spacious", unit: 6 },
 ] as const
 
-export function resolveSpacing(unit: number): number[] {
-  return SPACING_MULTIPLIERS.map((m) => Math.round(unit * m * 100) / 100)
-}
+/** The documented steps of the Tailwind spacing scale (class number → ×unit). */
+export const SPACING_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 10, 12, 16] as const
 
 /**
  * Scaling presets map to a concrete base text size — the root font-size the
@@ -174,6 +143,76 @@ export const SCALINGS = [
   { pct: 100, base: 16 },
   { pct: 105, base: 18 },
   { pct: 110, base: 20 },
+] as const
+
+/**
+ * THE ROLE MAP — every semantic token as a configurable palette step.
+ * Accent-source roles resolve on the accent hue; gray-source roles on the
+ * gray family. The Colors page edits these; defaults are shadcn's shape.
+ */
+export type RoleDef = {
+  token: string
+  /** Human name shown in the role editor. */
+  label: string
+  /** What actually changes on screen when this role's step changes. */
+  description: string
+  source: "accent" | "gray"
+  light: string
+  dark: string
+  /** Tokens that mirror this role's value. */
+  aliases?: string[]
+}
+
+export const ROLE_DEFS: RoleDef[] = [
+  { token: "--primary", label: "Action color", description: "Filled buttons, switches and checks when on, the active nav accent — the color that marks the main action.", source: "accent", light: "600", dark: "500", aliases: ["--sidebar-primary"] },
+  { token: "--ring", label: "Focus ring", description: "The outline drawn around whichever control has keyboard focus.", source: "accent", light: "600", dark: "500" },
+  { token: "--app-blue", label: "Ambient accent", description: "The assistant layer's accent — its chips, links, and highlights bridge to the brand hue through this.", source: "accent", light: "600", dark: "400" },
+  { token: "--background", label: "Page background", description: "The ground every screen sits on; everything else stacks above it.", source: "gray", light: "white", dark: "950" },
+  { token: "--foreground", label: "Primary text", description: "Headings and body copy everywhere — cards, popovers, and the sidebar inherit it.", source: "gray", light: "950", dark: "50", aliases: ["--card-foreground", "--popover-foreground", "--sidebar-foreground"] },
+  { token: "--card", label: "Raised surface", description: "The face of anything lifted off the page — cards, popovers, menus, sheets.", source: "gray", light: "white", dark: "900", aliases: ["--popover"] },
+  { token: "--muted", label: "Quiet fill", description: "The soft wash behind hover and selected states, subtle chips, and secondary surfaces.", source: "gray", light: "100", dark: "800", aliases: ["--accent", "--sidebar-accent"] },
+  { token: "--muted-foreground", label: "Secondary text", description: "Supporting copy — descriptions, captions, placeholders, section labels.", source: "gray", light: "500", dark: "400" },
+  { token: "--accent-foreground", label: "Text on quiet fill", description: "Text sitting on the quiet fill — a hovered menu item's label, a selected row's text.", source: "gray", light: "900", dark: "100", aliases: ["--sidebar-accent-foreground"] },
+  { token: "--border", label: "Hairline border", description: "Every hairline — card edges, dividers, table rules.", source: "gray", light: "200", dark: "800", aliases: ["--sidebar-border"] },
+  { token: "--input", label: "Field border", description: "Form-control borders at rest — inputs, selects, checkboxes.", source: "gray", light: "200", dark: "700" },
+  { token: "--sidebar", label: "Sidebar ground", description: "The navigation rail's tint, and the shell behind the inset content card.", source: "gray", light: "50", dark: "900" },
+]
+
+export const GRAY_STEP_OPTIONS = ["white", "50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"] as const
+export const ACCENT_STEP_OPTIONS = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"] as const
+
+/** Dark-mode mirror used by the Foundation's quick text-tone rows. */
+export const TEXT_DARK_MIRROR: Record<string, string> = {
+  "950": "50",
+  "900": "100",
+  "800": "200",
+  "600": "300",
+  "500": "400",
+  "400": "500",
+}
+export const TEXT_PRIMARY_STEPS = ["950", "900", "800"] as const
+export const TEXT_SECONDARY_STEPS = ["600", "500", "400"] as const
+
+/** The five icon libraries the system can draw from. */
+export const ICON_LIBRARIES = [
+  { id: "lucide", name: "Lucide" },
+  { id: "tabler", name: "Tabler Icons" },
+  { id: "hugeicons", name: "HugeIcons" },
+  { id: "phosphor", name: "Phosphor Icons" },
+  { id: "remix", name: "Remix Icon" },
+] as const
+
+/**
+ * The type family: Geist ships locally; the rest load from Google Fonts
+ * on demand (a <link> the provider injects when a Google family is saved).
+ */
+export const FONTS = [
+  { id: "geist", name: "Geist", family: "'Geist Variable'", google: null },
+  { id: "inter", name: "Inter", family: "'Inter'", google: "Inter:wght@400..700" },
+  { id: "dm-sans", name: "DM Sans", family: "'DM Sans'", google: "DM+Sans:opsz,wght@9..40,400..700" },
+  { id: "manrope", name: "Manrope", family: "'Manrope'", google: "Manrope:wght@400..700" },
+  { id: "space-grotesk", name: "Space Grotesk", family: "'Space Grotesk'", google: "Space+Grotesk:wght@400..700" },
+  { id: "ibm-plex-sans", name: "IBM Plex Sans", family: "'IBM Plex Sans'", google: "IBM+Plex+Sans:wght@400;500;600;700" },
 ] as const
 
 export interface OrbPaletteConfig {
@@ -190,9 +229,15 @@ export interface FoundationConfig {
   gray: string
   /** Corner radius in px — must be one of RADIUS_STEPS. */
   radius: number
-  /** Spacing grid id — resolves the ambient-space scale. */
+  /** Spacing unit id — sets Tailwind's --spacing, which every utility derives from. */
   spacingGrid: (typeof SPACING_GRIDS)[number]["id"]
   scaling: (typeof SCALINGS)[number]["pct"]
+  /** Per-role step overrides — the semantic mapping, editable on /ds → Colors. */
+  roles: Record<string, { light?: string; dark?: string }>
+  /** The icon library every <Icon> draws from. */
+  icons: (typeof ICON_LIBRARIES)[number]["id"]
+  /** The type family (--font-sans); Google families load on demand. */
+  font: (typeof FONTS)[number]["id"]
   /** The orb character's palette — configured on its /ds page, saved with the theme. */
   orb: OrbPaletteConfig
   figmaFileUrl: string | null
@@ -204,6 +249,9 @@ export const DEFAULT_FOUNDATION: FoundationConfig = {
   radius: 4,
   spacingGrid: "default",
   scaling: 100,
+  roles: {},
+  icons: "hugeicons",
+  font: "geist",
   orb: {
     useAccent: true,
     colors: ["#8bd8ff", "#2563eb", "#0b1e55"],
@@ -232,6 +280,35 @@ function migrate(raw: Record<string, unknown>): Partial<FoundationConfig> {
   // The 4px "compact" grid was removed — too tight for real interfaces.
   if ((out as { spacingGrid?: string }).spacingGrid === "compact")
     out.spacingGrid = "default"
+  // Pre-Tailwind-palette configs: "sage" gray retired; the achromatic
+  // accent was renamed to avoid colliding with the neutral gray family.
+  if (out.gray === "sage") out.gray = "gray"
+  if (out.accent === "neutral") out.accent = "neutral-accent"
+  if (out.gray && !["slate", "gray", "zinc", "neutral", "stone"].includes(out.gray))
+    out.gray = DEFAULT_FOUNDATION.gray
+  if (out.accent && !ACCENTS.some((a) => a.id === out.accent))
+    out.accent = DEFAULT_FOUNDATION.accent
+  const legacy = out as { textPrimary?: string; textSecondary?: string }
+  const roles: Record<string, { light?: string; dark?: string }> = {
+    ...(typeof out.roles === "object" && out.roles ? out.roles : {}),
+  }
+  if (legacy.textPrimary)
+    roles["--foreground"] = {
+      light: legacy.textPrimary,
+      dark: TEXT_DARK_MIRROR[legacy.textPrimary] ?? "50",
+    }
+  if (legacy.textSecondary)
+    roles["--muted-foreground"] = {
+      light: legacy.textSecondary,
+      dark: TEXT_DARK_MIRROR[legacy.textSecondary] ?? "400",
+    }
+  delete legacy.textPrimary
+  delete legacy.textSecondary
+  out.roles = roles
+  out.icons = ICON_LIBRARIES.some((x) => x.id === out.icons)
+    ? out.icons
+    : "hugeicons"
+  out.font = FONTS.some((x) => x.id === out.font) ? out.font : "geist"
   const orb = (out as { orb?: Partial<OrbPaletteConfig> }).orb
   out.orb = {
     useAccent: orb?.useAccent ?? true,
@@ -248,85 +325,61 @@ const STORAGE_KEY = "ambientui-foundation"
 
 /* ------------------------------ css compilation ------------------------------ */
 
-// The neutral surface tokens and their lightness per mode, matching the
-// preset's globals.css. The gray choice re-tints all of them.
-const SURFACE_TOKENS: {
-  token: string
-  light: number
-  dark: number
-  darkAlpha?: number
-}[] = [
-  { token: "--background", light: 1, dark: 0.145 },
-  { token: "--foreground", light: 0.145, dark: 0.985 },
-  { token: "--card", light: 1, dark: 0.205 },
-  { token: "--card-foreground", light: 0.145, dark: 0.985 },
-  { token: "--popover", light: 1, dark: 0.205 },
-  { token: "--popover-foreground", light: 0.145, dark: 0.985 },
-  { token: "--muted", light: 0.97, dark: 0.269 },
-  { token: "--muted-foreground", light: 0.556, dark: 0.708 },
-  { token: "--accent", light: 0.97, dark: 0.269 },
-  { token: "--accent-foreground", light: 0.205, dark: 0.985 },
-  { token: "--border", light: 0.922, dark: 1, darkAlpha: 0.1 },
-  { token: "--input", light: 0.922, dark: 1, darkAlpha: 0.15 },
-  { token: "--sidebar", light: 0.985, dark: 0.205 },
-  { token: "--sidebar-foreground", light: 0.145, dark: 0.985 },
-  { token: "--sidebar-accent", light: 0.97, dark: 0.269 },
-  { token: "--sidebar-accent-foreground", light: 0.205, dark: 0.985 },
-]
-
-function oklch(l: number, c: number, h: number, alpha?: number) {
-  const base = c === 0 ? `oklch(${l} 0 0)` : `oklch(${l} ${c} ${h})`
-  return alpha !== undefined ? base.replace(")", ` / ${alpha * 100}%)`) : base
+export function resolveRole(config: FoundationConfig, def: RoleDef) {
+  const o = config.roles[def.token]
+  return { light: o?.light ?? def.light, dark: o?.dark ?? def.dark }
 }
 
 export function compileFoundationCss(config: FoundationConfig): string {
-  const accent = ACCENTS.find((a) => a.id === config.accent) ?? ACCENTS[0]!
-  const gray = GRAYS.find((g) => g.id === config.gray) ?? GRAYS[0]!
+  const accent = ACCENTS.find((a) => a.id === config.accent) ?? ACCENTS[10]!
+  const accentFamily = accent.id === "neutral-accent" ? "neutral" : accent.id
+  const grayFamily = config.gray
   const grid =
     SPACING_GRIDS.find((g) => g.id === config.spacingGrid) ?? SPACING_GRIDS[0]
+
   // SCALING IS THE BASE LAYER: every dimension is nominal px at the 100%
   // base (16px) and emitted in rem, so the scaling preset re-derives the
   // entire app — spacing, radius, and type together.
   const rem = (px: number) => `${Math.round((px / 16) * 10000) / 10000}rem`
-  const spaceVars = resolveSpacing(grid.unit)
-    .map((px, i) => `--ambient-space-${i + 1}: ${rem(px)};`)
-    .join(" ")
-  // THE PROPAGATION RULE: the grid drives Tailwind's core --spacing too, so
-  // every utility-based padding/gap/height in every component re-densifies
-  // with the grid.
-  const tailwindSpacing = `--spacing: ${rem(grid.unit / 2)};`
+
+  const roleVar = (def: RoleDef, step: string) =>
+    step === "white"
+      ? "var(--color-white)"
+      : `var(--color-${def.source === "accent" ? accentFamily : grayFamily}-${step})`
 
   const light: string[] = [
-    `--primary: ${accent.light.primary};`,
     `--primary-foreground: ${accent.light.primaryForeground};`,
-    `--ring: ${accent.light.primary};`,
-    `--sidebar-primary: ${accent.light.primary};`,
     `--sidebar-primary-foreground: ${accent.light.primaryForeground};`,
-    `--app-blue: ${accent.ambient.light};`,
     `--radius: ${rem(config.radius)};`,
-    spaceVars,
-    tailwindSpacing,
+    // THE PROPAGATION RULE: the Foundation sets Tailwind's core --spacing,
+    // so every utility-based dimension in every component follows.
+    `--spacing: ${rem(grid.unit)};`,
+    ...(config.font !== "geist"
+      ? [
+          `--font-sans: ${
+            FONTS.find((f) => f.id === config.font)?.family ??
+            "'Geist Variable'"
+          }, 'Geist Variable', sans-serif;`,
+        ]
+      : []),
   ]
   const dark: string[] = [
-    `--primary: ${accent.dark.primary};`,
     `--primary-foreground: ${accent.dark.primaryForeground};`,
-    `--ring: ${accent.dark.primary};`,
-    `--sidebar-primary: ${accent.dark.primary};`,
     `--sidebar-primary-foreground: ${accent.dark.primaryForeground};`,
-    `--app-blue: ${accent.ambient.dark};`,
   ]
 
-  if (gray.chroma > 0) {
-    for (const t of SURFACE_TOKENS) {
-      light.push(`${t.token}: ${oklch(t.light, gray.chroma, gray.hue)};`)
-      dark.push(
-        `${t.token}: ${oklch(t.dark, t.darkAlpha ? 0 : gray.chroma, gray.hue, t.darkAlpha)};`
-      )
+  // THE ROLE MAP: every semantic token resolves to a configured palette
+  // step on the accent hue or gray family — the mapping the Colors page
+  // edits.
+  for (const def of ROLE_DEFS) {
+    const { light: l, dark: d } = resolveRole(config, def)
+    for (const token of [def.token, ...(def.aliases ?? [])]) {
+      light.push(`${token}: ${roleVar(def, l)};`)
+      dark.push(`${token}: ${roleVar(def, d)};`)
     }
   }
 
-  const scaling =
-    SCALINGS.find((s) => s.pct === config.scaling) ?? SCALINGS[2]
+  const scaling = SCALINGS.find((s) => s.pct === config.scaling) ?? SCALINGS[2]
 
   return [
     `:root { ${light.join(" ")} }`,
@@ -386,6 +439,23 @@ export function FoundationProvider({
       document.head.appendChild(style)
     }
     style.textContent = compileFoundationCss(config)
+    // Google font loading: one managed <link>, only when a Google family
+    // is selected — Geist ships locally.
+    const font = FONTS.find((f) => f.id === config.font)
+    const linkId = "ambientui-google-font"
+    let link = document.getElementById(linkId) as HTMLLinkElement | null
+    if (font?.google) {
+      const href = `https://fonts.googleapis.com/css2?family=${font.google}&display=swap`
+      if (!link) {
+        link = document.createElement("link")
+        link.id = linkId
+        link.rel = "stylesheet"
+        document.head.appendChild(link)
+      }
+      if (link.href !== href) link.href = href
+    } else if (link) {
+      link.remove()
+    }
   }, [config])
 
   const value = React.useMemo<FoundationContextValue>(
@@ -408,7 +478,9 @@ export function FoundationProvider({
 
   return (
     <FoundationContext.Provider value={value}>
-      {children}
+      <IconLibraryProvider library={config.icons}>
+        {children}
+      </IconLibraryProvider>
     </FoundationContext.Provider>
   )
 }

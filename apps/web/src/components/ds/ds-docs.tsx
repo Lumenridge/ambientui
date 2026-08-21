@@ -2,14 +2,14 @@ import * as React from "react"
 import { createPortal } from "react-dom"
 
 import {
-  ArrowDown01Icon,
-  Cancel01Icon,
-  FavouriteIcon,
-  Search01Icon,
-  Settings01Icon,
-  UserIcon,
-} from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
+  motion,
+  useAnimationFrame,
+  useMotionValue,
+  useTransform,
+  type MotionValue,
+} from "framer-motion"
+
+import { Icon, type IconName } from "@workspace/ui/components/icon"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -97,7 +97,7 @@ export function ControlRow({
 }) {
   return (
     <div className="border-border flex min-h-11 items-center justify-between gap-4 border-b px-3 py-2 last:border-b-0">
-      <span className="text-muted-foreground font-mono text-[12px]">{name}</span>
+      <span className="text-muted-foreground font-mono text-xs">{name}</span>
       <div className="flex flex-wrap items-center justify-end gap-1.5">
         {children}
       </div>
@@ -119,7 +119,7 @@ export function ChoiceControl<T extends string>({
       <DropdownMenuTrigger asChild>
         <Button size="xs" variant="outline" className="gap-1.5 font-normal">
           {value}
-          <HugeiconsIcon icon={ArrowDown01Icon} size={12} strokeWidth={1.8} />
+          <Icon name="chevron-down" size={12} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -194,7 +194,7 @@ function ButtonPlayground() {
             <Input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              className="h-7 w-36 text-[13px]"
+              className="h-7 w-36 text-sm"
             />
           </ControlRow>
           <ControlRow name="variant">
@@ -235,7 +235,7 @@ function BadgePlayground() {
             <Input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              className="h-7 w-36 text-[13px]"
+              className="h-7 w-36 text-sm"
             />
           </ControlRow>
           <ControlRow name="variant">
@@ -272,7 +272,7 @@ function InputPlayground() {
             <Input
               value={placeholder}
               onChange={(e) => setPlaceholder(e.target.value)}
-              className="h-7 w-36 text-[13px]"
+              className="h-7 w-36 text-sm"
             />
           </ControlRow>
           <ControlRow name="disabled">
@@ -405,7 +405,7 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
               Large
             </Button>
             <Button size="icon" variant="outline" aria-label="Settings">
-              <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.8} />
+              <Icon name="settings" size={16} />
             </Button>
           </div>
         ),
@@ -648,9 +648,9 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
             <div className="px-3 py-2.5 text-sm font-semibold">ambientui</div>
             <div className="flex flex-col gap-0.5 px-2 pb-2">
               {[
-                { icon: Search01Icon, label: "Canvas", active: true },
-                { icon: UserIcon, label: "Design system", active: false },
-                { icon: Settings01Icon, label: "Settings", active: false },
+                { icon: "search" as IconName, label: "Canvas", active: true },
+                { icon: "user" as IconName, label: "Design system", active: false },
+                { icon: "settings" as IconName, label: "Settings", active: false },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -661,7 +661,7 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
                       : "text-sidebar-foreground/80"
                   )}
                 >
-                  <HugeiconsIcon icon={item.icon} size={15} strokeWidth={1.8} />
+                  <Icon name={item.icon} size={15} />
                   {item.label}
                 </div>
               ))}
@@ -767,7 +767,7 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="outline" size="icon" aria-label="Favorite">
-                <HugeiconsIcon icon={FavouriteIcon} size={16} strokeWidth={1.8} />
+                <Icon name="heart" size={16} />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Add to favorites</TooltipContent>
@@ -787,20 +787,97 @@ function OrbStatesStory() {
   const { config } = useFoundation()
   const orb = config.orb
   return (
-    <div className="grid grid-cols-2 gap-ambient-5 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
       {ORB_STATES.map((s) => (
-        <div key={s} className="flex flex-col items-center gap-ambient-3">
+        <div key={s} className="flex flex-col items-center gap-2">
           <OrbCharacter
             state={s}
             size={72}
             colors={orb.useAccent ? undefined : orb.colors}
             speeds={orb.speeds}
           />
-          <span className="text-muted-foreground font-mono text-[11px]">
+          <span className="text-muted-foreground font-mono text-xs">
             {s}
           </span>
         </div>
       ))}
+    </div>
+  )
+}
+
+/** Seconds each state holds during a lifecycle run. */
+const LIFECYCLE_DWELL = 3
+
+function LifecycleSegment({
+  progress,
+  index,
+}: {
+  progress: MotionValue<number>
+  index: number
+}) {
+  const scaleX = useTransform(progress, (p) =>
+    Math.min(1, Math.max(0, p - index))
+  )
+  return (
+    <div className="bg-muted relative h-1 flex-1 overflow-hidden rounded-full">
+      <motion.div
+        className="bg-primary absolute inset-y-0 left-0 w-full origin-left"
+        style={{ scaleX }}
+      />
+    </div>
+  )
+}
+
+/**
+ * The lifecycle seek bar: plays the whole state journey (still →
+ * listening → thinking → answer) in one continuous run, dwelling a few
+ * seconds per state so every transition is seen in sequence. One segment
+ * per state; click or drag anywhere to scrub.
+ */
+function OrbLifecycleBar({
+  progress,
+  playing,
+  onToggle,
+  onSeek,
+}: {
+  progress: MotionValue<number>
+  playing: boolean
+  onToggle: () => void
+  onSeek: (p: number) => void
+}) {
+  const trackRef = React.useRef<HTMLDivElement>(null)
+  const seekFromEvent = (e: React.PointerEvent) => {
+    const rect = trackRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const f = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
+    onSeek(f * ORB_STATES.length)
+  }
+  return (
+    <div className="flex w-64 items-center gap-3">
+      <Button
+        size="xs"
+        variant="outline"
+        className="size-6 p-0"
+        aria-label={playing ? "Pause lifecycle" : "Play lifecycle"}
+        onClick={onToggle}
+      >
+        <Icon name={playing ? "pause" : "play"} size={12} />
+      </Button>
+      <div
+        ref={trackRef}
+        className="flex flex-1 cursor-pointer items-center gap-1 py-2"
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId)
+          seekFromEvent(e)
+        }}
+        onPointerMove={(e) => {
+          if (e.currentTarget.hasPointerCapture(e.pointerId)) seekFromEvent(e)
+        }}
+      >
+        {ORB_STATES.map((st, i) => (
+          <LifecycleSegment key={st} progress={progress} index={i} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -812,6 +889,40 @@ function OrbPlayground() {
   const [size, setSize] = React.useState<(typeof ORB_SIZES)[number]>("96")
   const [justSaved, setJustSaved] = React.useState(false)
 
+  // Lifecycle playback: progress runs 0..4 across the four states; the
+  // integer part is the active state, so a run walks every transition.
+  const [playing, setPlaying] = React.useState(false)
+  const progress = useMotionValue(0)
+  const stateRef = React.useRef(state)
+  stateRef.current = state
+  const syncState = (p: number) => {
+    const st =
+      ORB_STATES[Math.min(ORB_STATES.length - 1, Math.floor(p))] ?? "still"
+    if (st !== stateRef.current) setState(st)
+  }
+  useAnimationFrame((_, delta) => {
+    if (!playing) return
+    let p = progress.get() + delta / 1000 / LIFECYCLE_DWELL
+    if (p >= ORB_STATES.length) {
+      p = ORB_STATES.length
+      setPlaying(false)
+    }
+    progress.set(p)
+    syncState(p)
+  })
+  const seek = (p: number) => {
+    setPlaying(false)
+    progress.set(p)
+    syncState(p)
+  }
+  const togglePlay = () => {
+    if (!playing && progress.get() >= ORB_STATES.length - 0.001) {
+      progress.set(0)
+      syncState(0)
+    }
+    setPlaying((v) => !v)
+  }
+
   const setOrb = (patch: Partial<typeof orb>) =>
     setConfig({ orb: { ...orb, ...patch } })
 
@@ -820,16 +931,22 @@ function OrbPlayground() {
   return (
     <Playground
       preview={
-        <div className="flex flex-col items-center gap-ambient-4">
+        <div className="flex flex-col items-center gap-4">
           <OrbCharacter
             state={state}
             size={Number(size)}
             colors={orb.useAccent ? undefined : orb.colors}
             speeds={orb.speeds}
           />
-          <span className="text-muted-foreground font-mono text-[11px]">
+          <span className="text-muted-foreground font-mono text-xs">
             {state}
           </span>
+          <OrbLifecycleBar
+            progress={progress}
+            playing={playing}
+            onToggle={togglePlay}
+            onSeek={seek}
+          />
         </div>
       }
       controls={
@@ -838,7 +955,11 @@ function OrbPlayground() {
             <ChoiceControl
               options={ORB_STATES}
               value={state}
-              onChange={setState}
+              onChange={(v) => {
+                setPlaying(false)
+                progress.set(ORB_STATES.indexOf(v))
+                setState(v)
+              }}
             />
           </ControlRow>
           <ControlRow name="size">
@@ -904,11 +1025,7 @@ function OrbPlayground() {
                         })
                       }
                     >
-                      <HugeiconsIcon
-                        icon={Cancel01Icon}
-                        size={12}
-                        strokeWidth={1.8}
-                      />
+                      <Icon name="close" size={12} />
                     </Button>
                   )}
                 </ControlRow>
@@ -941,7 +1058,7 @@ function OrbPlayground() {
               {justSaved ? "Saved" : dirty ? "Save config" : "Saved"}
             </Button>
           </ControlRow>
-          <p className="text-muted-foreground px-3 py-2 text-[11px]">
+          <p className="text-muted-foreground px-3 py-2 text-xs">
             Saves the whole theme config — same commit as Save Theme on the
             Foundation page.
           </p>

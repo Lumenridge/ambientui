@@ -16,19 +16,27 @@ building blocks; `apps/web/src/components/ds/ds-docs.tsx` is the registry.
 Remember what this system is *for*: an AI composes UI from it. Every off-system
 value you let through becomes training data for drift.
 
+## The primary rule
+
+A reference look is matched by Foundation configuration, never by styling.
+If a diff styles components toward some target aesthetic, reject it and
+translate the target into config values (accent / gray / radius / unit /
+scaling) — or into a governance proposal if the config can't reach it.
+
 ## Compliance audit (run over any UI diff)
 
-1. **Tokens**: grep the change for hex colors, raw px paddings/margins/radii,
-   raw font sizes. Anything not a shadcn semantic token, `--ambient-space-*`,
-   `--ambient-text-*`, or a `--radius`-derived step fails (outside
-   tokens.json/foundation-context, which define the values).
+1. **Tokens**: grep the change for hex colors, raw `--color-*` palette
+   steps, arbitrary values (`p-[10px]`, `text-[13px]`), raw px radii.
+   Anything not a semantic role, a Tailwind scale utility, or a
+   `--radius`-derived step fails (outside foundation-context, which
+   defines the role → palette mapping).
 2. **Components**: does it compose vocabulary components, or re-implement one?
    Near-misses (a button-like div, a hand-rolled menu) fail. Check the gap list —
    no Select/Switch/Textarea/Dialog exist; the documented substitutes apply.
 3. **Layout**: `/ds` is the three-pane frame; the canvas stays bare; panes
    scroll internally, the document never scrolls. A new pane arrangement =
    new pattern → governance.
-4. **Icons**: HugeIcons via `<HugeiconsIcon>` only.
+4. **Icons**: semantic `<Icon name>` only — direct icon-library imports fail (assistant grandfathered).
 5. **Motion**: `theme.css` keyframes + Tailwind transitions only. A new
    `@keyframes` in a component file fails.
 6. **Ambient contract** (DESIGN.md §8): five modes, drag-as-mode-switch,
@@ -55,8 +63,10 @@ State what a change touches before making it:
   assistant's `--app-blue` accent (chips, sparkles, highlights).
 - `foundation.radius` steps → every control via `--radius` and its derived
   sm…4xl multipliers; the Foundation picker tiles.
-- `scale.space` / `scale.text` → every `*-ambient-N` utility; the Figma
-  Ambient Scale collection; the /ds Scale preview and Spacing page.
+- The spacing unit → every Tailwind spacing utility product-wide; the
+  /ds Scale preview and Spacing page.
+- The gray family → every surface token (backgrounds, cards, borders,
+  sidebar) in both modes; the accent hue → primary/ring/ambient accent.
 - A scaling preset's base px → all rem-based text product-wide.
 - Component prop changes → search usages across `apps/web/src` and report the
   blast radius.

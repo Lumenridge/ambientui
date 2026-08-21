@@ -61,15 +61,6 @@ body {
   --input: rgba(255, 255, 255, 0.12);
   --ring: #3b82f6;
 
-  --sidebar: #191919;
-  --sidebar-foreground: #e8e8e8;
-  --sidebar-primary: #3b82f6;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2b2b2b;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: transparent;
-  --sidebar-ring: #3b82f6;
-
   /* mock accents */
   --app-blue: #4d9aff;
   --app-blue-wash: rgba(61, 130, 246, 0.16);

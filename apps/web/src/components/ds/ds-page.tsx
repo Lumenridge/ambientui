@@ -10,6 +10,8 @@ import {
   ControlsHostContext,
   SHADCN_DEFAULT_COMPONENTS,
 } from "@/components/ds/ds-docs"
+import { ColorsPage } from "@/components/ds/colors-page"
+import { ShadowsPage } from "@/components/ds/shadows-page"
 import { SpacingPage } from "@/components/ds/spacing-page"
 import { FoundationPage } from "@/foundation/foundation-page"
 
@@ -23,8 +25,8 @@ function DocList({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) return null
   return (
     <section>
-      <h3 className="mb-2 text-[13px] font-semibold">{title}</h3>
-      <ul className="text-muted-foreground flex flex-col gap-1.5 text-[13px] leading-relaxed">
+      <h3 className="mb-2 text-sm font-semibold">{title}</h3>
+      <ul className="text-muted-foreground flex flex-col gap-1.5 text-sm leading-relaxed">
         {items.map((item) => (
           <li key={item} className="flex gap-2">
             <span className="text-foreground/70 select-none">·</span>
@@ -40,7 +42,10 @@ export function DsPage() {
   const [selectedId, setSelectedId] = React.useState<string>("foundation")
   const { setPageChip } = useAssistant()
   const entry =
-    selectedId === "foundation" || selectedId === "spacing"
+    selectedId === "foundation" ||
+    selectedId === "spacing" ||
+    selectedId === "colors" ||
+    selectedId === "shadows"
       ? null
       : [...AMBIENT_COMPONENTS, ...SHADCN_DEFAULT_COMPONENTS].find(
           (c) => c.id === selectedId
@@ -55,7 +60,11 @@ export function DsPage() {
     ? entry.name
     : selectedId === "spacing"
       ? "Spacing"
-      : "Foundation"
+      : selectedId === "colors"
+        ? "Colors"
+        : selectedId === "shadows"
+          ? "Shadows"
+          : "Foundation"
   React.useEffect(() => {
     setPageChip({
       id: `ds-${selectedId}`,
@@ -68,9 +77,9 @@ export function DsPage() {
   return (
     <div className="flex min-h-0 flex-1">
       {/* component list */}
-      <aside className="border-border flex w-60 shrink-0 flex-col overflow-y-auto border-r px-3 py-4">
+      <aside className="bg-sidebar text-sidebar-foreground flex w-60 shrink-0 flex-col overflow-y-auto px-3 py-4">
         <div className="px-2 pb-1 text-sm font-semibold">Design system</div>
-        <div className="text-muted-foreground px-2 pt-3 pb-2 text-[11px] font-medium tracking-wide uppercase">
+        <div className="px-2 pt-3 pb-1.5 text-xs font-medium">
           Project
         </div>
         <nav className="flex flex-col gap-0.5">
@@ -78,7 +87,7 @@ export function DsPage() {
             type="button"
             onClick={() => setSelectedId("foundation")}
             className={cn(
-              "rounded-md px-2.5 py-1.5 text-start text-[13px] transition-colors",
+              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
               selectedId === "foundation"
                 ? "bg-accent text-foreground font-medium"
                 : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -87,15 +96,27 @@ export function DsPage() {
             Foundation
           </button>
         </nav>
-        <div className="text-muted-foreground px-2 pt-4 pb-2 text-[11px] font-medium tracking-wide uppercase">
+        <div className="px-2 pt-5 pb-1.5 text-xs font-medium">
           Foundations
         </div>
         <nav className="flex flex-col gap-0.5">
           <button
             type="button"
+            onClick={() => setSelectedId("colors")}
+            className={cn(
+              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
+              selectedId === "colors"
+                ? "bg-accent text-foreground font-medium"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+            )}
+          >
+            Colors
+          </button>
+          <button
+            type="button"
             onClick={() => setSelectedId("spacing")}
             className={cn(
-              "rounded-md px-2.5 py-1.5 text-start text-[13px] transition-colors",
+              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
               selectedId === "spacing"
                 ? "bg-accent text-foreground font-medium"
                 : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -103,8 +124,20 @@ export function DsPage() {
           >
             Spacing
           </button>
+          <button
+            type="button"
+            onClick={() => setSelectedId("shadows")}
+            className={cn(
+              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
+              selectedId === "shadows"
+                ? "bg-accent text-foreground font-medium"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+            )}
+          >
+            Shadows
+          </button>
         </nav>
-        <div className="text-muted-foreground px-2 pt-4 pb-2 text-[11px] font-medium tracking-wide uppercase">
+        <div className="px-2 pt-5 pb-1.5 text-xs font-medium">
           Ambient vocabulary
         </div>
         <nav className="flex flex-col gap-0.5">
@@ -114,7 +147,7 @@ export function DsPage() {
               type="button"
               onClick={() => setSelectedId(c.id)}
               className={cn(
-                "rounded-md px-2.5 py-1.5 text-start text-[13px] transition-colors",
+                "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
                 c.id === selectedId
                   ? "bg-accent text-foreground font-medium"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -124,8 +157,8 @@ export function DsPage() {
             </button>
           ))}
         </nav>
-        <div className="text-muted-foreground px-2 pt-4 pb-2 text-[11px] font-medium tracking-wide uppercase">
-          Shadcn Default components
+        <div className="px-2 pt-5 pb-1.5 text-xs font-medium">
+          Shadcn components
         </div>
         <nav className="flex flex-col gap-0.5">
           {SHADCN_DEFAULT_COMPONENTS.map((c) => (
@@ -134,7 +167,7 @@ export function DsPage() {
               type="button"
               onClick={() => setSelectedId(c.id)}
               className={cn(
-                "rounded-md px-2.5 py-1.5 text-start text-[13px] transition-colors",
+                "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
                 c.id === selectedId
                   ? "bg-accent text-foreground font-medium"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -146,11 +179,16 @@ export function DsPage() {
         </nav>
       </aside>
 
-      {/* canvas */}
-      <main className="min-w-0 flex-1 overflow-y-auto px-8 py-6">
+      {/* canvas — the inset content card on the sidebar-tinted ground */}
+      <main className="bg-sidebar min-w-0 flex-1 p-2">
+        <div className="bg-background border-border h-full min-h-0 overflow-y-auto rounded-lg border px-8 py-6">
         {!entry ? (
           selectedId === "spacing" ? (
             <SpacingPage />
+          ) : selectedId === "colors" ? (
+            <ColorsPage />
+          ) : selectedId === "shadows" ? (
+            <ShadowsPage />
           ) : (
             <FoundationPage />
           )
@@ -171,7 +209,7 @@ export function DsPage() {
           <div className="mt-6 flex flex-col gap-6">
             {PlaygroundComponent && (
               <section>
-                <div className="text-muted-foreground mb-2 text-[11px] font-medium tracking-wide uppercase">
+                <div className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
                   Playground
                 </div>
                 <ControlsHostContext.Provider value={controlsHost}>
@@ -182,7 +220,7 @@ export function DsPage() {
 
             {entry.stories.map((story) => (
               <section key={story.label}>
-                <div className="text-muted-foreground mb-2 text-[11px] font-medium tracking-wide uppercase">
+                <div className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
                   {story.label}
                 </div>
                 <div className="border-border flex min-h-32 items-center justify-center rounded-xl border p-8">
@@ -194,7 +232,7 @@ export function DsPage() {
 
           <Separator className="my-8" />
 
-          <div className="text-muted-foreground mb-4 text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground mb-4 text-xs font-medium tracking-wide uppercase">
             Documentation
           </div>
           <div className="grid gap-8 md:grid-cols-2">
@@ -205,29 +243,30 @@ export function DsPage() {
             <DocList title="Behavior" items={entry.behavior} />
           </div>
 
-          <p className="text-muted-foreground mt-8 text-[12px]">
+          <p className="text-muted-foreground mt-8 text-xs">
             This documentation doubles as the component vocabulary — the same
             descriptions the AI layer reasons over when composing interfaces.
           </p>
         </div>
         )}
+        </div>
       </main>
 
       {/* inspect rail — the selected component's configuration */}
       {entry && (
-        <aside className="border-border flex w-72 shrink-0 flex-col overflow-y-auto border-l">
+        <aside className="border-border bg-sidebar text-sidebar-foreground flex w-72 shrink-0 flex-col overflow-y-auto border-l">
           <div className="border-border flex items-baseline justify-between border-b px-4 py-3">
             <span className="text-sm font-semibold">Inspect</span>
-            <span className="text-muted-foreground text-[12px]">
+            <span className="text-muted-foreground text-xs">
               {entry.name}
             </span>
           </div>
-          <div className="text-muted-foreground border-border border-b px-4 py-2 text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground border-border border-b px-4 py-2 text-xs font-medium tracking-wide uppercase">
             Controls
           </div>
           <div ref={setControlsHost} />
           {!PlaygroundComponent && (
-            <p className="text-muted-foreground px-4 py-3 text-[13px]">
+            <p className="text-muted-foreground px-4 py-3 text-sm">
               No configurable props for this component — see its stories and
               documentation.
             </p>

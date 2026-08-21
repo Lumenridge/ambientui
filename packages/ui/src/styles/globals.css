@@ -1,4 +1,7 @@
-@import "tailwindcss";
+/* theme(static) emits the ENTIRE Tailwind theme as CSS variables — the
+   full color palette is the system's palette of record, so every
+   --color-{family}-{step} must exist even before a class uses it. */
+@import "tailwindcss" theme(static);
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
@@ -131,55 +134,13 @@
     cursor: pointer;
     }
 }
-/* ambientui scale — spacing on an 8px grid starting from 2px, and the type
-   ramp. Text is in rem so the whole ramp follows the Foundation scaling
-   config (base text size = html font-size; 100% = 16px). */
+/* ambientui — the scales of record are Tailwind's own (colors, spacing,
+   type). The Foundation selects from them; only genuinely ambient tokens
+   are defined here. */
 :root {
-    --ambient-space-1: 2px;
-    --ambient-space-2: 4px;
-    --ambient-space-3: 8px;
-    --ambient-space-4: 16px;
-    --ambient-space-5: 24px;
-    --ambient-space-6: 32px;
-    --ambient-space-7: 40px;
-    --ambient-space-8: 48px;
-    --ambient-space-9: 56px;
-    --ambient-space-10: 64px;
-
-    --ambient-text-1: 0.6875rem; /* 11px @ 16 base */
-    --ambient-text-2: 0.75rem;   /* 12px */
-    --ambient-text-3: 0.8125rem; /* 13px */
-    --ambient-text-4: 0.875rem;  /* 14px */
-    --ambient-text-5: 1rem;      /* 16px */
-    --ambient-text-6: 1.125rem;  /* 18px */
-    --ambient-text-7: 1.25rem;   /* 20px */
-    --ambient-text-8: 1.5rem;    /* 24px */
-    --ambient-text-9: 1.875rem;  /* 30px */
-
     /* Glass blur — the one blur radius ambient surfaces use
        (backdrop-blur-[var(--ambient-blur)]). */
     --ambient-blur: 16px;
 }
 
-@theme inline {
-    --spacing-ambient-1: var(--ambient-space-1);
-    --spacing-ambient-2: var(--ambient-space-2);
-    --spacing-ambient-3: var(--ambient-space-3);
-    --spacing-ambient-4: var(--ambient-space-4);
-    --spacing-ambient-5: var(--ambient-space-5);
-    --spacing-ambient-6: var(--ambient-space-6);
-    --spacing-ambient-7: var(--ambient-space-7);
-    --spacing-ambient-8: var(--ambient-space-8);
-    --spacing-ambient-9: var(--ambient-space-9);
-    --spacing-ambient-10: var(--ambient-space-10);
 
-    --text-ambient-1: var(--ambient-text-1);
-    --text-ambient-2: var(--ambient-text-2);
-    --text-ambient-3: var(--ambient-text-3);
-    --text-ambient-4: var(--ambient-text-4);
-    --text-ambient-5: var(--ambient-text-5);
-    --text-ambient-6: var(--ambient-text-6);
-    --text-ambient-7: var(--ambient-text-7);
-    --text-ambient-8: var(--ambient-text-8);
-    --text-ambient-9: var(--ambient-text-9);
-}

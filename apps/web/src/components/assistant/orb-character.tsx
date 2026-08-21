@@ -1,6 +1,7 @@
 import * as React from "react"
 
 import { Heatmap } from "@paper-design/shaders-react"
+import { animate, useAnimationFrame, useMotionValue } from "framer-motion"
 
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -20,8 +21,10 @@ import { cn } from "@workspace/ui/lib/utils"
  * - "answer"    — a one-shot outward bloom (outer glow surges and decays),
  *                 then a slow, settled glow: found it.
  *
- * Transitions are continuous — every parameter eases toward its state
- * target, so a state change is a transition, never a cut. Per-state
+ * Transitions are continuous — every parameter is a Framer Motion spring
+ * (the sanctioned animation library, DESIGN.md §5) retargeted on state
+ * change, so velocity carries through: a state change is a transition,
+ * never a cut, and interrupting one mid-flight stays smooth. Per-state
  * speeds and the palette come from the Foundation orb config; palette is
  * accent-linked by default (a thermal ramp derived from the accent) or
  * custom colors used as the heat ramp (cold → hot).
@@ -123,9 +126,6 @@ export function OrbCharacter({
   speeds,
   className,
 }: OrbCharacterProps) {
-  const propsRef = React.useRef({ state, speed, colors, speeds })
-  propsRef.current = { state, speed, colors, speeds }
-
   const [params, setParams] = React.useState(() => ({ ...STATE_PARAMS.still }))
   const [palette, setPalette] = React.useState<string[]>([])
   const coreColor =
@@ -133,81 +133,101 @@ export function OrbCharacter({
       ? colors[Math.min(1, colors.length - 1)]!
       : "var(--app-blue)"
 
+  // Each shader parameter is a spring-driven motion value. Springs carry
+  // velocity across retargets, so a state change mid-transition leans in
+  // and settles out instead of restarting — the S-curve the character
+  // needs, for free. Per-parameter spring characters: the flow speed
+  // glides, the glows breathe, the wave direction swings deliberately.
+  const mv = {
+    speed: useMotionValue(STATE_PARAMS.still.speed),
+    contour: useMotionValue(STATE_PARAMS.still.contour),
+    innerGlow: useMotionValue(STATE_PARAMS.still.innerGlow),
+    outerGlow: useMotionValue(STATE_PARAMS.still.outerGlow),
+    angle: useMotionValue(STATE_PARAMS.still.angle),
+  }
+  const mvRef = React.useRef(mv)
+  mvRef.current = mv
 
-  // Transitions, not cuts — and S-curved, not merely eased. Each parameter
-  // runs SECOND-ORDER smoothing (the state target eases into an
-  // intermediate, which eases into the live value), so velocity is
-  // continuous: changes lean in and settle out. Per-parameter time
-  // constants: the flow speed glides slowly, glows breathe, the wave
-  // direction swings deliberately. Updates run every frame.
+  // per-state cadence config scales the heat's flow speed
+  const speedFactor =
+    ((speeds?.[state] ?? DEFAULT_STATE_SPEEDS[state]) /
+      DEFAULT_STATE_SPEEDS[state]) *
+    (speed ?? 1)
+
   React.useEffect(() => {
-    let raf = 0
-    let last = performance.now()
-    let lastState: OrbState = propsRef.current.state
-    let stateEntered = last
-    let frame = 0
-    let paletteKey = ""
+    const m = mvRef.current
+    const target = STATE_PARAMS[state]
+    const spring = (opts: { stiffness: number; damping: number; mass?: number }) =>
+      ({ type: "spring", ...opts }) as const
 
-    type P = "speed" | "contour" | "innerGlow" | "outerGlow" | "noise" | "angle"
-    const KEYS: P[] = ["speed", "contour", "innerGlow", "outerGlow", "noise", "angle"]
-    const TAU: Record<P, number> = {
-      speed: 0.7,
-      contour: 0.45,
-      innerGlow: 0.5,
-      outerGlow: 0.5,
-      noise: 0.3,
-      angle: 0.85,
+    const controls = [
+      animate(m.speed, target.speed * speedFactor, spring({ stiffness: 50, damping: 18, mass: 1.2 })),
+      animate(m.innerGlow, target.innerGlow, spring({ stiffness: 110, damping: 20 })),
+      animate(m.angle, target.angle, spring({ stiffness: 45, damping: 16, mass: 1.4 })),
+    ]
+    if (state === "answer") {
+      // one-shot outward bloom: surge past the resting glow, then decay
+      // into it — keyframes from the CURRENT value, so re-entry mid-flight
+      // stays continuous
+      controls.push(
+        animate(
+          m.outerGlow,
+          [null as unknown as number, Math.min(1, target.outerGlow + 0.6), target.outerGlow],
+          { duration: 1.6, times: [0, 0.2, 1], ease: ["easeOut", "easeOut"] }
+        ),
+        animate(
+          m.contour,
+          [null as unknown as number, Math.min(1, target.contour + 0.25), target.contour],
+          { duration: 1.6, times: [0, 0.2, 1], ease: ["easeOut", "easeOut"] }
+        )
+      )
+    } else {
+      controls.push(
+        animate(m.outerGlow, target.outerGlow, spring({ stiffness: 110, damping: 20 })),
+        animate(m.contour, target.contour, spring({ stiffness: 130, damping: 22 }))
+      )
     }
-    const init = STATE_PARAMS[propsRef.current.state]
-    const mid = { ...init }
-    const cur = { ...init }
+    return () => controls.forEach((c) => c.stop())
+  }, [state, speedFactor])
 
-    const loop = (now: number) => {
-      const { state: st, speed: sp, speeds: sps, colors: custom } =
-        propsRef.current
-      const dt = Math.min((now - last) / 1000, 0.1)
-      last = now
-      if (st !== lastState) {
-        lastState = st
-        stateEntered = now
+  // Feed the springs into the shader once per frame; refresh the palette
+  // (theme accent or custom ramp) at a slow cadence.
+  const frameCount = React.useRef(0)
+  const paletteKey = React.useRef("")
+  const colorsRef = React.useRef(colors)
+  colorsRef.current = colors
+  useAnimationFrame(() => {
+    const m = mvRef.current
+    setParams((prev) => {
+      const next = {
+        speed: m.speed.get(),
+        contour: m.contour.get(),
+        innerGlow: m.innerGlow.get(),
+        outerGlow: m.outerGlow.get(),
+        noise: 0,
+        angle: m.angle.get(),
       }
-      const stateT = (now - stateEntered) / 1000
-
-      const target = { ...STATE_PARAMS[st] }
-      // per-state cadence config scales the heat's flow speed
-      target.speed *=
-        ((sps?.[st] ?? DEFAULT_STATE_SPEEDS[st]) / DEFAULT_STATE_SPEEDS[st]) *
-        (sp ?? 1)
-      // answer: one-shot outward bloom that decays over ~1.4s
-      if (st === "answer") {
-        const bloom = Math.exp(-stateT * 2.2)
-        target.outerGlow = Math.min(1, target.outerGlow + bloom * 0.6)
-        target.contour = Math.min(1, target.contour + bloom * 0.25)
+      const same =
+        Math.abs(next.speed - prev.speed) < 1e-4 &&
+        Math.abs(next.contour - prev.contour) < 1e-4 &&
+        Math.abs(next.innerGlow - prev.innerGlow) < 1e-4 &&
+        Math.abs(next.outerGlow - prev.outerGlow) < 1e-4 &&
+        Math.abs(next.angle - prev.angle) < 1e-4
+      return same ? prev : next
+    })
+    if (frameCount.current++ % 30 === 0) {
+      const custom = colorsRef.current
+      const next =
+        custom && custom.length > 0
+          ? [resolveHex(custom[0]!) + "00", ...custom.map(resolveHex)]
+          : accentRamp()
+      const key = next.join()
+      if (key !== paletteKey.current) {
+        paletteKey.current = key
+        setPalette(next)
       }
-
-      for (const key of KEYS) {
-        const a = 1 - Math.exp((-2 * dt) / TAU[key])
-        mid[key] += (target[key] - mid[key]) * a
-        cur[key] += (mid[key] - cur[key]) * a
-      }
-
-      setParams({ ...cur })
-      if (frame++ % 30 === 0) {
-        const next =
-          custom && custom.length > 0
-            ? [resolveHex(custom[0]!) + "00", ...custom.map(resolveHex)]
-            : accentRamp()
-        const key = next.join()
-        if (key !== paletteKey) {
-          paletteKey = key
-          setPalette(next)
-        }
-      }
-      raf = requestAnimationFrame(loop)
     }
-    raf = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(raf)
-  }, [])
+  })
 
   return (
     <div
@@ -220,7 +240,7 @@ export function OrbCharacter({
         // from theme tokens
         backdropFilter: "blur(var(--ambient-blur)) saturate(1.15)",
         WebkitBackdropFilter: "blur(var(--ambient-blur)) saturate(1.15)",
-        backgroundColor: "color-mix(in oklab, var(--popover) 22%, transparent)",
+        backgroundColor: "color-mix(in oklab, var(--popover) 60%, transparent)",
         boxShadow:
           "inset 0 0 0 1px color-mix(in oklab, var(--border) 70%, transparent)",
       }}
