@@ -24,6 +24,7 @@ body {
   --wash-strong: color-mix(in oklab, var(--accent) 60%, transparent);   /* hover/active washes */
   --scrim: color-mix(in oklab, var(--background) 50%, transparent);     /* translucent covers (drag zones) */
   --glass-veil: color-mix(in oklab, var(--popover) 62%, transparent);  /* the frost between a heat field and content */
+  --glass-veil-stage: color-mix(in oklab, var(--popover) 32%, transparent); /* the thin veil over a STAGE field (canvas ground, projectors) */
 }
 
 /* The ambient layer's ONE glass recipe — every AI surface (bar, panel,
@@ -42,6 +43,15 @@ body {
   background-color: var(--glass-veil);
   -webkit-backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
   backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
+}
+
+/* The STAGE veil — for a field that IS the ground (canvas page,
+   presentations): thin tint, softer blur, so the heat reads across a room
+   while text on top stays legible. */
+.ambient-stage-frost {
+  background-color: var(--glass-veil-stage);
+  -webkit-backdrop-filter: blur(calc(var(--ambient-blur) * 0.5)) saturate(1.35);
+  backdrop-filter: blur(calc(var(--ambient-blur) * 0.5)) saturate(1.35);
 }
 
 /* THE LIVE BORDER — the orb's states projected onto an AI surface's

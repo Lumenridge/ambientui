@@ -67,6 +67,13 @@ import {
   OrbCharacter,
   type OrbState,
 } from "@/components/assistant/orb-character"
+import { useAssistant } from "@/components/assistant/assistant-context"
+import {
+  ReferenceChips,
+  ResponseBlock,
+  composeResponse,
+  type KitResponse,
+} from "@/components/assistant/response-kit"
 import { useFoundation } from "@/foundation/foundation-context"
 
 /**
@@ -1199,6 +1206,50 @@ function OrbPlayground() {
   )
 }
 
+function ResponsePlayground() {
+  const { pageChip, chips, setOrbState } = useAssistant()
+  const [runId, setRunId] = React.useState(0)
+  const [response, setResponse] = React.useState<KitResponse | null>(null)
+
+  const run = () => {
+    setResponse(null)
+    setOrbState("thinking")
+    window.setTimeout(() => {
+      setResponse(composeResponse("How does the response kit work?", pageChip, chips))
+      setOrbState("answer")
+      setRunId((n) => n + 1)
+    }, 900)
+  }
+
+  return (
+    <Playground
+      preview={
+        <div className="w-full max-w-xl">
+          {response ? (
+            <ResponseBlock
+              key={runId}
+              response={response}
+              onSettled={() => setOrbState("still")}
+            />
+          ) : (
+            <p className="text-muted-foreground text-center text-sm">
+              Compose an answer to watch the block stream and the ambient
+              state ride it.
+            </p>
+          )}
+        </div>
+      }
+      controls={
+        <ControlRow name="compose">
+          <Button size="xs" variant="outline" onClick={run}>
+            {response ? "Replay" : "Compose answer"}
+          </Button>
+        </ControlRow>
+      }
+    />
+  )
+}
+
 export const AMBIENT_COMPONENTS: ComponentEntry[] = [
   {
     id: "orb-character",
@@ -1231,6 +1282,63 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       {
         label: "The four states",
         render: <OrbStatesStory />,
+      },
+    ],
+  },
+  {
+    id: "response-block",
+    name: "ResponseBlock",
+    description:
+      "An assistant answer as an OBJECT — the orb author mark, text that streams in, and its references, in an inset card on the surface.",
+    behavior: [
+      "The mark is the live OrbCharacter while the answer is newest in the transcript; settled answers fall back to the CSS OrbGlyph, so a long conversation can't stack WebGL contexts.",
+      "Text reveals on the frame clock (~125 chars/s), not a timer — interval timers throttle in hidden tabs and would strand an answer mid-stream.",
+      "A caret pulses while streaming; references appear only once the text lands.",
+      "onSettled fires 400ms after the last character — the assistant uses it to return the ambient layer (orb, live borders, heat field) to still.",
+      "The mark carries the answer state while streaming and settles with the text, so the object itself reports whether the assistant is still talking.",
+      "Palette and per-state speeds come from the saved orb config, like every other instance of the character.",
+    ],
+    whenToUse: [
+      "Any assistant reply in a conversation surface — panel, dock, or the spotlight's AI Overview.",
+      "Whenever an answer needs provenance attached: the references row is part of the object.",
+    ],
+    whenNotToUse: [
+      "Product copy or static help text — this object implies an assistant authored it, live.",
+      "Confirming a completed action or reporting an error — use a toast (Sonner).",
+    ],
+    stories: [],
+    playground: ResponsePlayground,
+  },
+  {
+    id: "reference-chips",
+    name: "ReferenceChips",
+    description:
+      "Numbered provenance chips under an answer — what the assistant grounded its reply in.",
+    behavior: [
+      "Numbered in order: the page context first, then attached chips, then the kit's own sources.",
+      "Renders nothing when there are no references — grounding is never implied by an empty row.",
+      "Sits on the neutral glass wash (--glass-wash) so it reads as part of the answer object, not as interactive chips.",
+    ],
+    whenToUse: [
+      "Under any composed answer that used page context or attached items.",
+      "When the user needs to audit what the assistant saw — the governance habit applied to answers.",
+    ],
+    whenNotToUse: [
+      "As navigation — these name sources, they don't open them (yet).",
+      "For attaching context, which is the AI form's ContextRow.",
+    ],
+    stories: [
+      {
+        label: "References",
+        render: (
+          <ReferenceChips
+            refs={[
+              { label: "Design system · Foundation" },
+              { label: "Motion" },
+              { label: "Response kit v0" },
+            ]}
+          />
+        ),
       },
     ],
   },

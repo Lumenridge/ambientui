@@ -69,12 +69,23 @@ const STATE_PARAMS: Record<
     glow. Served as a real file — the shader's loader rejects data URIs. */
 const CIRCLE_IMAGE_SRC = "/orb-circle.svg?v=2"
 
-/** Resolve any CSS color string to a hex color. */
+/**
+ * Resolve any CSS color string to hex — including oklch(), which is what
+ * Tailwind v4's palette variables actually contain. Canvas fillStyle
+ * echoes oklch back verbatim, so rasterize a pixel and read it: the only
+ * conversion that works for every color syntax the tokens might use.
+ */
 function resolveHex(css: string): string {
-  const ctx = document.createElement("canvas").getContext("2d")
+  const value = css.trim() || "#2563eb"
+  if (/^#[0-9a-f]{6}$/i.test(value)) return value
+  const canvas = document.createElement("canvas")
+  canvas.width = canvas.height = 1
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })
   if (!ctx) return "#2563eb"
-  ctx.fillStyle = css.trim() || "#2563eb"
-  return String(ctx.fillStyle)
+  ctx.fillStyle = value
+  ctx.fillRect(0, 0, 1, 1)
+  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
+  return rgbToHex(r!, g!, b!)
 }
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -369,8 +380,16 @@ export function OrbField({
   speed = 1,
   colors,
   speeds,
+  strength = "ambient",
   className,
-}: OrbCharacterProps) {
+}: OrbCharacterProps & {
+  /**
+   * "ambient" — a low-presence layer behind surface content (the default).
+   * "stage" — the field IS the ground (the canvas page, projectors): full
+   * presence, paired with the lighter .ambient-stage-frost.
+   */
+  strength?: "ambient" | "stage"
+}) {
   const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
   const hostRef = React.useRef<HTMLDivElement>(null)
   const [box, setBox] = React.useState<{ w: number; h: number } | null>(null)
@@ -398,12 +417,23 @@ export function OrbField({
       ref={hostRef}
       aria-hidden
       className={cn(
-        // oversized so the shape's contour (and its corners) sits OUTSIDE
-        // the surface clip — only the soft glow bleeds into view
-        "pointer-events-none absolute -inset-[14%] transition-opacity duration-(--motion-surface) ease-(--motion-ease)",
+        // Surfaces oversize the field so the shape's contour (and corners)
+        // sit OUTSIDE the clip — only the glow bleeds in. A STAGE field is
+        // the ground itself: keep the body in frame and amplify it so the
+        // heat carries across a room.
+        "pointer-events-none absolute transition-opacity duration-(--motion-surface) ease-(--motion-ease)",
+        strength === "stage"
+          // saturate only — brightness/contrast wash the ramp toward white,
+          // which is exactly the color draining out of the ground
+          ? "-inset-[4%] saturate-[1.5]"
+          : "-inset-[14%]",
         // ambient light, not a flood — the field stays a low-presence layer
         // and the veil above does the rest
-        ready && box && palette.length > 0 ? "opacity-35" : "opacity-0",
+        ready && box && palette.length > 0
+          ? strength === "stage"
+            ? "opacity-100"
+            : "opacity-35"
+          : "opacity-0",
         className
       )}
     >
