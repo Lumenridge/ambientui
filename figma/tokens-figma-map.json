@@ -1,0 +1,56 @@
+{
+  "$comment": "Intended mapping for the ambientui design file. No file is connected yet — the key arrives from the Foundation page (saved config figmaFileUrl); collections below are the spec the first sync builds, then this file records the verified reality. Procedure: figma/figma-sync.md.",
+  "file": {
+    "key": null,
+    "name": null,
+    "collections": {
+      "Foundation": {
+        "modes": ["Light", "Dark"],
+        "role": "the saved Foundation config — accent pair, ring, gray-tinted surfaces, ambient accent bridge"
+      },
+      "Radius": {
+        "modes": ["Mode 1"],
+        "role": "all five presets (None/Small/Medium/Large/Full) + Radius/Active aliasing the saved step and its derived sm…4xl"
+      },
+      "Ambient Scale": {
+        "modes": ["Mode 1"],
+        "role": "Space/1…10 (8px grid from 2px, raw px) · Text/1…9 (resolved at the saved base size) · Base/Font size"
+      }
+    }
+  },
+  "map": {
+    "foundation.accents[<saved>].light|dark": {
+      "figma": ["Foundation › Color/Primary", "Foundation › Color/Primary Foreground", "Foundation › Color/Ring"],
+      "modes": { "light": "Light", "dark": "Dark" }
+    },
+    "foundation.grays[<saved>] (applied surface set)": {
+      "figma": [
+        "Foundation › Color/Background",
+        "Foundation › Color/Foreground",
+        "Foundation › Color/Card",
+        "Foundation › Color/Popover",
+        "Foundation › Color/Muted",
+        "Foundation › Color/Muted Foreground",
+        "Foundation › Color/Border",
+        "Foundation › Color/Sidebar",
+        "Foundation › Color/Sidebar Accent"
+      ],
+      "modes": { "light": "Light", "dark": "Dark" }
+    },
+    "foundation.accents[<saved>].ambient": {
+      "figma": ["Foundation › Color/Ambient Accent"],
+      "modes": { "light": "Light", "dark": "Dark" }
+    },
+    "foundation.radius": {
+      "figma": ["Radius › None|Small|Medium|Large|Full", "Radius › Radius/Active (alias)", "Radius › Radius/sm…4xl (derived)"]
+    },
+    "scale.space": { "figma": ["Ambient Scale › Space/1…10"] },
+    "scale.text": { "figma": ["Ambient Scale › Text/1…9"] },
+    "foundation.scaling[<saved>]": { "figma": ["Ambient Scale › Base/Font size"] }
+  },
+  "excluded": {
+    "unsaved live edits": "sync reads the saved config only — Save Theme is the commit point",
+    "font weights": "Figma style-name strings, not numeric weights",
+    "components": "never written by the sync; hand-authored ambientui components bind to Foundation variables and are additive only"
+  }
+}

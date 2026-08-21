@@ -1,0 +1,36 @@
+/* Data-viz tokens — status colors are fixed roles, never reused as series colors.
+   Light/dark steps validated against near-white / near-black chart surfaces. */
+:root {
+  --viz-good: #0ca30c;
+  --viz-warning: #fab219;
+  --viz-serious: #ec835a;
+  --viz-critical: #d03b3b;
+  --viz-seq-fill: #2a78d6;
+  --viz-seq-track: #cde2fb;
+  --viz-grid: #e1e0d9;
+  --viz-baseline: #c3c2b7;
+  --viz-axis-text: #898781;
+  --viz-delta-good: #006300;
+}
+
+.dark {
+  --viz-seq-fill: #3987e5;
+  --viz-seq-track: #184f95;
+  --viz-grid: #2c2c2a;
+  --viz-baseline: #383835;
+  --viz-delta-good: #0ca30c;
+}
+
+@keyframes viz-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.viz-live-dot {
+  animation: viz-pulse 2.4s ease-in-out infinite;
+}

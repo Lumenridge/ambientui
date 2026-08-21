@@ -1,0 +1,77 @@
+/* Visual language: dark charcoal desktop-app shell.
+   Loaded after globals.css so these win inside .dark. */
+
+:root {
+  /* 4px base — rounded-lg resolves to exactly 4px, md ~3px, xl ~6px */
+  --radius: 0.25rem;
+}
+
+/* Desktop-app behavior: the document never scrolls; panes scroll internally. */
+html,
+body {
+  overflow: hidden;
+}
+
+/* Shimmering placeholder text (palette input) */
+.ambient-shimmer {
+  color: transparent;
+  background: linear-gradient(
+    100deg,
+    var(--muted-foreground) 42%,
+    var(--foreground) 50%,
+    var(--muted-foreground) 58%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: ambient-shimmer 2.8s linear infinite;
+}
+@keyframes ambient-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+/* App accents — defined for both modes; .dark overrides below. */
+:root {
+  --app-blue: #2563eb;
+  --app-blue-wash: rgba(59, 130, 246, 0.1);
+  --app-chip: #ececea;
+}
+
+.dark {
+  --background: #212121;
+  --foreground: #f2f2f2;
+  --card: #282828;
+  --card-foreground: #f2f2f2;
+  --popover: #2a2a2a;
+  --popover-foreground: #f2f2f2;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #2e2e2e;
+  --secondary-foreground: #f2f2f2;
+  --muted: #2c2c2c;
+  --muted-foreground: #8f8f8f;
+  --accent: #2e2e2e;
+  --accent-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #3b82f6;
+
+  --sidebar: #191919;
+  --sidebar-foreground: #e8e8e8;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2b2b2b;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: transparent;
+  --sidebar-ring: #3b82f6;
+
+  /* mock accents */
+  --app-blue: #4d9aff;
+  --app-blue-wash: rgba(61, 130, 246, 0.16);
+  --app-chip: #303030;
+}
