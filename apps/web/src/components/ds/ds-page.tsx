@@ -94,7 +94,7 @@ export function DsPage() {
               "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
               selectedId === "foundation"
                 ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
             )}
           >
             Foundation
@@ -111,7 +111,7 @@ export function DsPage() {
               "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
               selectedId === "colors"
                 ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
             )}
           >
             Colors
@@ -123,7 +123,7 @@ export function DsPage() {
               "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
               selectedId === "spacing"
                 ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
             )}
           >
             Spacing
@@ -135,7 +135,7 @@ export function DsPage() {
               "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
               selectedId === "shadows"
                 ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
             )}
           >
             Shadows
@@ -147,7 +147,7 @@ export function DsPage() {
               "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
               selectedId === "motion"
                 ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
             )}
           >
             Motion
@@ -166,7 +166,7 @@ export function DsPage() {
                 "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
                 c.id === selectedId
                   ? "bg-accent text-foreground font-medium"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
               )}
             >
               {c.name}
@@ -186,7 +186,7 @@ export function DsPage() {
                 "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
                 c.id === selectedId
                   ? "bg-accent text-foreground font-medium"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
               )}
             >
               {c.name}

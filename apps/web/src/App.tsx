@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
 
+import { Toaster } from "@workspace/ui/components/sonner"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
 import { Assistant } from "@/components/assistant/assistant"
+import { useTheme } from "@/components/theme-provider"
 import { AssistantProvider } from "@/components/assistant/assistant-context"
 import { DsPage } from "@/components/ds/ds-page"
 import { FoundationProvider } from "@/foundation/foundation-context"
@@ -19,6 +21,12 @@ const sectionFromPath = (path: string): SectionId => {
 }
 
 const pathFromSection = (id: SectionId) => (id === "canvas" ? "/" : `/${id}`)
+
+/** The one toast outlet — follows the app's appearance. */
+function AppToaster() {
+  const { theme } = useTheme()
+  return <Toaster theme={theme === "dark" ? "dark" : "light"} />
+}
 
 export function App() {
   const [active, setActive] = useState<SectionId>(() =>
@@ -59,6 +67,7 @@ export function App() {
             </main>
           )}
           <Assistant />
+          <AppToaster />
         </div>
       </AssistantProvider>
       </FoundationProvider>

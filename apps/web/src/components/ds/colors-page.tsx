@@ -6,10 +6,11 @@ import {
   ACCENT_STEP_OPTIONS,
   GRAY_STEP_OPTIONS,
   ROLE_DEFS,
+  deriveDark,
   resolveRole,
   useFoundation,
 } from "@/foundation/foundation-context"
-import * as React from "react"
+import { toast } from "sonner"
 
 /**
  * The Colors page: the palette of record is Tailwind's own — every family,
@@ -55,7 +56,7 @@ function PaletteRow({ family }: { family: string }) {
           <div
             key={step}
             title={`${family}-${step}`}
-            className="border-border/40 h-7 rounded-sm border"
+            className="border-(--glass-border) h-7 rounded-sm border"
             style={{ backgroundColor: `var(--color-${family}-${step})` }}
           />
         ))}
@@ -66,7 +67,6 @@ function PaletteRow({ family }: { family: string }) {
 
 export function RoleEditor({ showSave = true }: { showSave?: boolean }) {
   const { config, setConfig, dirty, save } = useFoundation()
-  const [justSaved, setJustSaved] = React.useState(false)
   const accentFamily =
     config.accent === "neutral-accent" ? "neutral" : config.accent
 
@@ -75,20 +75,27 @@ export function RoleEditor({ showSave = true }: { showSave?: boolean }) {
       ? "var(--color-white)"
       : `var(--color-${def.source === "accent" ? accentFamily : config.gray}-${step})`
 
+  // Light is the design decision — picking it re-derives dark from the
+  // aesthetic mirror. Picking dark explicitly pins it (until the next
+  // light pick), so customization stays one click away without making
+  // the default path think about two modes.
   const setStep = (
-    token: string,
+    def: (typeof ROLE_DEFS)[number],
     mode: "light" | "dark",
     step: string
   ) =>
     setConfig({
       roles: {
         ...config.roles,
-        [token]: { ...config.roles[token], [mode]: step },
+        [def.token]:
+          mode === "light"
+            ? { light: step, dark: deriveDark(def, step) }
+            : { ...config.roles[def.token], dark: step },
       },
     })
 
   return (
-    <div className="border-border divide-border divide-y rounded-xl border">
+    <div className="border-border bg-card divide-border divide-y rounded-xl border">
       <div className="text-muted-foreground grid grid-cols-[1fr_90px_130px_130px] items-center gap-2 px-4 py-2 text-xs font-medium">
         <span>Role</span>
         <span>Source</span>
@@ -120,7 +127,7 @@ export function RoleEditor({ showSave = true }: { showSave?: boolean }) {
             {(["light", "dark"] as const).map((mode) => (
               <div key={mode} className="flex items-center gap-1.5">
                 <span
-                  className="border-border/60 size-5 shrink-0 rounded-full border"
+                  className="border-(--glass-border) size-5 shrink-0 rounded-full border"
                   style={{
                     backgroundColor: stepVar(def, mode === "light" ? light : dark),
                   }}
@@ -128,7 +135,7 @@ export function RoleEditor({ showSave = true }: { showSave?: boolean }) {
                 <ChoiceControl
                   options={options}
                   value={(mode === "light" ? light : dark) as never}
-                  onChange={(v) => setStep(def.token, mode, v)}
+                  onChange={(v) => setStep(def, mode, v)}
                 />
               </div>
             ))}
@@ -137,20 +144,19 @@ export function RoleEditor({ showSave = true }: { showSave?: boolean }) {
       })}
       <div className="flex items-center justify-between px-4 py-3">
         <span className="text-muted-foreground text-xs">
-          --primary-foreground stays paired automatically (dark text on light
-          hues).
+          Picking a light step derives the dark one automatically; set dark
+          yourself to override. --primary-foreground stays paired.
         </span>
         {showSave && (
           <Button
             size="sm"
-            disabled={!dirty && !justSaved}
+            disabled={!dirty}
             onClick={() => {
               save()
-              setJustSaved(true)
-              setTimeout(() => setJustSaved(false), 1600)
+              toast("Theme saved")
             }}
           >
-            {justSaved ? "Saved" : dirty ? "Save Theme" : "Saved"}
+            {dirty ? "Save Theme" : "Saved"}
           </Button>
         )}
       </div>

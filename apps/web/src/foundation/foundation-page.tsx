@@ -1,6 +1,7 @@
 import * as React from "react"
 
 import { motion } from "framer-motion"
+import { toast } from "sonner"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -8,8 +9,11 @@ import { Input } from "@workspace/ui/components/input"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { Icon } from "@/components/icon"
+import { SectionRail } from "@workspace/ui/components/section-rail"
+
 import { RoleEditor } from "@/components/ds/colors-page"
 import {
+  SaveReminder,
   SettingsCard,
   SettingsRow,
   SettingsSection,
@@ -45,10 +49,9 @@ function parseFigmaFileKey(url: string): string | null {
 }
 
 export function FoundationPage() {
-  const { config, setConfig, dirty, save, reset } = useFoundation()
+  const { config, setConfig, dirty, save, reset, discard } = useFoundation()
   const { theme, setTheme } = useTheme()
   const [figmaInput, setFigmaInput] = React.useState(config.figmaFileUrl ?? "")
-  const [justSaved, setJustSaved] = React.useState(false)
 
   const figmaKey = config.figmaFileUrl
     ? parseFigmaFileKey(config.figmaFileUrl)
@@ -71,8 +74,9 @@ export function FoundationPage() {
 
   const saveTheme = () => {
     save()
-    setJustSaved(true)
-    setTimeout(() => setJustSaved(false), 1600)
+    toast("Theme saved", {
+      description: "Every surface now builds from this configuration.",
+    })
   }
 
   const swatchButton = (
@@ -108,7 +112,20 @@ export function FoundationPage() {
         follows it, and the connected Figma file stays in sync.
       </p>
 
-      <SettingsSection title="General">
+      <SectionRail
+        sections={[
+          { id: "general", label: "General" },
+          { id: "color", label: "Color" },
+          { id: "semantic-mapping", label: "Mapping" },
+          { id: "shape", label: "Shape" },
+          { id: "motion", label: "Motion" },
+          { id: "icons", label: "Icons" },
+          { id: "figma", label: "Figma" },
+          { id: "reset", label: "Reset" },
+        ]}
+      />
+
+      <SettingsSection id="general" title="General">
         <SettingsCard>
           <SettingsRow
             title="Scaling — the base layer"
@@ -123,8 +140,8 @@ export function FoundationPage() {
                   className={cn(
                     "border-border flex flex-1 flex-col items-center gap-0.5 rounded-lg border py-2 transition-colors",
                     config.scaling === s.pct
-                      ? "border-ring bg-accent/40"
-                      : "hover:bg-accent/40"
+                      ? "border-ring bg-(--wash)"
+                      : "hover:bg-(--wash)"
                   )}
                 >
                   <span className="text-sm font-medium">{s.pct}%</span>
@@ -167,8 +184,8 @@ export function FoundationPage() {
                   className={cn(
                     "border-border flex flex-col items-start gap-0.5 rounded-lg border p-3 transition-colors",
                     config.font === f.id
-                      ? "border-ring bg-accent/40"
-                      : "hover:bg-accent/40"
+                      ? "border-ring bg-(--wash)"
+                      : "hover:bg-(--wash)"
                   )}
                   style={{ fontFamily: `${f.family}, sans-serif` }}
                 >
@@ -191,7 +208,7 @@ export function FoundationPage() {
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="Color">
+      <SettingsSection id="color" title="Color">
         <SettingsCard>
           <SettingsRow
             title="Accent color"
@@ -231,8 +248,8 @@ export function FoundationPage() {
                     className={cn(
                       "border-border flex flex-col items-center rounded-lg border px-3 py-1.5 transition-colors",
                       (config.roles["--foreground"]?.light ?? "950") === step
-                        ? "border-ring bg-accent/40"
-                        : "hover:bg-accent/40"
+                        ? "border-ring bg-(--wash)"
+                        : "hover:bg-(--wash)"
                     )}
                   >
                     <span
@@ -278,8 +295,8 @@ export function FoundationPage() {
                     className={cn(
                       "border-border flex flex-col items-center rounded-lg border px-3 py-1.5 transition-colors",
                       (config.roles["--muted-foreground"]?.light ?? "500") === step
-                        ? "border-ring bg-accent/40"
-                        : "hover:bg-accent/40"
+                        ? "border-ring bg-(--wash)"
+                        : "hover:bg-(--wash)"
                     )}
                   >
                     <span
@@ -318,16 +335,33 @@ export function FoundationPage() {
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="Semantic mapping">
-        <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
-          Every semantic token is one visual job — a configurable step on the
-          accent hue or gray family. Change a step and the whole product
-          follows. The full palette is documented at /ds → Colors.
-        </p>
+      <SettingsSection id="semantic-mapping" title="Semantic mapping">
+        <div className="mb-4 flex items-end justify-between gap-6">
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Every semantic token is one visual job — a configurable step on
+            the accent hue or gray family. Pick the light step and the dark
+            one follows automatically; set dark yourself to override. The
+            full palette is documented at /ds → Colors.
+          </p>
+          {/* quick appearance toggle — test both modes without leaving the map */}
+          <div className="flex shrink-0 gap-1.5">
+            {(["light", "dark"] as const).map((mode) => (
+              <Button
+                key={mode}
+                size="xs"
+                variant={theme === mode ? "secondary" : "outline"}
+                onClick={() => setTheme(mode)}
+              >
+                <Icon name={mode === "light" ? "sun" : "moon"} size={12} />
+                {mode === "light" ? "Light" : "Dark"}
+              </Button>
+            ))}
+          </div>
+        </div>
         <RoleEditor showSave={false} />
       </SettingsSection>
 
-      <SettingsSection title="Shape and density">
+      <SettingsSection id="shape" title="Shape and density">
         <SettingsCard>
           <SettingsRow
             title="Radius"
@@ -383,8 +417,8 @@ export function FoundationPage() {
                     className={cn(
                       "border-border flex flex-col items-start gap-2 rounded-lg border p-3 text-start transition-colors",
                       config.spacingGrid === g.id
-                        ? "border-ring bg-accent/40"
-                        : "hover:bg-accent/40"
+                        ? "border-ring bg-(--wash)"
+                        : "hover:bg-(--wash)"
                     )}
                   >
                     <span className="flex w-full items-baseline justify-between">
@@ -411,7 +445,7 @@ export function FoundationPage() {
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="Motion">
+      <SettingsSection id="motion" title="Motion">
         <SettingsCard>
           <SettingsRow
             title="Character"
@@ -428,8 +462,8 @@ export function FoundationPage() {
                   className={cn(
                     "border-border flex flex-col items-start gap-2 rounded-lg border p-3 text-start transition-colors",
                     config.motion.character === c.id
-                      ? "border-ring bg-accent/40"
-                      : "hover:bg-accent/40"
+                      ? "border-ring bg-(--wash)"
+                      : "hover:bg-(--wash)"
                   )}
                 >
                   <motion.span
@@ -476,14 +510,14 @@ export function FoundationPage() {
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="Icons">
+      <SettingsSection id="icons" title="Icons">
         <SettingsCard>
           {ICON_LIBRARIES.map((lib) => (
             <button
               key={lib.id}
               type="button"
               onClick={() => setConfig({ icons: lib.id })}
-              className="hover:bg-accent/30 flex w-full items-center justify-between px-5 py-3.5 text-start transition-colors first:rounded-t-xl last:rounded-b-xl"
+              className="hover:bg-(--wash) flex w-full items-center justify-between px-5 py-3.5 text-start transition-colors first:rounded-t-xl last:rounded-b-xl"
             >
               <span className="text-sm font-medium">{lib.name}</span>
               <span className="flex items-center gap-4">
@@ -519,7 +553,7 @@ export function FoundationPage() {
         </p>
       </SettingsSection>
 
-      <SettingsSection title="Figma">
+      <SettingsSection id="figma" title="Figma">
         <SettingsCard>
           <SettingsRow
             title="Design file"
@@ -557,24 +591,36 @@ export function FoundationPage() {
         </SettingsCard>
       </SettingsSection>
 
-      <div className="mt-10 flex items-center gap-2">
-        <Button
-          className="flex-1"
-          disabled={!dirty && !justSaved}
-          onClick={saveTheme}
-        >
-          {justSaved ? "Saved" : dirty ? "Save Theme" : "Theme saved"}
-        </Button>
-        <Button variant="ghost" onClick={reset}>
-          Reset
-        </Button>
-      </div>
-      {dirty && (
-        <p className="text-muted-foreground mt-2 text-xs">
-          Changes apply live but aren't saved yet — reloading returns to the
-          last saved theme.
-        </p>
-      )}
+      <SettingsSection id="reset" title="Reset">
+        <SettingsCard>
+          <SettingsRow
+            title="Reset to defaults"
+            description="Return every Foundation dimension — color, type, shape, motion, icons — to the system defaults. Applies live; Save Theme makes it permanent, Discard brings your saved theme back."
+            control={
+              <Button
+                variant="outline"
+                className="text-destructive hover:text-destructive"
+                onClick={() => {
+                  reset()
+                  toast("Theme reset to defaults", {
+                    description:
+                      "Save Theme to keep it — or Discard to return to your saved theme.",
+                  })
+                }}
+              >
+                Reset theme
+              </Button>
+            }
+          />
+        </SettingsCard>
+      </SettingsSection>
+
+      <SaveReminder
+        open={dirty}
+        onSave={saveTheme}
+        onDiscard={discard}
+        saveLabel="Save Theme"
+      />
     </div>
   )
 }

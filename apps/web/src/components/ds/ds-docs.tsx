@@ -10,6 +10,11 @@ import {
 } from "framer-motion"
 
 import { Icon, type IconName } from "@workspace/ui/components/icon"
+import { SectionRail } from "@workspace/ui/components/section-rail"
+
+import { toast } from "sonner"
+
+import { SaveReminder } from "@/components/ds/settings-kit"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -163,6 +168,26 @@ export function Playground({
 }
 
 /* ---------------------------------- playgrounds ---------------------------------- */
+
+function SaveReminderStory() {
+  const [dirty, setDirty] = React.useState(false)
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <Button variant="outline" size="sm" onClick={() => setDirty(true)}>
+        Make a change
+      </Button>
+      <SaveReminder
+        className="static translate-x-0"
+        open={dirty}
+        onSave={() => {
+          setDirty(false)
+          toast("Saved")
+        }}
+        onDiscard={() => setDirty(false)}
+      />
+    </div>
+  )
+}
 
 const BUTTON_VARIANTS = [
   "default",
@@ -554,6 +579,102 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
             <Input defaultValue="AmbientPill" />
             <Input placeholder="Disabled" disabled />
           </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "section-rail",
+    name: "SectionRail",
+    description:
+      "Right-edge dash rail for jumping between page sections — an ambientui extension to the product vocabulary (promoted via the watchlist).",
+    behavior: [
+      "One dash per section; the active section's dash grows and shows its label. Others reveal labels on hover.",
+      "Clicking a dash smooth-scrolls its section into view (native smooth scroll; sections carry scroll-mt).",
+      "Active tracking follows the nearest scroll container — works inside the /ds inset card or the window.",
+      "Motion rides the control role (CSS transitions on --motion-control / --motion-ease).",
+      "Fixed to the right edge by default; pass className to reposition (the story renders it static).",
+    ],
+    whenToUse: [
+      "Long single-column settings or document pages with 4+ named sections (the Foundation page).",
+      "When the reader needs a sense of place plus one-click jumps without a full sidebar.",
+    ],
+    whenNotToUse: [
+      "Pages that already have a navigation rail for their sections — one wayfinding system per page.",
+      "Fewer than three sections — a rail for two items is noise.",
+    ],
+    stories: [
+      {
+        label: "Sections",
+        render: (
+          <SectionRail
+            className="static translate-y-0 items-end"
+            sections={[
+              { id: "story-a", label: "General" },
+              { id: "story-b", label: "Color" },
+              { id: "story-c", label: "Motion" },
+              { id: "story-d", label: "Figma" },
+            ]}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "save-reminder",
+    name: "SaveReminder",
+    description:
+      "A save bar that rises from the bottom only while there are unsaved changes — the settings-kit's save affordance (promoted via the watchlist).",
+    behavior: [
+      "Hidden when everything is stored — the page carries no save chrome at rest.",
+      "While open: message + Save + optional Discard. `saved` swaps the actions for a brief confirmation before it slides away.",
+      "Enters on the configured character's spring, exits with a quick micro fade (AnimatePresence).",
+      "Fixed bottom-center by default; pass className to reposition (the story renders it static).",
+    ],
+    whenToUse: [
+      "Pages with explicit save semantics where edits apply live but persist on save (the Foundation page).",
+      "Any form where forgetting to save loses work on reload.",
+    ],
+    whenNotToUse: [
+      "Autosaving surfaces — a reminder for something already saved erodes trust.",
+      "Modal flows with their own confirm/cancel footer.",
+    ],
+    stories: [{ label: "States", render: <SaveReminderStory /> }],
+  },
+  {
+    id: "sonner",
+    name: "Sonner",
+    description:
+      "Toast notifications — transient feedback after an action completes (saves, syncs, errors).",
+    behavior: [
+      "One <Toaster> outlet at the app root, themed by the appearance and dressed in the popover role (surface, text, border, radius all follow the role map).",
+      "Fire with toast(\"Title\") or toast(title, { description }); variants: toast.success / toast.error / toast.promise.",
+      "Toasts self-dismiss; they never require interaction and never block the page.",
+      "The system's save-feedback pattern: SaveReminder dismisses on save, the toast confirms it.",
+    ],
+    whenToUse: [
+      "Confirming a completed action the user shouldn't have to watch for — Save Theme, a finished sync.",
+      "Non-blocking errors where the page state already shows the recovery path.",
+    ],
+    whenNotToUse: [
+      "Anything requiring a decision — use a dialog-pattern surface (Sheet) instead.",
+      "Persistent states (unsaved changes) — that's SaveReminder's job; a toast disappears.",
+    ],
+    stories: [
+      {
+        label: "Toast",
+        render: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              toast("Theme saved", {
+                description: "Every surface now builds from this configuration.",
+              })
+            }
+          >
+            Show toast
+          </Button>
         ),
       },
     ],

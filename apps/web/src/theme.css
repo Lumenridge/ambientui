@@ -12,6 +12,184 @@ body {
   overflow: hidden;
 }
 
+/* THE TRANSLUCENCY TOKENS — every alpha in the system is one of these;
+   no raw /NN opacity modifiers or ad-hoc color-mix in component code.
+   They derive from semantic roles, so the role map retints them. */
+:root {
+  --glass-fill: color-mix(in oklab, var(--popover) 55%, transparent);   /* ambient glass body */
+  --glass-core: color-mix(in oklab, var(--popover) 60%, transparent);   /* orb/glyph shells */
+  --glass-border: color-mix(in oklab, var(--border) 70%, transparent);  /* hairlines on glass */
+  --glass-wash: color-mix(in oklab, var(--foreground) 9%, transparent); /* neutral fills ON glass: selections, keycaps */
+  --wash: color-mix(in oklab, var(--accent) 40%, transparent);          /* quiet fills at rest */
+  --wash-strong: color-mix(in oklab, var(--accent) 60%, transparent);   /* hover/active washes */
+  --scrim: color-mix(in oklab, var(--background) 50%, transparent);     /* translucent covers (drag zones) */
+  --glass-veil: color-mix(in oklab, var(--popover) 62%, transparent);  /* the frost between a heat field and content */
+}
+
+/* The ambient layer's ONE glass recipe — every AI surface (bar, panel,
+   dock, spotlight, orb shell) wears the same frost: the glass-fill token
+   over a backdrop blur on the --ambient-blur token. Never a one-off blur
+   on an ambient surface. */
+.ambient-glass {
+  background-color: var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
+}
+
+/* The frost BETWEEN a surface's heat field (OrbField) and its content —
+   blurs the field, not the page; lighter tint so the heat glows through. */
+.ambient-field-frost {
+  background-color: var(--glass-veil);
+  -webkit-backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
+}
+
+/* THE LIVE BORDER — the orb's states projected onto an AI surface's
+   border: a conic comet on the ambient accent sweeping the perimeter.
+   One CSS ring, no shaders (a WebGL border per surface is the exact cost
+   the OrbGlyph decision removed). State decides cadence and presence:
+   still barely breathes, listening turns slow and attentive, thinking
+   sweeps hard, answer glows and settles. */
+@property --ambient-border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* NOTE: this class sets NO position. theme.css is unlayered and Tailwind's
+   utilities live in @layer — unlayered rules beat layered ones at any
+   specificity, so a `position` here would override .fixed on every surface
+   wearing the class (it did: the dock lost its fixed position and rendered
+   at the wrong edge). Consumers bring their own positioning utility. */
+/* Two identical comet rings; ::after always runs, ::before joins only
+   while thinking, counter-rotating — the shader's "heat radiating both
+   ways". Fully opaque stops: the tail resolves into the ordinary border
+   color, never into transparency. */
+.ambient-live-border::before,
+.ambient-live-border::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid transparent;
+  background: conic-gradient(
+      from var(--ambient-border-angle),
+      var(--border) 0deg,
+      color-mix(in oklab, var(--app-blue) 45%, var(--border)) 60deg,
+      var(--app-blue) 110deg,
+      color-mix(in oklab, var(--app-blue) 45%, white) 135deg,
+      color-mix(in oklab, var(--app-blue) 25%, var(--border)) 180deg,
+      var(--border) 230deg
+    )
+    border-box;
+  mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0) border-box;
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0) border-box;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  animation: ambient-border-spin 14s linear infinite;
+}
+.ambient-live-border::before {
+  display: none;
+}
+/* STATE CHARACTERS — the same movements as the orb shader's states
+   (orb-character.tsx STATE_PARAMS), translated to the perimeter:
+   listening draws INWARD (reverse, slower), thinking churns both ways
+   (fast + counter-comet), answer blooms then settles into a slow glide. */
+.ambient-live-border[data-orb-state="listening"]::after {
+  animation-direction: reverse;
+  animation-duration: 10s;
+}
+.ambient-live-border[data-orb-state="thinking"]::after {
+  animation-duration: 3.2s;
+}
+.ambient-live-border[data-orb-state="thinking"]::before {
+  display: block;
+  animation-direction: reverse;
+  animation-duration: 2.4s;
+}
+.ambient-live-border[data-orb-state="answer"]::after {
+  animation:
+    ambient-border-bloom 1.4s var(--motion-ease) 1,
+    ambient-border-spin 6s linear infinite;
+}
+@keyframes ambient-border-spin {
+  to {
+    --ambient-border-angle: 360deg;
+  }
+}
+/* the answer surge: the whole ring flares hot, then decays — the shader's
+   one-shot outward bloom */
+@keyframes ambient-border-bloom {
+  0% {
+    filter: brightness(1.9) saturate(1.6);
+  }
+  100% {
+    filter: none;
+  }
+}
+
+/* THE GLYPH'S BREATH — OrbGlyph stays pure CSS (no shader), but the
+   identity is never frozen: the core breathes, and the same state
+   language sets its pace (data-orb-state on the glyph). */
+.ambient-glyph-core {
+  animation: ambient-glyph-breathe 4s ease-in-out infinite alternate;
+}
+[data-orb-state="listening"] > .ambient-glyph-core {
+  animation-duration: 2.4s;
+}
+[data-orb-state="thinking"] > .ambient-glyph-core {
+  animation-duration: 1s;
+}
+[data-orb-state="answer"] > .ambient-glyph-core {
+  animation-duration: 1.8s;
+}
+/* the orbiting shine — a highlight circling the core, the glyph's
+   unmistakable "alive" signal; same state pacing as the breath */
+.ambient-glyph-orbit {
+  animation: ambient-glyph-orbit 3.6s linear infinite;
+}
+.ambient-glyph-orbit::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -4%;
+  width: 42%;
+  height: 42%;
+  margin-left: -21%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), transparent 68%);
+}
+[data-orb-state="listening"] > .ambient-glyph-orbit {
+  animation-duration: 2.2s;
+  animation-direction: reverse;
+}
+[data-orb-state="thinking"] > .ambient-glyph-orbit {
+  animation-duration: 0.9s;
+}
+[data-orb-state="answer"] > .ambient-glyph-orbit {
+  animation-duration: 1.6s;
+}
+@keyframes ambient-glyph-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ambient-glyph-breathe {
+  from {
+    transform: scale(0.88);
+    filter: blur(0.5px) brightness(0.92);
+  }
+  to {
+    transform: scale(1.24);
+    filter: blur(0.7px) brightness(1.35);
+  }
+}
+
 /* Shimmering placeholder text (palette input) */
 .ambient-shimmer {
   color: transparent;

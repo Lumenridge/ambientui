@@ -60,8 +60,9 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    gestural/layout/presence motion. No other animation libraries, no
    one-off keyframes in component files, no raw durations or springs.
 8. **The ambient layer contract (DESIGN.md §8) must not drift**: five modes,
-   drag-as-mode-switch, page context via `setPageChip`, and the response-kit
-   seam in `send()` stays empty until the kit exists. The beam glow was
+   drag-as-mode-switch, page context via `setPageChip`, and the response
+   kit (v0, `response-kit.tsx`) fills the `send()` seam with composed
+   answer objects — a model replaces `composeResponse`, never the objects. The beam glow was
    removed — do not reintroduce glows.
 9. **Every vocabulary component is documented** in
    `apps/web/src/components/ds/ds-docs.tsx` (summary, behavior, when to use,

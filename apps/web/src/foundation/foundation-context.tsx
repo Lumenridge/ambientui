@@ -193,6 +193,32 @@ export const TEXT_DARK_MIRROR: Record<string, string> = {
 export const TEXT_PRIMARY_STEPS = ["950", "900", "800"] as const
 export const TEXT_SECONDARY_STEPS = ["600", "500", "400"] as const
 
+/**
+ * Derive a role's DARK step from a LIGHT pick — light is the design
+ * decision, dark follows automatically. Gray roles mirror across the
+ * scale (a near-white surface becomes a near-black one), accent roles
+ * shift by the same offset their defaults carry (e.g. 600→500); both
+ * preserve each role's designed deviation from the pure mirror, so a
+ * role that defaults slightly off the inversion stays slightly off.
+ * Explicitly picking a dark step still overrides (until the next light
+ * pick re-derives).
+ */
+export function deriveDark(def: RoleDef, light: string): string {
+  if (def.source === "accent") {
+    const scale = ACCENT_STEP_OPTIONS as readonly string[]
+    const shift = scale.indexOf(def.dark) - scale.indexOf(def.light)
+    const i = scale.indexOf(light)
+    if (i < 0) return def.dark
+    return scale[Math.min(scale.length - 1, Math.max(0, i + shift))]!
+  }
+  const scale = GRAY_STEP_OPTIONS as readonly string[]
+  const mirror = (i: number) => scale.length - 1 - i
+  const delta = scale.indexOf(def.dark) - mirror(scale.indexOf(def.light))
+  const i = scale.indexOf(light)
+  if (i < 0) return def.dark
+  return scale[Math.min(scale.length - 1, Math.max(0, mirror(i) + delta))]!
+}
+
 /** The five icon libraries the system can draw from. */
 export const ICON_LIBRARIES = [
   { id: "lucide", name: "Lucide" },
@@ -519,7 +545,10 @@ interface FoundationContextValue {
   dirty: boolean
   /** Persist the current config as the project's theme. */
   save: () => void
+  /** Return every dimension to the system defaults (live; Save persists). */
   reset: () => void
+  /** Throw away unsaved edits — back to the last saved theme. */
+  discard: () => void
 }
 
 const FoundationContext = React.createContext<FoundationContextValue | null>(
@@ -594,6 +623,7 @@ export function FoundationProvider({
         setSaved(config)
       },
       reset: () => setConfigState(DEFAULT_FOUNDATION),
+      discard: () => setConfigState(saved),
     }),
     [config, saved]
   )

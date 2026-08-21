@@ -115,28 +115,35 @@ function accentRamp(): string[] {
 export function OrbGlyph({
   size = 20,
   color,
+  state,
   className,
 }: {
   size?: number
   /** Core color; defaults to the ambient accent. */
   color?: string
+  /** Ambient state — paces the glyph's breath (CSS, no shader). */
+  state?: OrbState
   className?: string
 }) {
   const core = color ?? "var(--app-blue)"
   return (
     <span
       aria-hidden
+      data-orb-state={state ?? "still"}
       className={cn("relative inline-block shrink-0 rounded-full", className)}
       style={{
         width: size,
         height: size,
-        backgroundColor: "color-mix(in oklab, var(--popover) 60%, transparent)",
-        boxShadow:
-          "inset 0 0 0 1px color-mix(in oklab, var(--border) 70%, transparent)",
+        backgroundColor: "var(--glass-core)",
+        boxShadow: "inset 0 0 0 1px var(--glass-border)",
       }}
     >
       <span
-        className="absolute rounded-full"
+        className="ambient-glyph-orbit absolute rounded-full"
+        style={{ inset: "12%" }}
+      />
+      <span
+        className="ambient-glyph-core absolute rounded-full"
         style={{
           inset: "20%",
           background: `radial-gradient(circle at 35% 30%, color-mix(in oklab, ${core} 55%, white), ${core} 58%, color-mix(in oklab, ${core} 62%, black))`,
@@ -160,20 +167,25 @@ export interface OrbCharacterProps {
   className?: string
 }
 
-export function OrbCharacter({
-  state = "still",
-  size = 96,
+/**
+ * The shared heat engine: spring-driven shader params + the palette, one
+ * state machine for every heat surface (the orb character, the ambient
+ * field). Springs carry velocity across retargets; the answer state runs
+ * its one-shot outward bloom.
+ */
+function useHeatEngine({
+  state,
   speed = 1,
-  colors,
   speeds,
-  className,
-}: OrbCharacterProps) {
+  colors,
+}: {
+  state: OrbState
+  speed?: number
+  speeds?: Partial<Record<OrbState, number>>
+  colors?: string[]
+}) {
   const [params, setParams] = React.useState(() => ({ ...STATE_PARAMS.still }))
   const [palette, setPalette] = React.useState<string[]>([])
-  const coreColor =
-    colors && colors.length > 0
-      ? colors[Math.min(1, colors.length - 1)]!
-      : "var(--app-blue)"
 
   // Each shader parameter is a spring-driven motion value. Springs carry
   // velocity across retargets, so a state change mid-transition leans in
@@ -271,6 +283,23 @@ export function OrbCharacter({
     }
   })
 
+  return { params, palette }
+}
+
+export function OrbCharacter({
+  state = "still",
+  size = 96,
+  speed = 1,
+  colors,
+  speeds,
+  className,
+}: OrbCharacterProps) {
+  const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
+  const coreColor =
+    colors && colors.length > 0
+      ? colors[Math.min(1, colors.length - 1)]!
+      : "var(--app-blue)"
+
   return (
     <div
       aria-hidden
@@ -282,9 +311,8 @@ export function OrbCharacter({
         // from theme tokens
         backdropFilter: "blur(var(--ambient-blur)) saturate(1.15)",
         WebkitBackdropFilter: "blur(var(--ambient-blur)) saturate(1.15)",
-        backgroundColor: "color-mix(in oklab, var(--popover) 60%, transparent)",
-        boxShadow:
-          "inset 0 0 0 1px color-mix(in oklab, var(--border) 70%, transparent)",
+        backgroundColor: "var(--glass-core)",
+        boxShadow: "inset 0 0 0 1px var(--glass-border)",
       }}
     >
       {/* the accent core — the middle wears the theme; the shell around it
@@ -313,6 +341,87 @@ export function OrbCharacter({
           speed={params.speed}
           scale={1}
           fit="contain"
+        />
+      )}
+    </div>
+  )
+}
+
+/** The field's shapes — near-full-bleed rounded rects in three aspect
+    buckets, so the heat hugs every edge of wide, square, and tall
+    surfaces (the loader rejects data URIs, so aspects are bucketed). */
+function rectImageFor(w: number, h: number) {
+  const ratio = w / h
+  if (ratio > 1.4) return "/orb-rect-wide.svg?v=3"
+  if (ratio < 0.72) return "/orb-rect-tall.svg?v=3"
+  return "/orb-rect.svg?v=4"
+}
+
+/**
+ * OrbField — the orb's heat as a SURFACE BACKGROUND: the same engine and
+ * states, wrapped around a rounded rect that fills the surface behind its
+ * glass. One field per open AI surface (only one is ever open), mounted
+ * a beat after the entrance so the shader compile can't jank it, fading
+ * in on the surface role.
+ */
+export function OrbField({
+  state = "still",
+  speed = 1,
+  colors,
+  speeds,
+  className,
+}: OrbCharacterProps) {
+  const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
+  const hostRef = React.useRef<HTMLDivElement>(null)
+  const [box, setBox] = React.useState<{ w: number; h: number } | null>(null)
+  const [ready, setReady] = React.useState(false)
+
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setReady(true), 400)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  React.useEffect(() => {
+    const el = hostRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      const r = entry!.contentRect
+      if (r.width > 0 && r.height > 0)
+        setBox({ w: Math.round(r.width), h: Math.round(r.height) })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  return (
+    <div
+      ref={hostRef}
+      aria-hidden
+      className={cn(
+        // oversized so the shape's contour (and its corners) sits OUTSIDE
+        // the surface clip — only the soft glow bleeds into view
+        "pointer-events-none absolute -inset-[14%] transition-opacity duration-(--motion-surface) ease-(--motion-ease)",
+        // ambient light, not a flood — the field stays a low-presence layer
+        // and the veil above does the rest
+        ready && box && palette.length > 0 ? "opacity-35" : "opacity-0",
+        className
+      )}
+    >
+      {ready && box && palette.length > 0 && (
+        <Heatmap
+          width={box.w}
+          height={box.h}
+          image={rectImageFor(box.w, box.h)}
+          colors={palette}
+          colorBack="#00000000"
+          contour={params.contour}
+          angle={params.angle}
+          noise={0}
+          innerGlow={params.innerGlow}
+          outerGlow={params.outerGlow}
+          speed={params.speed}
+          scale={1}
+          fit="cover"
         />
       )}
     </div>

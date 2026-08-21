@@ -27,13 +27,20 @@ import {
 } from "@/foundation/foundation-context"
 
 import { useAssistant, type ContextChip } from "./assistant-context"
-import { OrbGlyph } from "./orb-character"
+import {
+  ResponseBlock,
+  composeResponse,
+  type KitResponse,
+} from "./response-kit"
+import { OrbCharacter, OrbField, OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
 
 type Msg = {
   id: number
   role: "user" | "assistant"
   text: string
+  /** Composed response-kit payload (assistant messages). */
+  kit?: KitResponse
 }
 
 let msgId = 0
@@ -76,12 +83,15 @@ export function Assistant() {
   // Surfaces move on the motion system (DESIGN.md §5): transforms ride the
   // configured character's spring — instantly responsive, settles naturally —
   // while opacity fades on the micro tween. Exits are a quick micro fade.
+  const { config } = useFoundation()
   const microT = useMotionTransition("micro")
   const surfaceSpring = useMotionSpring()
   const enterT = { ...surfaceSpring, opacity: microT }
   const {
     mode,
     setMode,
+    orbState,
+    setOrbState,
     pageChip,
     chips,
     removeChip,
@@ -124,6 +134,11 @@ export function Assistant() {
     setPanelDrag({ dx: e.clientX - rect.left, dy: e.clientY - rect.top })
   }
 
+  // The hot zone lives in a REF read at drop time: listeners attach once
+  // per drag. (Keying the effect on hotZone re-subscribed the pointerup
+  // every time the zone changed — a release landing between
+  // re-subscriptions ran a stale closure and the drop silently failed.)
+  const hotZoneRef = React.useRef<"dock" | "spotlight" | null>(null)
   React.useEffect(() => {
     if (!panelDrag) return
     const move = (e: PointerEvent) => {
@@ -131,22 +146,25 @@ export function Assistant() {
         x: Math.min(Math.max(8, e.clientX - panelDrag.dx), window.innerWidth - 200),
         y: Math.min(Math.max(8, e.clientY - panelDrag.dy), window.innerHeight - 80),
       })
-      setHotZone(
+      const zone =
         e.clientX > window.innerWidth - 140
-          ? "dock"
+          ? ("dock" as const)
           : e.clientY < 180 && Math.abs(e.clientX - window.innerWidth / 2) < 320
-            ? "spotlight"
+            ? ("spotlight" as const)
             : null
-      )
+      hotZoneRef.current = zone
+      setHotZone(zone)
     }
     const up = () => {
-      if (hotZone === "dock") {
+      const zone = hotZoneRef.current
+      if (zone === "dock") {
         setMode("dock")
         setPanelPos(null)
-      } else if (hotZone === "spotlight") {
+      } else if (zone === "spotlight") {
         setMode("spotlight")
         setPanelPos(null)
       }
+      hotZoneRef.current = null
       setPanelDrag(null)
       setHotZone(null)
     }
@@ -156,7 +174,7 @@ export function Assistant() {
       window.removeEventListener("pointermove", move)
       window.removeEventListener("pointerup", up)
     }
-  }, [panelDrag, hotZone, setMode])
+  }, [panelDrag, setMode])
 
   // Global shortcuts: ⌘K toggles the palette; Esc clears the query, then closes
   React.useEffect(() => {
@@ -205,14 +223,44 @@ export function Assistant() {
     setMessages([])
   }
 
+  // AI activation while typing: the moment the input reads as a question
+  // (the "Ask ambientui" path), the ambient state turns to listening —
+  // the orb and every live border lean in before send is even pressed.
+  const busyRef = React.useRef(false)
+  React.useEffect(() => {
+    if (busyRef.current) return
+    if (mode === "line") {
+      setOrbState("still")
+      return
+    }
+    setOrbState(looksLikeQuestion(input) ? "listening" : "still")
+  }, [input, mode, setOrbState])
+
   const send = (textOverride?: string) => {
     const text = (typeof textOverride === "string" ? textOverride : input).trim()
     if (!text) return
     setInput("")
     setMessages((m) => [...m, { id: ++msgId, role: "user", text }])
     if (mode === "bar" || mode === "line") setMode("panel")
-    // The response kit plugs in here: page context + intent + component
-    // vocabulary → plan, streamed progress, and a composed answer.
+    // THE RESPONSE KIT (v0): page context + question → a composed answer
+    // object, driving the real ambient pipeline — thinking while composing,
+    // answer while streaming, still on settle. A model replaces
+    // composeResponse; the objects and states stay.
+    busyRef.current = true
+    setOrbState("thinking")
+    window.setTimeout(() => {
+      const kit = composeResponse(text, pageChip, chips)
+      setMessages((m) => [
+        ...m,
+        { id: ++msgId, role: "assistant", text: kit.text, kit },
+      ])
+      setOrbState("answer")
+    }, 1100)
+  }
+
+  const settleResponse = () => {
+    busyRef.current = false
+    setOrbState("still")
   }
 
   let surfaceEl: React.ReactNode = null
@@ -262,7 +310,7 @@ export function Assistant() {
                 key={p}
                 type="button"
                 onClick={() => send(p)}
-                className="border-border hover:bg-accent/60 flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-start text-[13px]"
+                className="border-border hover:bg-(--wash-strong) flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-start text-[13px]"
               >
                 <span className="min-w-0 flex-1">{p}</span>
                 <span className="text-muted-foreground shrink-0">
@@ -286,6 +334,13 @@ export function Assistant() {
             >
               {m.text}
             </div>
+          ) : m.kit ? (
+            <ResponseBlock
+              key={m.id}
+              response={m.kit}
+              live={m.id === messages[messages.length - 1]?.id}
+              onSettled={settleResponse}
+            />
           ) : (
             <div key={m.id} className="max-w-full text-[13px] leading-relaxed">
               {m.text}
@@ -296,8 +351,27 @@ export function Assistant() {
     </div>
   )
 
+  // The heat field + its frost, self-clipped: the field canvas is
+  // oversized past the surface, so the clip MUST live here — relying on
+  // the outer container's overflow leaks the field (the dock has none).
+  const fieldLayers = (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]"
+    >
+      <OrbField
+        state={orbState}
+        colors={config.orb.useAccent ? undefined : config.orb.colors}
+        speeds={config.orb.speeds}
+      />
+      <div className="ambient-field-frost pointer-events-none absolute inset-0" />
+    </div>
+  )
+
   const surface = (
-    <div className="bg-popover/80 border-border/70 flex h-full min-h-0 flex-col border backdrop-blur-2xl">
+    <div className="ambient-glass border-(--glass-border) relative flex h-full min-h-0 flex-col border">
+      {fieldLayers}
+      <div className="relative flex min-h-0 flex-1 flex-col">
       {/* header — the drag handle IS the form switcher: drag to float, dock, or spotlight */}
       <div
         onPointerDown={startPanelDrag}
@@ -321,7 +395,7 @@ export function Assistant() {
       {transcriptBlock}
 
       {/* input */}
-      <div className="border-t border-border p-2.5">
+      <div className="border-(--glass-border) border-t px-4 py-3">
         <ContextRow
           pageChip={pageChip}
           pagePinned={pagePinned}
@@ -340,6 +414,7 @@ export function Assistant() {
           placeholder="Ask a follow-up…"
           bare
         />
+      </div>
       </div>
     </div>
   )
@@ -435,7 +510,9 @@ export function Assistant() {
     surfaceEl = (
       <motion.div
         key="spotlight"
-        className="fixed inset-0 z-50 bg-black/50"
+        // no backdrop — the palette floats on the page (glass carries the
+        // separation); the full-viewport layer still catches outside clicks
+        className="fixed inset-0 z-50"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: microT }}
@@ -450,11 +527,17 @@ export function Assistant() {
           transition={enterT}
           onClick={(e) => e.stopPropagation()}
         >
-            <div className="bg-popover border-border flex max-h-[72vh] flex-col overflow-hidden rounded-xl border shadow-[0_32px_100px_-16px_rgba(0,0,0,0.6),0_8px_32px_-12px_rgba(0,0,0,0.4)]">
+            <div
+              className="ambient-glass ambient-live-border border-(--glass-border) relative flex max-h-[72vh] flex-col overflow-hidden rounded-2xl border shadow-[0_32px_100px_-16px_rgba(0,0,0,0.6),0_8px_32px_-12px_rgba(0,0,0,0.4)]"
+              data-orb-state={orbState}
+            >
+              {fieldLayers}
+              <div className="relative flex min-h-0 flex-col">
           {/* search / ask input — hidden in answer mode (follow-up bar takes over) */}
           {!asking && (
             <>
-              <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+              <div className="border-(--glass-border) border-b px-4 py-3">
+                <div className="flex items-center gap-3">
                 <MiniAvatar />
                 <div className="relative min-w-0 flex-1">
                   <input
@@ -463,12 +546,12 @@ export function Assistant() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={onPaletteKeyDown}
                     aria-label="Search or ask a question in ambientui"
-                    className="w-full bg-transparent text-[15px] outline-none"
+                    className="w-full bg-transparent text-base outline-none"
                   />
                   {input === "" && (
                     <span
                       aria-hidden
-                      className="ambient-shimmer pointer-events-none absolute inset-y-0 left-0 flex items-center text-[15px]"
+                      className="ambient-shimmer pointer-events-none absolute inset-y-0 left-0 flex items-center text-base"
                     >
                       Search or ask a question in ambientui…
                     </span>
@@ -476,9 +559,9 @@ export function Assistant() {
                 </div>
               </div>
 
-              {/* attached context — same anatomy as the chat panel */}
+              {/* attached context lives inside the header band — one hairline */}
               {(pageChip || chips.length > 0) && (
-                <div className="border-b border-border px-4 pt-2">
+                <div className="pt-2">
                   <ContextRow
                     pageChip={pageChip}
                     pagePinned={pagePinned}
@@ -488,6 +571,7 @@ export function Assistant() {
                   />
                 </div>
               )}
+              </div>
             </>
           )}
 
@@ -511,7 +595,7 @@ export function Assistant() {
               </div>
               {transcriptBlock}
               {/* follow-up bar at the bottom, with context attached — like the panel */}
-              <div className="border-t border-border p-2.5">
+              <div className="border-(--glass-border) border-t px-4 py-3">
                 <ContextRow
                   pageChip={pageChip}
                   pagePinned={pagePinned}
@@ -551,12 +635,28 @@ export function Assistant() {
             />
           )}
 
-          <div className="text-muted-foreground flex items-center gap-4 border-t border-border px-4 py-2 text-[11px]">
-            <span>↑↓ navigate</span>
-            <span>↵ select</span>
-            <span>esc clear · close</span>
-            <span className="ms-auto">⌘K toggle</span>
+          <div className="text-muted-foreground border-(--glass-border) flex items-center gap-3 border-t px-3 py-2 text-xs">
+            <span className="flex items-center gap-2">
+              <OrbGlyph
+                size={16}
+                color={
+                  config.orb.useAccent
+                    ? undefined
+                    : config.orb.colors[Math.min(1, config.orb.colors.length - 1)]
+                }
+              />
+              ambientui
+            </span>
+            <span className="ms-auto flex items-center gap-1.5">
+              Select <PaletteKey>↵</PaletteKey>
+            </span>
+            <span className="bg-(--glass-border) h-3.5 w-px" />
+            <span className="flex items-center gap-1.5">
+              Toggle <PaletteKey>⌘</PaletteKey>
+              <PaletteKey>K</PaletteKey>
+            </span>
           </div>
+              </div>
             </div>
         </motion.div>
       </motion.div>
@@ -567,7 +667,8 @@ export function Assistant() {
     surfaceEl = (
       <motion.div
         key="dock"
-        className="fixed top-0 bottom-0 right-0 z-50 w-[420px] max-w-[90vw] shadow-[-24px_0_70px_-16px_rgba(0,0,0,0.4)]"
+        data-orb-state={orbState}
+        className="ambient-live-border fixed top-0 bottom-0 right-0 z-50 w-[420px] max-w-[90vw] shadow-[-24px_0_70px_-16px_rgba(0,0,0,0.4)]"
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 40, transition: microT }}
@@ -584,11 +685,12 @@ export function Assistant() {
       <motion.div
         key="panel"
         ref={panelRef}
+        data-orb-state={orbState}
         initial={{ opacity: 0, y: 12, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 12, scale: 0.99, transition: microT }}
         transition={enterT}
-        className="fixed z-50 h-[560px] max-h-[80vh] w-[440px] max-w-[92vw] overflow-hidden rounded-xl shadow-[0_32px_90px_-12px_rgba(0,0,0,0.5),0_8px_28px_-8px_rgba(0,0,0,0.35)]"
+        className="ambient-live-border fixed z-50 h-[560px] max-h-[80vh] w-[440px] max-w-[92vw] overflow-hidden rounded-xl shadow-[0_32px_90px_-12px_rgba(0,0,0,0.5),0_8px_28px_-8px_rgba(0,0,0,0.35)]"
         style={
           panelPos
             ? { left: panelPos.x, top: panelPos.y }
@@ -613,18 +715,23 @@ export function Assistant() {
   )
 }
 
-/** The assistant's mark at surface scale — the CSS glyph, not the shader.
-    Each OrbCharacter is a WebGL context + shader compile + 60fps loop;
-    mounting those mid-entrance is what made surfaces stutter open. The
-    full character lives on the floating orb and the /ds playground. */
+/**
+ * The assistant's mark: the real OrbCharacter — one shader instance per
+ * surface mark, riding the live ambient state. (The CSS OrbGlyph remains
+ * for incidental marks: the footer brand and settled transcript entries,
+ * where a context per row would stack up — DESIGN.md §12.)
+ */
 function AssistantMark({ size }: { size: number }) {
   const { config } = useFoundation()
-  const core = config.orb.useAccent
-    ? undefined
-    : config.orb.colors[Math.min(1, config.orb.colors.length - 1)]
+  const { orbState } = useAssistant()
   return (
     <span className="inline-flex shrink-0">
-      <OrbGlyph size={size} color={core} />
+      <OrbCharacter
+        size={size}
+        state={orbState}
+        colors={config.orb.useAccent ? undefined : config.orb.colors}
+        speeds={config.orb.speeds}
+      />
     </span>
   )
 }
@@ -634,12 +741,21 @@ function MiniAvatar({ small }: { small?: boolean }) {
   return <AssistantMark size={small ? 24 : 32} />
 }
 
+/** Raycast-style keycap chip — a neutral wash square on the glass. */
+function PaletteKey({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="bg-(--glass-wash) inline-flex min-w-5 items-center justify-center rounded-sm px-1 py-0.5 font-mono text-[10px]">
+      {children}
+    </kbd>
+  )
+}
+
 const rowClass =
-  "hover:bg-accent/60 flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-start text-[13px]"
+  "hover:bg-(--glass-wash) flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-start text-sm"
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-muted-foreground px-2 pt-3 pb-1 text-[11px] font-medium tracking-wide uppercase first:pt-1">
+    <div className="text-muted-foreground px-2 pt-3.5 pb-1.5 text-xs font-medium first:pt-1.5">
       {children}
     </div>
   )
@@ -649,7 +765,7 @@ function PaletteItemIcon({ item }: { item: PaletteItem }) {
   if (item.iconKind === "avatar") return <MiniAvatar small />
   if (item.iconKind === "prompt" || item.iconKind === "ask")
     return (
-      <span className="text-[var(--app-blue)]">
+      <span className="text-muted-foreground">
         <HugeiconsIcon icon={SparklesIcon} size={16} strokeWidth={1.8} />
       </span>
     )
@@ -696,7 +812,7 @@ function PaletteList({
               type="button"
               onClick={item.run}
               onMouseEnter={() => onHover(i)}
-              className={cn(rowClass, i === selected && "bg-accent/60")}
+              className={cn(rowClass, i === selected && "bg-(--glass-wash)")}
             >
               <PaletteItemIcon item={item} />
               <span
@@ -718,7 +834,7 @@ function PaletteList({
                 </span>
               )}
               {i === selected && !item.trailing && (
-                <kbd className="text-muted-foreground ms-auto shrink-0 rounded-[4px] bg-accent px-1.5 py-0.5 text-[11px]">
+                <kbd className="text-muted-foreground bg-(--glass-wash) ms-auto shrink-0 rounded-sm px-1.5 py-0.5 text-[11px]">
                   ↵
                 </kbd>
               )}
@@ -738,7 +854,7 @@ function SnapZones({ hot }: { hot: "dock" | "spotlight" | null }) {
       "fixed z-40 flex items-center justify-center rounded-lg border border-dashed text-xs font-medium pointer-events-none backdrop-blur-md",
       active
         ? "border-[var(--app-blue)] bg-[var(--app-blue-wash)] text-[var(--app-blue)]"
-        : "border-muted-foreground/40 bg-background/50 text-muted-foreground"
+        : "border-muted-foreground/40 bg-(--scrim) text-muted-foreground"
     )
   return (
     <>
@@ -815,7 +931,7 @@ function ContextRow({
     <div className="flex flex-wrap items-center gap-1.5 pb-2">
       {pageChip &&
         (pagePinned ? (
-          <span className="border-border bg-accent/40 inline-flex max-w-full items-center gap-2 rounded-lg border py-1 ps-1.5 pe-1 text-[12.5px] font-medium">
+          <span className="border-border bg-(--wash) inline-flex max-w-full items-center gap-2 rounded-lg border py-1 ps-1.5 pe-1 text-[12.5px] font-medium">
             <IconTile icon={SparklesIcon} />
             <span className="min-w-0 truncate">{pageChip.label}</span>
             <button
@@ -832,7 +948,7 @@ function ContextRow({
             type="button"
             title="Attach this page as context"
             onClick={() => onTogglePage(true)}
-            className="border-border bg-popover hover:bg-accent/60 inline-flex items-center gap-2 rounded-lg border py-1 ps-1.5 pe-2.5 text-[12.5px] font-medium transition-colors"
+            className="border-border bg-popover hover:bg-(--wash-strong) inline-flex items-center gap-2 rounded-lg border py-1 ps-1.5 pe-2.5 text-[12.5px] font-medium transition-colors"
           >
             <IconTile icon={SparklesIcon} />
             Attach context
@@ -844,7 +960,7 @@ function ContextRow({
       {chips.map((c) => (
         <span
           key={c.id}
-          className="border-border bg-accent/40 inline-flex max-w-full items-center gap-2 rounded-lg border py-1 ps-1.5 pe-1 text-[12.5px] font-medium"
+          className="border-border bg-(--wash) inline-flex max-w-full items-center gap-2 rounded-lg border py-1 ps-1.5 pe-1 text-[12.5px] font-medium"
         >
           <IconTile icon={chipKindIcon[c.kind]} />
           <span className="min-w-0 max-w-56 truncate">{c.label}</span>
@@ -916,10 +1032,13 @@ function InputRow({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 px-3 py-2",
+        // THE AI FORM: the input sits plain ON the glass — no filled pill,
+        // no inner border; the surface's own hairline separates it. Only
+        // the free-floating bar carries a surface of its own.
+        "flex items-center gap-3",
         bare
-          ? "rounded-lg bg-accent/50"
-          : "bg-popover rounded-lg border border-border shadow-2xl shadow-black/50"
+          ? ""
+          : "ambient-glass ambient-live-border relative rounded-lg border border-border px-3 py-2 shadow-2xl shadow-black/50"
       )}
     >
       {!bare && <AssistantMark size={20} />}
@@ -935,7 +1054,10 @@ function InputRow({
           if (e.key === "Enter") onSend()
         }}
         placeholder={placeholder}
-        className="placeholder:text-muted-foreground/70 min-w-0 flex-1 bg-transparent text-sm outline-none"
+        className={cn(
+          "placeholder:text-muted-foreground/70 min-w-0 flex-1 bg-transparent outline-none",
+          bare ? "text-base" : "text-sm"
+        )}
       />
       {showKbd && (
         <kbd className="text-muted-foreground rounded-[4px] bg-accent px-1.5 py-0.5 text-[11px]">
