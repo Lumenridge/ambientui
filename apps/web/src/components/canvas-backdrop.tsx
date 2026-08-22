@@ -40,13 +40,16 @@ export function CanvasBackdrop({ className }: { className?: string }) {
     Math.floor(Math.random() * BACKDROPS.length)
   )
   const backdrop = BACKDROPS[index]!
-  const [loaded, setLoaded] = React.useState(false)
+  // which backdrop finished loading — not a boolean, because "loaded" is a
+  // fact about ONE image. Comparing ids means switching backdrops reports
+  // not-loaded without an effect resetting a flag after the fact.
+  const [loadedId, setLoadedId] = React.useState<string | null>(null)
+  const loaded = loadedId === backdrop.id
   const [hovered, setHovered] = React.useState(false)
 
   React.useEffect(() => {
-    setLoaded(false)
     const img = new Image()
-    img.onload = () => setLoaded(true)
+    img.onload = () => setLoadedId(backdrop.id)
     img.src = src(backdrop)
   }, [backdrop])
 

@@ -81,7 +81,10 @@ export function AssistantOrb() {
   }
   const [asking, setAsking] = React.useState(false)
   const askingRef = React.useRef(false)
-  askingRef.current = asking
+  // read from pointer handlers subscribed once; refreshed after commit
+  React.useEffect(() => {
+    askingRef.current = asking
+  })
   const sendQuick = () => {
     const text = quickInput.trim()
     if (!text || asking) return
@@ -180,7 +183,8 @@ export function AssistantOrb() {
       applyDrag(null)
       // click → quick ask, right here; asking promotes to the panel, and
       // ⌘K remains the explicit path to the palette
-      quickRef.current?.value || quick ? closeQuick() : openQuick()
+      if (quickRef.current?.value || quick) closeQuick()
+      else openQuick()
       return
     }
     const cx = d.x

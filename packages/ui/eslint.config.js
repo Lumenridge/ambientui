@@ -19,4 +19,32 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    /**
+     * THE SHADCN PRESET, EXEMPTED — and only these files.
+     *
+     * react-refresh/only-export-components is a Fast Refresh ergonomics rule:
+     * a module that exports both a component and a value loses granular hot
+     * reload. Our own code obeys it (the icon vocabulary lives in
+     * lib/icon-library for exactly this reason).
+     *
+     * These three are installed from the shadcn radix-nova preset and are
+     * extended only through the shadcn CLI or governance (CLAUDE.md rule 4).
+     * Upstream deliberately co-locates `badgeVariants`, `buttonVariants`, and
+     * `useSidebar` with their components; splitting them would diverge from
+     * the preset and make every future `shadcn add` a merge conflict — a real
+     * cost, traded against a dev-only reload nicety.
+     *
+     * Removing a file from this list is the goal, not adding one. Nothing we
+     * author belongs here.
+     */
+    files: [
+      'src/components/badge.tsx',
+      'src/components/button.tsx',
+      'src/components/sidebar.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

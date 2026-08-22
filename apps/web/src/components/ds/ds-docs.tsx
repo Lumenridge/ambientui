@@ -63,7 +63,6 @@ import {
 import { cn } from "@workspace/ui/lib/utils"
 
 import {
-  ORB_STATES,
   OrbCharacter,
   type OrbState,
 } from "@/components/assistant/orb-character"
@@ -83,7 +82,6 @@ import {
   MessageQueue,
   MessageTime,
   QuoteReply,
-  REASONING_EFFORTS,
   ReasoningEffort,
   ReasoningPanel,
   type ReasoningEffortLevel,
@@ -108,11 +106,15 @@ import {
   MessagePair,
   ReferenceChips,
   StreamingText,
-  composeResponse,
   type KitReference,
   type KitResponse,
   type MessageVariant,
 } from "@/components/assistant/response-kit"
+import { composeResponse } from "@/components/assistant/compose-response"
+import {
+  ORB_STATES,
+  REASONING_EFFORTS,
+} from "@/components/assistant/kit-vocabulary"
 import {
   STREAM_SPEEDS,
   useFoundation,
@@ -1126,7 +1128,9 @@ function OrbPlayground() {
   const [ended, setEnded] = React.useState(false)
   const progress = useMotionValue(0)
   const stateRef = React.useRef(state)
-  stateRef.current = state
+  React.useEffect(() => {
+    stateRef.current = state
+  })
   const syncState = (p: number) => {
     const st =
       ORB_STATES[Math.min(ORB_STATES.length - 1, Math.floor(p))] ?? "still"

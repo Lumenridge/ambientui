@@ -8,7 +8,6 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { useFoundation } from "@/foundation/foundation-context"
 
-import type { ContextChip } from "./assistant-context"
 import { OrbCharacter, OrbGlyph } from "./orb-character"
 
 /**
@@ -43,31 +42,6 @@ export interface KitResponse {
   refs: KitReference[]
 }
 
-/** v0 composer: grounded in the attached context, honest about being canned. */
-export function composeResponse(
-  _question: string,
-  pageChip: ContextChip | null,
-  chips: ContextChip[]
-): KitResponse {
-  const ground = pageChip?.label ?? "this page"
-  const extras =
-    chips.length > 0
-      ? ` plus ${chips.length} attached item${chips.length > 1 ? "s" : ""}`
-      : ""
-  return {
-    text:
-      `Grounded in ${ground}${extras}. ` +
-      `This reply is the response kit composing itself end-to-end — ` +
-      `thinking, streaming, settling — so the ambient states around it ` +
-      `(the orb, the live border) are the real pipeline, not a mock. ` +
-      `Wire a model into the composer and this text becomes the answer.`,
-    refs: [
-      ...(pageChip ? [{ label: pageChip.label }] : []),
-      ...chips.map((c) => ({ label: c.label })),
-      { label: "Response kit v0" },
-    ],
-  }
-}
 
 /**
  * The source mark on a citation chip. One slot, three fillings in a fixed
@@ -75,9 +49,10 @@ export function composeResponse(
  * back to. The number is NOT part of this: it is the citation's identity in
  * the text and always shows, so the mark is recognition, never identification.
  */
+// keyed by logo at the call site, so a changed logo mounts a fresh mark
+// rather than resetting this one's state from an effect
 function RefMark({ reference }: { reference: KitReference }) {
   const [failed, setFailed] = React.useState(false)
-  React.useEffect(() => setFailed(false), [reference.logo])
 
   if (reference.logo && !failed) {
     return (
@@ -133,7 +108,7 @@ export function ReferenceChips({ refs }: { refs: KitReference[] }) {
           const inner = (
             <>
               <span className="text-muted-foreground font-mono">{i + 1}</span>
-              <RefMark reference={r} />
+              <RefMark key={r.logo ?? "none"} reference={r} />
               <span className="truncate">{r.label}</span>
             </>
           )
@@ -209,7 +184,10 @@ export function StreamingText({
   const [shown, setShown] = React.useState(() => (live ? 0 : text.length))
   const settledRef = React.useRef(!live)
   const onSettledRef = React.useRef(onSettled)
-  onSettledRef.current = onSettled
+  // the frame loop calls this without re-subscribing; refreshed after commit
+  React.useEffect(() => {
+    onSettledRef.current = onSettled
+  })
   const startRef = React.useRef<number | null>(null)
 
   useAnimationFrame((t) => {

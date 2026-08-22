@@ -610,34 +610,37 @@ const FoundationContext = React.createContext<FoundationContextValue | null>(
   null
 )
 
+/**
+ * The saved theme, read once at startup.
+ *
+ * This used to hydrate from an effect, which meant the first paint used the
+ * DEFAULTS and then re-rendered into the user's theme — a flash of the wrong
+ * accent on every load. A lazy initializer reads it before the first render
+ * instead; storage is an external store, and this is a read, not a sync.
+ */
+function readSaved(): FoundationConfig {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) return { ...DEFAULT_FOUNDATION, ...migrate(JSON.parse(raw)) }
+  } catch {
+    // ignore malformed storage
+  }
+  return DEFAULT_FOUNDATION
+}
+
 export function FoundationProvider({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [config, setConfigState] = React.useState<FoundationConfig>(
-    DEFAULT_FOUNDATION
-  )
+  const [config, setConfigState] = React.useState<FoundationConfig>(readSaved)
   // The last saved theme. Edits apply live but only persist on save();
   // reloading without saving returns to this.
-  const [saved, setSaved] = React.useState<FoundationConfig>(DEFAULT_FOUNDATION)
+  const [saved, setSaved] = React.useState<FoundationConfig>(readSaved)
   // Rail-local edits (playground props) live in their own components, so the
   // config alone cannot tell us they happened — this flag carries them.
   const [touched, setTouched] = React.useState(false)
   const [generation, setGeneration] = React.useState(0)
-
-  React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const stored = { ...DEFAULT_FOUNDATION, ...migrate(JSON.parse(raw)) }
-        setConfigState(stored)
-        setSaved(stored)
-      }
-    } catch {
-      // ignore malformed storage
-    }
-  }, [])
 
   React.useEffect(() => {
     let style = document.getElementById(

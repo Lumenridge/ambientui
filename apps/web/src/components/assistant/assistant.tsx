@@ -32,9 +32,9 @@ import {
   ResponseBlock,
   StreamingText,
   UserMessage,
-  composeResponse,
   type KitResponse,
 } from "./response-kit"
+import { composeResponse } from "./compose-response"
 import { OrbCharacter, OrbField, OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
 
@@ -151,13 +151,33 @@ export function Assistant() {
   // Page context is attached by default — the chip names what the page is about
   const [pagePinned, setPagePinned] = React.useState(true)
   // Palette keyboard selection
+  // `send` is declared below (it depends on state declared between here and
+  // there); the seed effect reaches it through this ref rather than reading a
+  // binding that does not exist yet.
+  const sendRef = React.useRef<
+    ((textOverride?: string, immediate?: boolean) => void) | null
+  >(null)
   const [selIdx, setSelIdx] = React.useState(0)
-  React.useEffect(() => {
+  // A new query or a new surface starts the selection over. Adjusted DURING
+  // render rather than from an effect, so the palette never paints one frame
+  // with the previous row highlighted.
+  const selScope = `${mode}\u0000${input}`
+  const [selScopeSeen, setSelScopeSeen] = React.useState(selScope)
+  if (selScope !== selScopeSeen) {
+    setSelScopeSeen(selScope)
     setSelIdx(0)
-  }, [input, mode])
-  const [panelPos, setPanelPos] = React.useState<{ x: number; y: number } | null>(null)
-  const [panelDrag, setPanelDrag] = React.useState<{ dx: number; dy: number } | null>(null)
-  const [hotZone, setHotZone] = React.useState<"dock" | "spotlight" | null>(null)
+  }
+  const [panelPos, setPanelPos] = React.useState<{
+    x: number
+    y: number
+  } | null>(null)
+  const [panelDrag, setPanelDrag] = React.useState<{
+    dx: number
+    dy: number
+  } | null>(null)
+  const [hotZone, setHotZone] = React.useState<"dock" | "spotlight" | null>(
+    null
+  )
 
   const startPanelDrag = (e: React.PointerEvent) => {
     if (mode !== "panel" && mode !== "dock") return
@@ -186,8 +206,14 @@ export function Assistant() {
     if (!panelDrag) return
     const move = (e: PointerEvent) => {
       setPanelPos({
-        x: Math.min(Math.max(8, e.clientX - panelDrag.dx), window.innerWidth - 200),
-        y: Math.min(Math.max(8, e.clientY - panelDrag.dy), window.innerHeight - 80),
+        x: Math.min(
+          Math.max(8, e.clientX - panelDrag.dx),
+          window.innerWidth - 200
+        ),
+        y: Math.min(
+          Math.max(8, e.clientY - panelDrag.dy),
+          window.innerHeight - 80
+        ),
       })
       const zone =
         e.clientX > window.innerWidth - 140
@@ -225,7 +251,11 @@ export function Assistant() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault()
         setMode(
-          mode === "spotlight" ? (messages.length > 0 ? "panel" : "line") : "spotlight"
+          mode === "spotlight"
+            ? messages.length > 0
+              ? "panel"
+              : "line"
+            : "spotlight"
         )
       } else if (e.key === "Escape") {
         if (mode === "spotlight" && input !== "") {
@@ -244,10 +274,16 @@ export function Assistant() {
     if (mode !== "line") {
       const seeded = consumeSeededPrompt()
       // a quick-ask arrives already asked; an explain arrives as a draft
-      if (seeded)
-        consumeAutoSend()
-          ? send(seeded, consumeImmediate())
-          : setInput(seeded)
+      if (seeded) {
+        if (consumeAutoSend()) sendRef.current?.(seeded, consumeImmediate())
+        // Draining a queue handed over by another surface is exactly what an
+        // effect is for: the seed lives outside React, consuming it is a
+        // side effect, and it cannot be derived during render without making
+        // render impure. The rule's cascading-render warning is the intended
+        // cost here — one extra commit when a surface hands over.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        else setInput(seeded)
+      }
       requestAnimationFrame(() => inputRef.current?.focus())
     }
   }, [mode, seedVersion, consumeSeededPrompt])
@@ -284,7 +320,9 @@ export function Assistant() {
   }, [input, mode, setOrbState])
 
   const send = (textOverride?: string, immediate = false) => {
-    const text = (typeof textOverride === "string" ? textOverride : input).trim()
+    const text = (
+      typeof textOverride === "string" ? textOverride : input
+    ).trim()
     if (!text) return
     setInput("")
     setMessages((m) => [...m, { id: nextId(m), role: "user", text }])
@@ -297,15 +335,21 @@ export function Assistant() {
     setOrbState("thinking")
     // `immediate`: the surface that sent this already showed the thinking
     // beat (quick ask), so composing waits only a frame
-    window.setTimeout(() => {
-      const kit = composeResponse(text, pageChip, chips)
-      setMessages((m) => [
-        ...m,
-        { id: nextId(m), role: "assistant", text: kit.text, kit },
-      ])
-      setOrbState("answer")
-    }, immediate ? 60 : 1100)
+    window.setTimeout(
+      () => {
+        const kit = composeResponse(text, pageChip, chips)
+        setMessages((m) => [
+          ...m,
+          { id: nextId(m), role: "assistant", text: kit.text, kit },
+        ])
+        setOrbState("answer")
+      },
+      immediate ? 60 : 1100
+    )
   }
+  React.useEffect(() => {
+    sendRef.current = send
+  })
 
   const settleResponse = () => {
     busyRef.current = false
@@ -321,7 +365,7 @@ export function Assistant() {
           <h3 className="text-[15px] font-semibold">
             {pageChip ? "Ask about this page" : "Ask about ambientui"}
           </h3>
-          <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
             I can see this page and its context. Try one of these:
           </p>
           <div className="mt-4 flex flex-col gap-2">
@@ -330,16 +374,20 @@ export function Assistant() {
                 key={p}
                 type="button"
                 onClick={() => send(p)}
-                className="border-border hover:bg-(--wash-strong) flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-start text-[13px]"
+                className="flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-start text-[13px] hover:bg-(--wash-strong)"
               >
                 <span className="min-w-0 flex-1">{p}</span>
-                <span className="text-muted-foreground shrink-0">
-                  <HugeiconsIcon icon={ArrowUpRight01Icon} size={14} strokeWidth={1.8} />
+                <span className="shrink-0 text-muted-foreground">
+                  <HugeiconsIcon
+                    icon={ArrowUpRight01Icon}
+                    size={14}
+                    strokeWidth={1.8}
+                  />
                 </span>
               </button>
             ))}
           </div>
-          <p className="text-muted-foreground mt-4 text-[12px]">
+          <p className="mt-4 text-[12px] text-muted-foreground">
             Tip: right-click anything on the page to explain it or add it to
             this chat's context.
           </p>
@@ -387,51 +435,55 @@ export function Assistant() {
   )
 
   const surface = (
-    <div className="ambient-glass border-(--glass-border) relative flex h-full min-h-0 flex-col border">
+    <div className="ambient-glass relative flex h-full min-h-0 flex-col border border-(--glass-border)">
       {fieldLayers}
       <div className="relative flex min-h-0 flex-1 flex-col">
-      {/* header — the drag handle IS the form switcher: drag to float, dock, or spotlight */}
-      <div
-        onPointerDown={startPanelDrag}
-        className={cn(
-          "group/header relative flex items-center gap-2 border-b border-border px-3 py-2 select-none",
-          panelDrag ? "cursor-grabbing" : "cursor-grab"
-        )}
-      >
-        <AssistantMark size={20} />
-        <span className="text-sm font-medium">ambientui</span>
-        <span className="text-muted-foreground/70 absolute left-1/2 hidden -translate-x-1/2 group-hover/header:inline-flex">
-          <HugeiconsIcon icon={DragDropHorizontalIcon} size={15} strokeWidth={1.8} />
-        </span>
-        <div className="text-muted-foreground ms-auto flex items-center gap-1">
-          <HeaderBtn label="Minimize" onClick={() => setMode("line")}>
-            <HugeiconsIcon icon={Cancel01Icon} size={15} strokeWidth={1.8} />
-          </HeaderBtn>
+        {/* header — the drag handle IS the form switcher: drag to float, dock, or spotlight */}
+        <div
+          onPointerDown={startPanelDrag}
+          className={cn(
+            "group/header relative flex items-center gap-2 border-b border-border px-3 py-2 select-none",
+            panelDrag ? "cursor-grabbing" : "cursor-grab"
+          )}
+        >
+          <AssistantMark size={20} />
+          <span className="text-sm font-medium">ambientui</span>
+          <span className="absolute left-1/2 hidden -translate-x-1/2 text-muted-foreground/70 group-hover/header:inline-flex">
+            <HugeiconsIcon
+              icon={DragDropHorizontalIcon}
+              size={15}
+              strokeWidth={1.8}
+            />
+          </span>
+          <div className="ms-auto flex items-center gap-1 text-muted-foreground">
+            <HeaderBtn label="Minimize" onClick={() => setMode("line")}>
+              <HugeiconsIcon icon={Cancel01Icon} size={15} strokeWidth={1.8} />
+            </HeaderBtn>
+          </div>
         </div>
-      </div>
 
-      {transcriptBlock}
+        {transcriptBlock}
 
-      {/* input */}
-      <div className="border-(--glass-border) border-t px-4 py-2">
-        <ContextRow
-          pageChip={pageChip}
-          pagePinned={pagePinned}
-          onTogglePage={setPagePinned}
-          chips={chips}
-          removeChip={removeChip}
-        />
-        <InputRow
-          inputRef={inputRef}
-          input={input}
-          setInput={setInput}
-          onSend={send}
-          pageChip={null}
-          chips={[]}
-          removeChip={removeChip}
-          placeholder="Ask a follow-up…"
-        />
-      </div>
+        {/* input */}
+        <div className="border-t border-(--glass-border) px-4 py-2">
+          <ContextRow
+            pageChip={pageChip}
+            pagePinned={pagePinned}
+            onTogglePage={setPagePinned}
+            chips={chips}
+            removeChip={removeChip}
+          />
+          <InputRow
+            inputRef={inputRef}
+            input={input}
+            setInput={setInput}
+            onSend={send}
+            pageChip={null}
+            chips={[]}
+            removeChip={removeChip}
+            placeholder="Ask a follow-up…"
+          />
+        </div>
       </div>
     </div>
   )
@@ -462,51 +514,53 @@ export function Assistant() {
         navIcon: s.icon,
         run: () => goNav(s.id),
       }))
-    let paletteItems: PaletteItem[] = []
-    if (!asking) {
-      if (question) {
-        paletteItems = [askItem]
-      } else if (q) {
-        const ql = q.toLowerCase()
-        paletteItems = [
-          askItem,
-          ...navItems(
-            sections.filter(
-              (s) =>
-                s.label.toLowerCase().includes(ql) ||
-                s.description.toLowerCase().includes(ql)
-            )
-          ),
-        ]
-      } else {
-        paletteItems = [
-          ...RECENT_CHATS.map((r) => ({
-            id: `recent-${r.text}`,
-            section: "Recent chats",
-            label: r.text,
-            trailing: r.when,
-            iconKind: "recent" as const,
-            run: () => send(r.text),
-          })),
-          ...SUGGESTED_PROMPTS.map((p) => ({
-            id: `prompt-${p}`,
-            section: "Suggested for this page",
-            label: p,
-            iconKind: "prompt" as const,
-            run: () => send(p),
-          })),
-          {
-            id: "open-chat",
-            section: "Suggested for this page",
-            label: "Open chat with page context",
-            desc: pageChip?.label,
-            iconKind: "avatar" as const,
-            run: () => setMode("panel"),
-          },
-          ...navItems(sections),
-        ]
-      }
-    }
+    // The matching sections, kept as DATA: every palette item carries a `run`
+    // closure, so anything derived from the item list drags those closures
+    // along. The empty-state copy below needs a count, not a list of actions.
+    const ql = q.toLowerCase()
+    const queryMatches = q
+      ? sections.filter(
+          (s) =>
+            s.label.toLowerCase().includes(ql) ||
+            s.description.toLowerCase().includes(ql)
+        )
+      : []
+    // One expression, not a binding filled across branches: reassigning
+    // mid-render reads as a mutable box, and hiding the same branches behind
+    // a call reads as passing one around. What the palette shows is a pure
+    // function of the query — so it is written as one.
+    const paletteItems: PaletteItem[] = asking
+      ? []
+      : question
+        ? [askItem]
+        : q
+          ? [askItem, ...navItems(queryMatches)]
+          : [
+              ...RECENT_CHATS.map((r) => ({
+                id: `recent-${r.text}`,
+                section: "Recent chats",
+                label: r.text,
+                trailing: r.when,
+                iconKind: "recent" as const,
+                run: () => send(r.text),
+              })),
+              ...SUGGESTED_PROMPTS.map((p) => ({
+                id: `prompt-${p}`,
+                section: "Suggested for this page",
+                label: p,
+                iconKind: "prompt" as const,
+                run: () => send(p),
+              })),
+              {
+                id: "open-chat",
+                section: "Suggested for this page",
+                label: "Open chat with page context",
+                desc: pageChip?.label,
+                iconKind: "avatar" as const,
+                run: () => setMode("panel"),
+              },
+              ...navItems(sections),
+            ]
     const onPaletteKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey)) {
         e.preventDefault()
@@ -544,131 +598,143 @@ export function Assistant() {
           transition={enterT}
           onClick={(e) => e.stopPropagation()}
         >
-            <div
-              className="ambient-glass ambient-live-border border-(--glass-border) relative flex max-h-[72vh] flex-col overflow-hidden rounded-2xl border shadow-[0_32px_100px_-16px_rgba(0,0,0,0.6),0_8px_32px_-12px_rgba(0,0,0,0.4)]"
-              data-orb-state={orbState}
-            >
-              {fieldLayers}
-              <div className="relative flex min-h-0 flex-col">
-          {/* search / ask input — hidden in answer mode (follow-up bar takes over) */}
-          {!asking && (
-            <>
-              <div className="border-(--glass-border) border-b px-4 py-2">
-                <div className={AI_FORM_ROW}>
-                <MiniAvatar />
-                <div className="relative min-w-0 flex-1">
-                  <input
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={onPaletteKeyDown}
-                    aria-label="Search or ask a question in ambientui"
-                    className="w-full bg-transparent text-base outline-none"
-                  />
-                  <ShimmerPlaceholder show={input === ""}>
-                    Search or ask a question in ambientui…
-                  </ShimmerPlaceholder>
-                </div>
-              </div>
-
-              {/* attached context lives inside the header band — one hairline */}
-              {(pageChip || chips.length > 0) && (
-                <div className="pt-2">
-                  <ContextRow
-                    pageChip={pageChip}
-                    pagePinned={pagePinned}
-                    onTogglePage={setPagePinned}
-                    chips={chips}
-                    removeChip={removeChip}
-                  />
-                </div>
-              )}
-              </div>
-            </>
-          )}
-
-          {asking ? (
-            <>
-              <div className="flex items-center gap-2 border-b border-border px-4 py-2">
-                <AssistantMark size={18} />
-                <span className="text-[13px] font-medium">AI Overview</span>
-                <div className="text-muted-foreground ms-auto flex items-center gap-1">
-                  <HeaderBtn label="Open in chat window" onClick={() => setMode("panel")}>
-                    <HugeiconsIcon
-                      icon={PictureInPictureOnIcon}
-                      size={14}
-                      strokeWidth={1.8}
-                    />
-                  </HeaderBtn>
-                  <HeaderBtn label="Back to search" onClick={clearConversation}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={14} strokeWidth={1.8} />
-                  </HeaderBtn>
-                </div>
-              </div>
-              {transcriptBlock}
-              {/* follow-up bar at the bottom, with context attached — like the panel */}
-              <div className="border-(--glass-border) border-t px-4 py-2">
-                <ContextRow
-                  pageChip={pageChip}
-                  pagePinned={pagePinned}
-                  onTogglePage={setPagePinned}
-                  chips={chips}
-                  removeChip={removeChip}
-                />
-                <InputRow
-                  inputRef={inputRef}
-                  input={input}
-                  setInput={setInput}
-                  onSend={send}
-                  pageChip={null}
-                  chips={[]}
-                  removeChip={removeChip}
-                  placeholder="Ask a follow-up…"
+          <div
+            className="ambient-glass ambient-live-border relative flex max-h-[72vh] flex-col overflow-hidden rounded-2xl border border-(--glass-border) shadow-[0_32px_100px_-16px_rgba(0,0,0,0.6),0_8px_32px_-12px_rgba(0,0,0,0.4)]"
+            data-orb-state={orbState}
+          >
+            {fieldLayers}
+            <div className="relative flex min-h-0 flex-col">
+              {/* search / ask input — hidden in answer mode (follow-up bar takes over) */}
+              {!asking && (
+                <>
+                  <div className="border-b border-(--glass-border) px-4 py-2">
+                    <div className={AI_FORM_ROW}>
+                      <MiniAvatar />
+                      <div className="relative min-w-0 flex-1">
+                        <input
+                          ref={inputRef}
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          onKeyDown={onPaletteKeyDown}
+                          aria-label="Search or ask a question in ambientui"
+                          className="w-full bg-transparent text-base outline-none"
                         />
-              </div>
-            </>
-          ) : (
-            <PaletteList
-              items={paletteItems}
-              selected={selIdx}
-              onHover={setSelIdx}
-              footer={
-                question ? (
-                  <p className="text-muted-foreground px-2 pt-2 pb-1 text-[12px]">
-                    Answers are grounded in the attached context.
-                  </p>
-                ) : q && paletteItems.length === 1 ? (
-                  <p className="text-muted-foreground px-2 py-3 text-[13px]">
-                    No pages match — ↵ asks ambientui instead.
-                  </p>
-                ) : null
-              }
-            />
-          )}
+                        <ShimmerPlaceholder show={input === ""}>
+                          Search or ask a question in ambientui…
+                        </ShimmerPlaceholder>
+                      </div>
+                    </div>
 
-          <div className="text-muted-foreground border-(--glass-border) flex items-center gap-3 border-t px-3 py-2 text-xs">
-            <span className="flex items-center gap-2">
-              <OrbGlyph
-                size={16}
-                color={
-                  config.orb.useAccent
-                    ? undefined
-                    : config.orb.colors[Math.min(1, config.orb.colors.length - 1)]
-                }
-              />
-              ambientui
-            </span>
-            <span className="ms-auto flex items-center gap-1.5">
-              Select <PaletteKey>↵</PaletteKey>
-            </span>
-            <span className="bg-(--glass-border) h-3.5 w-px" />
-            <span className="flex items-center gap-1.5">
-              Toggle <PaletteKey>⌘</PaletteKey>
-              <PaletteKey>K</PaletteKey>
-            </span>
-          </div>
+                    {/* attached context lives inside the header band — one hairline */}
+                    {(pageChip || chips.length > 0) && (
+                      <div className="pt-2">
+                        <ContextRow
+                          pageChip={pageChip}
+                          pagePinned={pagePinned}
+                          onTogglePage={setPagePinned}
+                          chips={chips}
+                          removeChip={removeChip}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {asking ? (
+                <>
+                  <div className="flex items-center gap-2 border-b border-border px-4 py-2">
+                    <AssistantMark size={18} />
+                    <span className="text-[13px] font-medium">AI Overview</span>
+                    <div className="ms-auto flex items-center gap-1 text-muted-foreground">
+                      <HeaderBtn
+                        label="Open in chat window"
+                        onClick={() => setMode("panel")}
+                      >
+                        <HugeiconsIcon
+                          icon={PictureInPictureOnIcon}
+                          size={14}
+                          strokeWidth={1.8}
+                        />
+                      </HeaderBtn>
+                      <HeaderBtn
+                        label="Back to search"
+                        onClick={clearConversation}
+                      >
+                        <HugeiconsIcon
+                          icon={Cancel01Icon}
+                          size={14}
+                          strokeWidth={1.8}
+                        />
+                      </HeaderBtn>
+                    </div>
+                  </div>
+                  {transcriptBlock}
+                  {/* follow-up bar at the bottom, with context attached — like the panel */}
+                  <div className="border-t border-(--glass-border) px-4 py-2">
+                    <ContextRow
+                      pageChip={pageChip}
+                      pagePinned={pagePinned}
+                      onTogglePage={setPagePinned}
+                      chips={chips}
+                      removeChip={removeChip}
+                    />
+                    <InputRow
+                      inputRef={inputRef}
+                      input={input}
+                      setInput={setInput}
+                      onSend={send}
+                      pageChip={null}
+                      chips={[]}
+                      removeChip={removeChip}
+                      placeholder="Ask a follow-up…"
+                    />
+                  </div>
+                </>
+              ) : (
+                <PaletteList
+                  items={paletteItems}
+                  selected={selIdx}
+                  onHover={setSelIdx}
+                  footer={
+                    question ? (
+                      <p className="px-2 pt-2 pb-1 text-[12px] text-muted-foreground">
+                        Answers are grounded in the attached context.
+                      </p>
+                    ) : q && queryMatches.length === 0 ? (
+                      <p className="px-2 py-3 text-[13px] text-muted-foreground">
+                        No pages match — ↵ asks ambientui instead.
+                      </p>
+                    ) : null
+                  }
+                />
+              )}
+
+              <div className="flex items-center gap-3 border-t border-(--glass-border) px-3 py-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <OrbGlyph
+                    size={16}
+                    color={
+                      config.orb.useAccent
+                        ? undefined
+                        : config.orb.colors[
+                            Math.min(1, config.orb.colors.length - 1)
+                          ]
+                    }
+                  />
+                  ambientui
+                </span>
+                <span className="ms-auto flex items-center gap-1.5">
+                  Select <PaletteKey>↵</PaletteKey>
+                </span>
+                <span className="h-3.5 w-px bg-(--glass-border)" />
+                <span className="flex items-center gap-1.5">
+                  Toggle <PaletteKey>⌘</PaletteKey>
+                  <PaletteKey>K</PaletteKey>
+                </span>
               </div>
             </div>
+          </div>
         </motion.div>
       </motion.div>
     )
@@ -679,7 +745,7 @@ export function Assistant() {
       <motion.div
         key="dock"
         data-orb-state={orbState}
-        className="ambient-live-border fixed top-0 bottom-0 right-0 z-50 w-[420px] max-w-[90vw] shadow-[-24px_0_70px_-16px_rgba(0,0,0,0.4)]"
+        className="ambient-live-border fixed top-0 right-0 bottom-0 z-50 w-[420px] max-w-[90vw] shadow-[-24px_0_70px_-16px_rgba(0,0,0,0.4)]"
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 40, transition: microT }}
@@ -767,7 +833,7 @@ function MiniAvatar({ small }: { small?: boolean }) {
 /** Raycast-style keycap chip — a neutral wash square on the glass. */
 function PaletteKey({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="bg-(--glass-wash) inline-flex min-w-5 items-center justify-center rounded-sm px-1 py-0.5 font-mono text-[10px]">
+    <kbd className="inline-flex min-w-5 items-center justify-center rounded-sm bg-(--glass-wash) px-1 py-0.5 font-mono text-[10px]">
       {children}
     </kbd>
   )
@@ -778,7 +844,7 @@ const rowClass =
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-muted-foreground px-2 pt-3.5 pb-1.5 text-xs font-medium first:pt-1.5">
+    <div className="px-2 pt-3.5 pb-1.5 text-xs font-medium text-muted-foreground first:pt-1.5">
       {children}
     </div>
   )
@@ -795,7 +861,11 @@ function PaletteItemIcon({ item }: { item: PaletteItem }) {
   return (
     <span className="text-muted-foreground">
       <HugeiconsIcon
-        icon={item.iconKind === "recent" ? Message01Icon : (item.navIcon ?? Message01Icon)}
+        icon={
+          item.iconKind === "recent"
+            ? Message01Icon
+            : (item.navIcon ?? Message01Icon)
+        }
         size={16}
         strokeWidth={1.8}
       />
@@ -820,13 +890,15 @@ function PaletteList({
       .getElementById(`palette-item-${selected}`)
       ?.scrollIntoView({ block: "nearest" })
   }, [selected])
-  let lastSection: string | null = null
+  // headers derived up front: a `let` reassigned inside map() is render-phase
+  // mutation, and it silently breaks if React ever renders the list twice
+  const headers = items.map((item, i) =>
+    item.section && item.section !== items[i - 1]?.section ? item.section : null
+  )
   return (
     <div className="min-h-0 flex-1 overflow-y-auto p-2">
       {items.map((item, i) => {
-        const header =
-          item.section && item.section !== lastSection ? item.section : null
-        lastSection = item.section
+        const header = headers[i]
         return (
           <React.Fragment key={item.id}>
             {header && <SectionLabel>{header}</SectionLabel>}
@@ -847,17 +919,17 @@ function PaletteList({
                 {item.label}
               </span>
               {item.desc && (
-                <span className="text-muted-foreground min-w-0 truncate text-[12px]">
+                <span className="min-w-0 truncate text-[12px] text-muted-foreground">
                   {item.desc}
                 </span>
               )}
               {item.trailing && (
-                <span className="text-muted-foreground ms-auto shrink-0 text-[11px]">
+                <span className="ms-auto shrink-0 text-[11px] text-muted-foreground">
                   {item.trailing}
                 </span>
               )}
               {i === selected && !item.trailing && (
-                <kbd className="text-muted-foreground bg-(--glass-wash) ms-auto shrink-0 rounded-sm px-1.5 py-0.5 text-[11px]">
+                <kbd className="ms-auto shrink-0 rounded-sm bg-(--glass-wash) px-1.5 py-0.5 text-[11px] text-muted-foreground">
                   ↵
                 </kbd>
               )}
@@ -874,14 +946,16 @@ function SnapZones({ hot }: { hot: "dock" | "spotlight" | null }) {
   const zone = (active: boolean) =>
     cn(
       // glass: translucent fill + backdrop blur keeps the labels readable over content
-      "fixed z-40 flex items-center justify-center rounded-lg border border-dashed text-xs font-medium pointer-events-none backdrop-blur-md",
+      "pointer-events-none fixed z-40 flex items-center justify-center rounded-lg border border-dashed text-xs font-medium backdrop-blur-md",
       active
         ? "border-[var(--app-blue)] bg-[var(--app-blue-wash)] text-[var(--app-blue)]"
         : "border-muted-foreground/40 bg-(--scrim) text-muted-foreground"
     )
   return (
     <>
-      <div className={cn(zone(hot === "dock"), "inset-y-2 right-2 w-28")}>Dock</div>
+      <div className={cn(zone(hot === "dock"), "inset-y-2 right-2 w-28")}>
+        Dock
+      </div>
       <div
         className={cn(
           zone(hot === "spotlight"),
@@ -909,7 +983,7 @@ function HeaderBtn({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="hover:bg-accent hover:text-foreground flex size-7 items-center justify-center rounded-[4px]"
+      className="flex size-7 items-center justify-center rounded-[4px] hover:bg-accent hover:text-foreground"
     >
       {children}
     </button>
@@ -966,7 +1040,7 @@ export function ContextChipView({
   return (
     <span
       className={cn(
-        "border-border bg-(--wash) inline-flex max-w-full items-center rounded-lg border font-medium",
+        "inline-flex max-w-full items-center rounded-lg border border-border bg-(--wash) font-medium",
         compact
           ? "gap-1.5 py-0.5 ps-1 pe-0.5 text-[11.5px]"
           : "gap-2 py-1 ps-1.5 pe-1 text-[12.5px]",
@@ -974,14 +1048,14 @@ export function ContextChipView({
       )}
     >
       <IconTile icon={chipKindIcon[chip.kind]} compact={compact} />
-      <span className="min-w-0 max-w-56 truncate">{chip.label}</span>
+      <span className="max-w-56 min-w-0 truncate">{chip.label}</span>
       {onRemove && (
         <button
           type="button"
           aria-label={`Remove ${chip.label}`}
           onClick={onRemove}
           className={cn(
-            "bg-accent text-muted-foreground hover:text-foreground flex shrink-0 items-center justify-center rounded-md",
+            "flex shrink-0 items-center justify-center rounded-md bg-accent text-muted-foreground hover:text-foreground",
             compact ? "size-[18px]" : "size-[22px]"
           )}
         >
@@ -1019,13 +1093,16 @@ function ContextRow({
     <div className="flex flex-wrap items-center gap-1.5 pb-2">
       {pageChip &&
         (pagePinned ? (
-          <ContextChipView chip={pageChip} onRemove={() => onTogglePage(false)} />
+          <ContextChipView
+            chip={pageChip}
+            onRemove={() => onTogglePage(false)}
+          />
         ) : (
           <button
             type="button"
             title="Attach this page as context"
             onClick={() => onTogglePage(true)}
-            className="border-border bg-popover hover:bg-(--wash-strong) inline-flex items-center gap-2 rounded-lg border py-1 ps-1.5 pe-2.5 text-[12.5px] font-medium transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-popover py-1 ps-1.5 pe-2.5 text-[12.5px] font-medium transition-colors hover:bg-(--wash-strong)"
           >
             <IconTile icon={SparklesIcon} />
             Attach context
@@ -1035,7 +1112,11 @@ function ContextRow({
           </button>
         ))}
       {chips.map((c) => (
-        <ContextChipView key={c.id} chip={c} onRemove={() => removeChip(c.id)} />
+        <ContextChipView
+          key={c.id}
+          chip={c}
+          onRemove={() => removeChip(c.id)}
+        />
       ))}
     </div>
   )
@@ -1093,7 +1174,9 @@ function InputRow({
           aria-label={placeholder}
           className="w-full bg-transparent text-base outline-none"
         />
-        <ShimmerPlaceholder show={input === ""}>{placeholder}</ShimmerPlaceholder>
+        <ShimmerPlaceholder show={input === ""}>
+          {placeholder}
+        </ShimmerPlaceholder>
       </div>
       <Button
         type="button"
@@ -1101,7 +1184,7 @@ function InputRow({
         variant="ghost"
         aria-label="Send"
         onClick={onSend}
-        className="text-muted-foreground hover:text-foreground shrink-0"
+        className="shrink-0 text-muted-foreground hover:text-foreground"
       >
         <HugeiconsIcon icon={SentIcon} size={16} strokeWidth={1.8} />
       </Button>

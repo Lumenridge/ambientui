@@ -9,6 +9,12 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { useMotionTransition } from "@/foundation/foundation-context"
 
+import {
+  FEEDBACK_REASONS,
+  REASONING_EFFORTS,
+  type ReasoningEffortLevel,
+} from "./kit-vocabulary"
+
 /**
  * THE MESSAGE KIT — the objects a conversation is made of once an answer
  * exists: what you can do to it, what it offers next, what it costs, and
@@ -355,14 +361,15 @@ export function ReasoningPanel({
 }) {
   const [open, setOpen] = React.useState(defaultOpen ?? running)
   const transition = useMotionTransition("surface")
-  // a run that starts opens the trace; finishing collapses it back
-  const wasRunning = React.useRef(running)
-  React.useEffect(() => {
-    if (running !== wasRunning.current) {
-      wasRunning.current = running
-      if (defaultOpen === undefined) setOpen(running)
-    }
-  }, [running, defaultOpen])
+  // A run that starts opens the trace; finishing collapses it back — adjusted
+  // DURING render on the transition, not from an effect, so the panel never
+  // paints in the stale state first. (react.dev: adjusting state when a prop
+  // changes.) The user's own toggle still wins until running flips again.
+  const [wasRunning, setWasRunning] = React.useState(running)
+  if (running !== wasRunning) {
+    setWasRunning(running)
+    if (defaultOpen === undefined) setOpen(running)
+  }
 
   return (
     <div className={cn("flex flex-col", className)}>
@@ -413,8 +420,6 @@ export function ReasoningPanel({
   )
 }
 
-export const REASONING_EFFORTS = ["low", "medium", "high", "max"] as const
-export type ReasoningEffortLevel = (typeof REASONING_EFFORTS)[number]
 
 /**
  * REASONING EFFORT — how hard to think, and what that budget actually cost.
@@ -656,12 +661,6 @@ export function QuoteReply({
 
 /* --------------------------- feedback dialog --------------------------- */
 
-export const FEEDBACK_REASONS = [
-  "Not factual",
-  "Didn't follow instructions",
-  "Too long",
-  "Unsafe",
-] as const
 
 /**
  * FEEDBACK DIALOG — the thumbs-down that asks why.
@@ -796,3 +795,5 @@ export function MessageTime({
     </span>
   )
 }
+
+export type { ReasoningEffortLevel }

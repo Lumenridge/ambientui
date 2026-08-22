@@ -3,6 +3,11 @@
 import * as React from "react"
 
 import {
+  IconLibraryContext,
+  type IconName,
+} from "@workspace/ui/lib/icon-library"
+
+import {
   ArrowDown01Icon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
@@ -182,39 +187,6 @@ import {
  * mapped in every library or they don't exist.
  */
 
-export type IconName =
-  | "search"
-  | "settings"
-  | "user"
-  | "heart"
-  | "check"
-  | "close"
-  | "chevron-down"
-  | "chevron-left"
-  | "chevron-right"
-  | "sidebar"
-  | "sun"
-  | "moon"
-  | "play"
-  | "pause"
-  | "replay"
-  | "sparkles"
-  | "plus"
-  | "calendar"
-  | "document"
-  | "link"
-  | "globe"
-  | "code"
-  | "copy"
-  | "thumbs-up"
-  | "thumbs-down"
-  | "more"
-  | "quote"
-  | "edit"
-  | "alert"
-  | "arrow-up"
-  | "image"
-  | "paperclip"
 
 type Renderer = (size: number, strokeWidth: number, className?: string) => React.ReactNode
 
@@ -409,47 +381,6 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
   },
 }
 
-export const ICON_NAMES: IconName[] = [
-  "search",
-  "settings",
-  "user",
-  "heart",
-  "check",
-  "close",
-  "chevron-down",
-  "chevron-left",
-  "chevron-right",
-  "sidebar",
-  "sun",
-  "moon",
-  "play",
-  "pause",
-  "replay",
-  "sparkles",
-  "plus",
-  "calendar",
-  "document",
-  "link",
-  "globe",
-  "code",
-  "copy",
-  "thumbs-up",
-  "thumbs-down",
-  "more",
-  "quote",
-  "edit",
-  "alert",
-  "arrow-up",
-  "image",
-  "paperclip",
-]
-
-/**
- * The active icon library. The app's FoundationProvider supplies the saved
- * config's choice; packages/ui primitives render through it without knowing
- * where the config lives.
- */
-export const IconLibraryContext = React.createContext<string>("hugeicons")
 
 export function IconLibraryProvider({
   library,
@@ -485,3 +416,5 @@ export function Icon({
   const set = SETS[library ?? configured] ?? SETS.hugeicons!
   return <>{set[name](size, strokeWidth, className)}</>
 }
+
+export type { IconName }

@@ -6,8 +6,9 @@
  */
 export {
   Icon,
-  ICON_NAMES,
   IconLibraryProvider,
   type IconName,
   type IconProps,
 } from "@workspace/ui/components/icon"
+// the name vocabulary is data, not a component — see lib/icon-library
+export { ICON_NAMES } from "@workspace/ui/lib/icon-library"

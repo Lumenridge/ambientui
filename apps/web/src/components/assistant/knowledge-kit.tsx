@@ -31,9 +31,10 @@ export interface SearchSource {
   logo?: string
 }
 
+// keyed by logo at the call site — see RefMark; a different logo is a
+// different mark, not the same one in a new state
 function SourceMark({ source }: { source: SearchSource }) {
   const [failed, setFailed] = React.useState(false)
-  React.useEffect(() => setFailed(false), [source.logo])
   if (source.logo && !failed) {
     return (
       <img
@@ -92,7 +93,7 @@ export function WebSearch({
             {sources.map((s, i) => {
               const inner = (
                 <>
-                  <SourceMark source={s} />
+                  <SourceMark key={s.logo ?? "none"} source={s} />
                   <span className="min-w-0 flex-1 truncate text-[13px]">
                     {s.title}
                   </span>

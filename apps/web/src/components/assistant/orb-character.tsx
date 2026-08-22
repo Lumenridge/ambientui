@@ -1,4 +1,8 @@
 import * as React from "react"
+import {
+  DEFAULT_STATE_SPEEDS,
+  type OrbState,
+} from "./kit-vocabulary"
 
 import { Heatmap } from "@paper-design/shaders-react"
 import { animate, useAnimationFrame, useMotionValue } from "framer-motion"
@@ -30,22 +34,8 @@ import { cn } from "@workspace/ui/lib/utils"
  * custom colors used as the heat ramp (cold → hot).
  */
 
-export type OrbState = "still" | "listening" | "thinking" | "answer"
 
-export const ORB_STATES: OrbState[] = [
-  "still",
-  "listening",
-  "thinking",
-  "answer",
-]
 
-/** The designed cadence of each state — overridable via the speeds prop. */
-export const DEFAULT_STATE_SPEEDS: Record<OrbState, number> = {
-  still: 1,
-  listening: 0.8,
-  thinking: 2.8,
-  answer: 0.5,
-}
 
 /** Per-state movement targets for the heat itself. */
 const STATE_PARAMS: Record<
@@ -211,7 +201,11 @@ function useHeatEngine({
     angle: useMotionValue(STATE_PARAMS.still.angle),
   }
   const mvRef = React.useRef(mv)
-  mvRef.current = mv
+  // the frame loop reads the latest values, so the ref is refreshed after
+  // commit rather than during render (React may render without committing)
+  React.useEffect(() => {
+    mvRef.current = mv
+  })
 
   // per-state cadence config scales the heat's flow speed
   const speedFactor =
@@ -260,7 +254,9 @@ function useHeatEngine({
   const frameCount = React.useRef(0)
   const paletteKey = React.useRef("")
   const colorsRef = React.useRef(colors)
-  colorsRef.current = colors
+  React.useEffect(() => {
+    colorsRef.current = colors
+  })
   // Each shader param feeds React state, so an un-quantized read re-renders
   // this instance 60× a second — forever, since springs never land on an
   // exact value. Rounding lets the equality check succeed once a transition
@@ -496,3 +492,5 @@ export function OrbField({
     </div>
   )
 }
+
+export type { OrbState }
