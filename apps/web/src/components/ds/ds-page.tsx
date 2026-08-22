@@ -5,13 +5,19 @@ import { Separator } from "@workspace/ui/components/separator"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useAssistant } from "@/components/assistant/assistant-context"
+import { useFoundation } from "@/foundation/foundation-context"
 import {
   AMBIENT_COMPONENTS,
   ControlsHostContext,
   SHADCN_DEFAULT_COMPONENTS,
 } from "@/components/ds/ds-docs"
 import { ColorsPage } from "@/components/ds/colors-page"
+import { toast } from "sonner"
+
+import { SaveReminder } from "@/components/ds/settings-kit"
 import { MotionPage } from "@/components/ds/motion-page"
+import { FormFactorsPage } from "@/components/ds/form-factors-page"
+import { TranslucencyPage } from "@/components/ds/translucency-page"
 import { ShadowsPage } from "@/components/ds/shadows-page"
 import { SpacingPage } from "@/components/ds/spacing-page"
 import { FoundationPage } from "@/foundation/foundation-page"
@@ -42,12 +48,18 @@ function DocList({ title, items }: { title: string; items: string[] }) {
 export function DsPage() {
   const [selectedId, setSelectedId] = React.useState<string>("foundation")
   const { setPageChip } = useAssistant()
+  // Any control in the Inspect rail that writes to the Foundation config
+  // raises the same reminder as the Foundation page — one save affordance
+  // for the whole system, wherever the change was made.
+  const { dirty, configDirty, generation, save, discard } = useFoundation()
   const entry =
     selectedId === "foundation" ||
     selectedId === "spacing" ||
     selectedId === "colors" ||
     selectedId === "shadows" ||
-    selectedId === "motion"
+    selectedId === "motion" ||
+    selectedId === "translucency" ||
+    selectedId === "form-factors"
       ? null
       : [...AMBIENT_COMPONENTS, ...SHADCN_DEFAULT_COMPONENTS].find(
           (c) => c.id === selectedId
@@ -68,7 +80,11 @@ export function DsPage() {
           ? "Shadows"
           : selectedId === "motion"
             ? "Motion"
-            : "Foundation"
+            : selectedId === "translucency"
+              ? "Translucency"
+              : selectedId === "form-factors"
+                ? "Form factors"
+                : "Foundation"
   React.useEffect(() => {
     setPageChip({
       id: `ds-${selectedId}`,
@@ -152,25 +168,57 @@ export function DsPage() {
           >
             Motion
           </button>
+          <button
+            type="button"
+            onClick={() => setSelectedId("translucency")}
+            className={cn(
+              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
+              selectedId === "translucency"
+                ? "bg-accent text-foreground font-medium"
+                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
+            )}
+          >
+            Translucency
+          </button>
         </nav>
         <div className="px-2 pt-5 pb-1.5 text-xs font-medium">
           Ambient vocabulary
         </div>
         <nav className="flex flex-col gap-0.5">
-          {AMBIENT_COMPONENTS.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setSelectedId(c.id)}
-              className={cn(
-                "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-                c.id === selectedId
-                  ? "bg-accent text-foreground font-medium"
-                  : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
+          <button
+            type="button"
+            onClick={() => setSelectedId("form-factors")}
+            className={cn(
+              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
+              selectedId === "form-factors"
+                ? "bg-accent text-foreground font-medium"
+                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
+            )}
+          >
+            Form factors
+          </button>
+          {AMBIENT_COMPONENTS.map((c, i) => (
+            <React.Fragment key={c.id}>
+              {/* the vocabulary outgrew a flat list: entries declare a group
+                  and the rail prints each heading once, in registry order */}
+              {c.group && c.group !== AMBIENT_COMPONENTS[i - 1]?.group && (
+                <div className="text-muted-foreground mt-3 mb-1 px-2.5 text-xs font-medium tracking-wide uppercase">
+                  {c.group}
+                </div>
               )}
-            >
-              {c.name}
-            </button>
+              <button
+                type="button"
+                onClick={() => setSelectedId(c.id)}
+                className={cn(
+                  "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
+                  c.id === selectedId
+                    ? "bg-accent text-foreground font-medium"
+                    : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
+                )}
+              >
+                {c.name}
+              </button>
+            </React.Fragment>
           ))}
         </nav>
         <div className="px-2 pt-5 pb-1.5 text-xs font-medium">
@@ -207,6 +255,10 @@ export function DsPage() {
             <ShadowsPage />
           ) : selectedId === "motion" ? (
             <MotionPage />
+          ) : selectedId === "translucency" ? (
+            <TranslucencyPage />
+          ) : selectedId === "form-factors" ? (
+            <FormFactorsPage />
           ) : (
             <FoundationPage />
           )
@@ -231,7 +283,9 @@ export function DsPage() {
                   Playground
                 </div>
                 <ControlsHostContext.Provider value={controlsHost}>
-                  <PlaygroundComponent key={entry.id} />
+                  {/* generation remounts rail state on Discard, so throwing
+                      away edits is honest for playground props too */}
+                  <PlaygroundComponent key={`${entry.id}:${generation}`} />
                 </ControlsHostContext.Provider>
               </section>
             )}
@@ -291,6 +345,20 @@ export function DsPage() {
           )}
         </aside>
       )}
+
+      <SaveReminder
+        open={dirty}
+        onSave={() => {
+          save()
+          toast(configDirty ? "Theme saved" : "Configuration saved", {
+            description: configDirty
+              ? "Every surface now builds from this configuration."
+              : "The Inspect rail's settings are committed.",
+          })
+        }}
+        onDiscard={discard}
+        saveLabel="Save Theme"
+      />
     </div>
   )
 }

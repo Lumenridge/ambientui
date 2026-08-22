@@ -3,7 +3,7 @@ import * as React from "react"
 
 import type { OrbState } from "./orb-character"
 
-export type AssistantMode = "line" | "bar" | "panel" | "dock" | "spotlight"
+export type AssistantMode = "line" | "panel" | "dock" | "spotlight"
 
 export type OrbAnchor = "tl" | "tc" | "tr" | "ml" | "mr" | "bl" | "bc" | "br"
 
@@ -27,6 +27,15 @@ type AssistantState = {
   explain: (c: ContextChip) => void
   seedVersion: number
   consumeSeededPrompt: () => string | null
+  /**
+   * Hand a prompt to the next surface. autoSend asks it on arrival;
+   * immediate skips the thinking beat, for a surface that already showed it.
+   */
+  seedPrompt: (text: string, autoSend?: boolean, immediate?: boolean) => void
+  /** True once, if the pending seed should be sent rather than typed. */
+  consumeAutoSend: () => boolean
+  /** True once, if the pending seed should compose without the thinking beat. */
+  consumeImmediate: () => boolean
   orbAnchor: OrbAnchor
   setOrbAnchor: (a: OrbAnchor) => void
   /** The orb character's state — driven by the response pipeline. */
@@ -77,6 +86,28 @@ export function AssistantProvider({
     return p
   }, [])
 
+  const autoSendRef = React.useRef(false)
+  const immediateRef = React.useRef(false)
+  const seedPrompt = React.useCallback(
+    (text: string, autoSend = false, immediate = false) => {
+      seededRef.current = text
+      autoSendRef.current = autoSend
+      immediateRef.current = immediate
+      setSeedVersion((v) => v + 1)
+    },
+    []
+  )
+  const consumeAutoSend = React.useCallback(() => {
+    const a = autoSendRef.current
+    autoSendRef.current = false
+    return a
+  }, [])
+  const consumeImmediate = React.useCallback(() => {
+    const i = immediateRef.current
+    immediateRef.current = false
+    return i
+  }, [])
+
   const value = React.useMemo(
     () => ({
       mode,
@@ -88,6 +119,9 @@ export function AssistantProvider({
       removeChip,
       explain,
       seedVersion,
+      seedPrompt,
+      consumeAutoSend,
+      consumeImmediate,
       consumeSeededPrompt,
       orbAnchor,
       setOrbAnchor,

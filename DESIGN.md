@@ -234,9 +234,22 @@ Checkbox, DropdownMenu, Input, Separator, Sheet, Sidebar, Skeleton, Table,
 Tooltip. Installed from the shadcn radix-nova preset; extended only through the
 shadcn CLI or governance.
 
-**Ambient vocabulary** (`apps/web/src/components/assistant`): the assistant —
-orb (line), bar, panel, dock, spotlight — and the **OrbCharacter**, the
-assistant's animated identity (documented at `/ds` → Ambient vocabulary).
+**Ambient vocabulary** (`apps/web/src/components/assistant`): the assistant's
+four surfaces — orb (line), panel, dock, spotlight — plus the objects a
+conversation is made of, in four groups at `/ds` → Ambient vocabulary:
+
+- *Core*: **OrbCharacter** (the animated identity), **StreamingText**,
+  **MessagePair**, **MessageBranches**, **ReferenceChips**,
+  **ShimmerPlaceholder**, **ContextChip**, **CommandPalette**.
+- *Messages* (`message-kit.tsx`): **MessageActions**, **FollowUpSuggestions**,
+  **ErrorState**, **MessageQueue**, **ReasoningPanel**, **ReasoningEffort**,
+  **MessageAttachments**, **QuoteReply**, **FeedbackDialog**, **DayDivider** ·
+  **MessageTime**.
+- *Tool use* (`tool-kit.tsx`): **ToolCall**, **ToolTimeline**,
+  **TerminalBlock**, **CodeDiff**, **ReviewableDiff**, **ParallelTools**,
+  **ToolFailure**, **CodeRunner**.
+- *Knowledge* (`knowledge-kit.tsx`): **WebSearch**, **InlineCitation**,
+  **ResearchReport**.
 See §8 for its contract.
 
 **Known gaps** (the registry documents these so the AI cannot compose what does
@@ -262,8 +275,9 @@ render in the `/ds` Inspect rail.
 
 ## 8. The Ambient Layer contract — the five things that must not drift
 
-1. **One surface, five modes**: `line` (orb) · `bar` · `panel` · `dock` ·
-   `spotlight`. New modes are governance events.
+1. **One surface, four modes**: `line` (orb, which expands in place into
+   quick ask) · `panel` · `dock` · `spotlight`. New modes are governance
+   events; extend an existing form before adding one.
 2. **Drag is the mode switcher.** Panel header drags; right-edge hot zone docks;
    top-center hot zone opens spotlight; the dock tears off into a panel in one
    gesture. ⌘K toggles spotlight; Esc clears, then closes.
@@ -442,6 +456,16 @@ rules, or states. ambientui does not have it yet; building it is logged debt.
 | 2026-08-22 | **The response kit, v0** (user-commissioned — "let's start building the response kit"): `response-kit.tsx` fills the `send()` seam with composed answer OBJECTS — `ResponseBlock` (OrbGlyph author mark + frame-clock streamed text + settle callback) and `ReferenceChips` (numbered, on `--glass-wash`); `composeResponse` is a canned, context-grounded composer a model will replace. The full ambient pipeline is real: typing a question turns the state to LISTENING (the "Ask ambientui" activation), send → THINKING, streaming → ANSWER, completion → STILL — orb and live borders ride it. Live-border fixes: the ring mask moved to the border-box/padding-box exclude technique (the old one leaked the conic across the panel), zero-alpha stops pinned to the accent hue, still-state presence raised to 0.55. Streaming runs on the frame clock, not setInterval (timers throttle in hidden tabs) | The kit's contract: a model replaces the composer, never the objects or the states |
 
 | 2026-08-22 | **The heat field behind the glass** (`OrbField`): the orb's shader — same engine, same states, extracted into a shared `useHeatEngine` hook — now renders as the BACKGROUND of AI surfaces, behind a dedicated frost layer (`.ambient-field-frost` on the new `--glass-veil` token) so the heat glows through the translucency. Wrapped around a rounded-rect shape (`/orb-rect.svg`); one field per open surface, mounted 400ms after the entrance (the shader compile can never jank the spring) and faded in on the surface role. §5's sanctioned shader surfaces widened to include it | User's idea: "bring the shader as background with all the states behind the translucency." The identity isn't a mascot in the corner — the surface itself is made of it |
+
+| 2026-08-22 | **Quick ask — the orb's expanded form** (user-commissioned): clicking the orb grows an input out of the character, sharing its glass and opening toward screen center; the character turns to *listening* as it opens; clicking the orb again, clicking outside, or Esc closes it; the thinking beat is held IN the pill and the panel takes over when the answer is ready (`seedPrompt(text, autoSend, immediate)`), and asking seeds the panel with `seedPrompt(text, autoSend)` so the panel arrives already answering. Implemented as the orb's own state, NOT a sixth mode — the machine still has five. Documented at /ds → Form factors | The growth rule this sets: extend an existing form before adding one; add a mode only when the new surface would have its own lifecycle |
+
+| 2026-08-22 | **The bar mode was removed** (user-commissioned), taking the contract from five modes to four: `line` · `panel` · `dock` · `spotlight`. Quick ask supersedes it — a bottom-edge input that carried its own glass was the same job (one question, no surface) done further from the user's hand and with a second set of chrome. Its removal also retired the `bare` and `showKbd` props on the form row: `bare` existed only to distinguish the bar's self-glass from in-surface rows, so with the bar gone every AI form is in-surface and the row has one shape | The growth rule cuts both ways: a form that duplicates another's job at a worse distance is removed, not kept for symmetry |
+| 2026-08-22 | **MessageBranches** (user-commissioned): regenerated answers join their predecessor rather than replacing it, and a quiet pager under the answer keeps every version reachable. The newest branch becomes the one you are looking at; stepping back shows settled text, because history is written, not replayed. Arrows disable at the ends instead of wrapping. Composed entirely from existing primitives — ghost icon `Button`s, `<Icon>`, `ResponseBlock` — and the `chevron-left` name was added across all five icon libraries to serve it | Regeneration that overwrites is a silent destructive act: the user may have preferred the answer the model just discarded. The pager is navigation, not content, so it is the quietest object in the transcript |
+| 2026-08-22 | **Any Inspect-rail change raises the save reminder** (user-commissioned, stated as a rule): `dirty` is now "the config differs from the saved theme OR a rail control was touched". Enforced in the rail's primitives — `ControlRow` and `ChoiceControl` call `touch()` — never in the playgrounds; `ControlRow action` exempts one-shot action rows only. Discard bumps a `generation` that remounts rail state, so it reverts playground props as well as config | A rule that each new playground has to remember is a habit, not a rule. Enforcing it in the primitive means the next component written cannot silently drop a user's edit |
+| 2026-08-22 | **One context chip, not one per surface**: the palette's bordered icon-tile chip and the composer's small blue pill were two implementations of the same object. Unified into `ContextChipView` with two sizes (`default`, `compact`); the pill is deleted, and the `/ds` story now renders the real component | The registry documented the pill while the product showed the chip — documentation that shows an approximation of a component is worse than none, because it teaches the AI layer a shape that does not exist |
+| 2026-08-22 | **Reference chips carry a source mark** (user-commissioned, for citations): one anatomy — number · mark · label — with the mark slot filled in a fixed precedence (the source's own `logo`, else a typed `icon`, else nothing), and an optional `href` that makes the chip a link. A logo that fails to load falls back to a monogram. Four icon names (`document`, `link`, `globe`, `code`) were mapped across all five libraries to serve typed sources | A slot with a precedence keeps one object; a set of variants would have produced three chips that look like three kinds of claim. The logo is DATA the caller supplies — a design system that fetched favicons would be inventing provenance, and a mark makes a reference look authoritative, so it must never be added to a source the answer did not use |
+| 2026-08-22 | **The status pair**: the system had `--destructive` alone, which forced every positive signal (a passing test, an added diff line) to invent a green. Added `--positive` (Tailwind emerald 600/500, the palette of record) plus `--positive-wash` / `--destructive-wash` translucency tokens | A single-sided status vocabulary guarantees drift: the moment a component needs "good", it hardcodes one. Status is now a pair, and every pass/fail surface — diffs, tool marks, terminal exits, report sections — reads from it |
+| 2026-08-22 | **The conversation vocabulary tripled** (user-commissioned, from the assistant-ui element list): 21 components in three kits — `message-kit` (actions, follow-ups, error state, queue, reasoning panel + effort, attachments, quote reply, feedback, timestamps), `tool-kit` (tool call, timeline, terminal, code diff, reviewable diff, parallel tools, tool failure, code runner), `knowledge-kit` (web search, inline citation, research report). All composed from existing primitives — Button, Input, Icon, tokens, motion roles — with no new dependency and no bespoke color. Ten icon names added across all five libraries. The `/ds` ambient rail now groups entries (`ComponentEntry.group`) because a flat list of 29 stopped being navigable | Two rules did the design work. **A tool call is a claim, and a claim must be auditable** — the collapsed row is the claim, the disclosure is the evidence, and failures open by default because a failure you have to find is a failure you miss. **Provenance is shown, never implied** — the search query is visible because it is where an answer first goes wrong, and a citation binds a source to the SENTENCE it supports rather than to the reply |
 
 ## 13. Pattern watchlist
 

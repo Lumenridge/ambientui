@@ -67,14 +67,56 @@ import {
   OrbCharacter,
   type OrbState,
 } from "@/components/assistant/orb-character"
+import {
+  ContextChipView,
+  ShimmerPlaceholder,
+} from "@/components/assistant/assistant"
 import { useAssistant } from "@/components/assistant/assistant-context"
 import {
+  DayDivider,
+  ErrorState,
+  FeedbackDialog,
+  FollowUpSuggestions,
+  MessageActions,
+  type MessageRating,
+  MessageAttachments,
+  MessageQueue,
+  MessageTime,
+  QuoteReply,
+  REASONING_EFFORTS,
+  ReasoningEffort,
+  ReasoningPanel,
+  type ReasoningEffortLevel,
+} from "@/components/assistant/message-kit"
+import {
+  CodeDiff,
+  CodeRunner,
+  ParallelTools,
+  ReviewableDiff,
+  TerminalBlock,
+  ToolCall,
+  ToolFailure,
+  ToolTimeline,
+} from "@/components/assistant/tool-kit"
+import {
+  InlineCitation,
+  ResearchReport,
+  WebSearch,
+} from "@/components/assistant/knowledge-kit"
+import {
+  MessageBranches,
+  MessagePair,
   ReferenceChips,
-  ResponseBlock,
+  StreamingText,
   composeResponse,
+  type KitReference,
   type KitResponse,
+  type MessageVariant,
 } from "@/components/assistant/response-kit"
-import { useFoundation } from "@/foundation/foundation-context"
+import {
+  STREAM_SPEEDS,
+  useFoundation,
+} from "@/foundation/foundation-context"
 
 /**
  * The design-system registry: every component installed from the shadcn
@@ -89,6 +131,8 @@ export type Story = { label: string; render: React.ReactNode }
 export type ComponentEntry = {
   id: string
   name: string
+  /** Section heading in the /ds rail; entries without one lead the list. */
+  group?: string
   description: string
   behavior: string[]
   whenToUse: string[]
@@ -100,15 +144,45 @@ export type ComponentEntry = {
 
 /* ---------------------------------- controls helpers ---------------------------------- */
 
+/**
+ * ⛔ THE RAIL RULE — every control row raises the save reminder.
+ *
+ * Anything the user changes in the Inspect rail is an unsaved edit until
+ * they save it. That is enforced HERE, in the row primitive, rather than in
+ * each playground: a rule that depends on the next playground remembering to
+ * call touch() is not a rule, it is a habit.
+ *
+ * `action` opts a row out — and only rows that fire a one-shot action and
+ * change no value may use it (Replay, Add a version). Reaching for it on a
+ * row that sets something is the drift this rule exists to stop.
+ */
 export function ControlRow({
   name,
+  action,
   children,
 }: {
   name: string
+  /** This row triggers a one-shot action rather than setting a value. */
+  action?: boolean
   children: React.ReactNode
 }) {
+  const { touch } = useFoundation()
+  const mark = React.useCallback(
+    (e: React.SyntheticEvent) => {
+      if (action) return
+      // A menu TRIGGER only opens a menu — the choice itself is a change, and
+      // ChoiceControl marks it (its items render in a portal, out of reach of
+      // this handler).
+      if ((e.target as HTMLElement).closest?.("[aria-haspopup]")) return
+      touch()
+    },
+    [action, touch]
+  )
   return (
-    <div className="border-border flex min-h-11 items-center justify-between gap-4 border-b px-3 py-2 last:border-b-0">
+    <div
+      onClickCapture={mark}
+      onChangeCapture={mark}
+      className="border-border flex min-h-11 items-center justify-between gap-4 border-b px-3 py-2 last:border-b-0">
       <span className="text-muted-foreground font-mono text-xs">{name}</span>
       <div className="flex flex-wrap items-center justify-end gap-1.5">
         {children}
@@ -126,6 +200,8 @@ export function ChoiceControl<T extends string>({
   value: T
   onChange: (v: T) => void
 }) {
+  // the rail rule, for the one control whose items escape ControlRow's reach
+  const { touch } = useFoundation()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -139,7 +215,10 @@ export function ChoiceControl<T extends string>({
           <DropdownMenuCheckboxItem
             key={option}
             checked={option === value}
-            onCheckedChange={() => onChange(option)}
+            onCheckedChange={() => {
+              touch()
+              onChange(option)
+            }}
           >
             {option}
           </DropdownMenuCheckboxItem>
@@ -914,16 +993,36 @@ const ORB_SPEED_OPTIONS = ["0.5", "0.8", "1", "1.6", "2.8", "4"] as const
 function OrbStatesStory() {
   const { config } = useFoundation()
   const orb = config.orb
+  // Four shaders side by side is four WebGL contexts and four render loops
+  // running for as long as the page is open. They only need to run while
+  // they're actually on screen.
+  const ref = React.useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = React.useState(false)
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => setVisible(!!entry?.isIntersecting),
+      { rootMargin: "120px" }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   return (
-    <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+    <div ref={ref} className="grid grid-cols-2 gap-6 sm:grid-cols-4">
       {ORB_STATES.map((s) => (
         <div key={s} className="flex flex-col items-center gap-2">
-          <OrbCharacter
-            state={s}
-            size={72}
-            colors={orb.useAccent ? undefined : orb.colors}
-            speeds={orb.speeds}
-          />
+          {visible ? (
+            <OrbCharacter
+              state={s}
+              size={72}
+              colors={orb.useAccent ? undefined : orb.colors}
+              speeds={orb.speeds}
+            />
+          ) : (
+            <div className="size-[72px] rounded-full" />
+          )}
           <span className="text-muted-foreground font-mono text-xs">
             {s}
           </span>
@@ -1016,11 +1115,10 @@ function OrbLifecycleBar({
 }
 
 function OrbPlayground() {
-  const { config, setConfig, dirty, save } = useFoundation()
+  const { config, setConfig } = useFoundation()
   const orb = config.orb
   const [state, setState] = React.useState<OrbState>("still")
   const [size, setSize] = React.useState<(typeof ORB_SIZES)[number]>("96")
-  const [justSaved, setJustSaved] = React.useState(false)
 
   // Lifecycle playback: progress runs 0..4 across the four states; the
   // integer part is the active state, so a run walks every transition.
@@ -1104,7 +1202,7 @@ function OrbPlayground() {
             <ChoiceControl options={ORB_SIZES} value={size} onChange={setSize} />
           </ControlRow>
           {state === "answer" && (
-            <ControlRow name="replay">
+            <ControlRow name="replay" action>
               <Button
                 size="xs"
                 variant="outline"
@@ -1183,22 +1281,9 @@ function OrbPlayground() {
               )}
             </>
           )}
-          <ControlRow name="save">
-            <Button
-              size="xs"
-              disabled={!dirty && !justSaved}
-              onClick={() => {
-                save()
-                setJustSaved(true)
-                setTimeout(() => setJustSaved(false), 1600)
-              }}
-            >
-              {justSaved ? "Saved" : dirty ? "Save config" : "Saved"}
-            </Button>
-          </ControlRow>
           <p className="text-muted-foreground px-3 py-2 text-xs">
-            Saves the whole theme config — same commit as Save Theme on the
-            Foundation page.
+            These controls write to the saved theme — the save reminder
+            appears whenever there is something to keep.
           </p>
         </>
       }
@@ -1206,16 +1291,502 @@ function OrbPlayground() {
   )
 }
 
-function ResponsePlayground() {
+function StreamingTextPlayground() {
+  const [runId, setRunId] = React.useState(0)
+  // the pace is saved with the theme — the assistant writes at this speed
+  // everywhere, not only in this preview
+  const { config, setConfig } = useFoundation()
+  const speed = config.components.streamCharsPerSecond
+  const setSpeed = (v: string) =>
+    setConfig({
+      components: { ...config.components, streamCharsPerSecond: Number(v) },
+    })
+  const [live, setLive] = React.useState(true)
+  const text =
+    "Here is what changed in the latest release: the composer restores drafts per thread, tool calls collapse to a single line, and every answer carries its sources."
+
+  return (
+    <Playground
+      preview={
+        <p className="w-full max-w-lg text-sm leading-relaxed">
+          {/* no charsPerSecond prop: the component reads the saved pace, which
+              is what proves the config actually reaches it */}
+          <StreamingText key={`${runId}-${speed}-${live}`} text={text} live={live} />
+        </p>
+      }
+      controls={
+        <>
+          <ControlRow name="charsPerSecond">
+            <ChoiceControl
+              options={STREAM_SPEEDS.map(String)}
+              value={String(speed)}
+              onChange={setSpeed}
+            />
+          </ControlRow>
+          <ControlRow name="live">
+            <Checkbox checked={live} onCheckedChange={(v) => setLive(v === true)} />
+          </ControlRow>
+          <ControlRow name="replay" action>
+            <Button size="xs" variant="outline" onClick={() => setRunId((n) => n + 1)}>
+              Replay
+            </Button>
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            charsPerSecond writes to the saved theme — the assistant writes at
+            this pace everywhere. live and replay only drive this preview.
+          </p>
+        </>
+      }
+    />
+  )
+}
+
+const REF_MARKS = ["none", "icon", "logo", "mixed"] as const
+
+function ReferenceChipsPlayground() {
+  const [mark, setMark] = React.useState<(typeof REF_MARKS)[number]>("mixed")
+  const [linked, setLinked] = React.useState(true)
+
+  // a real favicon, so the fallback path is exercised honestly rather than
+  // demonstrated with an image we know resolves
+  const logo = "https://www.google.com/s2/favicons?domain=tailwindcss.com&sz=64"
+  const href = linked ? "https://tailwindcss.com/docs/theme" : undefined
+
+  const refs: KitReference[] =
+    mark === "none"
+      ? [
+          { label: "Design system · Foundation" },
+          { label: "Motion" },
+          { label: "Response kit v0" },
+        ]
+      : mark === "icon"
+        ? [
+            { label: "DESIGN.md · §5 Motion", icon: "document" },
+            { label: "foundation-context.tsx", icon: "code" },
+            { label: "tailwindcss.com/docs/theme", icon: "globe", href },
+          ]
+        : mark === "logo"
+          ? [
+              { label: "Tailwind CSS · Theme", logo, href },
+              { label: "A source whose logo 404s", logo: "/nope.png" },
+            ]
+          : [
+              { label: "Tailwind CSS · Theme", logo, href },
+              { label: "DESIGN.md · §5 Motion", icon: "document" },
+              { label: "Response kit v0" },
+            ]
+
+  return (
+    <Playground
+      preview={
+        <div className="w-full max-w-lg">
+          <ReferenceChips refs={refs} />
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="mark">
+            <ChoiceControl options={REF_MARKS} value={mark} onChange={setMark} />
+          </ControlRow>
+          <ControlRow name="href">
+            <Checkbox
+              checked={linked}
+              onCheckedChange={(v) => setLinked(v === true)}
+            />
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            The second chip under “logo” points at a missing image — the
+            monogram you see is the fallback, not a third variant.
+          </p>
+        </>
+      }
+    />
+  )
+}
+
+function MessageActionsPlayground() {
+  const [rating, setRating] = React.useState<MessageRating>(null)
+  const [log, setLog] = React.useState("—")
+  return (
+    <Playground
+      preview={
+        <div className="flex flex-col items-center gap-3">
+          <MessageActions
+            text="The composer restores drafts per thread."
+            rating={rating}
+            onRate={setRating}
+            onRegenerate={() => setLog("regenerate")}
+            onMore={() => setLog("more")}
+          />
+          <span className="text-muted-foreground font-mono text-xs">
+            rating: {rating ?? "none"} · last: {log}
+          </span>
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="rating" action>
+            <Button size="xs" variant="outline" onClick={() => setRating(null)}>
+              Clear
+            </Button>
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            Copy confirms itself for a beat rather than raising a toast — the
+            user is already looking at the thing they copied.
+          </p>
+        </>
+      }
+    />
+  )
+}
+
+const SUGGESTIONS = [
+  "Add optimistic updates",
+  "Show me the diff",
+  "Why not React context?",
+  "Write a regression test",
+]
+
+function FollowUpSuggestionsPlayground() {
+  const [layout, setLayout] = React.useState<"pills" | "list">("pills")
+  const [runId, setRunId] = React.useState(0)
+  const [picked, setPicked] = React.useState<string | null>(null)
+  return (
+    <Playground
+      preview={
+        <div className="w-full max-w-md">
+          <FollowUpSuggestions
+            key={`${layout}-${runId}`}
+            suggestions={SUGGESTIONS}
+            layout={layout}
+            onPick={setPicked}
+          />
+          <p className="text-muted-foreground mt-3 text-center font-mono text-xs">
+            {picked ?? "pick one"}
+          </p>
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="layout">
+            <ChoiceControl
+              options={["pills", "list"] as const}
+              value={layout}
+              onChange={setLayout}
+            />
+          </ControlRow>
+          <ControlRow name="replay" action>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setRunId((n) => n + 1)}
+            >
+              Replay
+            </Button>
+          </ControlRow>
+        </>
+      }
+    />
+  )
+}
+
+const TRACE = [
+  {
+    title: "Reading the request",
+    detail:
+      "The user wants drafts restored per thread, so the composer state has to move out of component state.",
+  },
+  {
+    title: "Locating the seam",
+    detail:
+      "Draft state already flows through the runtime; persisting it per thread id avoids a parallel store.",
+  },
+  {
+    title: "Settling on an approach",
+    detail:
+      "Keep a map keyed by thread id, hydrate on switch, and clear the entry once a message is sent.",
+  },
+]
+
+function ReasoningPanelPlayground() {
+  const [running, setRunning] = React.useState(false)
+  return (
+    <Playground
+      preview={
+        <div className="w-full max-w-md">
+          <ReasoningPanel
+            steps={TRACE}
+            seconds={5}
+            running={running}
+            defaultOpen={undefined}
+          />
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="running">
+            <Checkbox
+              checked={running}
+              onCheckedChange={(v) => setRunning(v === true)}
+            />
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            Turning running on opens the trace; turning it off settles it to
+            the summary. Reasoning is live commentary, then reference.
+          </p>
+        </>
+      }
+    />
+  )
+}
+
+function ReasoningEffortPlayground() {
+  const [level, setLevel] = React.useState<ReasoningEffortLevel>("high")
+  const spent = { low: 1840, medium: 6200, high: 13920, max: 23100 }[level]
+  return (
+    <Playground
+      preview={
+        <div className="w-full max-w-sm">
+          <ReasoningEffort
+            level={level}
+            onChange={setLevel}
+            spent={spent}
+            budget={24000}
+          />
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="level">
+            <ChoiceControl
+              options={REASONING_EFFORTS}
+              value={level}
+              onChange={setLevel}
+            />
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            The meter is not decoration: an effort setting without a spend
+            reading is a preference with invisible consequences.
+          </p>
+        </>
+      }
+    />
+  )
+}
+
+const HUNKS = [
+  {
+    header: "@@ -12,6 +12,7",
+    lines: [
+      { sign: " " as const, text: "  const composer = useComposer();" },
+      { sign: "-" as const, text: '  const [draft, setDraft] = useState("");' },
+      { sign: "+" as const, text: "  const draft = useDraft(threadId);" },
+    ],
+  },
+  {
+    header: "@@ -31,4 +32,5",
+    lines: [
+      { sign: " " as const, text: "  useEffect(() => {" },
+      { sign: "+" as const, text: "    if (!threadId) return;" },
+      { sign: " " as const, text: "    hydrate(draft);" },
+    ],
+  },
+]
+
+function ReviewableDiffPlayground() {
+  const [applied, setApplied] = React.useState<number[] | null>(null)
+  const [runId, setRunId] = React.useState(0)
+  return (
+    <Playground
+      preview={
+        <div className="w-full max-w-lg">
+          <ReviewableDiff
+            key={runId}
+            path="composer.tsx"
+            hunks={HUNKS}
+            onApply={setApplied}
+          />
+          <p className="text-muted-foreground mt-2 text-center font-mono text-xs">
+            {applied ? `applied hunks ${applied.join(", ")}` : "nothing applied"}
+          </p>
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="reset" action>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => {
+                setApplied(null)
+                setRunId((n) => n + 1)
+              }}
+            >
+              Reset
+            </Button>
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            Apply is disabled at zero kept, so “apply” can never quietly mean
+            “apply nothing”.
+          </p>
+        </>
+      }
+    />
+  )
+}
+
+function TerminalBlockPlayground() {
+  const [tone, setTone] = React.useState<"paper" | "ink">("paper")
+  const [running, setRunning] = React.useState(true)
+  return (
+    <Playground
+      preview={
+        <div className="w-full max-w-lg">
+          <TerminalBlock
+            tone={tone}
+            running={running}
+            exitCode={running ? undefined : 0}
+            command="pnpm vitest run composer"
+            lines={[
+              "RUN  v4.0.5 /apps/docs",
+              "✓ composer restores draft on switch (12ms)",
+              "✓ composer clears draft after send (9ms)",
+              "✓ composer keeps attachments per thread (11ms)",
+            ]}
+          />
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="tone">
+            <ChoiceControl
+              options={["paper", "ink"] as const}
+              value={tone}
+              onChange={setTone}
+            />
+          </ControlRow>
+          <ControlRow name="running">
+            <Checkbox
+              checked={running}
+              onCheckedChange={(v) => setRunning(v === true)}
+            />
+          </ControlRow>
+        </>
+      }
+    />
+  )
+}
+
+const QUEUE_SEED = [
+  { id: "q1", text: "Also add a changeset" },
+  { id: "q2", text: "Then run the full suite" },
+  { id: "q3", text: "And open the PR when it's green" },
+]
+
+function MessageQueuePlayground() {
+  const [queued, setQueued] = React.useState(QUEUE_SEED)
+  return (
+    <Playground
+      preview={
+        <div className="w-full max-w-md">
+          <MessageQueue
+            running="Fix the converter and add a guard"
+            queued={queued}
+            onPromote={(id) =>
+              setQueued((q) => {
+                const item = q.find((x) => x.id === id)
+                return item ? [item, ...q.filter((x) => x.id !== id)] : q
+              })
+            }
+            onCancel={(id) => setQueued((q) => q.filter((x) => x.id !== id))}
+          />
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="queue" action>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setQueued(QUEUE_SEED)}
+            >
+              Refill
+            </Button>
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            A queued turn is a plan, not a commitment — promote one that
+            matters more, cancel one the running answer already covered.
+          </p>
+        </>
+      }
+    />
+  )
+}
+
+function MessageBranchesPlayground() {
+  const { pageChip, chips } = useAssistant()
+  const question = "How do I persist composer drafts across threads?"
+  const [branches, setBranches] = React.useState<KitResponse[]>(() => [
+    {
+      text: "Persist the composer draft in the runtime with the thread id as its key. When the active thread changes, read that value back into the composer.",
+      refs: [{ label: "Response kit v0" }],
+    },
+  ])
+
+  return (
+    <Playground
+      preview={
+        <div className="w-full max-w-lg">
+          <MessageBranches branches={branches} live={false} />
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="regenerate" action>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() =>
+                setBranches((b) => [...b, composeResponse(question, pageChip, chips)])
+              }
+            >
+              Add a version
+            </Button>
+          </ControlRow>
+          <ControlRow name="versions">
+            <span className="text-muted-foreground font-mono text-xs">
+              {branches.length}
+            </span>
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            A new version becomes the one you are looking at; the pager keeps
+            the others reachable.
+          </p>
+        </>
+      }
+    />
+  )
+}
+
+function MessagePairPlayground() {
   const { pageChip, chips, setOrbState } = useAssistant()
+  // variant is COMPONENT-LAYER CONFIG, not demo state: it decides how every
+  // exchange is presented product-wide, so it lives in the theme and Save
+  // persists it. What the playground is currently doing (has it answered
+  // yet, replay) stays local.
+  const { config, setConfig } = useFoundation()
+  const variant = config.components.messageVariant
+  const setVariant = (v: MessageVariant) =>
+    setConfig({ components: { ...config.components, messageVariant: v } })
   const [runId, setRunId] = React.useState(0)
   const [response, setResponse] = React.useState<KitResponse | null>(null)
+  const question = "How do I persist composer drafts across threads?"
 
   const run = () => {
     setResponse(null)
     setOrbState("thinking")
     window.setTimeout(() => {
-      setResponse(composeResponse("How does the response kit work?", pageChip, chips))
+      setResponse(composeResponse(question, pageChip, chips))
       setOrbState("answer")
       setRunId((n) => n + 1)
     }, 900)
@@ -1225,28 +1796,56 @@ function ResponsePlayground() {
     <Playground
       preview={
         <div className="w-full max-w-xl">
-          {response ? (
-            <ResponseBlock
-              key={runId}
-              response={response}
-              onSettled={() => setOrbState("still")}
-            />
-          ) : (
-            <p className="text-muted-foreground text-center text-sm">
-              Compose an answer to watch the block stream and the ambient
-              state ride it.
+          <MessagePair
+            key={runId}
+            question={question}
+            response={response ?? undefined}
+            variant={variant}
+            onSettled={() => setOrbState("still")}
+          />
+          {!response && (
+            <p className="text-muted-foreground mt-3 text-center text-sm">
+              Answer the question to watch the pair complete.
             </p>
           )}
         </div>
       }
       controls={
-        <ControlRow name="compose">
-          <Button size="xs" variant="outline" onClick={run}>
-            {response ? "Replay" : "Compose answer"}
-          </Button>
-        </ControlRow>
+        <>
+          <ControlRow name="variant">
+            <ChoiceControl
+              options={["bubble", "flat"] as const}
+              value={variant}
+              onChange={setVariant}
+            />
+          </ControlRow>
+          <ControlRow name="answer" action>
+            <Button size="xs" variant="outline" onClick={run}>
+              {response ? "Replay" : "Answer"}
+            </Button>
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            variant writes to the saved theme — every exchange in the real
+            assistant is presented this way once you save.
+          </p>
+        </>
       }
     />
+  )
+}
+
+function CommandPaletteStory() {
+  const { setMode } = useAssistant()
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <Button variant="outline" size="sm" onClick={() => setMode("spotlight")}>
+        Open the palette
+      </Button>
+      <p className="text-muted-foreground text-xs">
+        Or press <kbd className="bg-muted rounded px-1.5 py-0.5 font-mono">⌘K</kbd>{" "}
+        anywhere — the palette is global, so it opens over this page.
+      </p>
+    </div>
   )
 }
 
@@ -1286,28 +1885,75 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     ],
   },
   {
-    id: "response-block",
-    name: "ResponseBlock",
+    id: "streaming-text",
+    name: "StreamingText",
     description:
-      "An assistant answer as an OBJECT — the orb author mark, text that streams in, and its references, in an inset card on the surface.",
+      "Text that arrives rather than appears — the assistant writing, with a warm tail and a blurred leading edge.",
     behavior: [
-      "The mark is the live OrbCharacter while the answer is newest in the transcript; settled answers fall back to the CSS OrbGlyph, so a long conversation can't stack WebGL contexts.",
-      "Text reveals on the frame clock (~125 chars/s), not a timer — interval timers throttle in hidden tabs and would strand an answer mid-stream.",
-      "A caret pulses while streaming; references appear only once the text lands.",
-      "onSettled fires 400ms after the last character — the assistant uses it to return the ambient layer (orb, live borders, heat field) to still.",
-      "The mark carries the answer state while streaming and settles with the text, so the object itself reports whether the assistant is still talking.",
-      "Palette and per-state speeds come from the saved orb config, like every other instance of the character.",
+      "Three zones travel with the write head: settled text in the foreground, a warm tail in the ambient accent, and a blurred edge behind a fading mask.",
+      "The reveal runs on the FRAME CLOCK, not a timer — interval timers are throttled in hidden tabs, which strands an answer mid-sentence.",
+      "charsPerSecond sets the pace; the default reads as deliberate writing rather than a printer.",
+      "live={false} renders the whole string settled, so a re-rendered older message never re-types itself — history is written, not replayed.",
+      "onSettled fires shortly after the last character, which is what returns the ambient layer to rest.",
+      "Purely presentational: the characters are already in the DOM, so selection and copy give the full text at any point.",
     ],
     whenToUse: [
-      "Any assistant reply in a conversation surface — panel, dock, or the spotlight's AI Overview.",
-      "Whenever an answer needs provenance attached: the references row is part of the object.",
+      "Any assistant text that is genuinely being produced as you watch.",
+      "When the pace of arrival is information — a slow answer should look slow.",
     ],
     whenNotToUse: [
-      "Product copy or static help text — this object implies an assistant authored it, live.",
-      "Confirming a completed action or reporting an error — use a toast (Sonner).",
+      "Text that is already known — faking a stream is a lie about latency.",
+      "Long documents or code; use a settled block and show progress elsewhere.",
+      "Product copy of any kind: this treatment says an assistant is writing.",
     ],
     stories: [],
-    playground: ResponsePlayground,
+    playground: StreamingTextPlayground,
+  },
+  {
+    id: "message-branches",
+    name: "MessageBranches",
+    description:
+      "Regenerated versions of the same answer, navigable without losing your place.",
+    behavior: [
+      "A regenerated answer does not replace its predecessor — it joins it, and the newest becomes the one you are looking at.",
+      "The pager sits under the answer it belongs to, so a branch reads as a version of THIS reply rather than as a new turn.",
+      "Quiet by design: ghost controls and a monospaced count, because this is navigation, not content. It hides entirely at one version.",
+      "Only a freshly generated branch streams; stepping back to one you have already read shows it settled — history is written, not replayed.",
+      "Arrows disable at the ends rather than wrapping, so the extent of the set is felt.",
+    ],
+    whenToUse: [
+      "Wherever regeneration is offered — the alternative is silently destroying an answer the user might have preferred.",
+      "When comparing phrasings or approaches matters more than the latest attempt.",
+    ],
+    whenNotToUse: [
+      "Across different questions; branches are versions of one answer, not a history.",
+      "For editing a sent message — that is a different object, with its own consequence disclosure.",
+    ],
+    stories: [],
+    playground: MessageBranchesPlayground,
+  },
+  {
+    id: "message-pair",
+    name: "MessagePair",
+    description:
+      "The unit of a conversation: one question and the answer it produced, presented together.",
+    behavior: [
+      "Pairing is what makes a transcript readable — an undifferentiated list of messages is a log, not a conversation.",
+      "Two presentations, one anatomy: BUBBLE gives each side a surface (the question on the accent wash, the answer on an inset card); FLAT sets both directly on the transcript, separated by alignment and tone alone.",
+      "The answer streams in place: settled text in the foreground, the last words warm in the ambient accent, and the leading edge blurred behind a fading mask — a stream reads as writing rather than as text appearing.",
+      "The author mark is the live OrbCharacter while this is the newest pair, and the CSS glyph once it settles, so a long transcript never stacks WebGL contexts.",
+      "onSettled fires when the answer finishes, which is what returns the ambient layer (orb, borders, field) to rest.",
+    ],
+    whenToUse: [
+      "Any assistant exchange in a conversation surface — panel, dock, or the spotlight's AI Overview.",
+      "When the question needs to stay visible next to its answer, which is nearly always.",
+    ],
+    whenNotToUse: [
+      "A one-shot answer with no question worth showing — render the answer alone.",
+      "System notices or confirmations; those are toasts or an error object.",
+    ],
+    stories: [],
+    playground: MessagePairPlayground,
   },
   {
     id: "reference-chips",
@@ -1315,21 +1961,43 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     description:
       "Numbered provenance chips under an answer — what the assistant grounded its reply in.",
     behavior: [
-      "Numbered in order: the page context first, then attached chips, then the kit's own sources.",
+      "Numbered in order: the page context first, then attached chips, then the kit's own sources. The number is the citation's identity in the text, so it always shows.",
+      "ONE anatomy with an optional mark slot — number · mark · label — not a set of variants, so a row mixing a web source, an internal document, and an unmarked reference still reads as one list.",
+      "The mark has a fixed precedence: the source's own logo, else a typed icon, else nothing. A logo that fails to load falls back to a monogram, so a dead image never leaves a hole.",
+      "A logo is DATA the caller supplies — the system never invents or fetches one. Icons come from the Foundation's configured library like everywhere else.",
+      "A reference with an href is a link, opens in a new tab, and says so on hover; without one it stays inert text.",
       "Renders nothing when there are no references — grounding is never implied by an empty row.",
-      "Sits on the neutral glass wash (--glass-wash) so it reads as part of the answer object, not as interactive chips.",
+      "Sits on the neutral glass wash (--glass-wash) so it reads as part of the answer object.",
     ],
     whenToUse: [
       "Under any composed answer that used page context or attached items.",
+      "For citations — give web sources their logo and internal ones a typed icon, so provenance is recognizable before it is read.",
       "When the user needs to audit what the assistant saw — the governance habit applied to answers.",
     ],
     whenNotToUse: [
-      "As navigation — these name sources, they don't open them (yet).",
+      "As navigation through the product — a reference opens its source, it is not a menu.",
       "For attaching context, which is the AI form's ContextRow.",
+      "To dress up an unsourced claim: a mark makes a reference look authoritative, so never add one the answer did not actually use.",
     ],
     stories: [
       {
-        label: "References",
+        label: "Citations — logo, icon, and unmarked in one row",
+        render: (
+          <ReferenceChips
+            refs={[
+              {
+                label: "Tailwind CSS · Theme",
+                logo: "https://www.google.com/s2/favicons?domain=tailwindcss.com&sz=64",
+                href: "https://tailwindcss.com/docs/theme",
+              },
+              { label: "DESIGN.md · §5 Motion", icon: "document" },
+              { label: "Response kit v0" },
+            ]}
+          />
+        ),
+      },
+      {
+        label: "Unmarked — the original anatomy, unchanged",
         render: (
           <ReferenceChips
             refs={[
@@ -1338,6 +2006,828 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
               { label: "Response kit v0" },
             ]}
           />
+        ),
+      },
+    ],
+    playground: ReferenceChipsPlayground,
+  },
+  {
+    id: "shimmer-placeholder",
+    name: "ShimmerPlaceholder",
+    description:
+      "The placeholder every AI form wears — text with a highlight travelling through it, the ambient layer's way of saying the assistant is listening before anything is typed.",
+    behavior: [
+      "A light band sweeps the glyphs on a 2.8s loop (ambient-shimmer in theme.css), built from a gradient clipped to the text — the letters are the mask, so nothing sits on top of them.",
+      "Rendered as an overlay, not the input's own placeholder attribute: a real placeholder cannot carry a background-clipped gradient. The input keeps an aria-label, so screen readers still announce it.",
+      "Shown only while the field is empty; it disappears the moment the first character lands, so it never competes with what the user is writing.",
+      "The travelling highlight is the ambient accent (--app-blue), blended into the foreground on its shoulders, with secondary text as the resting tone — so the placeholder carries the assistant's own colour and re-tints when the Foundation accent changes.",
+      "Every ambient form uses it — the palette's search, the panel and dock follow-ups, and the quick ask pill — which is what makes an AI input recognisable as one.",
+    ],
+    whenToUse: [
+      "Any input that talks to the assistant, in any form factor.",
+      "When a field should feel awake before it is used — the shimmer is presence, not decoration.",
+    ],
+    whenNotToUse: [
+      "Product inputs (settings, forms, filters) — a shimmering placeholder there claims an AI is listening when none is.",
+      "Fields that already have a value, or read-only text; motion on stable content is noise.",
+      "As a loading indicator — the orb's states carry progress, this only carries availability.",
+    ],
+    stories: [
+      {
+        label: "Placeholder",
+        render: (
+          // hugs its text: an invisible copy sizes the box, the shimmer
+          // overlays it exactly
+          <span className="relative inline-flex items-center">
+            <span className="invisible text-base">Ask ambientui…</span>
+            <ShimmerPlaceholder show>Ask ambientui…</ShimmerPlaceholder>
+          </span>
+        ),
+      },
+    ],
+  },
+  {
+    id: "context-chip",
+    name: "ContextChip",
+    description:
+      "One attached thing the assistant can see — the chip that makes context visible instead of implied.",
+    behavior: [
+      "ONE anatomy everywhere: an icon tile typed by what was attached, the label, and a squared remove control. Two sizes only — default where the composer has a row of its own, compact where chips share the input's line — and a surface picks the size, never the look.",
+      "The page's own chip arrives automatically (setPageChip); anything else is something the user attached by right-clicking an element.",
+      "Every chip carries a remove control, because everything here is a decision that can be undone — including keeping the page attached.",
+      "Truncates rather than wraps: a chip names its source, it does not quote it.",
+      "Chips ride every AI form factor, so what the assistant can see is the same wherever you ask from.",
+      "Removing one takes it out of the next question's grounding, and the answer's references will show the difference.",
+    ],
+    whenToUse: [
+      "Above any AI input, to show what the answer will be grounded in before it is asked.",
+      "Whenever the assistant gains access to something new mid-conversation.",
+    ],
+    whenNotToUse: [
+      "For filters or tags in product UI — this pill claims 'the assistant can see this', which is a specific promise.",
+      "For results or citations after an answer — that is ReferenceChips.",
+    ],
+    stories: [
+      {
+        label: "Attached context",
+        render: (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <ContextChipView
+              chip={{ id: "p", kind: "page", label: "Design system · Foundation" }}
+              onRemove={() => {}}
+            />
+            <ContextChipView
+              chip={{ id: "a", kind: "control", label: "Accent color" }}
+              onRemove={() => {}}
+            />
+            <ContextChipView
+              chip={{ id: "b", kind: "target", label: "Semantic mapping" }}
+              onRemove={() => {}}
+            />
+          </div>
+        ),
+      },
+      {
+        label: "Compact — chips sharing the input's line",
+        render: (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <ContextChipView
+              chip={{ id: "p", kind: "page", label: "Design system · Foundation" }}
+              compact
+            />
+            <ContextChipView
+              chip={{ id: "a", kind: "control", label: "Accent color" }}
+              compact
+              onRemove={() => {}}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "command-palette",
+    name: "CommandPalette",
+    description:
+      "The assistant's spotlight mode: one input that both searches the product and asks the AI, over a glass surface with the ambient identity in its edge and background.",
+    behavior: [
+      "⌘K opens it from anywhere and toggles it closed; Esc clears the query first, then closes — so a mistyped search never costs the surface.",
+      "One input, two intents: the query is read as a QUESTION (4+ words, a leading interrogative, or a trailing ?) or as navigation. Questions put \"Ask ambientui\" first; anything else ranks matching pages.",
+      "Sections are a flat, keyboard-navigable model — Recent chats, Suggested for this page, Jump to — with ↑↓ moving across section boundaries and ↵ running the selected row.",
+      "The page's own context rides along as a chip in the header band; right-clicking anything on the page attaches it as another chip.",
+      "Asking transitions the surface in place into the AI Overview — the answer arrives where the question was asked, with a follow-up form replacing the search input.",
+      "No backdrop: the palette floats on the page at full brightness, with the glass, its shadow, and the live border carrying the separation.",
+      "Ambient state is live: typing a question turns the layer to listening before send; the border and background field follow.",
+      "Selection and keycaps use the neutral glass wash, not the accent — on glass, accent marks actions, not focus position.",
+      "Dragging the floating panel to the top-center zone becomes this mode; dragging out of it returns to a panel.",
+    ],
+    whenToUse: [
+      "The product's primary entry point for both finding and asking — one keystroke from anywhere.",
+      "When the answer and the destination are the same question: \"where is X\" and \"what is X\" resolve in one surface.",
+    ],
+    whenNotToUse: [
+      "A conversation the user wants to keep while working — that's the panel or dock; the palette is for a single exchange.",
+      "Scoped search inside a page's own data — a local filter belongs in the page, not in the global palette.",
+      "Confirming or undoing an action — use a toast or the save reminder.",
+    ],
+    stories: [
+      {
+        label: "Open",
+        render: <CommandPaletteStory />,
+      },
+    ],
+  },
+  {
+    id: "message-actions",
+    group: "Messages",
+    name: "MessageActions",
+    description:
+      "Copy, rate, and regenerate — the quiet row under an answer, where each action confirms itself.",
+    behavior: [
+      "Each action confirms ITSELF rather than raising a toast: copy becomes a check for a beat, a rating stays lit. A toast for a copy is a notification about something the user is already looking at.",
+      "Ratings toggle — pressing the lit thumb clears it, because a mis-tap should not become permanent signal.",
+      "Copy only shows the check once the clipboard write actually resolved; a denied clipboard confirms nothing.",
+      "Ghost weight throughout: these sit under every answer, so they must not compete with the answer itself.",
+    ],
+    whenToUse: [
+      "Under any completed assistant answer.",
+      "Anywhere the user's reaction is worth capturing at the moment they have it.",
+    ],
+    whenNotToUse: [
+      "On a message still streaming — rating an unfinished answer measures patience, not quality.",
+      "For destructive actions; put those behind the More control with their own confirmation.",
+    ],
+    stories: [],
+    playground: MessageActionsPlayground,
+  },
+  {
+    id: "follow-up-suggestions",
+    group: "Messages",
+    name: "FollowUpSuggestions",
+    description:
+      "Prompt pills that stagger in after a reply and invite the next turn.",
+    behavior: [
+      "They are OFFERS, not actions: picking one seeds the composer's next question rather than silently running it.",
+      "They stagger in on the control motion role, because they arrive after the answer settles — a row that appears all at once reads as chrome that was always there.",
+      "layout=\"list\" for narrow surfaces, where pills wrap into an unreadable thicket.",
+      "Renders nothing when there are no suggestions; an empty invitation row is worse than none.",
+    ],
+    whenToUse: [
+      "After an answer that opens obvious next questions — a diff to review, a test to write.",
+      "In an empty conversation, as the fastest way to show what the assistant can do.",
+    ],
+    whenNotToUse: [
+      "As navigation to product features; that is the palette's job.",
+      "More than about four at a time — a menu of prompts is a decision, not a shortcut.",
+    ],
+    stories: [],
+    playground: FollowUpSuggestionsPlayground,
+  },
+  {
+    id: "error-state",
+    group: "Messages",
+    name: "ErrorState",
+    description:
+      "A quiet failure banner with a retry path, not a modal in your face.",
+    behavior: [
+      "Sits in the transcript where the answer would have been: a failed generation is a turn that did not work, not a system-level event.",
+      "States what happened and offers the single move that helps. No stack traces, no error codes the user cannot act on.",
+      "Wears --destructive over --destructive-wash, the system's status pair — never a bespoke red.",
+      "role=\"alert\", so a failure reaches a screen reader without the user going looking for it.",
+    ],
+    whenToUse: [
+      "A generation that stopped, timed out, or hit a limit.",
+      "Any failure where retrying is genuinely the right next step.",
+    ],
+    whenNotToUse: [
+      "For a failed tool call inside an otherwise fine answer — that is ToolFailure, which is scoped to the call.",
+      "For validation or empty states; a failure claim should be reserved for actual failures.",
+    ],
+    stories: [
+      {
+        label: "Generation stopped",
+        render: (
+          <div className="w-full max-w-md">
+            <ErrorState
+              detail="The model hit the output limit after 4,096 tokens."
+              onRetry={() => {}}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "message-queue",
+    group: "Messages",
+    name: "MessageQueue",
+    description:
+      "Turns you typed while a run was in flight, stacked and cancelable until it finishes.",
+    behavior: [
+      "The running turn sits on a raised card with a live pulse; queued turns are muted rows beneath it — one glance separates what is happening from what is waiting.",
+      "A queued turn stays EDITABLE: promote one that matters more, cancel one the running answer already covered.",
+      "Promotion is offered only where it means something — never on the item already at the front.",
+      "Rows animate with layout so promoting reorders visibly rather than teleporting.",
+    ],
+    whenToUse: [
+      "Whenever the composer accepts input during a run — the alternative is blocking the input and making the user hold a thought.",
+    ],
+    whenNotToUse: [
+      "As a task list; these are unsent messages, not work items.",
+      "When turns cannot actually be reordered or canceled — showing controls that do nothing is worse than a plain count.",
+    ],
+    stories: [],
+    playground: MessageQueuePlayground,
+  },
+  {
+    id: "reasoning-panel",
+    group: "Messages",
+    name: "ReasoningPanel",
+    description:
+      "A collapsible trace that streams reasoning steps, then settles into a summary.",
+    behavior: [
+      "Opens itself while the run is live and collapses to one line when it finishes — reasoning is interesting WHILE it happens and reference material after.",
+      "The settled summary states the cost in time (\"Thought for 5s\"), which is the part worth knowing at a glance.",
+      "Steps are marked, not connected: they are ordered, not causally chained, and a connector would claim more than the model did.",
+      "The user's own toggle wins — pass defaultOpen to opt out of the automatic behavior entirely.",
+    ],
+    whenToUse: [
+      "Any run where thinking takes long enough that silence reads as a hang.",
+      "When the reasoning is genuinely reviewable — a plan, a search strategy, a chain of constraints.",
+    ],
+    whenNotToUse: [
+      "To pad a fast answer with theatre; a trace on a 200ms reply is a costume.",
+      "For tool activity, which has its own objects (ToolCall, ToolTimeline).",
+    ],
+    stories: [],
+    playground: ReasoningPanelPlayground,
+  },
+  {
+    id: "reasoning-effort",
+    group: "Messages",
+    name: "ReasoningEffort",
+    description:
+      "How hard to think, and how much of that budget the run actually spent.",
+    behavior: [
+      "The control and the meter belong together: an effort setting with no spend reading is a preference with invisible consequences.",
+      "A radiogroup, not a slider — the levels are named tiers, and a continuous control would imply precision the model does not offer.",
+      "The meter fills on the surface motion role, so a spend that climbs during a run reads as accumulation rather than a jump.",
+      "Omit spent/budget and the meter disappears; the control alone is still valid.",
+    ],
+    whenToUse: [
+      "Wherever the user pays for thinking — in tokens, in latency, or in both.",
+      "In settings AND beside a run, so the choice can be learned from its result.",
+    ],
+    whenNotToUse: [
+      "When effort makes no observable difference; a control with no consequence teaches the user to ignore controls.",
+    ],
+    stories: [],
+    playground: ReasoningEffortPlayground,
+  },
+  {
+    id: "message-attachments",
+    group: "Messages",
+    name: "MessageAttachments",
+    description:
+      "Files as received rather than staged: an image to open, a document with its page count.",
+    behavior: [
+      "No remove control, deliberately: these are a record of what was SENT. The composer's chips are the editable ones.",
+      "An openable attachment is a raised, bordered card; the rest sit on the quiet fill — affordance is carried by the surface, not by a hover-only cue.",
+      "An image shows its thumbnail; everything else shows the icon for its kind, drawn by the configured icon library.",
+      "Size and meta are formatted by the caller and shown in mono — they are facts about a file, not prose.",
+    ],
+    whenToUse: [
+      "On a user turn that carried files, and on assistant turns that produced them.",
+    ],
+    whenNotToUse: [
+      "In the composer while attaching — that is a staging UI, with removal and progress.",
+      "For links or references; those are ContextChip and ReferenceChips.",
+    ],
+    stories: [
+      {
+        label: "Received files",
+        render: (
+          <div className="w-full max-w-sm">
+            <MessageAttachments
+              attachments={[
+                { id: "a", name: "composer-regression.png", size: "412 KB", kind: "image", onOpen: () => {} },
+                { id: "b", name: "migration-0.14.pdf", size: "1.2 MB", meta: "14 pages", kind: "document" },
+                { id: "c", name: "vitest-run.log", size: "38 KB", kind: "file" },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "quote-reply",
+    group: "Messages",
+    name: "QuoteReply",
+    description:
+      "Select a phrase in an answer and a toolbar offers to quote, explain, or rewrite it.",
+    behavior: [
+      "Appears on selection and nowhere else — a persistent toolbar over an answer would be chrome that is wrong ninety-nine percent of the time.",
+      "Only selections INSIDE its own content count, so selecting elsewhere on the page never summons it.",
+      "The three actions are the three scopes worth having: bring it into the next turn, ask about it, or change it.",
+      "It sets the SUBJECT of the next turn — without it, following up on one clause means re-typing it and hoping the assistant picks the right referent.",
+    ],
+    whenToUse: [
+      "Around long assistant answers, especially ones mixing prose and code.",
+    ],
+    whenNotToUse: [
+      "Around user messages — quoting yourself back to the assistant is what the composer is for.",
+      "Where text is short enough to reference whole; a toolbar over one sentence is friction.",
+    ],
+    stories: [
+      {
+        label: "Select any phrase below",
+        render: (
+          <div className="w-full max-w-md">
+            <QuoteReply>
+              <p className="text-[13px] leading-relaxed">
+                The regression happens because the converter drops parts with no
+                text, so an empty assistant turn never reaches the thread.
+              </p>
+            </QuoteReply>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "feedback-dialog",
+    group: "Messages",
+    name: "FeedbackDialog",
+    description:
+      "A thumbs-down that asks why, so the signal arrives with a reason attached.",
+    behavior: [
+      "Opens UNDER the answer it is about, not as a modal — the system has no Dialog (see the known gaps), and that constraint produced the better interaction.",
+      "Every field is optional and the reasons are preset: free text is a tax on someone already doing you a favor.",
+      "Reasons multi-select, because an answer can be both too long and wrong.",
+      "A bare rating is a number nobody can act on; asking at the moment of the reaction is the only time the user knows the reason.",
+    ],
+    whenToUse: [
+      "Immediately after a negative rating, in place.",
+    ],
+    whenNotToUse: [
+      "After a positive rating — interrogating praise is how you stop receiving it.",
+      "As a general support form; this is about one answer.",
+    ],
+    stories: [
+      {
+        label: "What went wrong?",
+        render: <FeedbackDialog onSubmit={() => {}} onDismiss={() => {}} />,
+      },
+    ],
+  },
+  {
+    id: "timestamps",
+    group: "Messages",
+    name: "DayDivider · MessageTime",
+    description:
+      "Chronology in a long thread: days marked, exact times on hover.",
+    behavior: [
+      "A day boundary is the only moment a reader actually needs orienting — a timestamp on every message is noise.",
+      "Exact times live on hover or keyboard focus (MessageTime), so precision is available without being ambient.",
+      "The divider is a real separator with an accessible label, not a decorative line with text over it.",
+      "MessageTime reveals inside a group-hover container, so the whole row is the target rather than the timestamp itself.",
+    ],
+    whenToUse: [
+      "Threads that span sessions or days.",
+      "Anywhere the age of an answer changes how much to trust it.",
+    ],
+    whenNotToUse: [
+      "In a short-lived surface — quick ask, the palette — where everything happened just now.",
+    ],
+    stories: [
+      {
+        label: "A thread across two days",
+        render: (
+          <div className="flex w-full max-w-md flex-col gap-2">
+            <DayDivider label="Yesterday" />
+            <div className="group flex items-baseline justify-end gap-2">
+              <MessageTime time="4:12 PM" />
+              <span className="bg-muted rounded-2xl px-3 py-2 text-[13px]">
+                Why does the draft survive a reload?
+              </span>
+            </div>
+            <DayDivider label="Today" />
+            <div className="group flex items-baseline justify-end gap-2">
+              <MessageTime time="9:03 AM" />
+              <span className="bg-muted rounded-2xl px-3 py-2 text-[13px]">
+                And across thread switches?
+              </span>
+            </div>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "tool-call",
+    group: "Tool use",
+    name: "ToolCall",
+    description:
+      "One tool invocation with its request and result tucked behind a disclosure.",
+    behavior: [
+      "A TOOL CALL IS A CLAIM, AND A CLAIM MUST BE AUDITABLE: the collapsed row is the claim, the disclosure holds the evidence.",
+      "The verb is plain language and the argument is a code chip beside it — the sentence is for reading, the chip is for verifying.",
+      "Collapsed by default, EXCEPT on failure: a failure the user has to go looking for is a failure they will miss.",
+      "Request and result are quoted verbatim in mono. Evidence is not paraphrased.",
+      "With no request or result, the row stops pretending to be expandable.",
+    ],
+    whenToUse: [
+      "Every tool invocation the user should be able to audit.",
+    ],
+    whenNotToUse: [
+      "For several calls that went out together — that is ParallelTools, which collapses them to one row.",
+      "For a whole session's activity — that is ToolTimeline.",
+    ],
+    stories: [
+      {
+        label: "Searched the docs",
+        render: (
+          <div className="w-full max-w-md">
+            <ToolCall
+              verb="Searched the docs"
+              argument="draft persistence"
+              request={'{"query": "draft persistence"}'}
+              result="3 matches, best hit /docs/runtime/drafts"
+              defaultOpen
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "tool-timeline",
+    group: "Tool use",
+    name: "ToolTimeline",
+    description:
+      "A whole working session summarized as verbs, targets, and file stats.",
+    behavior: [
+      "Summarizes to \"N steps · M files changed\" — the only two questions worth answering at a glance about a long run.",
+      "File stats sit at the bottom and carry +/− counts, because a change to your files is the part with consequences.",
+      "Additions and removals use the status pair (--positive / --destructive), never bespoke greens and reds.",
+      "Open by default: a session summary the user has to discover defeats the summary.",
+    ],
+    whenToUse: [
+      "After an agent run of more than a couple of steps.",
+      "Wherever the user needs to know what was touched before they trust the result.",
+    ],
+    whenNotToUse: [
+      "For a single call, which reads better as a ToolCall.",
+      "As a progress indicator during the run — it is a record, not a spinner.",
+    ],
+    stories: [
+      {
+        label: "Four steps, two files",
+        render: (
+          <div className="w-full max-w-md">
+            <ToolTimeline
+              steps={[
+                { verb: "Thinking", target: "planning the change", icon: "sparkles" },
+                { verb: "Read", target: "thread.tsx", icon: "document" },
+                { verb: "Ran", target: "pnpm vitest", icon: "code" },
+                { verb: "Edited", target: "composer.tsx", icon: "edit" },
+              ]}
+              files={[
+                { path: "composer.tsx", added: 14, removed: 3 },
+                { path: "use-draft.ts", added: 42 },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "terminal-block",
+    group: "Tool use",
+    name: "TerminalBlock",
+    description:
+      "Command output that streams line by line and ends with an exit status.",
+    behavior: [
+      "Output is quoted verbatim: monospaced, unwrapped, horizontally scrollable. Never reflowed to fit.",
+      "The cursor while a run is live earns its place — it is the difference between \"still going\" and \"produced nothing\".",
+      "The exit code replaces the cursor when the run ends, colored by the status pair.",
+      "tone=\"ink\" presents a run as an artifact; \"paper\" keeps it on the surface it lives in, which is right inside a conversation.",
+    ],
+    whenToUse: [
+      "Any command the assistant ran on the user's behalf.",
+    ],
+    whenNotToUse: [
+      "For code the assistant wrote — that is CodeRunner, where the output belongs to a snippet.",
+      "For long logs; link to them rather than pasting a thousand lines into a conversation.",
+    ],
+    stories: [],
+    playground: TerminalBlockPlayground,
+  },
+  {
+    id: "code-diff",
+    group: "Tool use",
+    name: "CodeDiff",
+    description:
+      "A unified diff with tinted additions and removals, sized for chat.",
+    behavior: [
+      "Read-only by design: this is the assistant showing what it changed, not asking anything.",
+      "Tint carries the sign so the eye finds the change before reading it — and the sign column stays anyway, because color alone is not a signal everyone receives.",
+      "Counts are derived from the lines when not given, so a diff can never advertise a total it does not contain.",
+      "Uses --positive-wash and --destructive-wash: the same status tokens as every other pass/fail surface.",
+    ],
+    whenToUse: [
+      "Whenever an answer changed code the user has not seen yet.",
+    ],
+    whenNotToUse: [
+      "When the change still needs the user's approval — that is ReviewableDiff, where each hunk is a decision.",
+      "For whole files; a diff is an argument about what changed.",
+    ],
+    stories: [
+      {
+        label: "composer.tsx",
+        render: (
+          <div className="w-full max-w-lg">
+            <CodeDiff
+              path="composer.tsx"
+              lines={[
+                { sign: " ", text: "export function Composer() {" },
+                { sign: " ", text: "  const threadId = useThreadId();" },
+                { sign: "-", text: '  const [draft, setDraft] = useState("");' },
+                { sign: "+", text: "  const draft = useDraft(threadId);" },
+                { sign: "+", text: "  useEffect(() => hydrate(draft), [threadId]);" },
+                { sign: " ", text: "  return (" },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "reviewable-diff",
+    group: "Tool use",
+    name: "ReviewableDiff",
+    description:
+      "The same diff, but each hunk is a decision: keep it, discard it, apply what survived.",
+    behavior: [
+      "The difference from CodeDiff is CONSEQUENCE, not appearance: here the assistant is asking permission, per hunk.",
+      "Three states per hunk — kept, discarded, undecided — because defaulting undecided to either one decides for the user.",
+      "It counts what is left to review and disables Apply at zero kept, so \"apply\" can never quietly mean \"apply nothing\".",
+      "A discarded hunk dims rather than disappearing; you can still see what you turned down.",
+    ],
+    whenToUse: [
+      "Any change the assistant proposes to files the user owns.",
+      "Wherever partial acceptance is genuinely possible.",
+    ],
+    whenNotToUse: [
+      "For changes already applied — showing decisions for a fait accompli is theatre.",
+      "When the hunks are not independent; offering per-hunk choice on a change that only works whole invites a broken state.",
+    ],
+    stories: [],
+    playground: ReviewableDiffPlayground,
+  },
+  {
+    id: "parallel-tools",
+    group: "Tool use",
+    name: "ParallelTools",
+    description:
+      "Calls that went out together, collapsed to one row until you want the detail.",
+    behavior: [
+      "Concurrency is an implementation fact — stacking five rows makes it look like five decisions.",
+      "One row states the batch and its outcome; the batch reads as failed if any call inside it did.",
+      "Opening it shows each call with its own timing, which is the only reason anyone opens it.",
+      "Closed by default: the summary is usually the whole story.",
+    ],
+    whenToUse: [
+      "Any fan-out — reading several files, querying several sources at once.",
+    ],
+    whenNotToUse: [
+      "For sequential calls, where order carries meaning that a batch hides.",
+      "For two calls; a batch of two is just two rows.",
+    ],
+    stories: [
+      {
+        label: "Read 4 files in parallel",
+        render: (
+          <div className="w-full max-w-md">
+            <ParallelTools
+              summary="Read 4 files in parallel"
+              defaultOpen
+              calls={[
+                { tool: "read_file", target: "packages/core/src/convertMessages.ts", duration: "42ms" },
+                { tool: "read_file", target: "packages/ui/src/composer.tsx", duration: "38ms" },
+                { tool: "grep", target: "useDraft", duration: "61ms" },
+                { tool: "read_file", target: "packages/core/src/queue/messages.ts", duration: "55ms" },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "tool-failure",
+    group: "Tool use",
+    name: "ToolFailure",
+    description:
+      "One call failed. The error, the attempt count, and a retry that doesn't restart the turn.",
+    behavior: [
+      "The attempt count is the honest part: \"1/3\" tells the user a retry is already policy, not a suggestion.",
+      "Skip exists because a failed call is often not fatal to the answer — forcing a retry to continue is how a transient blip becomes a dead conversation.",
+      "The error is quoted verbatim in mono on the destructive wash; a paraphrased error is a second bug to debug.",
+      "Scoped to the call, not the turn: the surrounding answer keeps its own state.",
+    ],
+    whenToUse: [
+      "Any tool call that failed inside an otherwise live turn.",
+    ],
+    whenNotToUse: [
+      "When the whole generation stopped — that is ErrorState.",
+      "For expected empty results; \"no matches\" is an answer, not a failure.",
+    ],
+    stories: [
+      {
+        label: "fetch timed out",
+        render: (
+          <div className="w-full max-w-md">
+            <ToolFailure
+              tool="fetch"
+              target="https://api.example.com/v1/issues"
+              error="ETIMEDOUT after 30000ms"
+              attempt={1}
+              attempts={3}
+              onRetry={() => {}}
+              onSkip={() => {}}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "code-runner",
+    group: "Tool use",
+    name: "CodeRunner",
+    description:
+      "A snippet with a run button, and the output it produced attached below it.",
+    behavior: [
+      "Attachment is the whole idea: output that floats free of the code that made it is a screenshot.",
+      "Re-running replaces the result rather than appending another orphan block.",
+      "The run control disables itself while running — the object states its own availability instead of relying on the user to wait.",
+      "Duration sits beside the control, because how long it took is part of the result.",
+    ],
+    whenToUse: [
+      "Executable snippets the user is meant to try, not just read.",
+    ],
+    whenNotToUse: [
+      "For code that changes files or state — that needs a ReviewableDiff and an explicit apply.",
+      "For output with no code behind it; that is a TerminalBlock.",
+    ],
+    stories: [
+      {
+        label: "typescript",
+        render: (
+          <div className="w-full max-w-lg">
+            <CodeRunner
+              language="typescript"
+              duration="38ms"
+              code={'const queue = createMessageQueue(driver);\nqueue.enqueue("also add a changeset");\nconsole.log(queue.size);'}
+              output={"1\n→ drains when the run settles"}
+              onRun={() => {}}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "web-search",
+    group: "Knowledge",
+    name: "WebSearch",
+    description:
+      "A search query and its results landing one by one as the agent reads.",
+    behavior: [
+      "Showing the QUERY is the part most search UIs skip: it is the assistant's interpretation of the question, and the first place an answer goes wrong.",
+      "Results stagger in because they genuinely arrive that way — the animation is reporting, not decoration.",
+      "Each source carries its own mark (a caller-supplied logo, else the domain's initial) and its domain in mono, so provenance is recognizable before it is read.",
+      "A source with an href opens in a new tab; without one it stays a record of what was read.",
+    ],
+    whenToUse: [
+      "Any answer grounded in a live search.",
+      "Whenever the user should be able to challenge WHAT was searched, not just what was found.",
+    ],
+    whenNotToUse: [
+      "As a final bibliography — that is ReferenceChips, under the answer.",
+      "For internal retrieval with no user-visible sources.",
+    ],
+    stories: [
+      {
+        label: "Reading three sources",
+        render: (
+          <div className="w-full max-w-md">
+            <WebSearch
+              query="assistant-ui draft persistence"
+              sources={[
+                { title: "Persisting composer state across threads", domain: "assistant-ui.com" },
+                { title: "Draft autosave patterns in chat UIs", domain: "patterns.dev" },
+                { title: "useSyncExternalStore and derived state", domain: "react.dev" },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "inline-citation",
+    group: "Knowledge",
+    name: "InlineCitation",
+    description:
+      "Numbered references inside a sentence, each with a hover preview of its source.",
+    behavior: [
+      "Reference chips say the reply used these sources; a citation says THIS sentence rests on THIS one — the difference between provenance and a bibliography.",
+      "The preview opens above the line, because a card below would cover the text still being read.",
+      "It responds to focus as well as hover, so the preview is reachable by keyboard.",
+      "The marker inverts while open — the only state it has, and enough to tell you which one you are reading.",
+    ],
+    whenToUse: [
+      "Answers where individual claims have individual sources.",
+      "Anywhere a reader may want to verify one sentence without auditing the whole reply.",
+    ],
+    whenNotToUse: [
+      "On every sentence; a paragraph of superscripts is unreadable and reads as defensiveness.",
+      "When the source does not actually support that specific claim — a citation is a promise.",
+    ],
+    stories: [
+      {
+        label: "Two claims, two sources",
+        render: (
+          <p className="w-full max-w-md text-[13px] leading-relaxed">
+            Optimistic updates keep the composer responsive while the server
+            confirms the write
+            <InlineCitation
+              citation={{
+                n: 1,
+                title: "Optimistic updates in the runtime",
+                domain: "assistant-ui.com",
+                excerpt:
+                  "The runtime applies local edits immediately and reconciles them once the server acknowledges the write.",
+              }}
+            />
+            . The store already exposes a consistent snapshot for every
+            subscriber
+            <InlineCitation
+              citation={{
+                n: 2,
+                title: "useSyncExternalStore",
+                domain: "react.dev",
+                excerpt:
+                  "Every subscriber reads the same snapshot for a given render pass.",
+              }}
+            />
+            , so no extra reconciliation pass is needed.
+          </p>
+        ),
+      },
+    ],
+  },
+  {
+    id: "research-report",
+    group: "Knowledge",
+    name: "ResearchReport",
+    description:
+      "An outline that fills in section by section, each carrying the sources behind it.",
+    behavior: [
+      "Declaring the outline first turns waiting into reading: you can see what is coming, what is being written now, and what has landed.",
+      "Each finished section carries its own source count, so depth is legible per claim rather than as one total at the end.",
+      "A pending section says so — muted, with an inert mark — instead of rendering an empty confident heading.",
+      "Three marks, three meanings: a check for done, a spinner for the section being written, a dot for not yet.",
+    ],
+    whenToUse: [
+      "Long-running research where the shape of the answer is known before its content.",
+      "Any deliverable a user will read in pieces rather than all at once.",
+    ],
+    whenNotToUse: [
+      "For a conversational answer; an outline over three sentences is bureaucracy.",
+      "When the sections are not known upfront — a skeleton that keeps changing is worse than none.",
+    ],
+    stories: [
+      {
+        label: "Filling in",
+        render: (
+          <div className="w-full max-w-md">
+            <ResearchReport
+              title="Draft ownership in 0.14"
+              sourcesRead={15}
+              sections={[
+                { title: "What changed in 0.14", status: "done", sources: 4, body: "Drafts moved from parent state into a per-thread slot owned by the composer." },
+                { title: "Who is affected", status: "done", sources: 3, body: "Anyone mirroring the draft in their own useState reads a value that never updates." },
+                { title: "Migration path", status: "running" },
+                { title: "Open questions", status: "pending" },
+              ]}
+            />
+          </div>
         ),
       },
     ],

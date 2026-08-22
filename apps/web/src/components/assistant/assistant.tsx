@@ -14,6 +14,7 @@ import {
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { sections } from "@/nav"
@@ -29,6 +30,8 @@ import {
 import { useAssistant, type ContextChip } from "./assistant-context"
 import {
   ResponseBlock,
+  StreamingText,
+  UserMessage,
   composeResponse,
   type KitResponse,
 } from "./response-kit"
@@ -43,7 +46,13 @@ type Msg = {
   kit?: KitResponse
 }
 
-let msgId = 0
+/**
+ * Ids are derived from the list itself, never from a shared counter: a
+ * state updater can be invoked more than once for a single update, so
+ * `++counter` inside one mints colliding ids — which makes React remount
+ * the transcript and replay every settled answer's stream.
+ */
+const nextId = (m: Msg[]) => (m.length ? m[m.length - 1]!.id + 1 : 1)
 
 const RECENT_CHATS = [
   { text: "Which components lack vocabulary docs?", when: "2h ago" },
@@ -67,6 +76,38 @@ type PaletteItem = {
   navIcon?: typeof SparklesIcon
   run: () => void
 }
+
+/**
+ * THE AI FORM'S PLACEHOLDER — the shimmer belongs to every ambient input,
+ * not just the palette's: it is how a form says the assistant is listening.
+ * Rendered as an overlay because an <input>'s own placeholder can't carry a
+ * background-clipped gradient.
+ */
+export function ShimmerPlaceholder({
+  show,
+  children,
+  className,
+}: {
+  show: boolean
+  children: React.ReactNode
+  className?: string
+}) {
+  if (!show) return null
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "ambient-shimmer pointer-events-none absolute inset-y-0 left-0 flex items-center text-base",
+        className
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
+/** Every AI form stands the same height, whichever surface it sits in. */
+const AI_FORM_ROW = "flex min-h-14 items-center gap-3"
 
 /** Heuristic: is the palette input a question for the AI rather than a nav search? */
 function looksLikeQuestion(q: string) {
@@ -97,6 +138,8 @@ export function Assistant() {
     removeChip,
     seedVersion,
     consumeSeededPrompt,
+    consumeAutoSend,
+    consumeImmediate,
     navigate,
   } = useAssistant()
 
@@ -200,7 +243,11 @@ export function Assistant() {
   React.useEffect(() => {
     if (mode !== "line") {
       const seeded = consumeSeededPrompt()
-      if (seeded) setInput(seeded)
+      // a quick-ask arrives already asked; an explain arrives as a draft
+      if (seeded)
+        consumeAutoSend()
+          ? send(seeded, consumeImmediate())
+          : setInput(seeded)
       requestAnimationFrame(() => inputRef.current?.focus())
     }
   }, [mode, seedVersion, consumeSeededPrompt])
@@ -236,26 +283,28 @@ export function Assistant() {
     setOrbState(looksLikeQuestion(input) ? "listening" : "still")
   }, [input, mode, setOrbState])
 
-  const send = (textOverride?: string) => {
+  const send = (textOverride?: string, immediate = false) => {
     const text = (typeof textOverride === "string" ? textOverride : input).trim()
     if (!text) return
     setInput("")
-    setMessages((m) => [...m, { id: ++msgId, role: "user", text }])
-    if (mode === "bar" || mode === "line") setMode("panel")
+    setMessages((m) => [...m, { id: nextId(m), role: "user", text }])
+    if (mode === "line") setMode("panel")
     // THE RESPONSE KIT (v0): page context + question → a composed answer
     // object, driving the real ambient pipeline — thinking while composing,
     // answer while streaming, still on settle. A model replaces
     // composeResponse; the objects and states stay.
     busyRef.current = true
     setOrbState("thinking")
+    // `immediate`: the surface that sent this already showed the thinking
+    // beat (quick ask), so composing waits only a frame
     window.setTimeout(() => {
       const kit = composeResponse(text, pageChip, chips)
       setMessages((m) => [
         ...m,
-        { id: ++msgId, role: "assistant", text: kit.text, kit },
+        { id: nextId(m), role: "assistant", text: kit.text, kit },
       ])
       setOrbState("answer")
-    }, 1100)
+    }, immediate ? 60 : 1100)
   }
 
   const settleResponse = () => {
@@ -264,35 +313,6 @@ export function Assistant() {
   }
 
   let surfaceEl: React.ReactNode = null
-
-  if (mode === "bar") {
-    surfaceEl = (
-      <motion.div
-        key="bar"
-        className="fixed bottom-4 left-1/2 z-50 w-[620px] max-w-[90vw]"
-        style={{ x: "-50%" }}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 8, transition: microT }}
-        transition={enterT}
-        onMouseLeave={() => {
-          if (!input && messages.length === 0) setMode("line")
-        }}
-      >
-        <InputRow
-          inputRef={inputRef}
-          input={input}
-          setInput={setInput}
-          onSend={send}
-          pageChip={pageChip}
-          chips={chips}
-          removeChip={removeChip}
-          placeholder="Ask or search ambientui…"
-          showKbd
-        />
-      </motion.div>
-    )
-  }
 
   const transcriptBlock = (
     <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
@@ -328,12 +348,7 @@ export function Assistant() {
       <div className="flex flex-col gap-3">
         {messages.map((m) =>
           m.role === "user" ? (
-            <div
-              key={m.id}
-              className="ms-auto max-w-[85%] rounded-lg bg-[var(--app-blue-wash)] px-3 py-2 text-[13px] text-[var(--app-blue)]"
-            >
-              {m.text}
-            </div>
+            <UserMessage key={m.id} text={m.text} />
           ) : m.kit ? (
             <ResponseBlock
               key={m.id}
@@ -342,9 +357,12 @@ export function Assistant() {
               onSettled={settleResponse}
             />
           ) : (
-            <div key={m.id} className="max-w-full text-[13px] leading-relaxed">
-              {m.text}
-            </div>
+            <StreamingText
+              key={m.id}
+              text={m.text}
+              live={false}
+              className="block max-w-full text-[13px] leading-relaxed"
+            />
           )
         )}
       </div>
@@ -395,7 +413,7 @@ export function Assistant() {
       {transcriptBlock}
 
       {/* input */}
-      <div className="border-(--glass-border) border-t px-4 py-3">
+      <div className="border-(--glass-border) border-t px-4 py-2">
         <ContextRow
           pageChip={pageChip}
           pagePinned={pagePinned}
@@ -412,7 +430,6 @@ export function Assistant() {
           chips={[]}
           removeChip={removeChip}
           placeholder="Ask a follow-up…"
-          bare
         />
       </div>
       </div>
@@ -536,8 +553,8 @@ export function Assistant() {
           {/* search / ask input — hidden in answer mode (follow-up bar takes over) */}
           {!asking && (
             <>
-              <div className="border-(--glass-border) border-b px-4 py-3">
-                <div className="flex items-center gap-3">
+              <div className="border-(--glass-border) border-b px-4 py-2">
+                <div className={AI_FORM_ROW}>
                 <MiniAvatar />
                 <div className="relative min-w-0 flex-1">
                   <input
@@ -548,14 +565,9 @@ export function Assistant() {
                     aria-label="Search or ask a question in ambientui"
                     className="w-full bg-transparent text-base outline-none"
                   />
-                  {input === "" && (
-                    <span
-                      aria-hidden
-                      className="ambient-shimmer pointer-events-none absolute inset-y-0 left-0 flex items-center text-base"
-                    >
-                      Search or ask a question in ambientui…
-                    </span>
-                  )}
+                  <ShimmerPlaceholder show={input === ""}>
+                    Search or ask a question in ambientui…
+                  </ShimmerPlaceholder>
                 </div>
               </div>
 
@@ -595,7 +607,7 @@ export function Assistant() {
               </div>
               {transcriptBlock}
               {/* follow-up bar at the bottom, with context attached — like the panel */}
-              <div className="border-(--glass-border) border-t px-4 py-3">
+              <div className="border-(--glass-border) border-t px-4 py-2">
                 <ContextRow
                   pageChip={pageChip}
                   pagePinned={pagePinned}
@@ -612,8 +624,7 @@ export function Assistant() {
                   chips={[]}
                   removeChip={removeChip}
                   placeholder="Ask a follow-up…"
-                  bare
-                />
+                        />
               </div>
             </>
           ) : (
@@ -704,11 +715,9 @@ export function Assistant() {
 
   return (
     <>
-      {/* The orb stays mounted across modes — remounting it means a fresh
-          WebGL context and shader compile mid-transition. */}
-      <div hidden={mode !== "line"}>
-        <AssistantOrb />
-      </div>
+      {/* Only render the orb in its own mode: kept mounted-but-hidden it
+          held a WebGL context and a 60fps loop behind every open surface. */}
+      {mode === "line" && <AssistantOrb />}
       {mode === "panel" && panelDrag && <SnapZones hot={hotZone} />}
       <AnimatePresence>{surfaceEl}</AnimatePresence>
     </>
@@ -738,7 +747,21 @@ function AssistantMark({ size }: { size: number }) {
 
 /** The AI avatar, pulled in close to the palette input. */
 function MiniAvatar({ small }: { small?: boolean }) {
-  return <AssistantMark size={small ? 24 : 32} />
+  const { config } = useFoundation()
+  // `small` is the list-row variant: incidental, so it wears the CSS twin.
+  // The surface's own mark (the input avatar) keeps the real character.
+  if (small)
+    return (
+      <OrbGlyph
+        size={24}
+        color={
+          config.orb.useAccent
+            ? undefined
+            : config.orb.colors[Math.min(1, config.orb.colors.length - 1)]
+        }
+      />
+    )
+  return <AssistantMark size={32} />
 }
 
 /** Raycast-style keycap chip — a neutral wash square on the glass. */
@@ -900,10 +923,75 @@ const chipKindIcon: Record<ContextChip["kind"], typeof CubeIcon> = {
   cell: CubeIcon,
 }
 
-function IconTile({ icon }: { icon: typeof CubeIcon }) {
+function IconTile({
+  icon,
+  compact,
+}: {
+  icon: typeof CubeIcon
+  compact?: boolean
+}) {
   return (
-    <span className="flex size-5 shrink-0 items-center justify-center rounded-[5px] bg-[var(--app-blue-wash)] text-[var(--app-blue)]">
-      <HugeiconsIcon icon={icon} size={12} strokeWidth={1.8} />
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center bg-[var(--app-blue-wash)] text-[var(--app-blue)]",
+        compact ? "size-4 rounded-[4px]" : "size-5 rounded-[5px]"
+      )}
+    >
+      <HugeiconsIcon icon={icon} size={compact ? 10 : 12} strokeWidth={1.8} />
+    </span>
+  )
+}
+
+/**
+ * CONTEXT CHIP — one attachment the assistant will answer against: the page
+ * itself, or anything the user right-clicked into the conversation.
+ *
+ * THE ANATOMY IS ONE OBJECT, not a per-surface treatment: icon tile (typed by
+ * what was attached) · label · a squared remove control. Two sizes only —
+ * `default` where the composer has a row of its own (palette, panel), and
+ * `compact` where chips share a line with the input (quick ask). Nothing
+ * else varies; a surface picks the size, never the look.
+ */
+export function ContextChipView({
+  chip,
+  compact,
+  onRemove,
+  className,
+}: {
+  chip: ContextChip
+  compact?: boolean
+  onRemove?: () => void
+  className?: string
+}) {
+  return (
+    <span
+      className={cn(
+        "border-border bg-(--wash) inline-flex max-w-full items-center rounded-lg border font-medium",
+        compact
+          ? "gap-1.5 py-0.5 ps-1 pe-0.5 text-[11.5px]"
+          : "gap-2 py-1 ps-1.5 pe-1 text-[12.5px]",
+        className
+      )}
+    >
+      <IconTile icon={chipKindIcon[chip.kind]} compact={compact} />
+      <span className="min-w-0 max-w-56 truncate">{chip.label}</span>
+      {onRemove && (
+        <button
+          type="button"
+          aria-label={`Remove ${chip.label}`}
+          onClick={onRemove}
+          className={cn(
+            "bg-accent text-muted-foreground hover:text-foreground flex shrink-0 items-center justify-center rounded-md",
+            compact ? "size-[18px]" : "size-[22px]"
+          )}
+        >
+          <HugeiconsIcon
+            icon={Cancel01Icon}
+            size={compact ? 11 : 13}
+            strokeWidth={1.8}
+          />
+        </button>
+      )}
     </span>
   )
 }
@@ -931,18 +1019,7 @@ function ContextRow({
     <div className="flex flex-wrap items-center gap-1.5 pb-2">
       {pageChip &&
         (pagePinned ? (
-          <span className="border-border bg-(--wash) inline-flex max-w-full items-center gap-2 rounded-lg border py-1 ps-1.5 pe-1 text-[12.5px] font-medium">
-            <IconTile icon={SparklesIcon} />
-            <span className="min-w-0 truncate">{pageChip.label}</span>
-            <button
-              type="button"
-              aria-label="Remove page context"
-              onClick={() => onTogglePage(false)}
-              className="bg-accent text-muted-foreground hover:text-foreground flex size-[22px] shrink-0 items-center justify-center rounded-md"
-            >
-              <HugeiconsIcon icon={Cancel01Icon} size={13} strokeWidth={1.8} />
-            </button>
-          </span>
+          <ContextChipView chip={pageChip} onRemove={() => onTogglePage(false)} />
         ) : (
           <button
             type="button"
@@ -958,54 +1035,17 @@ function ContextRow({
           </button>
         ))}
       {chips.map((c) => (
-        <span
-          key={c.id}
-          className="border-border bg-(--wash) inline-flex max-w-full items-center gap-2 rounded-lg border py-1 ps-1.5 pe-1 text-[12.5px] font-medium"
-        >
-          <IconTile icon={chipKindIcon[c.kind]} />
-          <span className="min-w-0 max-w-56 truncate">{c.label}</span>
-          <button
-            type="button"
-            aria-label={`Remove ${c.label}`}
-            onClick={() => removeChip(c.id)}
-            className="bg-accent text-muted-foreground hover:text-foreground flex size-[22px] shrink-0 items-center justify-center rounded-md"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} size={13} strokeWidth={1.8} />
-          </button>
-        </span>
+        <ContextChipView key={c.id} chip={c} onRemove={() => removeChip(c.id)} />
       ))}
     </div>
   )
 }
 
-function Chip({
-  chip,
-  muted,
-  onRemove,
-}: {
-  chip: ContextChip
-  muted?: boolean
-  onRemove?: () => void
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex max-w-52 items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[11px]",
-        muted
-          ? "text-muted-foreground bg-accent"
-          : "bg-[var(--app-blue-wash)] text-[var(--app-blue)]"
-      )}
-    >
-      <span className="truncate">{chip.label}</span>
-      {onRemove && (
-        <button type="button" aria-label={`Remove ${chip.label}`} onClick={onRemove}>
-          <HugeiconsIcon icon={Cancel01Icon} size={11} strokeWidth={1.8} />
-        </button>
-      )}
-    </span>
-  )
-}
-
+/**
+ * CONTEXT PILL — one attached thing the assistant can see. The page's own
+ * chip is muted (it arrived automatically); anything the user attached
+ * carries the ambient accent and a remove control.
+ */
 function InputRow({
   inputRef,
   input,
@@ -1015,8 +1055,6 @@ function InputRow({
   chips,
   removeChip,
   placeholder,
-  showKbd,
-  bare,
 }: {
   inputRef: React.RefObject<HTMLInputElement | null>
   input: string
@@ -1026,52 +1064,47 @@ function InputRow({
   chips: ContextChip[]
   removeChip: (id: string) => void
   placeholder: string
-  showKbd?: boolean
-  bare?: boolean
 }) {
   return (
     <div
       className={cn(
         // THE AI FORM: the input sits plain ON the glass — no filled pill,
-        // no inner border; the surface's own hairline separates it. Only
-        // the free-floating bar carries a surface of its own.
-        "flex items-center gap-3",
-        bare
-          ? ""
-          : "ambient-glass ambient-live-border relative rounded-lg border border-border px-3 py-2 shadow-2xl shadow-black/50"
+        // no inner border; the surface's own hairline separates it.
+        AI_FORM_ROW
       )}
     >
-      {!bare && <AssistantMark size={20} />}
-      {pageChip && <Chip chip={pageChip} muted />}
+      {pageChip && <ContextChipView chip={pageChip} compact />}
       {chips.map((c) => (
-        <Chip key={c.id} chip={c} onRemove={() => removeChip(c.id)} />
+        <ContextChipView
+          key={c.id}
+          chip={c}
+          compact
+          onRemove={() => removeChip(c.id)}
+        />
       ))}
-      <input
-        ref={inputRef}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") onSend()
-        }}
-        placeholder={placeholder}
-        className={cn(
-          "placeholder:text-muted-foreground/70 min-w-0 flex-1 bg-transparent outline-none",
-          bare ? "text-base" : "text-sm"
-        )}
-      />
-      {showKbd && (
-        <kbd className="text-muted-foreground rounded-[4px] bg-accent px-1.5 py-0.5 text-[11px]">
-          ⌘K
-        </kbd>
-      )}
-      <button
+      <div className="relative min-w-0 flex-1">
+        <input
+          ref={inputRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSend()
+          }}
+          aria-label={placeholder}
+          className="w-full bg-transparent text-base outline-none"
+        />
+        <ShimmerPlaceholder show={input === ""}>{placeholder}</ShimmerPlaceholder>
+      </div>
+      <Button
         type="button"
+        size="icon-sm"
+        variant="ghost"
         aria-label="Send"
         onClick={onSend}
-        className="text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground shrink-0"
       >
         <HugeiconsIcon icon={SentIcon} size={16} strokeWidth={1.8} />
-      </button>
+      </Button>
     </div>
   )
 }

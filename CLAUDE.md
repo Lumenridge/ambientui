@@ -59,12 +59,20 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    `framer-motion` (the one sanctioned library) for interruptible/
    gestural/layout/presence motion. No other animation libraries, no
    one-off keyframes in component files, no raw durations or springs.
-8. **The ambient layer contract (DESIGN.md §8) must not drift**: five modes,
+8. **The ambient layer contract (DESIGN.md §8) must not drift**: four modes,
    drag-as-mode-switch, page context via `setPageChip`, and the response
    kit (v0, `response-kit.tsx`) fills the `send()` seam with composed
    answer objects — a model replaces `composeResponse`, never the objects. The beam glow was
    removed — do not reintroduce glows.
-9. **Every vocabulary component is documented** in
+9. **Any Inspect-rail change raises the save reminder.** The rail has one
+   commit affordance and nothing in it changes silently. This is enforced in
+   the primitives — `ControlRow` and `ChoiceControl` call the Foundation's
+   `touch()` — never in individual playgrounds, so a new playground inherits
+   the rule instead of remembering it. The `action` prop on `ControlRow` is
+   the only exemption, and only for a row that fires a one-shot action and
+   sets no value. Discard remounts rail state (`generation`), so throwing
+   away edits works for playground props too.
+10. **Every vocabulary component is documented** in
    `apps/web/src/components/ds/ds-docs.tsx` (summary, behavior, when to use,
    when not to; playground where the prop surface warrants it). Undocumented
    components don't exist as far as the AI vocabulary is concerned.

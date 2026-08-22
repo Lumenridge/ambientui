@@ -1,8 +1,18 @@
 import * as React from "react"
 
+import { SentIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { AnimatePresence, motion } from "framer-motion"
+
+import { Button } from "@workspace/ui/components/button"
+
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useFoundation } from "@/foundation/foundation-context"
+import {
+  useFoundation,
+  useMotionSpring,
+  useMotionTransition,
+} from "@/foundation/foundation-context"
 
 import { useAssistant, type OrbAnchor } from "./assistant-context"
 import { OrbCharacter } from "./orb-character"
@@ -12,6 +22,12 @@ const ORB = 52
    corners and edge midpoints of the viewport. */
 const MARGIN = 12
 const ANCHORS: OrbAnchor[] = ["tl", "tc", "tr", "ml", "mr", "bl", "bc", "br"]
+
+/** The region an opened ambient surface centers on: the page's content area. */
+function measureZone(): DOMRect | null {
+  const el = document.querySelector("main")
+  return el ? el.getBoundingClientRect() : null
+}
 
 function anchorPoint(a: OrbAnchor, w: number, h: number) {
   const xs = { l: MARGIN, c: (w - ORB) / 2, r: w - ORB - MARGIN }
@@ -34,8 +50,54 @@ function anchorPoint(a: OrbAnchor, w: number, h: number) {
  * context, can be dragged anywhere in the window, and snaps to 8 edge anchors.
  */
 export function AssistantOrb() {
-  const { orbAnchor, setOrbAnchor, setMode, orbState } = useAssistant()
+  const { orbAnchor, setOrbAnchor, setMode, orbState, setOrbState, seedPrompt } =
+    useAssistant()
   const { config } = useFoundation()
+  const microT = useMotionTransition("micro")
+  const spring = useMotionSpring()
+  // QUICK ASK — the orb's own expanded form: hovering grows an input out of
+  // the character, anchored to it, so a question costs no surface and no
+  // travel. Leaving with an empty field collapses it back.
+  const [quick, setQuick] = React.useState(false)
+  const [quickInput, setQuickInput] = React.useState("")
+  const quickRef = React.useRef<HTMLInputElement>(null)
+  const closeTimer = React.useRef<number | null>(null)
+
+  const openQuick = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current)
+    // measure before the first render, or the opening frame centers on the
+    // viewport and then jumps to the content region
+    setZone(measureZone())
+    setQuick(true)
+    setOrbState("listening")
+    window.setTimeout(() => quickRef.current?.focus(), 60)
+  }
+  const closeQuick = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current)
+    if (askingRef.current) return
+    setQuick(false)
+    setQuickInput("")
+    setOrbState("still")
+  }
+  const [asking, setAsking] = React.useState(false)
+  const askingRef = React.useRef(false)
+  askingRef.current = asking
+  const sendQuick = () => {
+    const text = quickInput.trim()
+    if (!text || asking) return
+    // The pill holds the thinking beat itself — the question stays where it
+    // was asked, the character churns in place — and hands over to the panel
+    // at the moment there is an answer to hold.
+    setAsking(true)
+    setOrbState("thinking")
+    window.setTimeout(() => {
+      seedPrompt(text, true, true)
+      setMode("panel")
+      setQuickInput("")
+      setQuick(false)
+      setAsking(false)
+    }, 1100)
+  }
   const [drag, setDrag] = React.useState<{ x: number; y: number; moved: boolean } | null>(null)
   // Ref mirror so pointerup never reads a stale closure (fast flicks, synthetic events)
   const dragRef = React.useRef<typeof drag>(null)
@@ -53,9 +115,46 @@ export function AssistantOrb() {
 
   const w = window.innerWidth
   const h = window.innerHeight
+  // The opened form is a SURFACE, so it centers on the CONTENT REGION it
+  // opens over — the page's main area, not the raw viewport — so a rail or
+  // an inspector on the side doesn't push it off-center. The orb travels
+  // there on the page role and returns to its anchor on close.
+  const QUICK_W = 420
+  const [zone, setZone] = React.useState<DOMRect | null>(null)
+  // re-measure on resize while open; the open itself measures synchronously
+  // (see openQuick) so the first frame is already centered
+  React.useEffect(() => {
+    if (!quick) return
+    setZone(measureZone())
+  }, [quick, w, h])
+
+  // Opening does not relocate the assistant — it stays in the zone it is
+  // docked to. The form simply CENTERS on that zone's anchor instead of
+  // hanging off the orb's edge, clamped so it never leaves the content
+  // region.
+  const anchored = anchorPoint(orbAnchor, w, h)
+  const bounds = zone ?? { left: 0, right: w, top: 0, bottom: h }
+  // The orb keeps its side: docked right, it is the RIGHT end of the form
+  // and the input extends leftward — the character never crosses the screen
+  // to open.
+  const growsLeft = orbAnchor.endsWith("r")
+
+  // the form centers on the zone's anchor, clamped into the content region…
+  const formLeft = Math.round(
+    Math.min(
+      Math.max(anchored.x + ORB / 2 - QUICK_W / 2, bounds.left + MARGIN),
+      bounds.right - QUICK_W - MARGIN
+    )
+  )
   const pos = drag
     ? { x: drag.x - ORB / 2, y: drag.y - ORB / 2 }
-    : anchorPoint(orbAnchor, w, h)
+    : quick
+      ? {
+          // …and the orb sits at whichever end of it matches its side
+          x: growsLeft ? formLeft + QUICK_W - ORB : formLeft,
+          y: anchored.y,
+        }
+      : anchored
 
   const onPointerDown = (e: React.PointerEvent) => {
     try {
@@ -79,8 +178,9 @@ export function AssistantOrb() {
     if (!d) return
     if (!d.moved) {
       applyDrag(null)
-      // click → the chat interface; ⌘K is the explicit path to the palette
-      setMode("panel")
+      // click → quick ask, right here; asking promotes to the panel, and
+      // ⌘K remains the explicit path to the palette
+      quickRef.current?.value || quick ? closeQuick() : openQuick()
       return
     }
     const cx = d.x
@@ -98,6 +198,26 @@ export function AssistantOrb() {
     setOrbAnchor(best)
     applyDrag(null)
   }
+
+  // Click opens it, so a click elsewhere closes it — the surface is
+  // deliberate now, not something the pointer brushes past.
+  React.useEffect(() => {
+    if (!quick) return
+    const onDown = (e: PointerEvent) => {
+      const el = e.target as HTMLElement
+      if (!el.closest("[data-quick-ask]")) closeQuick()
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeQuick()
+    }
+    window.addEventListener("pointerdown", onDown)
+    window.addEventListener("keydown", onKey)
+    return () => {
+      window.removeEventListener("pointerdown", onDown)
+      window.removeEventListener("keydown", onKey)
+    }
+  }, [quick])
+
 
   return (
     <>
@@ -120,6 +240,7 @@ export function AssistantOrb() {
           !drag && "transition-all duration-(--motion-page) ease-(--motion-ease)"
         )}
         style={{ left: pos.x, top: pos.y, width: ORB, height: ORB }}
+        data-quick-ask
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -128,7 +249,7 @@ export function AssistantOrb() {
             type="button"
             aria-label="Open ambientui"
             className={cn(
-              "flex items-center justify-center rounded-full shadow-lg shadow-black/30",
+              "relative z-10 flex items-center justify-center rounded-full shadow-lg shadow-black/30",
               drag?.moved ? "cursor-grabbing" : "cursor-grab"
             )}
             style={{ width: ORB, height: ORB }}
@@ -140,6 +261,82 @@ export function AssistantOrb() {
               speeds={config.orb.speeds}
             />
           </button>
+
+          {/* QUICK ASK: the input grows out of the orb, on the side with
+              room, and shares its glass — one object, not two. */}
+          <AnimatePresence>
+            {quick && !drag?.moved && (
+              <motion.div
+                key="quick"
+                className={cn(
+                  "ambient-glass ambient-live-border absolute top-1/2 flex items-center gap-2 rounded-full border border-(--glass-border) shadow-lg shadow-black/25",
+                  growsLeft ? "right-0" : "left-0"
+                )}
+                data-orb-state={orbState}
+                style={{
+                  y: "-50%",
+                  originX: growsLeft ? 1 : 0,
+                  // the orb sits INSIDE the pill: match its height and clear
+                  // its diameter on the side it grows from
+                  height: ORB,
+                  paddingInlineStart: growsLeft ? 18 : ORB + 6,
+                  paddingInlineEnd: growsLeft ? ORB + 6 : 18,
+                }}
+                initial={{ width: ORB, opacity: 0 }}
+                animate={{ width: QUICK_W, opacity: 1 }}
+                exit={{ width: ORB, opacity: 0, transition: microT }}
+                transition={{ ...spring, opacity: microT }}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                {asking ? (
+                  <span className="text-muted-foreground min-w-0 flex-1 truncate text-sm">
+                    {quickInput}
+                  </span>
+                ) : (
+                <div
+                  className={cn(
+                    "relative min-w-0 flex-1",
+                    growsLeft && "order-first"
+                  )}
+                >
+                  <input
+                    ref={quickRef}
+                    value={quickInput}
+                    onChange={(e) => setQuickInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") sendQuick()
+                      if (e.key === "Escape") closeQuick()
+                    }}
+                    aria-label="Ask ambientui"
+                    className="w-full bg-transparent text-base outline-none"
+                  />
+                  {/* the same shimmer every AI form wears */}
+                  {quickInput === "" && (
+                    <span
+                      aria-hidden
+                      className="ambient-shimmer pointer-events-none absolute inset-y-0 left-0 flex items-center text-base"
+                    >
+                      Ask ambientui…
+                    </span>
+                  )}
+                </div>
+                )}
+                {!asking && (
+                  // the same send control every AI form carries
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Send"
+                    onClick={sendQuick}
+                    className="text-muted-foreground hover:text-foreground shrink-0"
+                  >
+                    <HugeiconsIcon icon={SentIcon} size={16} strokeWidth={1.8} />
+                  </Button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
       </div>
     </>
   )

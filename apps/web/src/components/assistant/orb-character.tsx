@@ -261,26 +261,35 @@ function useHeatEngine({
   const paletteKey = React.useRef("")
   const colorsRef = React.useRef(colors)
   colorsRef.current = colors
+  // Each shader param feeds React state, so an un-quantized read re-renders
+  // this instance 60× a second — forever, since springs never land on an
+  // exact value. Rounding lets the equality check succeed once a transition
+  // settles (zero renders at rest) and sampling every third frame is
+  // indistinguishable at these speeds.
+  const q = (v: number, p = 100) => Math.round(v * p) / p
   useAnimationFrame(() => {
-    const m = mvRef.current
-    setParams((prev) => {
-      const next = {
-        speed: m.speed.get(),
-        contour: m.contour.get(),
-        innerGlow: m.innerGlow.get(),
-        outerGlow: m.outerGlow.get(),
-        noise: 0,
-        angle: m.angle.get(),
-      }
-      const same =
-        Math.abs(next.speed - prev.speed) < 1e-4 &&
-        Math.abs(next.contour - prev.contour) < 1e-4 &&
-        Math.abs(next.innerGlow - prev.innerGlow) < 1e-4 &&
-        Math.abs(next.outerGlow - prev.outerGlow) < 1e-4 &&
-        Math.abs(next.angle - prev.angle) < 1e-4
-      return same ? prev : next
-    })
-    if (frameCount.current++ % 30 === 0) {
+    const frame = frameCount.current++
+    if (frame % 3 === 0) {
+      const m = mvRef.current
+      setParams((prev) => {
+        const next = {
+          speed: q(m.speed.get()),
+          contour: q(m.contour.get()),
+          innerGlow: q(m.innerGlow.get()),
+          outerGlow: q(m.outerGlow.get()),
+          noise: 0,
+          angle: q(m.angle.get(), 10),
+        }
+        const same =
+          next.speed === prev.speed &&
+          next.contour === prev.contour &&
+          next.innerGlow === prev.innerGlow &&
+          next.outerGlow === prev.outerGlow &&
+          next.angle === prev.angle
+        return same ? prev : next
+      })
+    }
+    if (frame % 30 === 0) {
       const custom = colorsRef.current
       const next =
         custom && custom.length > 0
@@ -392,7 +401,11 @@ export function OrbField({
 }) {
   const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
   const hostRef = React.useRef<HTMLDivElement>(null)
-  const [box, setBox] = React.useState<{ w: number; h: number } | null>(null)
+  const [box, setBox] = React.useState<{
+    w: number
+    h: number
+    scale: number
+  } | null>(null)
   const [ready, setReady] = React.useState(false)
 
   React.useEffect(() => {
@@ -405,8 +418,20 @@ export function OrbField({
     if (!el) return
     const ro = new ResizeObserver(([entry]) => {
       const r = entry!.contentRect
-      if (r.width > 0 && r.height > 0)
-        setBox({ w: Math.round(r.width), h: Math.round(r.height) })
+      if (r.width <= 0 || r.height <= 0) return
+      // RENDER RESOLUTION IS NOT LAYOUT SIZE. The field is a blurred
+      // gradient stretched behind frosted glass, so its pixels carry no
+      // detail — but at layout size on a retina display a full-page field
+      // is millions of fragments per frame, which is what a shader costs.
+      // Cap the long edge and let CSS scale it up; the result is identical
+      // and the fragment load drops by an order of magnitude.
+      const MAX = 360
+      const shrink = Math.min(1, MAX / Math.max(r.width, r.height))
+      setBox({
+        w: Math.max(1, Math.round(r.width * shrink)),
+        h: Math.max(1, Math.round(r.height * shrink)),
+        scale: 1 / shrink,
+      })
     })
     ro.observe(el)
     return () => ro.disconnect()
@@ -438,6 +463,19 @@ export function OrbField({
       )}
     >
       {ready && box && palette.length > 0 && (
+        <div
+          className="absolute top-1/2 left-1/2"
+          style={{
+            width: box.w,
+            height: box.h,
+            // transform scales the PIXELS, not the layout — the shader keeps
+            // sizing itself from this capped box while the visual covers the
+            // whole surface (and overshoots it, so a surface that grows never
+            // reveals an edge).
+            transform: `translate(-50%, -50%) scale(${box.scale * 1.06})`,
+            transformOrigin: "center",
+          }}
+        >
         <Heatmap
           width={box.w}
           height={box.h}
@@ -453,6 +491,7 @@ export function OrbField({
           scale={1}
           fit="cover"
         />
+        </div>
       )}
     </div>
   )

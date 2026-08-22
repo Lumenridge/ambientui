@@ -347,6 +347,16 @@ export interface OrbPaletteConfig {
   speeds: { still: number; listening: number; thinking: number; answer: number }
 }
 
+export interface ComponentConfig {
+  /** How fast the assistant writes — StreamingText's default pace. */
+  streamCharsPerSecond: number
+  /** How an exchange is presented product-wide: a card, or plain on the transcript. */
+  messageVariant: "bubble" | "flat"
+}
+
+export const STREAM_SPEEDS = [30, 60, 125, 260] as const
+export const MESSAGE_VARIANTS = ["bubble", "flat"] as const
+
 export interface FoundationConfig {
   accent: string
   gray: string
@@ -365,6 +375,17 @@ export interface FoundationConfig {
   orb: OrbPaletteConfig
   /** The motion system: character (easing/duration/spring family) + pace. */
   motion: MotionConfig
+  /**
+   * COMPONENT-LAYER CONFIG — vocabulary defaults that ship with the theme.
+   *
+   * The Inspect rail edits these and Save persists them, exactly like accent
+   * or radius; a component reads them as its DEFAULT and a call site may
+   * still override with a prop. Only settings that are genuinely product
+   * decisions live here — what a playground is currently demonstrating
+   * (which orb state, whether a stream is replaying) is demo state and stays
+   * local, because it says nothing about how the product should behave.
+   */
+  components: ComponentConfig
   figmaFileUrl: string | null
 }
 
@@ -383,6 +404,7 @@ export const DEFAULT_FOUNDATION: FoundationConfig = {
     speeds: { still: 1, listening: 0.8, thinking: 2.8, answer: 0.5 },
   },
   motion: { character: "productive", pace: 100 },
+  components: { streamCharsPerSecond: 60, messageVariant: "bubble" },
   figmaFileUrl: null,
 }
 
@@ -443,6 +465,20 @@ function migrate(raw: Record<string, unknown>): Partial<FoundationConfig> {
         ? orb.colors.slice(0, 4)
         : DEFAULT_FOUNDATION.orb.colors,
     speeds: { ...DEFAULT_FOUNDATION.orb.speeds, ...orb?.speeds },
+  }
+  const components = (out as { components?: Partial<ComponentConfig> })
+    .components
+  out.components = {
+    streamCharsPerSecond: STREAM_SPEEDS.includes(
+      components?.streamCharsPerSecond as (typeof STREAM_SPEEDS)[number]
+    )
+      ? components!.streamCharsPerSecond!
+      : DEFAULT_FOUNDATION.components.streamCharsPerSecond,
+    messageVariant: MESSAGE_VARIANTS.includes(
+      components?.messageVariant as (typeof MESSAGE_VARIANTS)[number]
+    )
+      ? components!.messageVariant!
+      : DEFAULT_FOUNDATION.components.messageVariant,
   }
   const motion = (out as { motion?: Partial<MotionConfig> }).motion
   out.motion = {
@@ -541,8 +577,27 @@ export function compileFoundationCss(config: FoundationConfig): string {
 interface FoundationContextValue {
   config: FoundationConfig
   setConfig: (patch: Partial<FoundationConfig>) => void
-  /** Unsaved changes exist — config differs from the last saved theme. */
+  /**
+   * Unsaved changes exist — either the config differs from the last saved
+   * theme, or an Inspect-rail control was touched. THE RULE: anything the
+   * user changes in the rail raises the save reminder, so a change is never
+   * silently lost. See touch().
+   */
   dirty: boolean
+  /** The config itself differs from the saved theme (dirty minus rail touches). */
+  configDirty: boolean
+  /**
+   * Mark the Inspect rail dirty. Called by the rail's control primitives
+   * (ControlRow, ChoiceControl) — never by an individual playground, so the
+   * rule cannot be forgotten when a new one is written.
+   */
+  touch: () => void
+  /**
+   * Bumped whenever edits are thrown away, so rail-local state (playground
+   * props) remounts to its defaults — which is what makes Discard honest
+   * for controls the Foundation config does not hold.
+   */
+  generation: number
   /** Persist the current config as the project's theme. */
   save: () => void
   /** Return every dimension to the system defaults (live; Save persists). */
@@ -566,6 +621,10 @@ export function FoundationProvider({
   // The last saved theme. Edits apply live but only persist on save();
   // reloading without saving returns to this.
   const [saved, setSaved] = React.useState<FoundationConfig>(DEFAULT_FOUNDATION)
+  // Rail-local edits (playground props) live in their own components, so the
+  // config alone cannot tell us they happened — this flag carries them.
+  const [touched, setTouched] = React.useState(false)
+  const [generation, setGeneration] = React.useState(0)
 
   React.useEffect(() => {
     try {
@@ -613,7 +672,10 @@ export function FoundationProvider({
     () => ({
       config,
       setConfig: (patch) => setConfigState((c) => ({ ...c, ...patch })),
-      dirty: JSON.stringify(config) !== JSON.stringify(saved),
+      dirty: JSON.stringify(config) !== JSON.stringify(saved) || touched,
+      configDirty: JSON.stringify(config) !== JSON.stringify(saved),
+      touch: () => setTouched(true),
+      generation,
       save: () => {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
@@ -621,11 +683,20 @@ export function FoundationProvider({
           // storage may be unavailable
         }
         setSaved(config)
+        setTouched(false)
       },
-      reset: () => setConfigState(DEFAULT_FOUNDATION),
-      discard: () => setConfigState(saved),
+      reset: () => {
+        setConfigState(DEFAULT_FOUNDATION)
+        setTouched(false)
+        setGeneration((g) => g + 1)
+      },
+      discard: () => {
+        setConfigState(saved)
+        setTouched(false)
+        setGeneration((g) => g + 1)
+      },
     }),
-    [config, saved]
+    [config, saved, touched, generation]
   )
 
   return (

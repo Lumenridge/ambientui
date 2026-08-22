@@ -23,6 +23,8 @@ body {
   --wash: color-mix(in oklab, var(--accent) 40%, transparent);          /* quiet fills at rest */
   --wash-strong: color-mix(in oklab, var(--accent) 60%, transparent);   /* hover/active washes */
   --scrim: color-mix(in oklab, var(--background) 50%, transparent);     /* translucent covers (drag zones) */
+  --positive-wash: color-mix(in oklab, var(--positive) 12%, transparent);      /* added lines, passing runs */
+  --destructive-wash: color-mix(in oklab, var(--destructive) 12%, transparent); /* removed lines, failures */
   --glass-veil: color-mix(in oklab, var(--popover) 62%, transparent);  /* the frost between a heat field and content */
   --glass-veil-stage: color-mix(in oklab, var(--popover) 32%, transparent); /* the thin veil over a STAGE field (canvas ground, projectors) */
 }
@@ -52,6 +54,21 @@ body {
   background-color: var(--glass-veil-stage);
   -webkit-backdrop-filter: blur(calc(var(--ambient-blur) * 0.5)) saturate(1.35);
   backdrop-filter: blur(calc(var(--ambient-blur) * 0.5)) saturate(1.35);
+}
+
+/* THE ENGINEERING GRID — the canvas ground reads as aworked surface, not a
+   wallpaper: a dot lattice on the border role, spaced on the Foundation's
+   spacing unit (×6), so density follows the grid like everything else. */
+.ambient-grid {
+  /* barely there by design — the lattice should register as texture, not
+     as pattern: a hairline dot on the border role, at a fraction of its
+     strength, on a wide gauge */
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--border) 45%, transparent) 0.5px,
+    transparent 0.5px
+  );
+  background-size: calc(var(--spacing) * 8) calc(var(--spacing) * 8);
+  background-position: center;
 }
 
 /* THE LIVE BORDER — the orb's states projected onto an AI surface's
@@ -200,14 +217,35 @@ body {
   }
 }
 
+/* THE STREAM'S LEADING EDGE — text that has just arrived is still
+   settling: the newest words carry the ambient accent and fade out toward
+   the tip, with the very edge blurred, so a stream reads as writing rather
+   than as text appearing. Purely presentational; the characters are
+   already in the DOM. */
+.ambient-stream-warm {
+  color: var(--app-blue);
+}
+.ambient-stream-edge {
+  color: var(--app-blue);
+  filter: blur(1.4px);
+  opacity: 0.55;
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 95%);
+  mask-image: linear-gradient(90deg, #000 0%, transparent 95%);
+}
+
 /* Shimmering placeholder text (palette input) */
 .ambient-shimmer {
   color: transparent;
+  /* the travelling highlight is the AMBIENT ACCENT — the assistant's own
+     colour passing through the words, so the placeholder is identity, not
+     just animated grey. Rest tone stays secondary text. */
   background: linear-gradient(
     100deg,
-    var(--muted-foreground) 42%,
-    var(--foreground) 50%,
-    var(--muted-foreground) 58%
+    var(--muted-foreground) 40%,
+    color-mix(in oklab, var(--app-blue) 65%, var(--foreground)) 48%,
+    var(--app-blue) 52%,
+    color-mix(in oklab, var(--app-blue) 65%, var(--foreground)) 56%,
+    var(--muted-foreground) 64%
   );
   background-size: 250% 100%;
   -webkit-background-clip: text;
