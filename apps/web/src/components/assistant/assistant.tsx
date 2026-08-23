@@ -1497,17 +1497,26 @@ function PaletteList({
                 {item.label}
               </span>
               {item.desc && (
-                <span className="min-w-0 truncate text-[12px] text-muted-foreground">
+                <span className="text-muted-foreground min-w-0 truncate text-xs">
                   {item.desc}
                 </span>
               )}
               {item.trailing && (
-                <span className="ms-auto shrink-0 text-[11px] text-muted-foreground">
+                <span className="text-muted-foreground ms-auto shrink-0 text-xs">
                   {item.trailing}
                 </span>
               )}
-              {i === selected && !item.trailing && (
-                <kbd className="ms-auto shrink-0 rounded-sm bg-(--glass-wash) px-1.5 py-0.5 text-[11px] text-muted-foreground">
+              {/* the keycap is ALWAYS in the row and only ever fades: rendered
+                  on selection it changed the row's height, so every row the
+                  pointer touched grew and the list flinched underneath it */}
+              {!item.trailing && (
+                <kbd
+                  aria-hidden={i !== selected}
+                  className={cn(
+                    "text-muted-foreground ms-auto shrink-0 rounded-sm bg-(--glass-wash) px-1.5 py-0.5 text-xs transition-opacity",
+                    i === selected ? "opacity-100" : "opacity-0"
+                  )}
+                >
                   ↵
                 </kbd>
               )}

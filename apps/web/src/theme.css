@@ -40,14 +40,16 @@ body {
   backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
 }
 
-/* THE GLASS WITHOUT ITS FILL — for a bar that floats ON an ambient surface
-   rather than over the product. The fill exists to lift a surface off the
-   page; a bar already sitting on the scrim would only be tinting a tint, and
-   the content passing underneath is the thing worth seeing. Same blur, no
-   ground. */
+/* BLUR AND NOTHING ELSE — for a bar that floats ON an ambient surface rather
+   than over the product. The fill exists to lift a surface off the page; a
+   bar already sitting on the scrim would only be tinting a tint. No
+   saturation boost either: the other recipes lift saturation so a fill reads
+   as glass rather than as fog, but with no fill to sell there is nothing to
+   compensate for — it just pushes colour into a bar that is supposed to have
+   none. The content passing underneath is the only thing worth seeing. */
 .ambient-clear {
-  -webkit-backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
-  backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--ambient-blur));
+  backdrop-filter: blur(var(--ambient-blur));
 }
 
 /* THE SCRIM — the same recipe at full-screen weight. A panel floats on the
