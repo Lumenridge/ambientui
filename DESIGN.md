@@ -301,7 +301,10 @@ render in the `/ds` Inspect rail.
 4. **Context is ambient.** The page chip arrives from the page (`setPageChip`),
    user chips attach explicitly; the user never re-explains where they are.
    Conversations keep their context. What the palette OFFERS is context too:
-   `setPageIntel` carries the page's live suggestions and recents, so the
+   `setPageIntel` carries the page's live suggestions and recents, and the
+   chip itself may carry an `icon` — every page is kind "page", too coarse to
+   tell an editor from a colour map, and the page is the only thing that
+   knows which. So the
    spotlight opens onto this environment's real work rather than a generic
    menu. The dev tool publishes its problem inventory there — every suggestion
    is a question one of its errors deserves, and a fixed problem leaves the

@@ -593,7 +593,13 @@ export function DevToolView() {
 
   // 1. THE PAGE DECLARES ITSELF — the open file, not the route
   React.useEffect(() => {
-    setPageChip({ id: "editor", kind: "page", label: `Editor · ${activePath}` })
+    setPageChip({
+      id: "editor",
+      kind: "page",
+      label: `Editor · ${activePath}`,
+      // this page is an editor over source, and says so
+      icon: "code",
+    })
     return () => setPageChip(null)
   }, [activePath, setPageChip])
 

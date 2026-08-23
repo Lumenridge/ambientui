@@ -189,14 +189,38 @@ export function DsPage() {
               : selectedId === "form-factors"
                 ? "Form factors"
                 : "Foundation"
+  /**
+   * The chip wears the SAME icon as the rail row you are standing on, so the
+   * thing the assistant says it can see and the thing you clicked to get
+   * here are visibly one object. A document is a document; a component is a
+   * component; a foundation page is whatever that dimension is called.
+   */
+  const chipIcon: IconName = doc
+    ? "document"
+    : entry
+      ? "sparkles"
+      : selectedId === "colors"
+        ? "palette"
+        : selectedId === "spacing"
+          ? "ruler"
+          : selectedId === "shadows"
+            ? "layers"
+            : selectedId === "motion"
+              ? "play"
+              : selectedId === "translucency"
+                ? "moon"
+                : selectedId === "form-factors"
+                  ? "sidebar"
+                  : "sliders"
   React.useEffect(() => {
     setPageChip({
       id: `ds-${selectedId}`,
       kind: "page",
       label: `Design system · ${chipLabel}`,
+      icon: chipIcon,
     })
     return () => setPageChip(null)
-  }, [selectedId, chipLabel, setPageChip])
+  }, [selectedId, chipLabel, chipIcon, setPageChip])
 
   return (
     <div className="flex min-h-0 flex-1">

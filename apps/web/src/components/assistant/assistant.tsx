@@ -1686,7 +1686,8 @@ export function ContextChipView({
         className
       )}
     >
-      <IconTile icon={chipKindIcon[chip.kind]} compact={compact} />
+      {/* the chip's own icon when it has one — the page knows what it is */}
+      <IconTile icon={chip.icon ?? chipKindIcon[chip.kind]} compact={compact} />
       <span className="max-w-56 min-w-0 truncate">{chip.label}</span>
       {onRemove && (
         <button

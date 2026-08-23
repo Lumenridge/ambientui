@@ -22,9 +22,16 @@ import { ViewMenu } from "@/components/view-menu"
  */
 
 const VIEWS = [
-  { id: "canvas", label: "Canvas", chip: "Home · Canvas" },
-  { id: "layer", label: "The ambient layer", chip: "Home · The ambient layer" },
-  { id: "devtool", label: "Dev tool", chip: "Home · Dev tool" },
+  // `icon` is what each view IS, for the context chip: every one of these is
+  // kind "page", which is too coarse to tell a bare canvas from an essay.
+  { id: "canvas", label: "Canvas", chip: "Home · Canvas", icon: "image" },
+  {
+    id: "layer",
+    label: "The ambient layer",
+    chip: "Home · The ambient layer",
+    icon: "document",
+  },
+  { id: "devtool", label: "Dev tool", chip: "Home · Dev tool", icon: "code" },
 ] as const
 
 type ViewId = (typeof VIEWS)[number]["id"]
@@ -52,7 +59,12 @@ export function HomePage() {
   React.useEffect(() => {
     if (declaresOwnChip) return
     const active = VIEWS.find((v) => v.id === view)
-    setPageChip({ id: `home-${view}`, kind: "page", label: active!.chip })
+    setPageChip({
+      id: `home-${view}`,
+      kind: "page",
+      label: active!.chip,
+      icon: active!.icon,
+    })
     return () => setPageChip(null)
   }, [view, declaresOwnChip, setPageChip])
 

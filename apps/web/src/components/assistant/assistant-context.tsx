@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 
+import type { IconName } from "@workspace/ui/components/icon"
+
 import type { OrbState } from "./orb-character"
 
 export type AssistantMode =
@@ -21,6 +23,13 @@ export type ContextChip = {
    * diff, a page earns a search and citations.
    */
   kind: "page" | "control" | "target" | "cell" | "file" | "symbol" | "selection"
+  /**
+   * What this particular thing IS, when the kind is too coarse to say. Every
+   * page is `kind: "page"`, but a page can be an editor, a colour map or a
+   * motion table — and the page is the only thing that knows which. Omitted,
+   * the kind's own icon stands in.
+   */
+  icon?: IconName
 }
 
 /**
