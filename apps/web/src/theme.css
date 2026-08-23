@@ -28,7 +28,7 @@ body {
   --glass-veil: color-mix(in oklab, var(--popover) 62%, transparent);  /* the frost between a heat field and content */
   --glass-veil-stage: color-mix(in oklab, var(--popover) 32%, transparent); /* the thin veil over a STAGE field (canvas ground, projectors) */
   --glass-scrim: color-mix(in oklab, var(--popover) 82%, transparent);  /* a FULL-SCREEN ambient surface: heavier, because it covers the product rather than floating on it */
-  --glass-veil-screen: color-mix(in oklab, var(--popover) 84%, transparent); /* the veil over a FULL-PRESENCE field: the panel's 62% leaves a stage-strength shader still glowing through the content */
+  --glass-veil-screen: color-mix(in oklab, var(--popover) 92%, transparent); /* the veil over a FULL-PRESENCE field: the panel's 62% leaves a stage-strength shader glowing through the content, and even 84% read as weather rather than ground */
 }
 
 /* The ambient layer's ONE glass recipe — every AI surface (bar, panel,

@@ -1220,7 +1220,6 @@ export function Assistant() {
             loudest possible place to drop the identity. Self-clipped, and
             mounted only while this mode is (one shader instance, not one
             per mode kept alive). */}
-        {renderField("screen")}
         <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
           <span className="text-sm font-medium">History</span>
@@ -1318,11 +1317,19 @@ export function Assistant() {
             </Sidebar>
           </SidebarProvider>
 
-          {/* the composer OVERLAYS the transcript rather than sitting beside
-              it, on the layer's own glass: a bar the content cannot pass
-              behind has nothing to be translucent about, and seeing the
-              answer move under it is what says the conversation continues */}
+          {/* THE FIELD BELONGS TO THE CONVERSATION, not to the window. Run
+              across the whole surface it lit the record and the chrome too,
+              which are lists — they are read, not felt, and a shader behind
+              them is just noise under text. Scoped here it does what it is
+              for: it is the ground the answer arrives on.
+
+              The composer OVERLAYS the transcript on that same ground: a bar
+              the content cannot pass behind has nothing to be translucent
+              about, and seeing the answer move under it is what says the
+              conversation continues. */}
           <div className="relative flex min-h-0 flex-1 flex-col">
+            {renderField("screen")}
+            <div className="relative flex min-h-0 flex-1 flex-col">
             {renderTranscript("mx-auto w-full max-w-2xl pb-28")}
             {/* no frost of its own: the surface's screen veil already covers
                 the field for the whole window, and a second veil here made
@@ -1353,6 +1360,7 @@ export function Assistant() {
                 }
               />
               </div>
+            </div>
             </div>
           </div>
         </div>
