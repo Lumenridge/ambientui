@@ -3,7 +3,10 @@ import * as React from "react"
 import { AnimatePresence, motion } from "framer-motion"
 
 import { Button } from "@workspace/ui/components/button"
+import { Icon } from "@workspace/ui/components/icon"
 import { cn } from "@workspace/ui/lib/utils"
+
+import { useTheme } from "@/components/theme-provider"
 
 import { useMotionSpring, useMotionTransition } from "@/foundation/foundation-context"
 
@@ -27,6 +30,11 @@ import { useMotionSpring, useMotionTransition } from "@/foundation/foundation-co
  * it opens makes closing a game of catch-up. It rides the Foundation's
  * surface spring and closes on Escape or an outside click, because a menu
  * you cannot dismiss the ordinary way is a trap.
+ *
+ * Appearance rides along at the bottom. It belongs here because it is the
+ * other thing you reach for without meaning to leave the page, and it states
+ * what it will DO rather than what is currently true — a row reading "Dark"
+ * in a menu is ambiguous about whether it is a label or a switch.
  */
 export function ViewMenu({
   items,
@@ -40,6 +48,19 @@ export function ViewMenu({
   className?: string
 }) {
   const [open, setOpen] = React.useState(false)
+  const { theme, setTheme } = useTheme()
+  // "system" is a real setting, so the row has to resolve what is actually
+  // on screen before it can offer the opposite of it
+  const [systemDark, setSystemDark] = React.useState(
+    () => window.matchMedia("(prefers-color-scheme: dark)").matches
+  )
+  React.useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)")
+    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches)
+    mq.addEventListener("change", onChange)
+    return () => mq.removeEventListener("change", onChange)
+  }, [])
+  const isDark = theme === "dark" || (theme === "system" && systemDark)
   const spring = useMotionSpring()
   const micro = useMotionTransition("micro")
   const ref = React.useRef<HTMLDivElement | null>(null)
@@ -113,6 +134,19 @@ export function ViewMenu({
                 {item.label}
               </Button>
             ))}
+            <span className="bg-(--glass-border) mx-2 my-1 h-px" />
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              className="text-muted-foreground justify-start gap-2 rounded-xl"
+            >
+              <Icon name={isDark ? "sun" : "moon"} size={14} />
+              {isDark ? "Switch to light" : "Switch to dark"}
+              <kbd className="bg-(--glass-wash) ms-auto rounded px-1.5 py-0.5 font-mono text-xs">
+                D
+              </kbd>
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>

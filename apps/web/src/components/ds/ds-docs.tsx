@@ -2198,7 +2198,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     ],
     whenNotToUse: [
       "As decoration on pages where no AI is present — the character means the AI is here.",
-      "There is one assistant: within ambient surfaces the mark IS the character (header, palette avatar, input rows all render it, sharing one state); never render a competing character elsewhere.",
+      "ONE CHARACTER PER SURFACE, in the row you speak to it: the composer mark, the quick-ask pill, and the resting orb. Not headers, not footers, not navigation. A shell that stamps the character on every bar is signing itself once per component, and the mark stops meaning \"the assistant is listening here\" and starts meaning \"logo\".",
     ],
     playground: OrbPlayground,
     stories: [

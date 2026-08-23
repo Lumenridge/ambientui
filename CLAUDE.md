@@ -65,7 +65,10 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    drag-as-mode-switch, page context via `setPageChip` (and what the page
    knows via `setPageIntel`), and the response kit (v0, `response-kit.tsx`)
    fills the `send()` seam with composed answer objects — a model replaces
-   `composeResponse`, never the objects. **An answer arrives in order**:
+   `composeResponse`, never the objects. **One character per surface**: the
+   orb/OrbCharacter mark belongs in the row where the user speaks to the
+   assistant (composer mark, quick-ask pill) and in the resting orb — never
+   in headers, footers, navigation or product chrome. **An answer arrives in order**:
    thinking, then each evidence block, then the prose, then artifacts —
    enforced by the stage queue inside `useStagedReveal`, never by a block
    scheduling itself. The beam glow was removed — do not reintroduce glows.

@@ -871,8 +871,17 @@ export function Assistant() {
               {asking ? (
                 <>
                   <div className="flex items-center gap-2 border-b border-border px-4 py-2">
-                    <AssistantMark size={18} />
-                    <span className="text-[13px] font-medium">AI Overview</span>
+                    {/* the session's subject, not a character and not the
+                        product's name — same header rule as the panel */}
+                    <span
+                      title={sessionTitle}
+                      className={cn(
+                        "min-w-0 truncate text-sm font-medium",
+                        busy && "ambient-shimmer"
+                      )}
+                    >
+                      {sessionTitle}
+                    </span>
                     <div className="ms-auto flex items-center gap-1 text-muted-foreground">
                       <HeaderBtn
                         label="Open in chat window"
@@ -953,19 +962,10 @@ export function Assistant() {
               )}
 
               <div className="flex items-center gap-3 border-t border-(--glass-border) px-3 py-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-2">
-                  <OrbGlyph
-                    size={16}
-                    color={
-                      config.orb.useAccent
-                        ? undefined
-                        : config.orb.colors[
-                            Math.min(1, config.orb.colors.length - 1)
-                          ]
-                    }
-                  />
-                  ambientui
-                </span>
+                {/* no character down here either: the palette already
+                    carries one in the row you type into, and a second mark on
+                    the same surface is the shell signing itself twice */}
+                <span className="flex items-center gap-2">ambientui</span>
                 <span className="ms-auto flex items-center gap-1.5">
                   Select <PaletteKey>↵</PaletteKey>
                 </span>

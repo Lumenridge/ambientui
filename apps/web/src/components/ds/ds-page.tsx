@@ -42,6 +42,8 @@ import { TranslucencyPage } from "@/components/ds/translucency-page"
 import { ShadowsPage } from "@/components/ds/shadows-page"
 import { SpacingPage } from "@/components/ds/spacing-page"
 import { FoundationPage } from "@/foundation/foundation-page"
+import { Markdown } from "@/components/ds/markdown"
+import { SYSTEM_DOCS } from "@/components/ds/system-docs"
 
 /**
  * The design-system browser: component list, interactive controls
@@ -117,12 +119,24 @@ export function DsPage() {
     ),
   }))
   const shadcnList = SHADCN_DEFAULT_COMPONENTS.filter((c) => railShow(c.name))
+  // The governing documents, rendered from their real bytes — see
+  // system-docs.ts. They are grouped like the rest of the rail.
+  const docGroups = [...new Set(SYSTEM_DOCS.map((d) => d.group))].map(
+    (group) => ({
+      group,
+      items: SYSTEM_DOCS.filter(
+        (d) => d.group === group && (railShow(d.name) || railMatch(d.summary))
+      ),
+    })
+  )
+  const doc = SYSTEM_DOCS.find((d) => d.id === selectedId)
   const { setPageChip } = useAssistant()
   // Any control in the Inspect rail that writes to the Foundation config
   // raises the same reminder as the Foundation page — one save affordance
   // for the whole system, wherever the change was made.
   const { dirty, configDirty, generation, save, discard } = useFoundation()
   const entry =
+    doc ||
     selectedId === "foundation" ||
     selectedId === "spacing" ||
     selectedId === "colors" ||
@@ -140,7 +154,9 @@ export function DsPage() {
   )
 
   // Declare this page (and the selected item) to the ambient layer.
-  const chipLabel = entry
+  const chipLabel = doc
+    ? doc.path
+    : entry
     ? entry.name
     : selectedId === "spacing"
       ? "Spacing"
@@ -278,6 +294,53 @@ export function DsPage() {
               )
             )}
 
+            {docGroups.map(({ group, items }) =>
+              items.length === 0 ? null : (
+                <Collapsible
+                  key={group}
+                  defaultOpen={false}
+                  open={railQuery ? true : undefined}
+                  className="group/collapsible"
+                >
+                  <SidebarGroup>
+                    <SidebarGroupLabel asChild>
+                      <CollapsibleTrigger>
+                        <span>{group}</span>
+                        <span className="text-muted-foreground ms-auto me-1 font-mono text-xs">
+                          {items.length}
+                        </span>
+                        <Icon
+                          name="chevron-right"
+                          size={13}
+                          className="group-data-[state=open]/collapsible:hidden"
+                        />
+                        <Icon
+                          name="chevron-down"
+                          size={13}
+                          className="hidden group-data-[state=open]/collapsible:block"
+                        />
+                      </CollapsibleTrigger>
+                    </SidebarGroupLabel>
+                    <CollapsibleContent>
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {items.map((d) => (
+                            <RailItem
+                              key={d.id}
+                              id={d.id}
+                              label={d.name}
+                              icon="document"
+                              selectedId={selectedId}
+                              onSelect={setSelectedId}
+                            />
+                          ))}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </CollapsibleContent>
+                  </SidebarGroup>
+                </Collapsible>
+              )
+            )}
             {shadcnList.length > 0 && (
               <Collapsible defaultOpen open={railQuery ? true : undefined} className="group/collapsible">
                 <SidebarGroup>
@@ -331,7 +394,24 @@ export function DsPage() {
       {/* canvas — the inset content card on the sidebar-tinted ground */}
       <main className="bg-sidebar min-w-0 flex-1 p-2">
         <div className="bg-background border-border h-full min-h-0 overflow-y-auto rounded-lg border px-8 py-6">
-        {!entry ? (
+        {doc ? (
+          /* THE REAL FILE. Rendered from its bytes, so the page cannot drift
+             from the rules it is showing. */
+          <div className="mx-auto max-w-3xl pb-12">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-xl font-semibold">{doc.name}</h1>
+              <Badge variant="outline" className="font-mono">
+                {doc.path}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+              {doc.summary}
+            </p>
+            <div className="border-border mt-6 border-t pt-2">
+              <Markdown source={doc.source} />
+            </div>
+          </div>
+        ) : !entry ? (
           selectedId === "spacing" ? (
             <SpacingPage />
           ) : selectedId === "colors" ? (
