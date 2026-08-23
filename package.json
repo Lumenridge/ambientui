@@ -5,10 +5,12 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "gate": "turbo typecheck lint build",
+    "gate": "npm run registry:check && turbo typecheck lint build",
     "lint": "turbo lint",
     "format": "turbo format",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "registry:build": "node scripts/build-registry.mjs && shadcn build --output apps/web/public/r",
+    "registry:check": "node scripts/build-registry.mjs --check"
   },
   "devDependencies": {
     "prettier": "^3.8.3",

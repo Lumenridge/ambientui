@@ -159,14 +159,20 @@
       var(--border) 230deg
     )
     border-box;
-  mask:
-    linear-gradient(#000 0 0) padding-box,
-    linear-gradient(#000 0 0) border-box;
-  mask-composite: exclude;
+  /* ORDER IS LOAD-BEARING: `-webkit-mask` is an alias for the `mask`
+     shorthand, so it RESETS mask-composite. Written webkit-first, the
+     standard longhand lands last and wins. The other order computed to
+     `exclude` here and `add` in a consumer app whose CSS ran through a
+     different pipeline — the ring vanished and the whole conic gradient
+     painted the surface. Found by installing into a real app, not here. */
   -webkit-mask:
     linear-gradient(#000 0 0) padding-box,
     linear-gradient(#000 0 0) border-box;
   -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0) border-box;
+  mask-composite: exclude;
   pointer-events: none;
   animation: ambient-border-spin 14s linear infinite;
 }
