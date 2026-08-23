@@ -28,9 +28,9 @@ export default defineConfig([
      * reload. Our own code obeys it (the icon vocabulary lives in
      * lib/icon-library for exactly this reason).
      *
-     * These three are installed from the shadcn radix-nova preset and are
+     * These are installed from the shadcn radix-nova preset and are
      * extended only through the shadcn CLI or governance (CLAUDE.md rule 4).
-     * Upstream deliberately co-locates `badgeVariants`, `buttonVariants`, and
+     * Upstream deliberately co-locates `badgeVariants`, `buttonVariants`, `tabsListVariants`, and
      * `useSidebar` with their components; splitting them would diverge from
      * the preset and make every future `shadcn add` a merge conflict — a real
      * cost, traded against a dev-only reload nicety.
@@ -42,6 +42,7 @@ export default defineConfig([
       'src/components/badge.tsx',
       'src/components/button.tsx',
       'src/components/sidebar.tsx',
+      'src/components/tabs.tsx',
     ],
     rules: {
       'react-refresh/only-export-components': 'off',

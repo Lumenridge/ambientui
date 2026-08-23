@@ -42,6 +42,15 @@ export type IconName =
   | "edit"
   | "alert"
   | "arrow-up"
+  | "arrow-up-right"
+  | "scissors"
+  | "type"
+  | "smile"
+  | "stop"
+  | "palette"
+  | "ruler"
+  | "layers"
+  | "sliders"
   | "image"
   | "paperclip"
 
@@ -76,6 +85,15 @@ export const ICON_NAMES: IconName[] = [
   "edit",
   "alert",
   "arrow-up",
+  "arrow-up-right",
+  "scissors",
+  "type",
+  "smile",
+  "stop",
+  "palette",
+  "ruler",
+  "layers",
+  "sliders",
   "image",
   "paperclip",
 ]

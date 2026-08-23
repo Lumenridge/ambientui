@@ -104,12 +104,12 @@ That identity runs through the whole ambient layer, all driven by one state:
   counter-rotating comet, answer blooms then settles).
 - **The heat field** — the shader as a surface *background*, behind a frost
   veil, so the glass itself is made of the identity.
-- **Marks** — the real character wherever the assistant signs its name; a
-  pure-CSS twin (`OrbGlyph`) for settled transcript rows and small brand marks,
-  so a long conversation never stacks WebGL contexts.
+- **Marks** — the real character wherever the assistant signs its name at the
+  SHELL level (the floating orb, a surface's brand row); messages themselves
+  carry no mark — the identity is the surface's, not each reply's.
 
 **The response kit** composes answers as objects rather than paragraphs:
-`ResponseBlock` (author mark, streamed text, settle handoff) and
+`ResponseBlock` (streamed text, evidence and artifact blocks, settle handoff) and
 `ReferenceChips` (what the answer was grounded in). The composer is canned —
 wiring a model in replaces `composeResponse`, never the objects or the states.
 The full pipeline is real: typing a question turns the layer to *listening*,

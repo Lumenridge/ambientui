@@ -40,7 +40,9 @@ governance. (DESIGN.md §2, with the Linear precedent.)
 4. **Sanctioned components only.** Product UI composes `packages/ui` components;
    ambient UI composes the assistant's parts. Known gaps are documented in the
    `/ds` registry (no Select/Switch/Textarea/Dialog — use the documented
-   substitutes). Never re-implement a near-miss of an existing component.
+   substitutes). Never re-implement a near-miss of an existing component. A
+   genuinely missing primitive is added through the **shadcn CLI**, then
+   documented at `/ds` before it is used (Tabs, 2026-08-22).
 5. **Foundation is the single source of theme truth.** Theme changes flow through
    `apps/web/src/foundation/foundation-context.tsx` (one injected style tag,
    Save-to-persist). Never set theme variables ad hoc. New `--ambient-*` tokens
@@ -60,10 +62,13 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    gestural/layout/presence motion. No other animation libraries, no
    one-off keyframes in component files, no raw durations or springs.
 8. **The ambient layer contract (DESIGN.md §8) must not drift**: four modes,
-   drag-as-mode-switch, page context via `setPageChip`, and the response
-   kit (v0, `response-kit.tsx`) fills the `send()` seam with composed
-   answer objects — a model replaces `composeResponse`, never the objects. The beam glow was
-   removed — do not reintroduce glows.
+   drag-as-mode-switch, page context via `setPageChip` (and what the page
+   knows via `setPageIntel`), and the response kit (v0, `response-kit.tsx`)
+   fills the `send()` seam with composed answer objects — a model replaces
+   `composeResponse`, never the objects. **An answer arrives in order**:
+   thinking, then each evidence block, then the prose, then artifacts —
+   enforced by the stage queue inside `useStagedReveal`, never by a block
+   scheduling itself. The beam glow was removed — do not reintroduce glows.
 9. **Any Inspect-rail change raises the save reminder.** The rail has one
    commit affordance and nothing in it changes silently. This is enforced in
    the primitives — `ControlRow` and `ChoiceControl` call the Foundation's

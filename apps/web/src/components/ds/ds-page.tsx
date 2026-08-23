@@ -1,10 +1,11 @@
 import * as React from "react"
 
 import { Badge } from "@workspace/ui/components/badge"
+import { Icon, type IconName } from "@workspace/ui/components/icon"
 import { Separator } from "@workspace/ui/components/separator"
-import { cn } from "@workspace/ui/lib/utils"
 
 import { useAssistant } from "@/components/assistant/assistant-context"
+import { OrbGlyph } from "@/components/assistant/orb-character"
 import { useFoundation } from "@/foundation/foundation-context"
 import {
   AMBIENT_COMPONENTS,
@@ -13,6 +14,26 @@ import {
 } from "@/components/ds/ds-docs"
 import { ColorsPage } from "@/components/ds/colors-page"
 import { toast } from "sonner"
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarFooter,
+  SidebarInput,
+  SidebarProvider,
+} from "@workspace/ui/components/sidebar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@workspace/ui/components/collapsible"
 
 import { SaveReminder } from "@/components/ds/settings-kit"
 import { MotionPage } from "@/components/ds/motion-page"
@@ -45,8 +66,57 @@ function DocList({ title, items }: { title: string; items: string[] }) {
   )
 }
 
+/** One rail row on the sanctioned SidebarMenuButton. */
+function RailItem({
+  id,
+  label,
+  selectedId,
+  onSelect,
+  icon,
+}: {
+  id: string
+  label: string
+  selectedId: string
+  onSelect: (id: string) => void
+  icon?: IconName
+}) {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        size="default"
+        isActive={selectedId === id}
+        onClick={() => onSelect(id)}
+      >
+        {icon && <Icon name={icon} size={15} />}
+        <span>{label}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  )
+}
+
 export function DsPage() {
   const [selectedId, setSelectedId] = React.useState<string>("foundation")
+  const { setMode } = useAssistant()
+
+  // the rail's search: filters every list; groups with no matches hide, and
+  // the collapsibles hold themselves open while a query is live
+  const [railQuery, setRailQuery] = React.useState("")
+  const q = railQuery.trim().toLowerCase()
+  const railShow = (label: string) => !q || label.toLowerCase().includes(q)
+  const railMatch = (labels: string) =>
+    !q || labels.toLowerCase().includes(q)
+  const ambientCore = AMBIENT_COMPONENTS.filter(
+    (c) => !c.group && railShow(c.name)
+  )
+  const kitGroups = [
+    ...new Set(AMBIENT_COMPONENTS.map((c) => c.group).filter(Boolean)),
+  ].map((group) => ({
+    group: group as string,
+    items: AMBIENT_COMPONENTS.filter(
+      (c) => c.group === group && railShow(c.name)
+    ),
+  }))
+  const shadcnList = SHADCN_DEFAULT_COMPONENTS.filter((c) => railShow(c.name))
   const { setPageChip } = useAssistant()
   // Any control in the Inspect rail that writes to the Foundation config
   // raises the same reminder as the Foundation page — one save affordance
@@ -97,151 +167,166 @@ export function DsPage() {
   return (
     <div className="flex min-h-0 flex-1">
       {/* component list */}
-      <aside className="bg-sidebar text-sidebar-foreground flex w-60 shrink-0 flex-col overflow-y-auto px-3 py-4">
-        <div className="px-2 pb-1 text-sm font-semibold">Design system</div>
-        <div className="px-2 pt-3 pb-1.5 text-xs font-medium">
-          Project
-        </div>
-        <nav className="flex flex-col gap-0.5">
-          <button
-            type="button"
-            onClick={() => setSelectedId("foundation")}
-            className={cn(
-              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-              selectedId === "foundation"
-                ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
+      {/* THE RAIL IS THE SANCTIONED SIDEBAR, full anatomy: brand header,
+          search that filters the vocabulary, iconed groups, collapsible kit
+          sections with counts, and the assistant in the footer. The /ds page
+          eats its own cooking. */}
+      <SidebarProvider className="min-h-0! w-auto! flex-none">
+        <Sidebar collapsible="none" className="w-64 shrink-0">
+          <SidebarHeader>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton size="lg" className="pointer-events-none">
+                  <OrbGlyph size={28} />
+                  <span className="flex flex-col leading-tight">
+                    <span className="text-sm font-semibold">ambientui</span>
+                    <span className="text-muted-foreground text-xs">
+                      Design system
+                    </span>
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+            <SidebarInput
+              value={railQuery}
+              onChange={(e) => setRailQuery(e.target.value)}
+              placeholder="Search components…"
+            />
+          </SidebarHeader>
+          <SidebarContent className="pb-2">
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <RailItem icon="sliders" id="foundation" label="Foundation" selectedId={selectedId} onSelect={setSelectedId} />
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {railMatch("Colors Spacing Shadows Motion Translucency") && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Foundations</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {railShow("Colors") && <RailItem icon="palette" id="colors" label="Colors" selectedId={selectedId} onSelect={setSelectedId} />}
+                    {railShow("Spacing") && <RailItem icon="ruler" id="spacing" label="Spacing" selectedId={selectedId} onSelect={setSelectedId} />}
+                    {railShow("Shadows") && <RailItem icon="layers" id="shadows" label="Shadows" selectedId={selectedId} onSelect={setSelectedId} />}
+                    {railShow("Motion") && <RailItem icon="play" id="motion" label="Motion" selectedId={selectedId} onSelect={setSelectedId} />}
+                    {railShow("Translucency") && <RailItem icon="moon" id="translucency" label="Translucency" selectedId={selectedId} onSelect={setSelectedId} />}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
             )}
-          >
-            Foundation
-          </button>
-        </nav>
-        <div className="px-2 pt-5 pb-1.5 text-xs font-medium">
-          Foundations
-        </div>
-        <nav className="flex flex-col gap-0.5">
-          <button
-            type="button"
-            onClick={() => setSelectedId("colors")}
-            className={cn(
-              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-              selectedId === "colors"
-                ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
+
+            {(railShow("Form factors") || ambientCore.length > 0) && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Ambient vocabulary</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {railShow("Form factors") && (
+                      <RailItem icon="sidebar" id="form-factors" label="Form factors" selectedId={selectedId} onSelect={setSelectedId} />
+                    )}
+                    {ambientCore.map((c) => (
+                      <RailItem key={c.id} icon="sparkles" id={c.id} label={c.name} selectedId={selectedId} onSelect={setSelectedId} />
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
             )}
-          >
-            Colors
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedId("spacing")}
-            className={cn(
-              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-              selectedId === "spacing"
-                ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
+
+            {/* the kits collapse — 46 rows is an index, and an index you can
+                fold is one you can navigate. Searching holds them open. */}
+            {kitGroups.map(({ group, items }) =>
+              items.length === 0 ? null : (
+                <Collapsible
+                  key={group}
+                  defaultOpen={group === "Messages"}
+                  open={railQuery ? true : undefined}
+                  className="group/collapsible"
+                >
+                  <SidebarGroup>
+                    <SidebarGroupLabel asChild>
+                      <CollapsibleTrigger>
+                        <span>{group}</span>
+                        <span className="text-muted-foreground ms-auto me-1 font-mono text-xs">
+                          {items.length}
+                        </span>
+                        {/* the same disclosure chevron every fold in the app
+                            wears: right closed, down open */}
+                        <Icon
+                          name="chevron-right"
+                          size={13}
+                          className="group-data-[state=open]/collapsible:hidden"
+                        />
+                        <Icon
+                          name="chevron-down"
+                          size={13}
+                          className="hidden group-data-[state=open]/collapsible:block"
+                        />
+                      </CollapsibleTrigger>
+                    </SidebarGroupLabel>
+                    <CollapsibleContent>
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {items.map((c) => (
+                            <RailItem key={c.id} id={c.id} label={c.name} selectedId={selectedId} onSelect={setSelectedId} />
+                          ))}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </CollapsibleContent>
+                  </SidebarGroup>
+                </Collapsible>
+              )
             )}
-          >
-            Spacing
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedId("shadows")}
-            className={cn(
-              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-              selectedId === "shadows"
-                ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
+
+            {shadcnList.length > 0 && (
+              <Collapsible defaultOpen open={railQuery ? true : undefined} className="group/collapsible">
+                <SidebarGroup>
+                  <SidebarGroupLabel asChild>
+                    <CollapsibleTrigger>
+                      <span>Shadcn components</span>
+                      <span className="text-muted-foreground ms-auto me-1 font-mono text-xs">
+                        {shadcnList.length}
+                      </span>
+                      <Icon
+                        name="chevron-right"
+                        size={13}
+                        className="group-data-[state=open]/collapsible:hidden"
+                      />
+                      <Icon
+                        name="chevron-down"
+                        size={13}
+                        className="hidden group-data-[state=open]/collapsible:block"
+                      />
+                    </CollapsibleTrigger>
+                  </SidebarGroupLabel>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {shadcnList.map((c) => (
+                          <RailItem key={c.id} id={c.id} label={c.name} selectedId={selectedId} onSelect={setSelectedId} />
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </SidebarGroup>
+              </Collapsible>
             )}
-          >
-            Shadows
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedId("motion")}
-            className={cn(
-              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-              selectedId === "motion"
-                ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
-            )}
-          >
-            Motion
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedId("translucency")}
-            className={cn(
-              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-              selectedId === "translucency"
-                ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
-            )}
-          >
-            Translucency
-          </button>
-        </nav>
-        <div className="px-2 pt-5 pb-1.5 text-xs font-medium">
-          Ambient vocabulary
-        </div>
-        <nav className="flex flex-col gap-0.5">
-          <button
-            type="button"
-            onClick={() => setSelectedId("form-factors")}
-            className={cn(
-              "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-              selectedId === "form-factors"
-                ? "bg-accent text-foreground font-medium"
-                : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
-            )}
-          >
-            Form factors
-          </button>
-          {AMBIENT_COMPONENTS.map((c, i) => (
-            <React.Fragment key={c.id}>
-              {/* the vocabulary outgrew a flat list: entries declare a group
-                  and the rail prints each heading once, in registry order */}
-              {c.group && c.group !== AMBIENT_COMPONENTS[i - 1]?.group && (
-                <div className="text-muted-foreground mt-3 mb-1 px-2.5 text-xs font-medium tracking-wide uppercase">
-                  {c.group}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => setSelectedId(c.id)}
-                className={cn(
-                  "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-                  c.id === selectedId
-                    ? "bg-accent text-foreground font-medium"
-                    : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
-                )}
-              >
-                {c.name}
-              </button>
-            </React.Fragment>
-          ))}
-        </nav>
-        <div className="px-2 pt-5 pb-1.5 text-xs font-medium">
-          Shadcn components
-        </div>
-        <nav className="flex flex-col gap-0.5">
-          {SHADCN_DEFAULT_COMPONENTS.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setSelectedId(c.id)}
-              className={cn(
-                "rounded-md px-2.5 py-1.5 text-start text-sm transition-colors",
-                c.id === selectedId
-                  ? "bg-accent text-foreground font-medium"
-                  : "text-muted-foreground hover:bg-(--wash-strong) hover:text-foreground"
-              )}
-            >
-              {c.name}
-            </button>
-          ))}
-        </nav>
-      </aside>
+          </SidebarContent>
+          <SidebarFooter className="border-border border-t">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => setMode("spotlight")}>
+                  <OrbGlyph size={18} />
+                  <span>Ask ambientui</span>
+                  <span className="text-muted-foreground ms-auto font-mono text-xs">
+                    ⌘K
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
+      </SidebarProvider>
 
       {/* canvas — the inset content card on the sidebar-tinted ground */}
       <main className="bg-sidebar min-w-0 flex-1 p-2">
@@ -295,7 +380,7 @@ export function DsPage() {
                 <div className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
                   {story.label}
                 </div>
-                <div className="border-border flex min-h-32 items-center justify-center rounded-xl border p-8">
+                <div className="border-border bg-card flex min-h-32 items-center justify-center rounded-xl border p-8">
                   {story.render}
                 </div>
               </section>

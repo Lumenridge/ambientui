@@ -9,12 +9,12 @@ import {
   Message01Icon,
   PictureInPictureOnIcon,
   PlusSignIcon,
-  SentIcon,
+  SourceCodeIcon,
   SparklesIcon,
+  TextIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { sections } from "@/nav"
@@ -29,7 +29,7 @@ import {
 
 import { useAssistant, type ContextChip } from "./assistant-context"
 import {
-  ResponseBlock,
+  MessageBranches,
   StreamingText,
   UserMessage,
   type KitResponse,
@@ -37,13 +37,27 @@ import {
 import { composeResponse } from "./compose-response"
 import { OrbCharacter, OrbField, OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
+import { Composer } from "./composer"
+import { MessageQueue } from "./message-kit"
 
 type Msg = {
   id: number
   role: "user" | "assistant"
   text: string
-  /** Composed response-kit payload (assistant messages). */
-  kit?: KitResponse
+  /**
+   * Composed response-kit payloads (assistant messages). A list, not one
+   * object: regenerating APPENDS a version rather than overwriting, so the
+   * answer the user may have preferred is still reachable (MessageBranches).
+   */
+  kits?: KitResponse[]
+  /** The question that produced this answer, so it can be asked again. */
+  prompt?: string
+  /**
+   * This answer has finished arriving. It survives the surface changing —
+   * dragging panel → dock remounts the transcript, and without this the
+   * message would perform its stream again. An answer is said once.
+   */
+  settled?: boolean
 }
 
 /**
@@ -134,6 +148,7 @@ export function Assistant() {
     orbState,
     setOrbState,
     pageChip,
+    pageIntel,
     chips,
     removeChip,
     seedVersion,
@@ -141,6 +156,7 @@ export function Assistant() {
     consumeAutoSend,
     consumeImmediate,
     navigate,
+    announceEffect,
   } = useAssistant()
 
   const [input, setInput] = React.useState("")
@@ -151,12 +167,6 @@ export function Assistant() {
   // Page context is attached by default — the chip names what the page is about
   const [pagePinned, setPagePinned] = React.useState(true)
   // Palette keyboard selection
-  // `send` is declared below (it depends on state declared between here and
-  // there); the seed effect reaches it through this ref rather than reading a
-  // binding that does not exist yet.
-  const sendRef = React.useRef<
-    ((textOverride?: string, immediate?: boolean) => void) | null
-  >(null)
   const [selIdx, setSelIdx] = React.useState(0)
   // A new query or a new surface starts the selection over. Adjusted DURING
   // render rather than from an effect, so the palette never paints one frame
@@ -269,25 +279,6 @@ export function Assistant() {
     return () => window.removeEventListener("keydown", onKey)
   }, [mode, messages.length, input, setMode])
 
-  // Focus input when a surface opens; pick up seeded prompts (right-click → Explain)
-  React.useEffect(() => {
-    if (mode !== "line") {
-      const seeded = consumeSeededPrompt()
-      // a quick-ask arrives already asked; an explain arrives as a draft
-      if (seeded) {
-        if (consumeAutoSend()) sendRef.current?.(seeded, consumeImmediate())
-        // Draining a queue handed over by another surface is exactly what an
-        // effect is for: the seed lives outside React, consuming it is a
-        // side effect, and it cannot be derived during render without making
-        // render impure. The rule's cascading-render warning is the intended
-        // cost here — one extra commit when a surface hands over.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        else setInput(seeded)
-      }
-      requestAnimationFrame(() => inputRef.current?.focus())
-    }
-  }, [mode, seedVersion, consumeSeededPrompt])
-
   React.useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
   }, [messages])
@@ -310,8 +301,43 @@ export function Assistant() {
   // (the "Ask ambientui" path), the ambient state turns to listening —
   // the orb and every live border lean in before send is even pressed.
   const busyRef = React.useRef(false)
+  // busy must also RENDER (the composer's orb yields to Stop), so the ref
+  // gains a state twin; the ref stays for handlers that must not re-bind
+  const [busy, setBusy] = React.useState(false)
+  const composeTimer = React.useRef<number | null>(null)
+  // the settled answer's workspace effect, relayed to whichever surface owns
+  // the product state — the layer never learns what "fix-composer" means
+  const pendingEffect = React.useRef<string | null>(null)
+  const beginWork = () => {
+    busyRef.current = true
+    setBusy(true)
+  }
+  /**
+   * SCENARIO: queue work while the agent is busy. A send that lands mid-run
+   * does not interrupt and does not block — it stacks, visibly, and drains
+   * when the running turn settles. The queue stays editable (cancel, or
+   * send-now which re-queues the running prompt behind it).
+   */
+  const [queued, setQueued] = React.useState<{ id: string; text: string }[]>([])
+  const queuedRef = React.useRef(queued)
   React.useEffect(() => {
+    queuedRef.current = queued
+  })
+  const [runningPrompt, setRunningPrompt] = React.useState("")
+  // mirrored so the ambient effect below can consult the current state
+  // without taking it as a dependency (which would loop)
+  const orbStateRef = React.useRef(orbState)
+  React.useEffect(() => {
+    orbStateRef.current = orbState
+  })
+  React.useEffect(() => {
+    // WHILE THE PIPELINE OWNS THE CHARACTER, THIS EFFECT KEEPS OUT. Typing
+    // and surface changes decide listening-vs-still only between turns; a
+    // cleared input at the moment of sending must not cancel the thinking
+    // state the send just set.
     if (busyRef.current) return
+    if (orbStateRef.current === "thinking" || orbStateRef.current === "answer")
+      return
     if (mode === "line") {
       setOrbState("still")
       return
@@ -319,42 +345,174 @@ export function Assistant() {
     setOrbState(looksLikeQuestion(input) ? "listening" : "still")
   }, [input, mode, setOrbState])
 
+  /**
+   * REGENERATE — compose the same question again and keep both. The ambient
+   * states run exactly as they do for a first answer, because from the
+   * layer's point of view it IS one.
+   */
+  const regenerate = (id: number) => {
+    if (busyRef.current) return
+    beginWork()
+    setOrbState("thinking")
+    composeTimer.current = window.setTimeout(() => {
+      setMessages((m) =>
+        m.map((msg) =>
+          msg.id === id && msg.kits
+            ? {
+                ...msg,
+                settled: false,
+                kits: [
+                  ...msg.kits,
+                  composeResponse(msg.prompt ?? msg.text, pageChip, chips),
+                ],
+              }
+            : msg
+        )
+      )
+      // NOT "answer" here — the block has only been composed; its evidence
+      // still has to run. ResponseBlock announces the real handover.
+    }, 900)
+  }
+
   const send = (textOverride?: string, immediate = false) => {
     const text = (
       typeof textOverride === "string" ? textOverride : input
     ).trim()
     if (!text) return
+    if (busyRef.current) {
+      // the agent is mid-run: the new instruction stacks behind it
+      setInput("")
+      setQueued((q) => [...q, { id: `${Date.now()}-${q.length}`, text }])
+      return
+    }
     setInput("")
+    setRunningPrompt(text)
     setMessages((m) => [...m, { id: nextId(m), role: "user", text }])
     if (mode === "line") setMode("panel")
     // THE RESPONSE KIT (v0): page context + question → a composed answer
     // object, driving the real ambient pipeline — thinking while composing,
     // answer while streaming, still on settle. A model replaces
     // composeResponse; the objects and states stay.
-    busyRef.current = true
+    beginWork()
     setOrbState("thinking")
     // `immediate`: the surface that sent this already showed the thinking
     // beat (quick ask), so composing waits only a frame
-    window.setTimeout(
+    composeTimer.current = window.setTimeout(
       () => {
         const kit = composeResponse(text, pageChip, chips)
+        pendingEffect.current = kit.effect ?? null
         setMessages((m) => [
           ...m,
-          { id: nextId(m), role: "assistant", text: kit.text, kit },
+          {
+            id: nextId(m),
+            role: "assistant",
+            text: kit.text,
+            kits: [kit],
+            prompt: text,
+          },
         ])
-        setOrbState("answer")
+        // the character keeps thinking until the prose starts — see
+        // onAnswerStart on the transcript's MessageBranches
       },
       immediate ? 60 : 1100
     )
   }
+  /**
+   * Focus the input when a surface opens, and drain any prompt handed over by
+   * another surface (right-click → Explain, quick ask).
+   *
+   * DECLARED AFTER `send` ON PURPOSE. It used to reach `send` through a ref
+   * refreshed by a later effect, which meant this one ran a render behind —
+   * so a prompt seeded in the same click as `addChip` composed its answer
+   * against the PREVIOUS chip list, and an explain-this-file answer came back
+   * generic. Effects run in declaration order; being below `send` is the fix.
+   */
   React.useEffect(() => {
-    sendRef.current = send
-  })
+    if (mode !== "line") {
+      const seeded = consumeSeededPrompt()
+      // a quick-ask arrives already asked; an explain arrives as a draft
+      // Draining a queue handed over by another surface is exactly what an
+      // effect is for: the seed lives outside React, consuming it is a side
+      // effect, and it cannot be derived during render without making render
+      // impure. The cascading render is the intended cost — one extra commit
+      // when a surface hands over.
+      /* eslint-disable react-hooks/set-state-in-effect */
+      if (seeded) {
+        if (consumeAutoSend()) send(seeded, consumeImmediate())
+        else setInput(seeded)
+      }
+      /* eslint-enable react-hooks/set-state-in-effect */
+      requestAnimationFrame(() => inputRef.current?.focus())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, seedVersion, consumeSeededPrompt])
+
+  /**
+   * STOP — the composer's other meaning. Composing: the pending timer is
+   * cancelled and nothing was said. Streaming: the stream settles where it
+   * is; what has arrived stays, because it was already said.
+   */
+  const stop = () => {
+    if (composeTimer.current !== null) {
+      window.clearTimeout(composeTimer.current)
+      composeTimer.current = null
+    }
+    busyRef.current = false
+    setBusy(false)
+    setOrbState("still")
+    // an explicit stop does NOT drain the queue — stopping means stop; the
+    // queued turns stay visible and the user sends the next one deliberately
+  }
+
+  /** MessageQueue's send-now: the picked turn runs, the running one re-queues. */
+  const interruptWith = (id: string) => {
+    const item = queuedRef.current.find((q) => q.id === id)
+    if (!item) return
+    const displaced = runningPrompt
+    stop()
+    setQueued((q) => [
+      ...(displaced ? [{ id: `req-${Date.now()}`, text: displaced }] : []),
+      ...q.filter((x) => x.id !== id),
+    ])
+    window.setTimeout(() => send(item.text), 60)
+  }
 
   const settleResponse = () => {
     busyRef.current = false
+    setBusy(false)
+    // the answer is now history: mark it, so changing surface re-renders it
+    // settled instead of replaying the stream
+    setMessages((m) =>
+      m.map((msg, i) =>
+        i === m.length - 1 && msg.role === "assistant"
+          ? { ...msg, settled: true }
+          : msg
+      )
+    )
+    if (pendingEffect.current) {
+      announceEffect(pendingEffect.current)
+      pendingEffect.current = null
+    }
+    // drain: the next queued turn sends itself once this one has settled
+    const next = queuedRef.current[0]
+    if (next) {
+      setQueued((q) => q.slice(1))
+      window.setTimeout(() => send(next.text), 450)
+    }
     setOrbState("still")
   }
+
+  /**
+   * WHAT THIS CONVERSATION IS ABOUT. A panel titled with the product's name
+   * says nothing the surface has not already said — the identity lives in
+   * the character, which now sits in the composer. The useful title is the
+   * subject: the question that started it, and while a turn runs, the
+   * instruction being executed.
+   */
+  const firstAsk = messages.find((m) => m.role === "user")?.text
+  const sessionTitle = busy
+    ? runningPrompt || firstAsk || "Working…"
+    : (firstAsk ?? "New chat")
 
   let surfaceEl: React.ReactNode = null
 
@@ -397,12 +555,17 @@ export function Assistant() {
         {messages.map((m) =>
           m.role === "user" ? (
             <UserMessage key={m.id} text={m.text} />
-          ) : m.kit ? (
-            <ResponseBlock
+          ) : m.kits ? (
+            <MessageBranches
               key={m.id}
-              response={m.kit}
-              live={m.id === messages[messages.length - 1]?.id}
+              branches={m.kits}
+              live={!m.settled && m.id === messages[messages.length - 1]?.id}
               onSettled={settleResponse}
+              // the work is not over when the answer was composed — it is
+              // over when the answer starts being said
+              onAnswerStart={() => setOrbState("answer")}
+              onRegenerate={() => regenerate(m.id)}
+              onFollowUp={(text) => send(text)}
             />
           ) : (
             <StreamingText
@@ -435,7 +598,7 @@ export function Assistant() {
   )
 
   const surface = (
-    <div className="ambient-glass relative flex h-full min-h-0 flex-col border border-(--glass-border)">
+    <div className="ambient-glass relative flex h-full min-h-0 flex-col rounded-[inherit] border border-(--glass-border)">
       {fieldLayers}
       <div className="relative flex min-h-0 flex-1 flex-col">
         {/* header — the drag handle IS the form switcher: drag to float, dock, or spotlight */}
@@ -446,8 +609,17 @@ export function Assistant() {
             panelDrag ? "cursor-grabbing" : "cursor-grab"
           )}
         >
-          <AssistantMark size={20} />
-          <span className="text-sm font-medium">ambientui</span>
+          {/* the session's subject, not the product's name; it shimmers
+              while the instruction it names is running */}
+          <span
+            title={sessionTitle}
+            className={cn(
+              "min-w-0 truncate text-sm font-medium",
+              busy && "ambient-shimmer"
+            )}
+          >
+            {sessionTitle}
+          </span>
           <span className="absolute left-1/2 hidden -translate-x-1/2 text-muted-foreground/70 group-hover/header:inline-flex">
             <HugeiconsIcon
               icon={DragDropHorizontalIcon}
@@ -473,15 +645,24 @@ export function Assistant() {
             chips={chips}
             removeChip={removeChip}
           />
-          <InputRow
+          {queued.length > 0 && (
+            <MessageQueue
+              running={busy ? runningPrompt : undefined}
+              queued={queued}
+              onInterrupt={interruptWith}
+              onCancel={(id) => setQueued((q) => q.filter((x) => x.id !== id))}
+              className="pb-2"
+            />
+          )}
+          <Composer
             inputRef={inputRef}
-            input={input}
-            setInput={setInput}
+            value={input}
+            onChange={setInput}
             onSend={send}
-            pageChip={null}
-            chips={[]}
-            removeChip={removeChip}
-            placeholder="Ask a follow-up…"
+            onStop={stop}
+            busy={busy}
+            mark
+            placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
           />
         </div>
       </div>
@@ -490,6 +671,9 @@ export function Assistant() {
 
   if (mode === "spotlight") {
     const q = input.trim()
+    // the page's own invitation, or the app-wide one
+    const askLine =
+      pageIntel?.askPlaceholder ?? "Search or ask a question in ambientui…"
     const question = looksLikeQuestion(input)
 
     const goNav = (id: string) => {
@@ -504,25 +688,51 @@ export function Assistant() {
       iconKind: "ask",
       run: () => send(),
     }
-    const navItems = (list: typeof sections): PaletteItem[] =>
-      list.map((s) => ({
-        id: `nav-${s.id}`,
-        section: "Jump to",
-        label: s.label,
-        desc: s.description,
+    // The page's own workspace wins over the app's routes: inside the dev
+    // tool, "Jump to" opens files. Both shapes collapse to the same item.
+    const jumpTargets: {
+      id: string
+      label: string
+      desc?: string
+      icon?: typeof SparklesIcon
+      go: () => void
+    }[] = pageIntel?.jumps
+      ? pageIntel.jumps.map((j) => ({
+          id: j.id,
+          label: j.label,
+          desc: j.desc,
+          icon: SourceCodeIcon,
+          go: () => {
+            pageIntel.onJump?.(j.id)
+            setMode("line")
+          },
+        }))
+      : sections.map((s) => ({
+          id: s.id,
+          label: s.label,
+          desc: s.description,
+          icon: s.icon,
+          go: () => goNav(s.id),
+        }))
+    const navItems = (list: typeof jumpTargets): PaletteItem[] =>
+      list.map((t) => ({
+        id: `nav-${t.id}`,
+        section: pageIntel?.jumpLabel ?? "Jump to",
+        label: t.label,
+        desc: t.desc,
         iconKind: "nav" as const,
-        navIcon: s.icon,
-        run: () => goNav(s.id),
+        navIcon: t.icon,
+        run: t.go,
       }))
     // The matching sections, kept as DATA: every palette item carries a `run`
     // closure, so anything derived from the item list drags those closures
     // along. The empty-state copy below needs a count, not a list of actions.
     const ql = q.toLowerCase()
     const queryMatches = q
-      ? sections.filter(
-          (s) =>
-            s.label.toLowerCase().includes(ql) ||
-            s.description.toLowerCase().includes(ql)
+      ? jumpTargets.filter(
+          (t) =>
+            t.label.toLowerCase().includes(ql) ||
+            (t.desc ?? "").toLowerCase().includes(ql)
         )
       : []
     // One expression, not a binding filled across branches: reassigning
@@ -536,7 +746,7 @@ export function Assistant() {
         : q
           ? [askItem, ...navItems(queryMatches)]
           : [
-              ...RECENT_CHATS.map((r) => ({
+              ...(pageIntel?.recents ?? RECENT_CHATS).map((r) => ({
                 id: `recent-${r.text}`,
                 section: "Recent chats",
                 label: r.text,
@@ -544,22 +754,23 @@ export function Assistant() {
                 iconKind: "recent" as const,
                 run: () => send(r.text),
               })),
-              ...SUGGESTED_PROMPTS.map((p) => ({
+              ...(pageIntel?.suggestions ?? SUGGESTED_PROMPTS).map((p) => ({
                 id: `prompt-${p}`,
-                section: "Suggested for this page",
+                section: pageIntel?.suggestLabel ?? "Suggested for this page",
                 label: p,
                 iconKind: "prompt" as const,
                 run: () => send(p),
               })),
               {
                 id: "open-chat",
-                section: "Suggested for this page",
-                label: "Open chat with page context",
+                section: pageIntel?.suggestLabel ?? "Suggested for this page",
+                // the surface has a name, and it is the panel (DESIGN.md §8)
+                label: "Open the panel with this context",
                 desc: pageChip?.label,
                 iconKind: "avatar" as const,
                 run: () => setMode("panel"),
               },
-              ...navItems(sections),
+              ...navItems(jumpTargets),
             ]
     const onPaletteKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey)) {
@@ -616,11 +827,11 @@ export function Assistant() {
                           value={input}
                           onChange={(e) => setInput(e.target.value)}
                           onKeyDown={onPaletteKeyDown}
-                          aria-label="Search or ask a question in ambientui"
+                          aria-label={askLine}
                           className="w-full bg-transparent text-base outline-none"
                         />
                         <ShimmerPlaceholder show={input === ""}>
-                          Search or ask a question in ambientui…
+                          {askLine}
                         </ShimmerPlaceholder>
                       </div>
                     </div>
@@ -679,15 +890,26 @@ export function Assistant() {
                       chips={chips}
                       removeChip={removeChip}
                     />
-                    <InputRow
+                    {queued.length > 0 && (
+                      <MessageQueue
+                        running={busy ? runningPrompt : undefined}
+                        queued={queued}
+                        onInterrupt={interruptWith}
+                        onCancel={(id) =>
+                          setQueued((q) => q.filter((x) => x.id !== id))
+                        }
+                        className="pb-2"
+                      />
+                    )}
+                    <Composer
                       inputRef={inputRef}
-                      input={input}
-                      setInput={setInput}
+                      value={input}
+                      onChange={setInput}
                       onSend={send}
-                      pageChip={null}
-                      chips={[]}
-                      removeChip={removeChip}
-                      placeholder="Ask a follow-up…"
+                      onStop={stop}
+                      busy={busy}
+                      mark
+            placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
                     />
                   </div>
                 </>
@@ -745,7 +967,10 @@ export function Assistant() {
       <motion.div
         key="dock"
         data-orb-state={orbState}
-        className="ambient-live-border fixed top-0 right-0 bottom-0 z-50 w-[420px] max-w-[90vw] shadow-[-24px_0_70px_-16px_rgba(0,0,0,0.4)]"
+        // inset on the spacing grid (2 = 8px at the default unit) and
+        // rounded: the dock is a surface the layer put there, not a pane
+        // welded to the window edge
+        className="ambient-live-border fixed top-2 right-2 bottom-2 z-50 w-[420px] max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl shadow-[-24px_0_70px_-16px_rgba(0,0,0,0.4)]"
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 40, transition: microT }}
@@ -796,7 +1021,7 @@ export function Assistant() {
  * for incidental marks: the footer brand and settled transcript entries,
  * where a context per row would stack up — DESIGN.md §12.)
  */
-function AssistantMark({ size }: { size: number }) {
+export function AssistantMark({ size }: { size: number }) {
   const { config } = useFoundation()
   const { orbState } = useAssistant()
   return (
@@ -995,6 +1220,9 @@ const chipKindIcon: Record<ContextChip["kind"], typeof CubeIcon> = {
   control: CheckListIcon,
   target: CubeIcon,
   cell: CubeIcon,
+  file: SourceCodeIcon,
+  symbol: CubeIcon,
+  selection: TextIcon,
 }
 
 function IconTile({
@@ -1127,67 +1355,3 @@ function ContextRow({
  * chip is muted (it arrived automatically); anything the user attached
  * carries the ambient accent and a remove control.
  */
-function InputRow({
-  inputRef,
-  input,
-  setInput,
-  onSend,
-  pageChip,
-  chips,
-  removeChip,
-  placeholder,
-}: {
-  inputRef: React.RefObject<HTMLInputElement | null>
-  input: string
-  setInput: (v: string) => void
-  onSend: () => void
-  pageChip: ContextChip | null
-  chips: ContextChip[]
-  removeChip: (id: string) => void
-  placeholder: string
-}) {
-  return (
-    <div
-      className={cn(
-        // THE AI FORM: the input sits plain ON the glass — no filled pill,
-        // no inner border; the surface's own hairline separates it.
-        AI_FORM_ROW
-      )}
-    >
-      {pageChip && <ContextChipView chip={pageChip} compact />}
-      {chips.map((c) => (
-        <ContextChipView
-          key={c.id}
-          chip={c}
-          compact
-          onRemove={() => removeChip(c.id)}
-        />
-      ))}
-      <div className="relative min-w-0 flex-1">
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onSend()
-          }}
-          aria-label={placeholder}
-          className="w-full bg-transparent text-base outline-none"
-        />
-        <ShimmerPlaceholder show={input === ""}>
-          {placeholder}
-        </ShimmerPlaceholder>
-      </div>
-      <Button
-        type="button"
-        size="icon-sm"
-        variant="ghost"
-        aria-label="Send"
-        onClick={onSend}
-        className="shrink-0 text-muted-foreground hover:text-foreground"
-      >
-        <HugeiconsIcon icon={SentIcon} size={16} strokeWidth={1.8} />
-      </Button>
-    </div>
-  )
-}

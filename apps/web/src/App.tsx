@@ -4,10 +4,10 @@ import { Toaster } from "@workspace/ui/components/sonner"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
 import { Assistant } from "@/components/assistant/assistant"
-import { CanvasBackdrop } from "@/components/canvas-backdrop"
 import { useTheme } from "@/components/theme-provider"
 import { AssistantProvider } from "@/components/assistant/assistant-context"
 import { DsPage } from "@/components/ds/ds-page"
+import { HomePage } from "@/components/home/home-page"
 import { FoundationProvider } from "@/foundation/foundation-context"
 import { sections, type SectionId } from "@/nav"
 
@@ -56,19 +56,8 @@ export function App() {
           {active === "ds" ? (
             <DsPage />
           ) : (
-            <main className="relative flex flex-1 items-center justify-center overflow-hidden">
-              {/* The canvas wears the ambient identity as a still backdrop
-                  — the heat field at rest behind a frost veil. Presentation
-                  surface: the page IS the ambient layer's ground. */}
-              <CanvasBackdrop />
-              <div className="text-muted-foreground relative flex flex-col items-center gap-2 text-sm select-none">
-                <p className="text-foreground/80 text-base font-medium">
-                  ambientui
-                </p>
-                <p>
-                  Press <kbd className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">⌘K</kbd> — or drag the orb.
-                </p>
-              </div>
+            <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+              <HomePage />
             </main>
           )}
           <Assistant />

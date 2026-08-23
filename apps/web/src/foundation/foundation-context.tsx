@@ -117,7 +117,56 @@ export const GRAYS: Gray[] = ["slate", "gray", "zinc", "neutral", "stone"].map(
  * grid logic as spacing. Customization means choosing a step, never typing
  * a number that isn't here.
  */
-export const RADIUS_STEPS = [0, 2, 4, 8, 12, 16, 20, 24] as const
+/**
+ * THE RADIUS SCALE OF RECORD IS TAILWIND'S — none, xs, sm, md, lg, xl, 2xl,
+ * 3xl, 4xl, exactly as `tailwindcss/theme.css` defines them. The previous ramp
+ * (0/2/4/8/12/16/20/24) was invented: 20 exists on no scale, 6 and 32 were
+ * missing, and the named steps were multiples of the pick rather than real
+ * Tailwind values.
+ *
+ * The Foundation does not change the scale — it chooses WHERE ON IT the
+ * product sits. `--radius` is the chosen step and the named steps are its
+ * neighbours ON THE SAME RAMP (see radiusWindow), so every emitted value is a
+ * Tailwind radius, and the default choice reproduces Tailwind exactly.
+ */
+export const RADIUS_SCALE = [
+  { px: 0, name: "none" },
+  { px: 2, name: "xs" },
+  { px: 4, name: "sm" },
+  { px: 6, name: "md" },
+  { px: 8, name: "lg" },
+  { px: 12, name: "xl" },
+  { px: 16, name: "2xl" },
+  { px: 24, name: "3xl" },
+  { px: 32, name: "4xl" },
+] as const
+
+export const RADIUS_STEPS: number[] = RADIUS_SCALE.map((r) => r.px)
+
+/** The named steps shadcn components consume, as a window on Tailwind's ramp. */
+export const RADIUS_NAMES = ["xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl"] as const
+
+/**
+ * Slide the window so `lg` lands on the chosen step: the neighbours are the
+ * adjacent Tailwind values, clamped at the ends of the ramp. At the default
+ * (8px = lg) this returns Tailwind's own mapping unchanged.
+ */
+export function radiusWindow(chosen: number): Record<string, number> {
+  const steps: number[] = RADIUS_SCALE.map((r) => r.px)
+  const i = Math.max(0, steps.indexOf(chosen))
+  const at = (offset: number) =>
+    steps[Math.min(steps.length - 1, Math.max(0, i + offset))]!
+  return {
+    xs: at(-3),
+    sm: at(-2),
+    md: at(-1),
+    lg: at(0),
+    xl: at(1),
+    "2xl": at(2),
+    "3xl": at(3),
+    "4xl": at(4),
+  }
+}
 
 /**
  * Spacing is Tailwind's own scale; the Foundation chooses its UNIT — the
@@ -360,7 +409,7 @@ export const MESSAGE_VARIANTS = ["bubble", "flat"] as const
 export interface FoundationConfig {
   accent: string
   gray: string
-  /** Corner radius in px — must be one of RADIUS_STEPS. */
+  /** Corner radius in px — must be a step on Tailwind's radius scale. */
   radius: number
   /** Spacing unit id — sets Tailwind's --spacing, which every utility derives from. */
   spacingGrid: (typeof SPACING_GRIDS)[number]["id"]
@@ -420,11 +469,16 @@ function migrate(raw: Record<string, unknown>): Partial<FoundationConfig> {
   const out = { ...raw } as Partial<FoundationConfig> & { radius?: unknown }
   if (typeof out.radius === "string")
     out.radius = legacyRadius[out.radius] ?? DEFAULT_FOUNDATION.radius
-  if (
-    typeof out.radius === "number" &&
-    !RADIUS_STEPS.includes(out.radius as (typeof RADIUS_STEPS)[number])
-  )
-    out.radius = DEFAULT_FOUNDATION.radius
+  if (typeof out.radius === "number" && !RADIUS_STEPS.includes(out.radius)) {
+    // 20px was on the retired ramp and exists on no Tailwind scale — land on
+    // the nearest real step rather than silently resetting the whole choice
+    const nearest = RADIUS_STEPS.reduce((best, step) =>
+      Math.abs(step - (out.radius as number)) < Math.abs(best - (out.radius as number))
+        ? step
+        : best
+    )
+    out.radius = nearest
+  }
   // The 4px "compact" grid was removed — too tight for real interfaces.
   if ((out as { spacingGrid?: string }).spacingGrid === "compact")
     out.spacingGrid = "default"
@@ -522,6 +576,13 @@ export function compileFoundationCss(config: FoundationConfig): string {
     `--primary-foreground: ${accent.light.primaryForeground};`,
     `--sidebar-primary-foreground: ${accent.light.primaryForeground};`,
     `--radius: ${rem(config.radius)};`,
+    // …and the named steps with it, as real Tailwind values rather than
+    // multiples. These are the RUNTIME window tokens the @theme entries
+    // reference — writing --radius-* directly would be inert, because
+    // theme(inline) bakes utilities against these vars, not those names.
+    ...Object.entries(radiusWindow(config.radius)).map(
+      ([name, px]) => `--radius-window-${name}: ${rem(px)};`
+    ),
     // THE PROPAGATION RULE: the Foundation sets Tailwind's core --spacing,
     // so every utility-based dimension in every component follows.
     `--spacing: ${rem(grid.unit)};`,

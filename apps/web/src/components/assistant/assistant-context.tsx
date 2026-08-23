@@ -10,7 +10,40 @@ export type OrbAnchor = "tl" | "tc" | "tr" | "ml" | "mr" | "bl" | "bc" | "br"
 export type ContextChip = {
   id: string
   label: string
-  kind: "page" | "control" | "target" | "cell"
+  /**
+   * What was attached. The kind picks the chip's mark and tells the composer
+   * what sort of answer the question deserves — a file earns tool calls and a
+   * diff, a page earns a search and citations.
+   */
+  kind: "page" | "control" | "target" | "cell" | "file" | "symbol" | "selection"
+}
+
+/**
+ * What the page knows that the ambient layer should surface: the questions
+ * worth asking RIGHT NOW (live — a healed problem leaves the list) and the
+ * working history this surface would plausibly have. Announced by the page
+ * like pageChip is; the layer renders it and falls back to its generic
+ * defaults when no page has spoken.
+ */
+export type PageIntel = {
+  suggestions?: string[]
+  recents?: { text: string; when: string }[]
+  /**
+   * What "Jump to" navigates to while this page is open. A page with its own
+   * workspace — the dev tool's files — offers those instead of the app's
+   * routes: the palette should move you around where you are working, not
+   * away from it.
+   */
+  jumps?: { id: string; label: string; desc?: string }[]
+  onJump?: (id: string) => void
+  /**
+   * What the spotlight's input invites here. The generic line asks about the
+   * app; a page with its own material can ask about that instead.
+   */
+  askPlaceholder?: string
+  /** Section headings, when the page's own words are more useful. */
+  suggestLabel?: string
+  jumpLabel?: string
 }
 
 type AssistantState = {
@@ -19,6 +52,9 @@ type AssistantState = {
   /** Ambient context — what the user is currently looking at. Replaced on navigation/selection. */
   pageChip: ContextChip | null
   setPageChip: (c: ContextChip | null) => void
+  /** What the current page suggests and remembers — see PageIntel. */
+  pageIntel: PageIntel | null
+  setPageIntel: (i: PageIntel | null) => void
   /** Explicit context added by the user (right-click → Explain / Add to context). */
   chips: ContextChip[]
   addChip: (c: ContextChip) => void
@@ -43,6 +79,12 @@ type AssistantState = {
   setOrbState: (s: OrbState) => void
   /** Navigate the app shell to a section (wired by App). */
   navigate?: (sectionId: string) => void
+  /**
+   * The last workspace effect a settled answer announced. Surfaces that own
+   * product state subscribe and decide what it means; the layer only relays.
+   */
+  workspaceEffect: string | null
+  announceEffect: (effect: string | null) => void
 }
 
 const AssistantContext = React.createContext<AssistantState | undefined>(undefined)
@@ -56,8 +98,10 @@ export function AssistantProvider({
 }) {
   const [mode, setMode] = React.useState<AssistantMode>("line")
   const [pageChip, setPageChip] = React.useState<ContextChip | null>(null)
+  const [pageIntel, setPageIntel] = React.useState<PageIntel | null>(null)
   const [chips, setChips] = React.useState<ContextChip[]>([])
   const [seedVersion, setSeedVersion] = React.useState(0)
+  const [workspaceEffect, announceEffect] = React.useState<string | null>(null)
   const [orbAnchor, setOrbAnchor] = React.useState<OrbAnchor>("bc")
   const [orbState, setOrbState] = React.useState<OrbState>("still")
   const seededRef = React.useRef<string | null>(null)
@@ -114,6 +158,8 @@ export function AssistantProvider({
       setMode,
       pageChip,
       setPageChip,
+      pageIntel,
+      setPageIntel,
       chips,
       addChip,
       removeChip,
@@ -128,8 +174,10 @@ export function AssistantProvider({
       orbState,
       setOrbState,
       navigate: onNavigate,
+      workspaceEffect,
+      announceEffect,
     }),
-    [mode, pageChip, chips, addChip, removeChip, explain, seedVersion, consumeSeededPrompt, orbAnchor, orbState, onNavigate]
+    [mode, pageChip, pageIntel, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeImmediate, consumeSeededPrompt, orbAnchor, orbState, onNavigate, workspaceEffect]
   )
 
   return (

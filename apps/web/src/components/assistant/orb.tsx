@@ -1,10 +1,7 @@
 import * as React from "react"
 
-import { SentIcon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
 import { AnimatePresence, motion } from "framer-motion"
 
-import { Button } from "@workspace/ui/components/button"
 
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -15,6 +12,7 @@ import {
 } from "@/foundation/foundation-context"
 
 import { useAssistant, type OrbAnchor } from "./assistant-context"
+import { Composer } from "./composer"
 import { OrbCharacter } from "./orb-character"
 
 const ORB = 52
@@ -50,8 +48,15 @@ function anchorPoint(a: OrbAnchor, w: number, h: number) {
  * context, can be dragged anywhere in the window, and snaps to 8 edge anchors.
  */
 export function AssistantOrb() {
-  const { orbAnchor, setOrbAnchor, setMode, orbState, setOrbState, seedPrompt } =
-    useAssistant()
+  const {
+    orbAnchor,
+    setOrbAnchor,
+    setMode,
+    orbState,
+    setOrbState,
+    seedPrompt,
+    pageIntel,
+  } = useAssistant()
   const { config } = useFoundation()
   const microT = useMotionTransition("micro")
   const spring = useMotionSpring()
@@ -85,8 +90,8 @@ export function AssistantOrb() {
   React.useEffect(() => {
     askingRef.current = asking
   })
-  const sendQuick = () => {
-    const text = quickInput.trim()
+  const sendQuick = (override?: string) => {
+    const text = (override ?? quickInput).trim()
     if (!text || asking) return
     // The pill holds the thinking beat itself — the question stays where it
     // was asked, the character churns in place — and hands over to the panel
@@ -297,46 +302,26 @@ export function AssistantOrb() {
                     {quickInput}
                   </span>
                 ) : (
-                <div
-                  className={cn(
-                    "relative min-w-0 flex-1",
-                    growsLeft && "order-first"
-                  )}
-                >
-                  <input
-                    ref={quickRef}
+                  // THE ONE COMPOSER, quick variant: the pill supplies the
+                  // glass and the height, this supplies everything touched
+                  <Composer
+                    variant="quick"
+                    inputRef={quickRef}
                     value={quickInput}
-                    onChange={(e) => setQuickInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") sendQuick()
-                      if (e.key === "Escape") closeQuick()
+                    onChange={setQuickInput}
+                    onSend={() => sendQuick()}
+                    onEscape={closeQuick}
+                    placeholder="Ask ambientui…"
+                    // what this page thinks is worth doing next; Tab runs it
+                    suggestion={pageIntel?.suggestions?.[0]}
+                    onAcceptSuggestion={() => {
+                      const next = pageIntel?.suggestions?.[0]
+                      if (next) {
+                        setQuickInput(next)
+                        sendQuick(next)
+                      }
                     }}
-                    aria-label="Ask ambientui"
-                    className="w-full bg-transparent text-base outline-none"
                   />
-                  {/* the same shimmer every AI form wears */}
-                  {quickInput === "" && (
-                    <span
-                      aria-hidden
-                      className="ambient-shimmer pointer-events-none absolute inset-y-0 left-0 flex items-center text-base"
-                    >
-                      Ask ambientui…
-                    </span>
-                  )}
-                </div>
-                )}
-                {!asking && (
-                  // the same send control every AI form carries
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label="Send"
-                    onClick={sendQuick}
-                    className="text-muted-foreground hover:text-foreground shrink-0"
-                  >
-                    <HugeiconsIcon icon={SentIcon} size={16} strokeWidth={1.8} />
-                  </Button>
                 )}
               </motion.div>
             )}

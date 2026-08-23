@@ -8,6 +8,11 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { useMotionTransition } from "@/foundation/foundation-context"
 
+import { FeedbackDialog } from "./message-kit"
+import { StageSkeleton, StagedItem } from "./staging"
+import { StreamingText } from "./streaming-text"
+import { useElapsedSeconds, useStagedReveal } from "./use-staged-reveal"
+
 /**
  * THE TOOL KIT — what the assistant DID, as objects in the transcript.
  *
@@ -56,27 +61,35 @@ function StatusMark({ status }: { status: ToolStatus }) {
  */
 export function ToolCall({
   verb,
-  argument,
   status = "done",
   request,
   result,
   defaultOpen = false,
+  staged = true,
   className,
 }: {
   /** What it did, in plain language: "Searched the docs". */
   verb: string
-  /** The argument worth showing inline: a query, a path, a command. */
-  argument?: string
   status?: ToolStatus
   /** The exact request — evidence, so it is monospaced and unedited. */
   request?: string
   result?: string
   defaultOpen?: boolean
+  /** Stage the call: working with a live count, then the result streams. */
+  staged?: boolean
   className?: string
 }) {
   const [open, setOpen] = React.useState(defaultOpen || status === "failed")
   const transition = useMotionTransition("surface")
   const hasBody = Boolean(request || result)
+  // a call that returns instantly is a call that never went anywhere
+  const { pending, working: counting } = useStagedReveal(1, {
+    enabled: staged,
+    delay: 2200,
+    interval: 0,
+  })
+  const elapsed = useElapsedSeconds(counting)
+  const working = staged && pending
 
   return (
     <div className={cn("flex flex-col", className)}>
@@ -85,23 +98,28 @@ export function ToolCall({
         onClick={() => hasBody && setOpen((v) => !v)}
         aria-expanded={hasBody ? open : undefined}
         disabled={!hasBody}
-        className="flex items-center gap-2 self-start text-start text-[13px] disabled:cursor-default"
+        className="flex items-center gap-2 self-start text-start text-sm disabled:cursor-default"
       >
         {hasBody && (
           <span className="text-muted-foreground shrink-0">
             <Icon name={open ? "chevron-down" : "chevron-right"} size={13} />
           </span>
         )}
-        <span className="font-medium">{verb}</span>
-        {argument && (
-          <span className="bg-muted text-muted-foreground rounded-md px-1.5 py-0.5 font-mono text-[11px]">
-            {argument}
+        {/* the verb alone: the exact argument is evidence, and evidence
+            lives in the disclosure — a chip up here duplicated the request
+            line one click away */}
+        <span className={cn("font-medium", working && "ambient-shimmer")}>
+          {verb}
+        </span>
+        {working && (
+          <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
+            {elapsed}s
           </span>
         )}
-        <StatusMark status={status} />
+        <StatusMark status={working ? "running" : status} />
       </button>
       <AnimatePresence initial={false}>
-        {open && hasBody && (
+        {open && hasBody && !working && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -112,10 +130,10 @@ export function ToolCall({
             <div className="bg-muted mt-2 flex flex-col gap-2 rounded-xl px-3 py-2">
               {request && (
                 <div>
-                  <div className="text-muted-foreground font-mono text-[11px]">
+                  <div className="text-muted-foreground font-mono text-xs">
                     Request
                   </div>
-                  <pre className="mt-0.5 overflow-x-auto font-mono text-[12px] whitespace-pre-wrap">
+                  <pre className="mt-0.5 overflow-x-auto font-mono text-xs whitespace-pre-wrap">
                     {request}
                   </pre>
                 </div>
@@ -123,12 +141,16 @@ export function ToolCall({
               {request && result && <span className="bg-border h-px" />}
               {result && (
                 <div>
-                  <div className="text-muted-foreground font-mono text-[11px]">
+                  <div className="text-muted-foreground font-mono text-xs">
                     Result
                   </div>
-                  <pre className="mt-0.5 overflow-x-auto font-mono text-[12px] whitespace-pre-wrap">
-                    {result}
-                  </pre>
+                  {/* the result is quoted as it came back — written, not
+                      revealed, because that is how it actually arrived */}
+                  <StreamingText
+                    text={result}
+                    live={staged}
+                    className="mt-0.5 block overflow-x-auto font-mono text-xs whitespace-pre-wrap"
+                  />
                 </div>
               )}
             </div>
@@ -167,26 +189,51 @@ export function ToolTimeline({
   steps,
   files = [],
   defaultOpen = true,
+  staged = true,
+  onStepSelect,
   className,
 }: {
   steps: TimelineStep[]
   files?: FileStat[]
   defaultOpen?: boolean
+  /** Stage the arrival — see staging.tsx. False renders settled. */
+  staged?: boolean
+  /** Jump to a step — open the file, reveal the diff. Rows render as ghost
+      buttons either way so the record always looks traversable. */
+  onStepSelect?: (step: TimelineStep, index: number) => void
   className?: string
 }) {
   const [open, setOpen] = React.useState(defaultOpen)
   const transition = useMotionTransition("surface")
+  // the summary counts what has actually happened, so it climbs as the
+  // session does rather than announcing the total before the work
+  const { shown, pending, working: counting } = useStagedReveal(steps.length, {
+    enabled: staged,
+    delay: 2000,
+    interval: 900,
+  })
+  const landed = steps.slice(0, shown)
+  const working = staged && shown < steps.length
+  const elapsed = useElapsedSeconds(counting)
+  const shownFiles = working ? [] : files
   return (
     <div className={cn("flex flex-col", className)}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 self-start text-[13px] transition-colors"
+        className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 self-start text-sm transition-colors"
       >
         <Icon name={open ? "chevron-down" : "chevron-right"} size={13} />
-        {steps.length} step{steps.length === 1 ? "" : "s"}
-        {files.length > 0 && ` · ${files.length} file${files.length === 1 ? "" : "s"} changed`}
+        <span className={cn(working && "ambient-shimmer")}>
+          {working
+            ? `Working… ${elapsed}s · ${shown} step${shown === 1 ? "" : "s"}`
+            : `${steps.length} step${steps.length === 1 ? "" : "s"}${
+                files.length > 0
+                  ? ` · ${files.length} file${files.length === 1 ? "" : "s"} changed`
+                  : ""
+              }`}
+        </span>
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -197,27 +244,38 @@ export function ToolTimeline({
             transition={transition}
             className="overflow-hidden"
           >
-            <ol className="mt-1.5 flex flex-col gap-1.5">
-              {steps.map((s, i) => (
-                <li key={`${s.verb}-${i}`} className="flex items-center gap-2">
-                  <span className="text-muted-foreground shrink-0">
-                    <Icon name={s.icon ?? "code"} size={14} />
-                  </span>
-                  <span className="text-[13px]">{s.verb}</span>
-                  {s.target && (
-                    <span className="bg-muted text-muted-foreground truncate rounded-md px-1.5 py-0.5 font-mono text-[11px]">
-                      {s.target}
+            {pending && <StageSkeleton rows={2} />}
+            <ol className="mt-1 flex flex-col">
+              {landed.map((s, i) => (
+                <StagedItem key={`${s.verb}-${i}`} index={i}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={
+                      onStepSelect ? () => onStepSelect(s, i) : undefined
+                    }
+                    className="w-fit max-w-full justify-start gap-2 px-2 font-normal"
+                  >
+                    <span className="text-muted-foreground shrink-0">
+                      <Icon name={s.icon ?? "code"} size={14} />
                     </span>
-                  )}
-                </li>
+                    <span className="text-sm">{s.verb}</span>
+                    {s.target && (
+                      <span className="bg-muted text-muted-foreground truncate rounded-md px-1.5 py-0.5 font-mono text-xs">
+                        {s.target}
+                      </span>
+                    )}
+                  </Button>
+                </StagedItem>
               ))}
             </ol>
-            {files.length > 0 && (
+            {shownFiles.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {files.map((f) => (
+                {shownFiles.map((f) => (
                   <span
                     key={f.path}
-                    className="bg-muted inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-mono text-[11px]"
+                    className="bg-muted inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-mono text-xs"
                   >
                     {f.path}
                     {f.added ? (
@@ -256,6 +314,7 @@ export function TerminalBlock({
   running = false,
   exitCode,
   tone = "paper",
+  staged = true,
   className,
 }: {
   command: string
@@ -264,9 +323,19 @@ export function TerminalBlock({
   /** Shown when the run ends; 0 reads as success, anything else as failure. */
   exitCode?: number
   tone?: "paper" | "ink"
+  /** Stage the run: output lands line by line, the way it actually arrives. */
+  staged?: boolean
   className?: string
 }) {
   const ink = tone === "ink"
+  const { shown, pending, working: counting } = useStagedReveal(lines.length, {
+    enabled: staged,
+    delay: 1600,
+    interval: 700,
+  })
+  const live = staged ? shown < lines.length : running
+  const elapsed = useElapsedSeconds(counting)
+  const printed = lines.slice(0, shown)
   return (
     <div
       className={cn(
@@ -277,17 +346,26 @@ export function TerminalBlock({
     >
       <div
         className={cn(
-          "flex items-center gap-2 px-3 py-2 font-mono text-[12px]",
+          "flex items-center gap-2 px-3 py-2 font-mono text-xs",
           ink ? "text-(--color-zinc-100)" : "text-foreground"
         )}
       >
-        <span className="min-w-0 flex-1 truncate">{command}</span>
-        {running ? (
+        <span
+          className={cn("min-w-0 flex-1 truncate", live && "ambient-shimmer")}
+        >
+          {command}
+        </span>
+        {live && (
+          <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+            {elapsed}s
+          </span>
+        )}
+        {live ? (
           <span className="border-muted-foreground/30 border-t-primary size-3.5 shrink-0 animate-spin rounded-full border-2" />
         ) : exitCode !== undefined ? (
           <span
             className={cn(
-              "shrink-0 text-[11px]",
+              "shrink-0 text-xs",
               exitCode === 0 ? "text-(--positive)" : "text-destructive"
             )}
           >
@@ -297,16 +375,19 @@ export function TerminalBlock({
       </div>
       <div
         className={cn(
-          "overflow-x-auto px-3 pb-2 font-mono text-[12px] leading-relaxed",
+          "overflow-x-auto px-3 pb-2 font-mono text-xs leading-relaxed",
           ink ? "text-(--color-zinc-400)" : "text-muted-foreground"
         )}
       >
-        {lines.map((l, i) => (
-          <div key={i} className="whitespace-pre">
+        {printed.map((l, i) => (
+          <StagedItem key={i} index={i} className="whitespace-pre">
             {l}
-          </div>
+          </StagedItem>
         ))}
-        {running && (
+        {pending && (
+          <div className="text-muted-foreground/60 whitespace-pre">…</div>
+        )}
+        {live && (
           <span className="bg-primary inline-block h-3.5 w-1.5 animate-pulse align-middle" />
         )}
       </div>
@@ -323,12 +404,27 @@ export interface DiffHunk {
   lines: DiffLine[]
 }
 
-function DiffRows({ lines }: { lines: DiffLine[] }) {
+function DiffRows({
+  lines,
+  staged = false,
+  delay = 0,
+}: {
+  lines: DiffLine[]
+  staged?: boolean
+  delay?: number
+}) {
+  // a patch arrives as lines, so it lands as lines
+  const { shown } = useStagedReveal(lines.length, {
+    enabled: staged,
+    delay,
+    interval: 140,
+  })
   return (
-    <div className="overflow-x-auto font-mono text-[12px] leading-relaxed">
-      {lines.map((l, i) => (
-        <div
+    <div className="overflow-x-auto font-mono text-xs leading-relaxed">
+      {lines.slice(0, shown).map((l, i) => (
+        <StagedItem
           key={i}
+          index={i}
           className={cn(
             "flex gap-3 px-3 whitespace-pre",
             l.sign === "+" && "bg-(--positive-wash) text-(--positive)",
@@ -340,7 +436,7 @@ function DiffRows({ lines }: { lines: DiffLine[] }) {
             {l.sign === " " ? "" : l.sign === "+" ? "+" : "−"}
           </span>
           <span>{l.text}</span>
-        </div>
+        </StagedItem>
       ))}
     </div>
   )
@@ -359,16 +455,26 @@ export function CodeDiff({
   lines,
   added,
   removed,
+  staged = true,
   className,
 }: {
   path: string
   lines: DiffLine[]
   added?: number
   removed?: number
+  /** Stage the arrival — see staging.tsx. False renders settled. */
+  staged?: boolean
   className?: string
 }) {
   const plus = added ?? lines.filter((l) => l.sign === "+").length
   const minus = removed ?? lines.filter((l) => l.sign === "-").length
+  const { shown, working: counting } = useStagedReveal(lines.length, {
+    enabled: staged,
+    delay: 1800,
+    interval: 140,
+  })
+  const working = staged && shown < lines.length
+  const elapsed = useElapsedSeconds(counting)
   return (
     <div
       className={cn(
@@ -377,15 +483,26 @@ export function CodeDiff({
       )}
     >
       <div className="flex items-center gap-3 px-3 py-2">
-        <span className="min-w-0 flex-1 truncate font-mono text-[12px]">
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate font-mono text-xs",
+            working && "ambient-shimmer"
+          )}
+        >
           {path}
         </span>
-        <span className="shrink-0 font-mono text-[11px]">
-          <span className="text-(--positive)">+{plus}</span>{" "}
-          <span className="text-destructive">−{minus}</span>
-        </span>
+        {working ? (
+          <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
+            {elapsed}s
+          </span>
+        ) : (
+          <span className="shrink-0 font-mono text-xs">
+            <span className="text-(--positive)">+{plus}</span>{" "}
+            <span className="text-destructive">−{minus}</span>
+          </span>
+        )}
       </div>
-      <DiffRows lines={lines} />
+      <DiffRows lines={lines} staged={staged} delay={1800} />
     </div>
   )
 }
@@ -402,15 +519,27 @@ export function ReviewableDiff({
   path,
   hunks,
   onApply,
+  staged = true,
   className,
 }: {
   path: string
   hunks: DiffHunk[]
   onApply?: (keptIndexes: number[]) => void
+  /** Stage the arrival — see staging.tsx. False renders settled. */
+  staged?: boolean
   className?: string
 }) {
   // undefined = undecided; the third state is the point of the component
   const [kept, setKept] = React.useState<Record<number, boolean | undefined>>({})
+  const [applied, setApplied] = React.useState<number | null>(null)
+  const { shown, working: counting } = useStagedReveal(hunks.length, {
+    enabled: staged,
+    delay: 2000,
+    interval: 900,
+  })
+  const working = staged && shown < hunks.length
+  const elapsed = useElapsedSeconds(counting)
+  const landed = hunks.slice(0, shown)
   const keptIndexes = hunks
     .map((_, i) => i)
     .filter((i) => kept[i] === true)
@@ -424,21 +553,28 @@ export function ReviewableDiff({
       )}
     >
       <div className="flex items-center gap-3 px-3 py-2">
-        <span className="min-w-0 flex-1 truncate font-mono text-[12px]">
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate font-mono text-xs",
+            working && "ambient-shimmer"
+          )}
+        >
           {path}
         </span>
-        <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
-          {keptIndexes.length} of {hunks.length} kept
+        <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
+          {working
+            ? `${elapsed}s`
+            : `${keptIndexes.length} of ${hunks.length} kept`}
         </span>
       </div>
-      {hunks.map((h, i) => (
+      {landed.map((h, i) => (
         <div key={i} className={cn(kept[i] === false && "opacity-50")}>
           <div className="flex items-center gap-2 px-3 py-1.5">
-            <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-[11px]">
+            <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs">
               {h.header}
             </span>
             <Button
-              size="xs"
+              size="sm"
               variant="ghost"
               aria-pressed={kept[i] === false}
               onClick={() => setKept((k) => ({ ...k, [i]: false }))}
@@ -448,7 +584,7 @@ export function ReviewableDiff({
               Discard
             </Button>
             <Button
-              size="xs"
+              size="sm"
               variant="ghost"
               aria-pressed={kept[i] === true}
               onClick={() => setKept((k) => ({ ...k, [i]: true }))}
@@ -463,21 +599,35 @@ export function ReviewableDiff({
               Keep
             </Button>
           </div>
-          <DiffRows lines={h.lines} />
+          <DiffRows lines={h.lines} staged={staged} delay={2000 + i * 900} />
         </div>
       ))}
-      <div className="flex items-center justify-between gap-3 px-3 py-2">
-        <span className="text-muted-foreground font-mono text-[11px]">
-          {undecided > 0 ? `${undecided} left to review` : "all reviewed"}
-        </span>
-        <Button
-          size="xs"
-          disabled={keptIndexes.length === 0}
-          onClick={() => onApply?.(keptIndexes)}
-        >
-          Apply {keptIndexes.length}
-        </Button>
-      </div>
+      {!working && (
+        <div className="flex items-center justify-between gap-3 px-3 py-2">
+          {applied !== null ? (
+            // the change is a consequence, so applying says so rather than
+            // leaving the user to infer it from a button that stopped working
+            <span className="text-(--positive) flex items-center gap-1.5 font-mono text-xs">
+              <Icon name="check" size={12} />
+              applied {applied} hunk{applied === 1 ? "" : "s"} to {path}
+            </span>
+          ) : (
+            <span className="text-muted-foreground font-mono text-xs">
+              {undecided > 0 ? `${undecided} left to review` : "all reviewed"}
+            </span>
+          )}
+          <Button
+            size="sm"
+            disabled={keptIndexes.length === 0 || applied !== null}
+            onClick={() => {
+              setApplied(keptIndexes.length)
+              onApply?.(keptIndexes)
+            }}
+          >
+            {applied !== null ? "Applied" : `Apply ${keptIndexes.length}`}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -504,18 +654,30 @@ export function ParallelTools({
   summary,
   calls,
   defaultOpen = false,
+  staged = true,
   className,
 }: {
   /** What the batch was for: "Read 4 files in parallel". */
   summary: string
   calls: ParallelCall[]
   defaultOpen?: boolean
+  /** Stage the arrival — see staging.tsx. False renders settled. */
+  staged?: boolean
   className?: string
 }) {
   const [open, setOpen] = React.useState(defaultOpen)
   const transition = useMotionTransition("surface")
-  const done = calls.filter((c) => (c.status ?? "done") === "done").length
-  const failed = calls.some((c) => c.status === "failed")
+  // calls that went out together still come BACK one at a time, and the
+  // count in the header should climb the way it actually did
+  const { shown, pending } = useStagedReveal(calls.length, {
+    enabled: staged,
+    delay: 600,
+    interval: 260,
+  })
+  const landed = calls.slice(0, shown)
+  const done = landed.filter((c) => (c.status ?? "done") === "done").length
+  const failed = landed.some((c) => c.status === "failed")
+  const settled = shown === calls.length
 
   return (
     <div
@@ -533,45 +695,54 @@ export function ParallelTools({
         <span className="text-muted-foreground shrink-0">
           <Icon name={open ? "chevron-down" : "chevron-right"} size={13} />
         </span>
-        <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-sm font-medium",
+            pending && "ambient-shimmer"
+          )}
+        >
           {summary}
         </span>
-        <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
+        <span className="text-muted-foreground shrink-0 font-mono text-xs">
           {done} done
         </span>
-        <StatusMark status={failed ? "failed" : "done"} />
+        <StatusMark
+          status={settled ? (failed ? "failed" : "done") : "running"}
+        />
       </button>
       <AnimatePresence initial={false}>
         {open && (
-          <motion.ul
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={transition}
             className="border-border overflow-hidden border-t"
           >
-            {calls.map((c, i) => (
-              <li
+            {pending && <StageSkeleton rows={2} className="px-3 pb-2" />}
+            {landed.map((c, i) => (
+              <StagedItem
                 key={`${c.tool}-${i}`}
+                index={i}
                 className="flex items-center gap-2 px-3 py-1.5"
               >
                 <StatusMark status={c.status ?? "done"} />
-                <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
+                <span className="text-muted-foreground shrink-0 font-mono text-xs">
                   {c.tool}
                 </span>
                 {c.target && (
-                  <span className="min-w-0 flex-1 truncate text-[13px]">
+                  <span className="min-w-0 flex-1 truncate text-sm">
                     {c.target}
                   </span>
                 )}
                 {c.duration && (
-                  <span className="text-muted-foreground ms-auto shrink-0 font-mono text-[11px]">
+                  <span className="text-muted-foreground ms-auto shrink-0 font-mono text-xs">
                     {c.duration}
                   </span>
                 )}
-              </li>
+              </StagedItem>
             ))}
-          </motion.ul>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
@@ -596,6 +767,7 @@ export function ToolFailure({
   attempts,
   onRetry,
   onSkip,
+  onFeedback,
   className,
 }: {
   tool: string
@@ -605,8 +777,12 @@ export function ToolFailure({
   attempts?: number
   onRetry?: () => void
   onSkip?: () => void
+  /** Capture what went wrong from the user's side — opens the same
+      FeedbackDialog the message actions use, inline under the failure. */
+  onFeedback?: (feedback: { reasons: string[]; note: string }) => void
   className?: string
 }) {
+  const [reporting, setReporting] = React.useState(false)
   return (
     <div
       role="alert"
@@ -619,25 +795,37 @@ export function ToolFailure({
         <span className="text-destructive shrink-0">
           <Icon name="alert" size={14} />
         </span>
-        <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
+        <span className="text-muted-foreground shrink-0 font-mono text-xs">
           {tool}
         </span>
         {target && (
-          <span className="min-w-0 flex-1 truncate text-[13px]">{target}</span>
+          <span className="min-w-0 flex-1 truncate text-sm">{target}</span>
         )}
         {attempt !== undefined && attempts !== undefined && (
-          <span className="text-muted-foreground ms-auto shrink-0 font-mono text-[11px]">
+          <span className="text-muted-foreground ms-auto shrink-0 font-mono text-xs">
             {attempt}/{attempts}
           </span>
         )}
       </div>
-      <pre className="bg-(--destructive-wash) text-destructive overflow-x-auto rounded-lg px-2.5 py-1.5 font-mono text-[12px] whitespace-pre-wrap">
+      <pre className="bg-(--destructive-wash) text-destructive overflow-x-auto rounded-lg px-2.5 py-1.5 font-mono text-xs whitespace-pre-wrap">
         {error}
       </pre>
       <div className="flex items-center justify-end gap-1.5">
+        {onFeedback && (
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-expanded={reporting}
+            onClick={() => setReporting((v) => !v)}
+            className="text-muted-foreground hover:text-foreground me-auto"
+          >
+            <Icon name="thumbs-down" size={12} />
+            Report
+          </Button>
+        )}
         {onSkip && (
           <Button
-            size="xs"
+            size="sm"
             variant="ghost"
             onClick={onSkip}
             className="text-muted-foreground hover:text-foreground"
@@ -646,12 +834,21 @@ export function ToolFailure({
           </Button>
         )}
         {onRetry && (
-          <Button size="xs" variant="ghost" onClick={onRetry}>
+          <Button size="sm" variant="ghost" onClick={onRetry}>
             <Icon name="replay" size={12} />
             Retry
           </Button>
         )}
       </div>
+      {reporting && onFeedback && (
+        <FeedbackDialog
+          onSubmit={(f) => {
+            onFeedback(f)
+            setReporting(false)
+          }}
+          onDismiss={() => setReporting(false)}
+        />
+      )}
     </div>
   )
 }
@@ -673,6 +870,7 @@ export function CodeRunner({
   duration,
   running = false,
   onRun,
+  staged = true,
   className,
 }: {
   language: string
@@ -681,8 +879,20 @@ export function CodeRunner({
   duration?: string
   running?: boolean
   onRun?: () => void
+  /** Stage the run: the output is produced, not pre-printed. */
+  staged?: boolean
   className?: string
 }) {
+  // pressing play IS a run: the output clears, the clock restarts, and the
+  // result streams back in — the same arrival the first render performed
+  const [runId, setRunId] = React.useState(0)
+  const { pending } = useStagedReveal(1, {
+    enabled: staged,
+    delay: 1800,
+    replay: runId,
+  })
+  const live = staged ? pending : running
+  const elapsed = useElapsedSeconds(live)
   return (
     <div
       className={cn(
@@ -691,37 +901,40 @@ export function CodeRunner({
       )}
     >
       <div className="flex items-center gap-3 px-3 py-2">
-        <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-[11px]">
+        <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs">
           {language}
         </span>
-        {duration && (
-          <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
-            {duration}
-          </span>
-        )}
+        <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
+          {live ? `${elapsed}s` : duration}
+        </span>
         <Button
-          size="icon-xs"
+          size="icon-sm"
           variant="ghost"
-          aria-label={running ? "Running" : "Run"}
-          title={running ? "Running" : "Run"}
-          disabled={running}
-          onClick={onRun}
+          aria-label={live ? "Running" : "Run"}
+          title={live ? "Running" : "Run"}
+          disabled={live}
+          onClick={() => {
+            if (staged) setRunId((r) => r + 1)
+            onRun?.()
+          }}
           className="text-muted-foreground hover:text-foreground shrink-0"
         >
-          <Icon name={running ? "pause" : "play"} size={13} />
+          <Icon name={live ? "pause" : "play"} size={13} />
         </Button>
       </div>
-      <pre className="overflow-x-auto px-3 py-2 font-mono text-[12px] leading-relaxed">
+      <pre className="overflow-x-auto px-3 py-2 font-mono text-xs leading-relaxed">
         {code}
       </pre>
-      {output !== undefined && (
-        <div className="px-3 py-2">
-          <div className="text-muted-foreground font-mono text-[11px]">
+      {output !== undefined && !live && (
+        <div key={runId} className="px-3 py-2">
+          <div className="text-muted-foreground font-mono text-xs">
             output
           </div>
-          <pre className="text-muted-foreground mt-0.5 overflow-x-auto font-mono text-[12px] leading-relaxed whitespace-pre-wrap">
-            {output}
-          </pre>
+          <StreamingText
+            text={output}
+            live={staged}
+            className="text-muted-foreground mt-0.5 block overflow-x-auto font-mono text-xs leading-relaxed whitespace-pre-wrap"
+          />
         </div>
       )}
     </div>

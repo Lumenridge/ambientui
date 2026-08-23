@@ -56,6 +56,17 @@ import {
   TableRow,
 } from "@workspace/ui/components/table"
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@workspace/ui/components/collapsible"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs"
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -71,6 +82,8 @@ import {
   ShimmerPlaceholder,
 } from "@/components/assistant/assistant"
 import { useAssistant } from "@/components/assistant/assistant-context"
+import { AskAI } from "@/components/assistant/attach-menu"
+import { Composer } from "@/components/assistant/composer"
 import {
   DayDivider,
   ErrorState,
@@ -85,7 +98,9 @@ import {
   ReasoningEffort,
   ReasoningPanel,
   type ReasoningEffortLevel,
+  ReviewComment,
 } from "@/components/assistant/message-kit"
+import { ViewMenu } from "@/components/view-menu"
 import {
   CodeDiff,
   CodeRunner,
@@ -247,7 +262,7 @@ export function Playground({
   const host = React.useContext(ControlsHostContext)
   return (
     <>
-      <div className="border-border flex min-h-44 items-center justify-center rounded-xl border p-8">
+      <div className="border-border bg-card flex min-h-44 items-center justify-center rounded-xl border p-8">
         {preview}
       </div>
       {host && createPortal(controls, host)}
@@ -603,6 +618,40 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
     ],
   },
   {
+    id: "collapsible",
+    name: "Collapsible",
+    description:
+      "A region that folds behind its trigger — disclosure as a primitive, not a re-implementation.",
+    behavior: [
+      "Radix underneath: the trigger carries aria-expanded and data-state, keyboard works, and the content unmounts collapsed.",
+      "Controlled or uncontrolled — pass `open` to force it (the /ds rail holds groups open while a search is live), `defaultOpen` otherwise.",
+      "Style the disclosure chevron off data-state (`group-data-[state=open]/collapsible:rotate-90`) rather than tracking your own boolean.",
+    ],
+    whenToUse: [
+      "Long indexes and secondary detail — anything worth hiding until asked for (the /ds rail's kit groups).",
+      "As the fold inside other components: sidebar groups, tool-call disclosures could migrate here.",
+    ],
+    whenNotToUse: [
+      "For a set of peer panels where one is always open — that is Tabs.",
+      "To hide required content; collapsed must never mean missing.",
+    ],
+    stories: [
+      {
+        label: "Fold",
+        render: (
+          <Collapsible defaultOpen className="w-full max-w-sm">
+            <CollapsibleTrigger className="text-sm font-medium">
+              Details
+            </CollapsibleTrigger>
+            <CollapsibleContent className="text-muted-foreground pt-2 text-sm">
+              Folded content mounts only while open.
+            </CollapsibleContent>
+          </Collapsible>
+        ),
+      },
+    ],
+  },
+  {
     id: "dropdown-menu",
     name: "DropdownMenu",
     description: "Contextual actions behind a trigger.",
@@ -704,6 +753,45 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
               { id: "story-d", label: "Figma" },
             ]}
           />
+        ),
+      },
+    ],
+  },
+  {
+    id: "view-menu",
+    name: "ViewMenu",
+    description:
+      "The app's destinations as a disclosure that morphs from a pill into a card — an ambientui extension to the product vocabulary (promoted via the watchlist).",
+    behavior: [
+      "Collapsed, it is one pill carrying the assistant's mark and the view you are on. Opening is what costs space, and only while you are choosing — a tab strip spends room proportional to how many destinations exist, permanently, on a surface whose argument is that chrome should get out of the way.",
+      "The morph is a LAYOUT animation, not a swap: the pill becomes the card, so the thing you clicked is the thing that opened. Rides the Foundation's surface spring; the label crossfades on the micro role.",
+      "Closes on Escape or an outside pointer-down — a menu you cannot dismiss the ordinary way is a trap.",
+      "The current view is marked with aria-current and carries the foreground weight; the others sit muted.",
+      "It is the pointer twin of the spotlight's \"Jump to\" — same destinations, reached by hand rather than ⌘K. They read the same list, so they cannot disagree.",
+    ],
+    whenToUse: [
+      "Switching between a small set of top-level views on a surface where permanent chrome would compete with the content.",
+    ],
+    whenNotToUse: [
+      "Tabbed panes INSIDE a page — that is Tabs, and the relationship there is between siblings, not destinations.",
+      "More than a handful of destinations, or anything needing search — that is the spotlight.",
+      "Anywhere the current location must stay visible while a menu is open; this one covers itself when it expands.",
+    ],
+    stories: [
+      {
+        label: "Collapsed and open",
+        render: (
+          <div className="flex min-h-44 w-full items-start justify-center">
+            <ViewMenu
+              items={[
+                { id: "canvas", label: "Canvas" },
+                { id: "layer", label: "The ambient layer" },
+                { id: "devtool", label: "Dev tool" },
+              ]}
+              value="canvas"
+              onSelect={() => {}}
+            />
+          </div>
         ),
       },
     ],
@@ -954,6 +1042,47 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
         ),
       },
     ],
+  },
+  {
+    id: "tabs",
+    name: "Tabs",
+    description:
+      "Peer views of one subject, switched in place — the panel changes, the page does not.",
+    behavior: [
+      "Radix underneath: roving focus, arrow-key navigation, and the right ARIA wiring come free. Never rebuild a tab strip from buttons.",
+      "Two shapes — the default pill list for a self-contained control, and `line` for tabs that sit against a page edge.",
+      "orientation=\"vertical\" turns the list into a rail; the same component, no second implementation.",
+      "The tab is component state by default. Anything a user might link to or reload into should be driven from the URL instead (the home page does this with ?view=).",
+    ],
+    whenToUse: [
+      "Peer views of ONE subject, where switching should not feel like navigating.",
+      "Three to five destinations. Beyond that the list becomes a menu that happens to be horizontal.",
+    ],
+    whenNotToUse: [
+      "For steps in a sequence — tabs claim the views are independent and equal.",
+      "As primary navigation between unrelated sections; that is the app's own nav.",
+      "To hide content the user must see, since only one panel is ever visible.",
+    ],
+    stories: [
+      {
+        label: "Line variant",
+        render: (
+          <Tabs defaultValue="a" className="w-full max-w-md">
+            <TabsList variant="line">
+              <TabsTrigger value="a">Changes</TabsTrigger>
+              <TabsTrigger value="b">Checks</TabsTrigger>
+            </TabsList>
+            <TabsContent value="a" className="text-muted-foreground text-sm">
+              Sits against an edge; the active tab is marked by a rule, not a pill.
+            </TabsContent>
+            <TabsContent value="b" className="text-muted-foreground text-sm">
+              Same component, different weight.
+            </TabsContent>
+          </Tabs>
+        ),
+      },
+    ],
+    playground: TabsPlayground,
   },
   {
     id: "tooltip",
@@ -1408,6 +1537,96 @@ function ReferenceChipsPlayground() {
   )
 }
 
+const TAB_VARIANTS = ["default", "line"] as const
+const TAB_ORIENTATIONS = ["horizontal", "vertical"] as const
+
+function TabsPlayground() {
+  const [variant, setVariant] =
+    React.useState<(typeof TAB_VARIANTS)[number]>("default")
+  const [orientation, setOrientation] =
+    React.useState<(typeof TAB_ORIENTATIONS)[number]>("horizontal")
+
+  return (
+    <Playground
+      preview={
+        <Tabs defaultValue="overview" orientation={orientation} className="w-full max-w-md">
+          <TabsList variant={variant}>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="text-muted-foreground text-sm">
+            Three views of one subject — the panel changes, the page does not.
+          </TabsContent>
+          <TabsContent value="activity" className="text-muted-foreground text-sm">
+            Peer content: everything here belongs to the same object.
+          </TabsContent>
+          <TabsContent value="settings" className="text-muted-foreground text-sm">
+            If a panel needs its own URL to be shareable, give it one.
+          </TabsContent>
+        </Tabs>
+      }
+      controls={
+        <>
+          <ControlRow name="variant">
+            <ChoiceControl
+              options={TAB_VARIANTS}
+              value={variant}
+              onChange={setVariant}
+            />
+          </ControlRow>
+          <ControlRow name="orientation">
+            <ChoiceControl
+              options={TAB_ORIENTATIONS}
+              value={orientation}
+              onChange={setOrientation}
+            />
+          </ControlRow>
+        </>
+      }
+    />
+  )
+}
+
+function ComposerPlayground() {
+  const [value, setValue] = React.useState("")
+  const [busy, setBusy] = React.useState(false)
+  return (
+    <Playground
+      preview={
+        <div className="border-border w-full max-w-lg rounded-xl border px-4">
+          <Composer
+            value={value}
+            onChange={setValue}
+            onSend={() => {
+              if (!value.trim()) return
+              setValue("")
+              setBusy(true)
+            }}
+            onStop={() => setBusy(false)}
+            busy={busy}
+            placeholder="Ask a follow-up…"
+          />
+        </div>
+      }
+      controls={
+        <>
+          <ControlRow name="busy">
+            <Checkbox
+              checked={busy}
+              onCheckedChange={(v) => setBusy(v === true)}
+            />
+          </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            Sending flips the control to Stop; here Stop just returns it,
+            since nothing is really composing.
+          </p>
+        </>
+      }
+    />
+  )
+}
+
 function MessageActionsPlayground() {
   const [rating, setRating] = React.useState<MessageRating>(null)
   const [log, setLog] = React.useState("—")
@@ -1452,7 +1671,6 @@ const SUGGESTIONS = [
 ]
 
 function FollowUpSuggestionsPlayground() {
-  const [layout, setLayout] = React.useState<"pills" | "list">("pills")
   const [runId, setRunId] = React.useState(0)
   const [picked, setPicked] = React.useState<string | null>(null)
   return (
@@ -1460,9 +1678,8 @@ function FollowUpSuggestionsPlayground() {
       preview={
         <div className="w-full max-w-md">
           <FollowUpSuggestions
-            key={`${layout}-${runId}`}
+            key={runId}
             suggestions={SUGGESTIONS}
-            layout={layout}
             onPick={setPicked}
           />
           <p className="text-muted-foreground mt-3 text-center font-mono text-xs">
@@ -1472,13 +1689,6 @@ function FollowUpSuggestionsPlayground() {
       }
       controls={
         <>
-          <ControlRow name="layout">
-            <ChoiceControl
-              options={["pills", "list"] as const}
-              value={layout}
-              onChange={setLayout}
-            />
-          </ControlRow>
           <ControlRow name="replay" action>
             <Button
               size="xs"
@@ -1488,6 +1698,10 @@ function FollowUpSuggestionsPlayground() {
               Replay
             </Button>
           </ControlRow>
+          <p className="text-muted-foreground px-3 py-2 text-xs">
+            One shape only. A pill row was tried and removed: a real follow-up
+            is a sentence, and a pill can hold neither the wrap nor the target.
+          </p>
         </>
       }
     />
@@ -1514,29 +1728,49 @@ const TRACE = [
 
 function ReasoningPanelPlayground() {
   const [running, setRunning] = React.useState(false)
+  const [staged, setStaged] = React.useState(true)
+  const [runId, setRunId] = React.useState(0)
   return (
     <Playground
       preview={
         <div className="w-full max-w-md">
           <ReasoningPanel
+            key={`${runId}-${staged}`}
             steps={TRACE}
             seconds={5}
             running={running}
-            defaultOpen={undefined}
+            staged={staged}
+            defaultOpen
           />
         </div>
       }
       controls={
         <>
+          <ControlRow name="staged">
+            <Checkbox
+              checked={staged}
+              onCheckedChange={(v) => setStaged(v === true)}
+            />
+          </ControlRow>
           <ControlRow name="running">
             <Checkbox
               checked={running}
               onCheckedChange={(v) => setRunning(v === true)}
             />
           </ControlRow>
+          <ControlRow name="replay" action>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setRunId((n) => n + 1)}
+            >
+              Replay
+            </Button>
+          </ControlRow>
           <p className="text-muted-foreground px-3 py-2 text-xs">
-            Turning running on opens the trace; turning it off settles it to
-            the summary. Reasoning is live commentary, then reference.
+            Staged: shimmer, a beat of nothing, then one step at a time. Turn
+            it off and the trace renders settled — which is what an older
+            message must do, since history is written, not re-thought.
           </p>
         </>
       }
@@ -1689,17 +1923,25 @@ const QUEUE_SEED = [
 
 function MessageQueuePlayground() {
   const [queued, setQueued] = React.useState(QUEUE_SEED)
+  const [running, setRunning] = React.useState("Fix the converter and add a guard")
   return (
     <Playground
       preview={
         <div className="w-full max-w-md">
           <MessageQueue
-            running="Fix the converter and add a guard"
+            running={running}
             queued={queued}
-            onPromote={(id) =>
+            // interrupting SWAPS: the picked turn runs, and the turn it
+            // displaced goes back to the head of the queue
+            onInterrupt={(id) =>
               setQueued((q) => {
                 const item = q.find((x) => x.id === id)
-                return item ? [item, ...q.filter((x) => x.id !== id)] : q
+                if (!item) return q
+                setRunning(item.text)
+                return [
+                  { id: `req-${item.id}`, text: running },
+                  ...q.filter((x) => x.id !== id),
+                ]
               })
             }
             onCancel={(id) => setQueued((q) => q.filter((x) => x.id !== id))}
@@ -1712,14 +1954,17 @@ function MessageQueuePlayground() {
             <Button
               size="xs"
               variant="outline"
-              onClick={() => setQueued(QUEUE_SEED)}
+              onClick={() => {
+                setQueued(QUEUE_SEED)
+                setRunning("Fix the converter and add a guard")
+              }}
             >
               Refill
             </Button>
           </ControlRow>
           <p className="text-muted-foreground px-3 py-2 text-xs">
-            A queued turn is a plan, not a commitment — promote one that
-            matters more, cancel one the running answer already covered.
+            The arrow does not reorder — it INTERRUPTS: the picked turn runs
+            now and the one it displaced goes back to the head of the queue.
           </p>
         </>
       }
@@ -1871,6 +2116,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "Every state has its own configurable cadence (speed.still/listening/thinking/answer), persisted with the theme.",
       "Palette is accent-linked by default (a thermal ramp derived from the accent); uncheck accent-linked to set custom colors — they become the heat ramp, cold to hot (up to four, add/remove).",
       "State is driven through the assistant context (orbState) — the response pipeline sets it, components read it.",
+      "THE PIPELINE OWNS IT WHILE A TURN IS RUNNING. thinking holds until the prose actually starts — not until the answer was composed, because the evidence blocks still have to run — then answer, then still on settle. Ambient input states (listening / still) only apply between turns; typing cannot cancel a thinking state mid-run.",
     ],
     whenToUse: [
       "As the assistant's face — the floating orb is this character at 52px.",
@@ -1895,9 +2141,10 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "Text that arrives rather than appears — the assistant writing, with a warm tail and a blurred leading edge.",
     behavior: [
       "Three zones travel with the write head: settled text in the foreground, a warm tail in the ambient accent, and a blurred edge behind a fading mask.",
-      "The reveal runs on the FRAME CLOCK, not a timer — interval timers are throttled in hidden tabs, which strands an answer mid-sentence.",
+      "The reveal runs on the FRAME CLOCK and derives the write head from ELAPSED TIME rather than by counting ticks. A hidden tab pauses the frame loop either way; what this buys is the recovery — coming back, the head is where the clock says it should be, not wherever a throttled timer had counted to.",
       "charsPerSecond sets the pace; the default reads as deliberate writing rather than a printer.",
       "live={false} renders the whole string settled, so a re-rendered older message never re-types itself — history is written, not replayed.",
+      "A finished message RECORDS that it finished, so live={false} survives the surface changing. Dragging panel → dock remounts the transcript; without the record, position alone would say \"newest message\" and the answer would perform itself again.",
       "onSettled fires shortly after the last character, which is what returns the ambient layer to rest.",
       "Purely presentational: the characters are already in the DOM, so selection and copy give the full text at any point.",
     ],
@@ -1919,6 +2166,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     description:
       "Regenerated versions of the same answer, navigable without losing your place.",
     behavior: [
+      "Wired into the real transcript: MessageActions' regenerate composes the same question again and APPENDS the result, so the assistant's own answers branch exactly as this component describes.",
       "A regenerated answer does not replace its predecessor — it joins it, and the newest becomes the one you are looking at.",
       "The pager sits under the answer it belongs to, so a branch reads as a version of THIS reply rather than as a new turn.",
       "Quiet by design: ghost controls and a monospaced count, because this is navigation, not content. It hides entirely at one version.",
@@ -1945,7 +2193,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "Pairing is what makes a transcript readable — an undifferentiated list of messages is a log, not a conversation.",
       "Two presentations, one anatomy: BUBBLE gives each side a surface (the question on the accent wash, the answer on an inset card); FLAT sets both directly on the transcript, separated by alignment and tone alone.",
       "The answer streams in place: settled text in the foreground, the last words warm in the ambient accent, and the leading edge blurred behind a fading mask — a stream reads as writing rather than as text appearing.",
-      "The author mark is the live OrbCharacter while this is the newest pair, and the CSS glyph once it settles, so a long transcript never stacks WebGL contexts.",
+      "NO AUTHOR MARK on the answer: the identity lives in the shell — the orb, the live border, the surface's own brand mark — so a message never signs itself. Alignment alone says who is speaking.",
       "onSettled fires when the answer finishes, which is what returns the ambient layer (orb, borders, field) to rest.",
     ],
     whenToUse: [
@@ -2118,6 +2366,8 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "⌘K opens it from anywhere and toggles it closed; Esc clears the query first, then closes — so a mistyped search never costs the surface.",
       "One input, two intents: the query is read as a QUESTION (4+ words, a leading interrogative, or a trailing ?) or as navigation. Questions put \"Ask ambientui\" first; anything else ranks matching pages.",
       "Sections are a flat, keyboard-navigable model — Recent chats, Suggested for this page, Jump to — with ↑↓ moving across section boundaries and ↵ running the selected row.",
+      "WHAT IT OFFERS COMES FROM THE PAGE. setPageIntel supplies the suggestions, the recents, where \"Jump to\" goes, and the input's own invitation; pages that stay quiet get the app-wide defaults. The dev tool publishes its LIVE problem inventory there, so every suggestion is a question one of its errors deserves — and a problem that gets fixed leaves the palette, because the list is derived from workspace state rather than written twice.",
+      "A page with its own workspace takes over \"Jump to\" entirely: inside the dev tool it lists open files, each subtitled with its actual problem, instead of the app's routes.",
       "The page's own context rides along as a chip in the header band; right-clicking anything on the page attaches it as another chip.",
       "Asking transitions the surface in place into the AI Overview — the answer arrives where the question was asked, with a follow-up form replacing the search input.",
       "No backdrop: the palette floats on the page at full brightness, with the glass, its shadow, and the live border carrying the separation.",
@@ -2138,6 +2388,122 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       {
         label: "Open",
         render: <CommandPaletteStory />,
+      },
+    ],
+  },
+  {
+    id: "composer",
+    group: "Messages",
+    name: "Composer",
+    description:
+      "The one place a question is written: an optional character mark, context chips, the input, and one control.",
+    behavior: [
+      "ONE CONTROL, TWO MEANINGS: send while idle, Stop while an answer runs. Send only lights up once there is text — the affordance states its own availability. (An orb was tried in this slot and removed: the identity lives in the shell, and a character where a control belongs reads as decoration.)",
+      "While an answer is running the same position becomes STOP — one control, two meanings, always the one that applies. Stopping mid-compose cancels cleanly; stopping mid-stream settles what has already arrived, because it was already said.",
+      "Every form factor shares this anatomy: `panel` for the in-surface row (panel and dock), `quick` inside quick ask's pill — the pill supplies the glass and the height — and `inline` for a composer standing inside another object (a review thread), which brings its own frame and the smaller type size. The spotlight band is next.",
+      "`mark` puts the assistant's CHARACTER at the head of the row, reacting through still / listening / thinking / answer. It is an identity mark, never the control: the send slot stays a control, which is the distinction that made the orb-as-send experiment fail.",
+      "`suggestion` offers what to do next as ghost text in the empty field, with Tab to accept and run it. The offer stands only while the field is empty — the moment the user types, their words win.",
+      "Context chips ride in compact size ahead of the input; the shimmer placeholder says the assistant is listening.",
+    ],
+    whenToUse: [
+      "Anywhere a question is typed to the assistant — it is the only sanctioned composer.",
+    ],
+    whenNotToUse: [
+      "For product search or filters; this control promises an AI on the other end.",
+      "Never rebuild the input row inline in a surface — that is exactly the drift this extraction removes.",
+    ],
+    stories: [],
+    playground: ComposerPlayground,
+  },
+  {
+    id: "review-comment",
+    group: "Messages",
+    name: "ReviewComment",
+    description:
+      "A teammate's note threaded into the code it is about, with the assistant reachable from inside it.",
+    behavior: [
+      "ANCHORED, NOT ADJACENT: the note renders under the line it questions. A review comment in a side panel makes the reader hold a line number in their head and scroll; threaded, the question and the code are one object.",
+      "That anchoring is what makes the reply seam honest — \"resolve this\" has an unambiguous referent, so replying attaches the line as context and hands the work to the ambient panel rather than answering about a whole file.",
+      "The reply row is the Composer's `inline` variant, not a lookalike input: one instrument everywhere a question is written.",
+      "Status is STATED, not implied by color alone — a red tint is not a word, and \"Change requested\" is the difference between an opinion and a blocker.",
+      "Wears the ambient glass: a thread the assistant can act on belongs to the layer's material, not the host surface's chrome.",
+      "Replying HANDS THE THREAD OVER: the host closes the comment (it is the assistant's business now) and puts the line it pointed at into the working state, so the handover is visible in the code and not only in the panel that just opened. The component reports the reply; what closing and highlighting mean is the host's decision.",
+      "Omit onReply and it is a read-only record, with no reply affordance offered.",
+    ],
+    whenToUse: [
+      "Human review notes inside a diff or an editor, where the assistant may be asked to resolve them.",
+      "Anywhere a comment's meaning depends on exactly which line it points at.",
+    ],
+    whenNotToUse: [
+      "For the assistant's own output — that is the response kit; this component is for a person's words.",
+      "As a general comment feed detached from code; without an anchor it is just a message list.",
+    ],
+    stories: [
+      {
+        label: "Change requested",
+        render: (
+          <div className="w-full max-w-lg">
+            <ReviewComment
+              author="mingjie"
+              when="1h ago"
+              status="change-requested"
+              text="Should the draft live in the runtime store, or stay local and only persist on blur? Asking because the composer is the only consumer today."
+              onReply={() => {}}
+              replyPlaceholder="Reply, or ask ambientui to resolve it…"
+            />
+          </div>
+        ),
+      },
+      {
+        label: "Resolved, read-only",
+        render: (
+          <div className="w-full max-w-lg">
+            <ReviewComment
+              author="nan"
+              when="Yesterday"
+              status="resolved"
+              text="Rounded the total after fee calculation so pricing and display use the same value."
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "attach-menu",
+    group: "Messages",
+    name: "AttachMenu · AskAI",
+    description:
+      "The attach gesture: right-click anything to make it context, or ask where the data is.",
+    behavior: [
+      "THE UNIVERSAL GESTURE of the ambient layer. Right-click any element and it becomes a ContextChip — this is how the assistant learns what you mean without you describing it.",
+      "Two verbs, deliberately: Explain (attach, ask, open the panel) for the impatient path, Add to chat context (attach, say nothing) for the deliberate one. A third would make it a menu.",
+      "AskAI is the inline entry point — it lives IN the row, revealed on hover, because a question asked where the thing is costs no navigation and no retyping. Requires `relative group/row` on the row.",
+      "It FLOATS rather than sitting in flow: an affordance that resizes the thing being hovered makes the whole list flinch under the pointer. Revealing it costs no layout.",
+      "Any click, scroll, or Escape dismisses the menu: a context menu that survives the next interaction is a modal nobody asked for.",
+      "This is the whole product side of the contract. A surface hands over a chip; it never learns how an answer is rendered.",
+    ],
+    whenToUse: [
+      "On any object a user might reasonably ask about — a row, a cell, a file, a line of code.",
+      "Beside a problem or anomaly the product already surfaces; that is the moment the question exists.",
+    ],
+    whenNotToUse: [
+      "On every element indiscriminately — if everything is attachable, the gesture stops meaning anything.",
+      "As a replacement for the product's own actions; this attaches context, it does not perform work.",
+    ],
+    stories: [
+      {
+        label: "Inline entry point (hover the row)",
+        render: (
+          <div className="border-border bg-card group/row relative flex w-full max-w-sm items-center gap-2 rounded-lg border px-3 py-2">
+            <Icon name="document" size={13} />
+            <span className="flex-1 font-mono text-[12px]">composer.tsx</span>
+            <AskAI
+              chip={{ id: "demo", kind: "file", label: "composer.tsx" }}
+              prompt="Review composer.tsx and tell me what is wrong"
+            />
+          </div>
+        ),
       },
     ],
   },
@@ -2169,11 +2535,12 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     group: "Messages",
     name: "FollowUpSuggestions",
     description:
-      "Prompt pills that stagger in after a reply and invite the next turn.",
+      "A titled group of next turns, offered as prompts rather than performed.",
     behavior: [
       "They are OFFERS, not actions: picking one seeds the composer's next question rather than silently running it.",
       "They stagger in on the control motion role, because they arrive after the answer settles — a row that appears all at once reads as chrome that was always there.",
-      "layout=\"list\" for narrow surfaces, where pills wrap into an unreadable thicket.",
+      "ONE SHAPE, deliberately. A pill row was the obvious second variant and it was removed: a real follow-up is a sentence, so it wraps to two lines and needs a target the width of the surface. A pill could hold neither.",
+      "Each row carries the open-arrow that says picking it goes somewhere; the heading (\"Ask more\") names the group, and label={null} drops it.",
       "Renders nothing when there are no suggestions; an empty invitation row is worse than none.",
     ],
     whenToUse: [
@@ -2229,8 +2596,9 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "Turns you typed while a run was in flight, stacked and cancelable until it finishes.",
     behavior: [
       "The running turn sits on a raised card with a live pulse; queued turns are muted rows beneath it — one glance separates what is happening from what is waiting.",
-      "A queued turn stays EDITABLE: promote one that matters more, cancel one the running answer already covered.",
-      "Promotion is offered only where it means something — never on the item already at the front.",
+      "The arrow INTERRUPTS, it does not reorder: the picked turn runs now and the running one goes back to the head of the queue. A queue whose items shuffle while one is mid-answer implies the running turn can be overtaken quietly, and it cannot.",
+      "It is offered only while something is actually running — with nothing to interrupt, the control would be a lie.",
+      "The running row wears the shimmer, because that is the treatment this system uses for work in progress everywhere else.",
       "Rows animate with layout so promoting reorders visibly rather than teleporting.",
     ],
     whenToUse: [
@@ -2250,6 +2618,13 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     description:
       "A collapsible trace that streams reasoning steps, then settles into a summary.",
     behavior: [
+      "STAGES ITS ARRIVAL: shimmer, a beat of nothing, then one step at a time. The block is complete in the data and would paint in a single frame — painting it instantly says the work was free, and robs the reader of the one thing a trace is for.",
+      "staged={false} renders it settled, which is what a re-rendered older message must do: history is written, not re-thought.",
+      "INSIDE A RESPONSE, BLOCKS WAIT FOR EACH OTHER: thinking finishes, then the next evidence block works, then the prose streams. The stage queue enforces the order in the shared hook, so a block inherits it by being staged at all — see DESIGN.md §8. On its own (this playground) a block has no queue and stages immediately.",
+      "The counter is REAL — it ticks actual seconds while the trace is arriving, and the settled summary quotes what it measured rather than a prop. A trace that claims 'thought for 5s' when it took two is a decoration pretending to be a measurement.",
+      "It runs on the block's WORKING state and freezes the moment the work stops: not while queued behind an earlier block (that is someone else's time) and not after the last item lands (a settled summary must quote a number that has stopped moving).",
+      "Thinking holds to a floor (THINKING_FLOOR_MS) so an answer never appears to think for a blink and then know everything. The floor is a real wait, which is what keeps the counter a measurement.",
+      "Each step's detail is WRITTEN, not revealed: it streams through the same StreamingText the answer itself uses.",
       "Opens itself while the run is live and collapses to one line when it finishes — reasoning is interesting WHILE it happens and reference material after.",
       "The settled summary states the cost in time (\"Thought for 5s\"), which is the part worth knowing at a glance.",
       "Steps are marked, not connected: they are ordered, not causally chained, and a connector would claim more than the model did.",
@@ -2329,12 +2704,14 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     group: "Messages",
     name: "QuoteReply",
     description:
-      "Select a phrase in an answer and a toolbar offers to quote, explain, or rewrite it.",
+      "Select a phrase and a contextual edit bar attaches beneath it — describe an edit, or pick one, and watch the rewrite arrive in place.",
     behavior: [
-      "Appears on selection and nowhere else — a persistent toolbar over an answer would be chrome that is wrong ninety-nine percent of the time.",
-      "Only selections INSIDE its own content count, so selecting elsewhere on the page never summons it.",
-      "The three actions are the three scopes worth having: bring it into the next turn, ask about it, or change it.",
-      "It sets the SUBJECT of the next turn — without it, following up on one clause means re-typing it and hoping the assistant picks the right referent.",
+      "ANCHORED TO THE SELECTION: the bar measures the selected range and attaches beneath its last line, centred on the whole selection — a wrapped selection still reads as one object with its bar. It pops in on the control role and repositions through requestAnimationFrame.",
+      "A STATE MACHINE, not a toolbar: idle (a Describe-edits prompt plus Explain / Improve, with Shorten / Tone / Grammar unfolding inside the pill) → thinking (spinner + shimmer with the real elapsed count) → streaming (the rewrite arrives INTO the selection through StreamingText) → result (Keep / Discard / Retry).",
+      "Rewriting in place requires owning the prose: pass `text` and a `rewrite` seam. Without the seam, actions only report (onAction) — which is all a surface that cannot mutate its content should get.",
+      "Typing in the prompt collapses the presets to a send control; the instruction IS the action.",
+      "Appears on selection and nowhere else, and only for selections inside its own content.",
+      "The selection stays the SUBJECT: Keep applies the replacement to the text, Discard restores it, Retry runs the same action again.",
     ],
     whenToUse: [
       "Around long assistant answers, especially ones mixing prose and code.",
@@ -2347,13 +2724,19 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       {
         label: "Select any phrase below",
         render: (
-          <div className="w-full max-w-md">
-            <QuoteReply>
-              <p className="text-[13px] leading-relaxed">
-                The regression happens because the converter drops parts with no
-                text, so an empty assistant turn never reaches the thread.
-              </p>
-            </QuoteReply>
+          <div className="w-full max-w-md pb-14">
+            <QuoteReply
+              text="The regression happens because the converter drops parts with no text, so an empty assistant turn never reaches the thread."
+              // the canned model seam: a real one produces the rewrite
+              rewrite={(action, selection) =>
+                action === "shorten"
+                  ? selection
+                      .split(" ")
+                      .slice(0, Math.max(3, Math.ceil(selection.split(" ").length / 2)))
+                      .join(" ")
+                  : `${selection.replace(/[.]$/, "")} — reworded by the ${action} action.`
+              }
+            />
           </div>
         ),
       },
@@ -2436,7 +2819,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "One tool invocation with its request and result tucked behind a disclosure.",
     behavior: [
       "A TOOL CALL IS A CLAIM, AND A CLAIM MUST BE AUDITABLE: the collapsed row is the claim, the disclosure holds the evidence.",
-      "The verb is plain language and the argument is a code chip beside it — the sentence is for reading, the chip is for verifying.",
+      "The verb alone, in plain language. The exact argument is evidence, and evidence lives in the disclosure — a chip in the header duplicated the request one click away.",
       "Collapsed by default, EXCEPT on failure: a failure the user has to go looking for is a failure they will miss.",
       "Request and result are quoted verbatim in mono. Evidence is not paraphrased.",
       "With no request or result, the row stops pretending to be expandable.",
@@ -2455,7 +2838,6 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
           <div className="w-full max-w-md">
             <ToolCall
               verb="Searched the docs"
-              argument="draft persistence"
               request={'{"query": "draft persistence"}'}
               result="3 matches, best hit /docs/runtime/drafts"
               defaultOpen
@@ -2476,6 +2858,8 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "File stats sit at the bottom and carry +/− counts, because a change to your files is the part with consequences.",
       "Additions and removals use the status pair (--positive / --destructive), never bespoke greens and reds.",
       "Open by default: a session summary the user has to discover defeats the summary.",
+      "Steps land one by one, each row growing in — the record admits it was assembled over time, and a row appearing at full height would shove the list in a single frame.",
+      "Every step row is a ghost button: pass onStepSelect to make it a jump — open the file, reveal the diff — and the record reads as traversable either way.",
     ],
     whenToUse: [
       "After an agent run of more than a couple of steps.",
@@ -2501,6 +2885,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
                 { path: "composer.tsx", added: 14, removed: 3 },
                 { path: "use-draft.ts", added: 42 },
               ]}
+              onStepSelect={() => {}}
             />
           </div>
         ),
@@ -2642,6 +3027,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "Skip exists because a failed call is often not fatal to the answer — forcing a retry to continue is how a transient blip becomes a dead conversation.",
       "The error is quoted verbatim in mono on the destructive wash; a paraphrased error is a second bug to debug.",
       "Scoped to the call, not the turn: the surrounding answer keeps its own state.",
+      "Report (onFeedback) opens the same FeedbackDialog the message actions use, inline under the failure — what went wrong from the user's side is captured at the moment they know it, in the ambient visual language rather than a detached modal.",
     ],
     whenToUse: [
       "Any tool call that failed inside an otherwise live turn.",
@@ -2663,6 +3049,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
               attempts={3}
               onRetry={() => {}}
               onSkip={() => {}}
+              onFeedback={() => {}}
             />
           </div>
         ),
@@ -2678,6 +3065,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     behavior: [
       "Attachment is the whole idea: output that floats free of the code that made it is a screenshot.",
       "Re-running replaces the result rather than appending another orphan block.",
+      "Pressing play performs a run: the old output clears, the clock restarts from zero, and the result streams back in — the same arrival every time, because every run took time.",
       "The run control disables itself while running — the object states its own availability instead of relying on the user to wait.",
       "Duration sits beside the control, because how long it took is part of the result.",
     ],
@@ -2714,6 +3102,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     behavior: [
       "Showing the QUERY is the part most search UIs skip: it is the assistant's interpretation of the question, and the first place an answer goes wrong.",
       "Results stagger in because they genuinely arrive that way — the animation is reporting, not decoration.",
+      "The query itself shimmers while sources are still being read: the search is the thing currently happening, and it settles to plain text when the reading ends.",
       "Each source carries its own mark (a caller-supplied logo, else the domain's initial) and its domain in mono, so provenance is recognizable before it is read.",
       "A source with an href opens in a new tab; without one it stays a record of what was read.",
     ],

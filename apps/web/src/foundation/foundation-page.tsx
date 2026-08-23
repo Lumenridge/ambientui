@@ -27,7 +27,7 @@ import {
   ICON_LIBRARIES,
   MOTION_CHARACTERS,
   MOTION_PACES,
-  RADIUS_STEPS,
+  RADIUS_SCALE,
   SCALINGS,
   SPACING_GRIDS,
   TEXT_DARK_MIRROR,
@@ -365,10 +365,10 @@ export function FoundationPage() {
         <SettingsCard>
           <SettingsRow
             title="Radius"
-            description="The full ramp of legal corner values; components derive their steps from your pick."
+            description="Tailwind's radius scale. Your pick becomes rounded-lg, and the neighbouring steps slide with it — every value stays on the scale."
           >
-            <div className="grid grid-cols-8 gap-2">
-              {RADIUS_STEPS.map((px) => (
+            <div className="grid grid-cols-9 gap-2">
+              {RADIUS_SCALE.map(({ px, name }) => (
                 <button
                   key={px}
                   type="button"
@@ -394,6 +394,9 @@ export function FoundationPage() {
                         : "text-muted-foreground"
                     )}
                   >
+                    {name}
+                  </span>
+                  <span className="text-muted-foreground/70 font-mono text-[10px]">
                     {px}px
                   </span>
                 </button>

@@ -7,6 +7,10 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { useMotionTransition } from "@/foundation/foundation-context"
 
+import { StageSkeleton, StagedItem } from "./staging"
+import { StreamingText } from "./streaming-text"
+import { useElapsedSeconds, useStagedReveal } from "./use-staged-reveal"
+
 /**
  * THE KNOWLEDGE KIT — where an answer came from.
  *
@@ -49,7 +53,7 @@ function SourceMark({ source }: { source: SearchSource }) {
   return (
     <span
       aria-hidden
-      className="bg-muted text-muted-foreground flex size-4 shrink-0 items-center justify-center rounded-sm text-[9px] font-medium uppercase"
+      className="bg-muted text-muted-foreground flex size-4 shrink-0 items-center justify-center rounded-sm text-[0.625rem] font-medium uppercase"
     >
       {source.domain.trim().charAt(0)}
     </span>
@@ -69,46 +73,63 @@ export function WebSearch({
   query,
   sources,
   label,
+  staged = true,
   className,
 }: {
   query: string
   sources: SearchSource[]
   /** Defaults to "Read N sources". */
   label?: string
+  /** Stage the arrival — see staging.tsx. False renders settled. */
+  staged?: boolean
   className?: string
 }) {
-  const transition = useMotionTransition("control")
+  // sources are read one at a time; the count says how far it has got
+  const { shown, pending, working: counting } = useStagedReveal(sources.length, {
+    enabled: staged,
+    delay: 1800,
+    interval: 700,
+  })
+  const elapsed = useElapsedSeconds(counting)
+  const reading = staged && shown < sources.length
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <span className="bg-muted text-foreground inline-flex max-w-full items-center gap-2 self-start rounded-full px-3 py-1.5 text-[13px]">
+      <span className="bg-muted text-foreground inline-flex max-w-full items-center gap-2 self-start rounded-full px-3 py-1.5 text-sm">
         <Icon name="search" size={13} />
-        <span className="min-w-0 truncate">{query}</span>
+        <span className={cn("min-w-0 truncate", reading && "ambient-shimmer")}>
+          {query}
+        </span>
       </span>
       {sources.length > 0 && (
         <>
-          <div className="text-muted-foreground text-[13px]">
-            {label ?? `Read ${sources.length} source${sources.length === 1 ? "" : "s"}`}
+          <div
+            className={cn(
+              "text-muted-foreground text-sm",
+              reading && "ambient-shimmer"
+            )}
+          >
+            {reading
+              ? `Reading sources… ${elapsed}s`
+              : (label ??
+                `Read ${shown} source${shown === 1 ? "" : "s"}`)}
           </div>
+          {pending && <StageSkeleton rows={2} />}
           <ul className="flex flex-col gap-1">
-            {sources.map((s, i) => {
+            {sources.slice(0, shown).map((s, i) => {
               const inner = (
                 <>
                   <SourceMark key={s.logo ?? "none"} source={s} />
-                  <span className="min-w-0 flex-1 truncate text-[13px]">
+                  <span className="min-w-0 flex-1 truncate text-sm">
                     {s.title}
                   </span>
-                  <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
+                  <span className="text-muted-foreground shrink-0 font-mono text-xs">
                     {s.domain}
                   </span>
                 </>
               )
               return (
-                <motion.li
-                  key={`${s.domain}-${i}`}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ ...transition, delay: i * 0.06 }}
-                >
+                <li key={`${s.domain}-${i}`}>
+                  <StagedItem index={i}>
                   {s.href ? (
                     <a
                       href={s.href}
@@ -123,7 +144,8 @@ export function WebSearch({
                       {inner}
                     </span>
                   )}
-                </motion.li>
+                  </StagedItem>
+                </li>
               )
             })}
           </ul>
@@ -173,7 +195,10 @@ export function InlineCitation({
         onBlur={() => setOpen(false)}
         aria-label={`Source ${citation.n}: ${citation.title}`}
         className={cn(
-          "mx-0.5 inline-flex min-w-4 items-center justify-center rounded px-1 align-super font-mono text-[10px] transition-colors",
+          // NOT align-super: superscript alignment stretches the line box and
+          // pads every paragraph that contains a citation. A baseline-aligned
+          // marker nudged up costs the prose nothing.
+          "relative -top-[0.35em] mx-0.5 inline-flex min-w-4 items-center justify-center rounded px-1 py-0.5 align-baseline font-mono text-[0.625rem] leading-none transition-colors",
           open
             ? "bg-foreground text-background"
             : "bg-muted text-muted-foreground"
@@ -193,15 +218,15 @@ export function InlineCitation({
             // and a card below would cover the text still being read
             className="border-border bg-card absolute bottom-full left-0 z-10 mb-1.5 flex w-64 flex-col gap-1 rounded-xl border p-3 shadow-xs"
           >
-            <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-[11px]">
-              <span className="bg-muted text-muted-foreground flex size-4 shrink-0 items-center justify-center rounded-sm text-[9px] font-medium uppercase">
+            <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
+              <span className="bg-muted text-muted-foreground flex size-4 shrink-0 items-center justify-center rounded-sm text-[0.625rem] font-medium uppercase">
                 {citation.domain.charAt(0)}
               </span>
               {citation.domain}
             </span>
-            <span className="text-[13px] font-medium">{citation.title}</span>
+            <span className="text-sm font-medium">{citation.title}</span>
             {citation.excerpt && (
-              <span className="text-muted-foreground text-[13px]">
+              <span className="text-muted-foreground text-sm">
                 {citation.excerpt}
               </span>
             )}
@@ -235,15 +260,27 @@ export function ResearchReport({
   title,
   sections,
   sourcesRead,
+  staged = true,
   className,
 }: {
   title: string
   sections: ReportSection[]
   /** Total sources read so far, shown in the header. */
   sourcesRead?: number
+  /** Stage the arrival — see staging.tsx. False renders settled. */
+  staged?: boolean
   className?: string
 }) {
-  const done = sections.filter((s) => (s.status ?? "pending") === "done").length
+  // the outline is declared first and fills in; that IS the component's claim
+  const { shown, pending, working: counting } = useStagedReveal(sections.length, {
+    enabled: staged,
+    delay: 2000,
+    interval: 1400,
+  })
+  const writing = staged && shown < sections.length
+  const elapsed = useElapsedSeconds(counting)
+  const landed = sections.slice(0, shown)
+  const done = landed.filter((s) => (s.status ?? "pending") === "done").length
   return (
     <div
       className={cn(
@@ -253,16 +290,29 @@ export function ResearchReport({
     >
       <div className="px-3 pt-3 pb-2">
         <div className="text-sm font-medium">{title}</div>
-        <div className="text-muted-foreground mt-0.5 font-mono text-[11px]">
-          {done}/{sections.length} sections
-          {sourcesRead !== undefined && ` · ${sourcesRead} sources read`}
+        <div
+          className={cn(
+            "text-muted-foreground mt-0.5 font-mono text-xs tabular-nums",
+            writing && "ambient-shimmer"
+          )}
+        >
+          {writing
+            ? `Researching… ${elapsed}s · ${done}/${sections.length} sections`
+            : `${done}/${sections.length} sections${
+                sourcesRead !== undefined ? ` · ${sourcesRead} sources read` : ""
+              }`}
         </div>
       </div>
+      {pending && <StageSkeleton rows={2} className="px-3 pb-3" />}
       <ol className="divide-border divide-y">
-        {sections.map((s) => {
+        {landed.map((s, si) => {
           const status = s.status ?? "pending"
           return (
-            <li key={s.title} className="flex gap-2.5 px-3 py-2.5">
+            <StagedItem
+              key={s.title}
+              index={si}
+              className="flex gap-2.5 px-3 py-2.5"
+            >
               <span className="mt-0.5 shrink-0">
                 {status === "done" ? (
                   <span className="text-(--positive)">
@@ -281,25 +331,28 @@ export function ResearchReport({
                 <div className="flex items-baseline justify-between gap-3">
                   <span
                     className={cn(
-                      "text-[13px] font-medium",
+                      "text-sm font-medium",
                       status === "pending" && "text-muted-foreground"
                     )}
                   >
                     {s.title}
                   </span>
                   {s.sources !== undefined && (
-                    <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
+                    <span className="text-muted-foreground shrink-0 font-mono text-xs">
                       {s.sources} src
                     </span>
                   )}
                 </div>
                 {s.body && (
-                  <p className="text-muted-foreground mt-0.5 text-[13px]">
-                    {s.body}
-                  </p>
+                  // a section is written, so it arrives written
+                  <StreamingText
+                    text={s.body}
+                    live={staged}
+                    className="text-muted-foreground mt-0.5 block text-sm"
+                  />
                 )}
               </div>
-            </li>
+            </StagedItem>
           )
         })}
       </ol>
