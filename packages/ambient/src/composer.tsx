@@ -1,9 +1,9 @@
 import * as React from "react"
 
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ambientui/ui/lib/utils"
 
-import { Button } from "@workspace/ui/components/button"
-import { Icon } from "@workspace/ui/components/icon"
+import { Button } from "@ambientui/ui/components/button"
+import { Icon } from "@ambientui/ui/components/icon"
 
 import { AssistantMark, ContextChipView, ShimmerPlaceholder } from "./assistant"
 import {

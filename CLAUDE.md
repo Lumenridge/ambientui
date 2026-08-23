@@ -131,7 +131,7 @@ skill before any `use_figma` write.
 - Ambient layer: `packages/ambient/src/` (context, surfaces, orb,
   orb-character — the animated identity with states still/listening/thinking/
   answer, driven via `orbState` in the context). **It is a package, not app
-  code: it may import `@workspace/ui` and npm, never `@/`.** Its material is
+  code: it may import `@ambientui/ui` and npm, never `@/`.** Its material is
   `packages/ambient/src/ambient.css`; the app's own shell tokens are
   `apps/web/src/theme.css`, `viz.css`.
 - What the layer needs from a design system is stated in

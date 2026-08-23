@@ -9,6 +9,6 @@ export {
   IconLibraryProvider,
   type IconName,
   type IconProps,
-} from "@workspace/ui/components/icon"
+} from "@ambientui/ui/components/icon"
 // the name vocabulary is data, not a component — see lib/icon-library
-export { ICON_NAMES } from "@workspace/ui/lib/icon-library"
+export { ICON_NAMES } from "@ambientui/ui/lib/icon-library"

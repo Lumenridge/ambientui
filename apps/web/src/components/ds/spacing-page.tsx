@@ -1,8 +1,8 @@
 import * as React from "react"
 
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
-import { Separator } from "@workspace/ui/components/separator"
+import { Badge } from "@ambientui/ui/components/badge"
+import { Button } from "@ambientui/ui/components/button"
+import { Separator } from "@ambientui/ui/components/separator"
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from "@ambientui/ui/components/table"
 
 import {
   SPACING_GRIDS,

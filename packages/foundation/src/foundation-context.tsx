@@ -6,7 +6,7 @@ import {
   type AmbientRuntime,
 } from "@ambientui/ambient/ambient-runtime"
 
-import { IconLibraryProvider } from "@workspace/ui/components/icon"
+import { IconLibraryProvider } from "@ambientui/ui/components/icon"
 
 /**
  * The Foundation layer — the project's global design configuration and the

@@ -2,14 +2,14 @@ import * as React from "react"
 
 import { AnimatePresence, motion } from "framer-motion"
 
-import { Button } from "@workspace/ui/components/button"
-import { Icon } from "@workspace/ui/components/icon"
+import { Button } from "@ambientui/ui/components/button"
+import { Icon } from "@ambientui/ui/components/icon"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ambientui/ui/components/tooltip"
+import { cn } from "@ambientui/ui/lib/utils"
 
 import { useTheme } from "@/components/theme-provider"
 

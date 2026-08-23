@@ -9,15 +9,15 @@ import {
   type MotionValue,
 } from "framer-motion"
 
-import { Icon, type IconName } from "@workspace/ui/components/icon"
-import { SectionRail } from "@workspace/ui/components/section-rail"
+import { Icon, type IconName } from "@ambientui/ui/components/icon"
+import { SectionRail } from "@ambientui/ui/components/section-rail"
 
 import { toast } from "sonner"
 
 import { SaveReminder } from "@/components/ds/settings-kit"
 
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
+import { Badge } from "@ambientui/ui/components/badge"
+import { Button } from "@ambientui/ui/components/button"
 import {
   Card,
   CardContent,
@@ -25,8 +25,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { Checkbox } from "@workspace/ui/components/checkbox"
+} from "@ambientui/ui/components/card"
+import { Checkbox } from "@ambientui/ui/components/checkbox"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -35,9 +35,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
-import { Input } from "@workspace/ui/components/input"
-import { Separator } from "@workspace/ui/components/separator"
+} from "@ambientui/ui/components/dropdown-menu"
+import { Input } from "@ambientui/ui/components/input"
+import { Separator } from "@ambientui/ui/components/separator"
 import {
   Sheet,
   SheetContent,
@@ -45,8 +45,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@workspace/ui/components/sheet"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+} from "@ambientui/ui/components/sheet"
+import { Skeleton } from "@ambientui/ui/components/skeleton"
 import {
   Table,
   TableBody,
@@ -54,24 +54,24 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from "@ambientui/ui/components/table"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@workspace/ui/components/collapsible"
+} from "@ambientui/ui/components/collapsible"
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@workspace/ui/components/tabs"
+} from "@ambientui/ui/components/tabs"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ambientui/ui/components/tooltip"
+import { cn } from "@ambientui/ui/lib/utils"
 
 import {
   OrbCharacter,

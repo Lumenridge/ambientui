@@ -7,7 +7,7 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@ambientui/ui/*": ["../../packages/ui/src/*"],
       "@ambientui/ambient/*": ["../../packages/ambient/src/*"],
       "@ambientui/foundation": ["../../packages/foundation/src/foundation-context.tsx"]
     }

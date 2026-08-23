@@ -1,4 +1,4 @@
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ambientui/ui/components/button"
 
 import {
   useAssistant,

@@ -2,8 +2,8 @@ import * as React from "react"
 
 import { AnimatePresence, motion } from "framer-motion"
 
-import { Button } from "@workspace/ui/components/button"
-import { cn } from "@workspace/ui/lib/utils"
+import { Button } from "@ambientui/ui/components/button"
+import { cn } from "@ambientui/ui/lib/utils"
 
 import {
   useMotionSpring,

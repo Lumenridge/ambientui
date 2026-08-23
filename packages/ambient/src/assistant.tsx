@@ -11,7 +11,7 @@ import {
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ambientui/ui/lib/utils"
 
 import { AnimatePresence, motion } from "framer-motion"
 
@@ -38,7 +38,7 @@ import { composeResponse } from "./compose-response"
 import { OrbCharacter, OrbField, OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
 import { Composer } from "./composer"
-import { Icon, type IconName } from "@workspace/ui/components/icon"
+import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import {
   Sidebar,
   SidebarContent,
@@ -50,7 +50,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-} from "@workspace/ui/components/sidebar"
+} from "@ambientui/ui/components/sidebar"
 import { MessageQueue } from "./message-kit"
 
 type Msg = {

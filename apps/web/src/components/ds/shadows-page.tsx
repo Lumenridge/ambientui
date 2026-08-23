@@ -1,4 +1,4 @@
-import { Separator } from "@workspace/ui/components/separator"
+import { Separator } from "@ambientui/ui/components/separator"
 
 /**
  * The Shadows page: documentation of the elevation scale of record —

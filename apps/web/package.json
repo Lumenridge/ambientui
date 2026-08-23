@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "@ambientui/site",
   "version": "0.0.1",
   "type": "module",
   "private": true,
@@ -20,7 +20,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@remixicon/react": "^4.9.0",
     "@tabler/icons-react": "^3.46.0",
-    "@workspace/ui": "*",
+    "@ambientui/ui": "*",
     "framer-motion": "^13.1.1",
     "lucide-react": "^1.33.0",
     "react": "^19.2.6",
@@ -40,5 +40,6 @@
     "typescript": "~6",
     "typescript-eslint": "^8",
     "vite": "^8"
-  }
+  },
+  "description": "The ambientui website \u2014 philosophy, the component reference, and the dev-tool demo."
 }

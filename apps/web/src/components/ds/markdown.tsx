@@ -7,8 +7,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ambientui/ui/components/table"
+import { cn } from "@ambientui/ui/lib/utils"
 
 /**
  * THE GOVERNING DOCUMENTS, RENDERED — not a copy of them.

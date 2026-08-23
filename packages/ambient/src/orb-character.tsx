@@ -7,7 +7,7 @@ import {
 import { Heatmap } from "@paper-design/shaders-react"
 import { animate, useAnimationFrame, useMotionValue } from "framer-motion"
 
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ambientui/ui/lib/utils"
 
 /**
  * The orb character — the assistant's animated identity: the Paper Design

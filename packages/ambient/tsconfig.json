@@ -9,7 +9,7 @@
     "strict": true,
     "noEmit": true,
     "paths": {
-      "@workspace/ui/*": ["../ui/src/*"]
+      "@ambientui/ui/*": ["../ui/src/*"]
     }
   },
   "include": ["."],

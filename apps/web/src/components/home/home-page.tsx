@@ -1,8 +1,8 @@
 import * as React from "react"
 
-import { Tabs, TabsContent } from "@workspace/ui/components/tabs"
+import { Tabs, TabsContent } from "@ambientui/ui/components/tabs"
 
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ambientui/ui/lib/utils"
 
 import { useAssistant } from "@ambientui/ambient/assistant-context"
 import { CanvasBackdrop } from "@/components/canvas-backdrop"

@@ -19,7 +19,7 @@ import { createRoot } from "react-dom/client"
 // Only the primitives' tokens and the layer's own material — NOT the app's
 // theme.css. If the layer ever needs that file again, the CSS split has
 // regressed exactly the way the import split would.
-import "@workspace/ui/globals.css"
+import "@ambientui/ui/globals.css"
 import "@ambientui/ambient/ambient.css"
 
 import { Assistant } from "@ambientui/ambient/assistant"

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 
-import { Toaster } from "@workspace/ui/components/sonner"
-import { TooltipProvider } from "@workspace/ui/components/tooltip"
+import { Toaster } from "@ambientui/ui/components/sonner"
+import { TooltipProvider } from "@ambientui/ui/components/tooltip"
 
 import { Assistant } from "@ambientui/ambient/assistant"
 import { useTheme } from "@/components/theme-provider"

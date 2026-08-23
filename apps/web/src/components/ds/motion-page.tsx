@@ -2,8 +2,8 @@ import * as React from "react"
 
 import { motion } from "framer-motion"
 
-import { Button } from "@workspace/ui/components/button"
-import { Icon } from "@workspace/ui/components/icon"
+import { Button } from "@ambientui/ui/components/button"
+import { Icon } from "@ambientui/ui/components/icon"
 
 import {
   MOTION_ROLES,

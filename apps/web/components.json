@@ -14,8 +14,8 @@
     "components": "@/components",
     "hooks": "@/hooks",
     "lib": "@/lib",
-    "utils": "@workspace/ui/lib/utils",
-    "ui": "@workspace/ui/components"
+    "utils": "@ambientui/ui/lib/utils",
+    "ui": "@ambientui/ui/components"
   },
   "rtl": true,
   "menuColor": "inverted-translucent",

@@ -3,7 +3,7 @@ import * as React from "react"
 import { AnimatePresence, motion } from "framer-motion"
 
 
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ambientui/ui/lib/utils"
 
 import {
   useAmbientRuntime,
@@ -12,7 +12,7 @@ import {
 } from "./ambient-runtime"
 
 import { useAssistant, type OrbAnchor } from "./assistant-context"
-import { Icon } from "@workspace/ui/components/icon"
+import { Icon } from "@ambientui/ui/components/icon"
 import { Composer } from "./composer"
 import { OrbCharacter } from "./orb-character"
 

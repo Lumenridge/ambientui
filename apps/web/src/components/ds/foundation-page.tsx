@@ -3,13 +3,13 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { toast } from "sonner"
 
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
-import { Input } from "@workspace/ui/components/input"
-import { cn } from "@workspace/ui/lib/utils"
+import { Badge } from "@ambientui/ui/components/badge"
+import { Button } from "@ambientui/ui/components/button"
+import { Input } from "@ambientui/ui/components/input"
+import { cn } from "@ambientui/ui/lib/utils"
 
 import { Icon } from "@/components/icon"
-import { SectionRail } from "@workspace/ui/components/section-rail"
+import { SectionRail } from "@ambientui/ui/components/section-rail"
 
 import { RoleEditor } from "@/components/ds/colors-page"
 import {

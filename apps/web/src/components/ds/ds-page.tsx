@@ -1,8 +1,8 @@
 import * as React from "react"
 
-import { Badge } from "@workspace/ui/components/badge"
-import { Icon, type IconName } from "@workspace/ui/components/icon"
-import { Separator } from "@workspace/ui/components/separator"
+import { Badge } from "@ambientui/ui/components/badge"
+import { Icon, type IconName } from "@ambientui/ui/components/icon"
+import { Separator } from "@ambientui/ui/components/separator"
 
 import { useAssistant } from "@ambientui/ambient/assistant-context"
 import { OrbGlyph } from "@ambientui/ambient/orb-character"
@@ -28,12 +28,12 @@ import {
   SidebarFooter,
   SidebarInput,
   SidebarProvider,
-} from "@workspace/ui/components/sidebar"
+} from "@ambientui/ui/components/sidebar"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@workspace/ui/components/collapsible"
+} from "@ambientui/ui/components/collapsible"
 
 import { SaveReminder } from "@/components/ds/settings-kit"
 import { MotionPage } from "@/components/ds/motion-page"

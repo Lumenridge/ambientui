@@ -1,8 +1,8 @@
 import * as React from "react"
 
-import { Button } from "@workspace/ui/components/button"
-import { Icon } from "@workspace/ui/components/icon"
-import { cn } from "@workspace/ui/lib/utils"
+import { Button } from "@ambientui/ui/components/button"
+import { Icon } from "@ambientui/ui/components/icon"
+import { cn } from "@ambientui/ui/lib/utils"
 
 /**
  * The canvas ground: an abstract gradient behind the ambient layer's frost
