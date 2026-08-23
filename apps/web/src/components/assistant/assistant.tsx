@@ -641,29 +641,37 @@ export function Assistant() {
   // oversized past the surface, so the clip MUST live here — relying on
   // the outer container's overflow leaks the field (the dock has none).
   /**
-   * The heat field and its veil, as ONE decision. What the field is doing
-   * here decides both: behind a panel's content it stays low-presence under
-   * the heavier frost; full-screen it IS the ground, which is what
-   * strength="stage" and the lighter .ambient-stage-frost exist for. They are
-   * a pair in theme.css and in OrbField's own docs, so passing them
-   * separately just invites applying half of it — which is exactly what
-   * happened the first time.
+   * The heat field and the translucency over it, as ONE named decision.
+   *
+   * Two knobs — how present the field is, and how much veil covers it — but
+   * only three combinations mean anything, so the surface picks a PLACE
+   * rather than setting both and hoping:
+   *
+   *   panel  — low presence under the full frost. Behind a floating
+   *            surface's content, where the field is atmosphere.
+   *   ground — full presence under the thin stage veil. The field IS the
+   *            wallpaper (the canvas page); nothing is meant to sit over it.
+   *   screen — full presence under the FULL frost. A full-screen ambient
+   *            surface: the field has to carry a whole window, and the
+   *            translucent layer still has to sit on top of it. Pairing full
+   *            presence with the thin veil instead left the shader raw, which
+   *            is the ground's recipe applied where it does not belong.
    */
-  const renderField = (strength: "ambient" | "stage" = "ambient") => (
+  const renderField = (place: "panel" | "ground" | "screen" = "panel") => (
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]"
     >
       <OrbField
         state={orbState}
-        strength={strength}
+        strength={place === "panel" ? "ambient" : "stage"}
         colors={config.orb.useAccent ? undefined : config.orb.colors}
         speeds={config.orb.speeds}
       />
       <div
         className={cn(
           "pointer-events-none absolute inset-0",
-          strength === "stage" ? "ambient-stage-frost" : "ambient-field-frost"
+          place === "ground" ? "ambient-stage-frost" : "ambient-field-frost"
         )}
       />
     </div>
@@ -1209,7 +1217,7 @@ export function Assistant() {
             loudest possible place to drop the identity. Self-clipped, and
             mounted only while this mode is (one shader instance, not one
             per mode kept alive). */}
-        {renderField("stage")}
+        {renderField("screen")}
         <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
           <span className="text-sm font-medium">History</span>
