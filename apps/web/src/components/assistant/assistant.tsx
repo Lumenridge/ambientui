@@ -652,13 +652,13 @@ export function Assistant() {
           <span
             title={sessionTitle}
             className={cn(
-              "min-w-0 truncate text-sm font-medium",
+              "min-w-0 truncate text-sm font-medium transition-opacity group-hover/header:opacity-0",
               busy && "ambient-shimmer"
             )}
           >
             {sessionTitle}
           </span>
-          <span className="absolute left-1/2 hidden -translate-x-1/2 text-muted-foreground/70 group-hover/header:inline-flex">
+          <span className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 text-muted-foreground/70 group-hover/header:inline-flex">
             <HugeiconsIcon
               icon={DragDropHorizontalIcon}
               size={15}
@@ -1091,9 +1091,10 @@ export function Assistant() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: microT }}
         transition={microT}
-        className="ambient-glass fixed inset-0 z-50 flex flex-col"
+        // the scrim, not the panel's glass: this one covers the product
+        className="ambient-scrim fixed inset-0 z-50 flex flex-col"
       >
-        <div className="ambient-blur-top flex shrink-0 items-center gap-3 px-4 py-3">
+        <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
           <span className="text-sm font-medium">History</span>
           <span className="text-muted-foreground font-mono text-xs">
             {recents.length} conversation{recents.length === 1 ? "" : "s"}
@@ -1185,9 +1186,13 @@ export function Assistant() {
             </Sidebar>
           </SidebarProvider>
 
-          <div className="flex min-h-0 flex-1 flex-col">
-            {renderTranscript("mx-auto w-full max-w-2xl")}
-            <div className="ambient-blur-bottom px-4 py-2">
+          {/* the composer OVERLAYS the transcript rather than sitting beside
+              it, on the layer's own glass: a bar the content cannot pass
+              behind has nothing to be translucent about, and seeing the
+              answer move under it is what says the conversation continues */}
+          <div className="relative flex min-h-0 flex-1 flex-col">
+            {renderTranscript("mx-auto w-full max-w-2xl pb-28")}
+            <div className="ambient-glass border-(--glass-border) absolute inset-x-0 bottom-0 border-t px-4 py-2">
               <div className="mx-auto w-full max-w-2xl">
               <ContextRow
                 pageChip={pageChip}
