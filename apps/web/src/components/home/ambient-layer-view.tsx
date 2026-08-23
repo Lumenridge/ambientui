@@ -551,7 +551,11 @@ export function AmbientLayerView() {
           terminal.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button size="lg" onClick={() => navigate?.("ds")}>
+          <Button size="lg" onClick={() => navigate?.("gallery")}>
+            <Icon name="layers" size={15} />
+            See all 32, running
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => navigate?.("ds")}>
             Read the documentation
           </Button>
           <Button size="lg" variant="outline" asChild>

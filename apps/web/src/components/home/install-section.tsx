@@ -1,10 +1,8 @@
 import * as React from "react"
 
-import { toast } from "sonner"
-
 import { Button } from "@ambientui/ui/components/button"
-import { cn } from "@ambientui/ui/lib/utils"
 
+import { CommandLine } from "@/components/command-line"
 import { Icon } from "@/components/icon"
 
 /**
@@ -16,11 +14,9 @@ import { Icon } from "@/components/icon"
  * doors sit beneath it as equals rather than as a menu you must classify
  * yourself into before you know what any of it is.
  *
- * COMPOSED, NOT PROMOTED (user decision, 2026-08-23). The command block is
- * built here from Button and the type/colour tokens rather than becoming a
- * vocabulary component. It is written ONCE, in this file, for the same reason
- * a component would exist: a treatment re-decided at each call site drifts.
- * If a third surface ever needs it, that is the moment to revisit promotion.
+ * The command block itself lives in components/command-line.tsx — composed,
+ * not promoted (owner's call), but written once now that the gallery needs
+ * it too.
  *
  * ONLY COMMANDS THAT RUN. Every command here was verified end to end by
  * installing into a scratch project that is not this repo. The design
@@ -61,63 +57,6 @@ const DOORS: Door[] = [
   },
 ]
 
-function CommandLine({
-  command,
-  size = "default",
-}: {
-  command: string
-  size?: "default" | "lead"
-}) {
-  const [copied, setCopied] = React.useState(false)
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(command)
-      setCopied(true)
-      toast.success("Copied to your clipboard")
-      window.setTimeout(() => setCopied(false), 1600)
-    } catch {
-      // clipboard is permission-gated and fails silently otherwise; say so
-      toast.error("Couldn't copy — select the command and copy it by hand")
-    }
-  }
-
-  return (
-    <div
-      className={cn(
-        "border-border bg-card flex items-center gap-3 rounded-xl border",
-        size === "lead" ? "px-4 py-3" : "px-3 py-2"
-      )}
-    >
-      {/* the prompt marker is decoration, so it is not part of the copied text */}
-      <span aria-hidden className="text-muted-foreground shrink-0 font-mono">
-        $
-      </span>
-      <code
-        className={cn(
-          "min-w-0 flex-1 font-mono",
-          size === "lead"
-            ? "overflow-x-auto text-sm whitespace-pre"
-            : // a two-column door has no room to scroll a command out of
-              // sight, and a half-shown command reads as a broken one
-              "text-xs leading-relaxed break-all"
-        )}
-      >
-        {command}
-      </code>
-      <Button
-        type="button"
-        size="icon-sm"
-        variant="ghost"
-        aria-label={copied ? "Copied" : `Copy: ${command}`}
-        onClick={copy}
-        className="shrink-0 rounded-lg"
-      >
-        <Icon name={copied ? "check" : "copy"} size={14} />
-      </Button>
-    </div>
-  )
-}
 
 export function InstallSection({ onDocs }: { onDocs?: () => void }) {
   return (
