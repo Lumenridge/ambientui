@@ -22,6 +22,8 @@ export type IconName =
   | "chevron-left"
   | "chevron-right"
   | "sidebar"
+  | "menu"
+  | "home"
   | "sun"
   | "moon"
   | "play"
@@ -66,6 +68,8 @@ export const ICON_NAMES: IconName[] = [
   "chevron-left",
   "chevron-right",
   "sidebar",
+  "menu",
+  "home",
   "sun",
   "moon",
   "play",

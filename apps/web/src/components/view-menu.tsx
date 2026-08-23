@@ -47,8 +47,13 @@ import { useMotionSpring, useMotionTransition } from "@/foundation/foundation-co
  * surface spring and closes on Escape or an outside click, because a menu
  * you cannot dismiss the ordinary way is a trap.
  *
- * Appearance rides at the HEAD of the closed pill as a ghost icon, not
- * inside the menu.
+ * HOME LEADS, when the app gives it one. It is the only control here that
+ * leaves the set of views entirely, so it sits outside the list and ahead of
+ * everything: a way back is not one destination among others. The component
+ * is told where home IS — it never assumes, because a control that invents a
+ * destination is one that will send someone somewhere wrong.
+ *
+ * Appearance rides beside it, not inside the menu.
  * It is the one thing here you reach for without meaning to go anywhere, so
  * putting it in the list cost it a click and, worse, drew it exactly like
  * the destinations above it — a two-state setting reading as a fourth place
@@ -59,11 +64,20 @@ export function ViewMenu({
   items,
   value,
   onSelect,
+  home,
   className,
 }: {
   items: readonly { id: string; label: string }[]
   value: string
   onSelect: (id: string) => void
+  /**
+   * Where home is, decided by the APP. The menu knows how to get there and
+   * nothing about what is there — the same contract the palette has with
+   * its commands. Omit it and no home control appears, because a component
+   * that invents a destination is a component that will send someone
+   * somewhere wrong.
+   */
+  home?: { label?: string; onSelect: () => void }
   className?: string
 }) {
   const [open, setOpen] = React.useState(false)
@@ -131,6 +145,23 @@ export function ViewMenu({
         transition={spring}
         className="ambient-glass border-(--glass-border) flex items-center gap-2 overflow-hidden rounded-full border p-1"
       >
+        {home && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="secondary"
+                aria-label={home.label ?? "Home"}
+                onClick={home.onSelect}
+                className="rounded-full"
+              >
+                <Icon name="home" size={14} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{home.label ?? "Home"}</TooltipContent>
+          </Tooltip>
+        )}
         {/* Appearance sits on the CLOSED pill, not inside the menu: it is
             the one thing here you reach for without meaning to go anywhere,
             and burying a two-state setting one click deep — drawn like the
@@ -172,8 +203,8 @@ export function ViewMenu({
               // move under the pointer as it opens
               className="rounded-full"
             >
-              {/* chevron says a list drops below; close says dismiss it */}
-              <Icon name={open ? "close" : "chevron-down"} size={14} />
+              {/* menu says there is a list here; close says dismiss it */}
+              <Icon name={open ? "close" : "menu"} size={14} />
             </Button>
           </TooltipTrigger>
           {/* only while closed: open, the menu itself is the explanation,

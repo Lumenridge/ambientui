@@ -96,7 +96,15 @@ export function HomePage() {
           view === "devtool" ? "top-1.5 justify-end pe-3" : "top-4 justify-center"
         )}
       >
-        <ViewMenu items={VIEWS} value={view} onSelect={select} />
+        {/* THE APP NAMES HOME, the menu only knows how to get there. Here it
+            is the bare canvas — the ground the ambient layer lives on, and
+            the thing every other view is a departure from. */}
+        <ViewMenu
+          items={VIEWS}
+          value={view}
+          onSelect={select}
+          home={{ label: "Home", onSelect: () => select("canvas") }}
+        />
       </div>
 
       <TabsContent
