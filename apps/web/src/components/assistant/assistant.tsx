@@ -2,15 +2,12 @@ import * as React from "react"
 
 import {
   Cancel01Icon,
-  CheckListIcon,
-  CubeIcon,
   DragDropHorizontalIcon,
   Message01Icon,
   PictureInPictureOnIcon,
   PlusSignIcon,
   SourceCodeIcon,
   SparklesIcon,
-  TextIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
@@ -1620,21 +1617,30 @@ function HeaderBtn({
   )
 }
 
-const chipKindIcon: Record<ContextChip["kind"], typeof CubeIcon> = {
-  page: SparklesIcon,
-  control: CheckListIcon,
-  target: CubeIcon,
-  cell: CubeIcon,
-  file: SourceCodeIcon,
-  symbol: CubeIcon,
-  selection: TextIcon,
+/**
+ * What each kind of context LOOKS like. Sparkles is gone from this map on
+ * purpose: in this system sparkles means the ASSISTANT — its mark, AskAI,
+ * the follow-up heading — and a context chip is not the assistant. It is the
+ * thing the assistant can see, so it wears the icon of the thing.
+ *
+ * Names, not icon modules: these are drawn by whichever library the
+ * Foundation has configured (rule 6), like every other icon in the product.
+ */
+const chipKindIcon: Record<ContextChip["kind"], IconName> = {
+  page: "document",
+  control: "sliders",
+  target: "layers",
+  cell: "layers",
+  file: "code",
+  symbol: "code",
+  selection: "type",
 }
 
 function IconTile({
   icon,
   compact,
 }: {
-  icon: typeof CubeIcon
+  icon: IconName
   compact?: boolean
 }) {
   return (
@@ -1644,7 +1650,7 @@ function IconTile({
         compact ? "size-4 rounded-[4px]" : "size-5 rounded-[5px]"
       )}
     >
-      <HugeiconsIcon icon={icon} size={compact ? 10 : 12} strokeWidth={1.8} />
+      <Icon name={icon} size={compact ? 10 : 12} />
     </span>
   )
 }
@@ -1751,7 +1757,7 @@ function ContextRow({
             onClick={() => onTogglePage(true)}
             className="inline-flex items-center gap-2 rounded-lg border border-border bg-popover py-1 ps-1.5 pe-2.5 text-[12.5px] font-medium transition-colors hover:bg-(--wash-strong)"
           >
-            <IconTile icon={SparklesIcon} />
+            <IconTile icon="document" />
             Attach context
             <span className="text-muted-foreground">
               <HugeiconsIcon icon={PlusSignIcon} size={13} strokeWidth={1.8} />

@@ -2762,11 +2762,39 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     ],
     whenToUse: [
       "On a user turn that carried files, and on assistant turns that produced them.",
+      "In the Composer (`compact`), for anything staged — pasted text, attached files — while the turn is still being written.",
     ],
     whenNotToUse: [
       "For links or references; those are ContextChip and ReferenceChips.",
+      "As a second place to show what is already staged. The Composer owns staged attachments because it owns the paste that creates them; rendering them in the context row as well produced two of every chip, each with its own remove button.",
     ],
     stories: [
+      {
+        label: "Staged in the composer (compact)",
+        render: (
+          <div className="w-full max-w-md">
+            <MessageAttachments
+              compact
+              onRemove={() => {}}
+              attachments={[
+                {
+                  id: "t1",
+                  name: 'TypeError: Cannot read properties of undefined',
+                  kind: "text",
+                  meta: "24 lines · 1,180 chars",
+                },
+                {
+                  id: "t2",
+                  name: "composer-regression.png",
+                  kind: "image",
+                  meta: "412 KB",
+                },
+                { id: "t3", name: "vitest-run.log", kind: "file", meta: "38 KB" },
+              ]}
+            />
+          </div>
+        ),
+      },
       {
         label: "Received files",
         render: (
