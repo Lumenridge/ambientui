@@ -2754,6 +2754,8 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "ONE COMPONENT FOR BOTH MOMENTS, because removability is the only honest difference: pass onRemove while the attachment is still staged in the composer, omit it once the message is sent and the attachment is a record. Two components would have drifted into two ideas of what an attachment looks like.",
       "A removable row is never also an openable one — it already contains a button, so it must not be one. While staged, removing wins.",
       "Pasted text is a `text` attachment: it is quoted material rather than a file, it says so with the quote mark, and its meta counts lines and characters so it is identifiable without being read.",
+      "`compact` is the composer's density: chips in one row rather than stacked cards, because staged attachments sit beside context chips and mean the same thing. Four stacked cards pushed the input off the surface, which is the wrong trade for material you are only referring to.",
+      "The compact row PAGES with arrows when it overflows, and carries none when it does not. A row that scrolls silently is one most people read as truncated — the arrows are the only thing separating \"there is more\" from \"that is all\".",
       "An openable attachment is a raised, bordered card; the rest sit on the quiet fill — affordance is carried by the surface, not by a hover-only cue.",
       "An image shows its thumbnail; everything else shows the icon for its kind, drawn by the configured icon library.",
       "Size and meta are formatted by the caller and shown in mono — they are facts about a file, not prose.",

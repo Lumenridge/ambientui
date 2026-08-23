@@ -40,18 +40,6 @@ body {
   backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
 }
 
-/* BLUR AND NOTHING ELSE — for a bar that floats ON an ambient surface rather
-   than over the product. The fill exists to lift a surface off the page; a
-   bar already sitting on the scrim would only be tinting a tint. No
-   saturation boost either: the other recipes lift saturation so a fill reads
-   as glass rather than as fog, but with no fill to sell there is nothing to
-   compensate for — it just pushes colour into a bar that is supposed to have
-   none. The content passing underneath is the only thing worth seeing. */
-.ambient-clear {
-  -webkit-backdrop-filter: blur(var(--ambient-blur));
-  backdrop-filter: blur(var(--ambient-blur));
-}
-
 /* THE SCRIM — the same recipe at full-screen weight. A panel floats on the
    product and can afford to be thin; a surface that covers it has to carry
    its own legibility, so the fill is heavier and the blur is stronger. Still

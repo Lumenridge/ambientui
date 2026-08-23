@@ -50,6 +50,7 @@ export function Composer({
   suggestion,
   onAcceptSuggestion,
   attachments = [],
+  onAttach,
   onPasteText,
   onRemoveAttachment,
   variant = "panel",
@@ -100,6 +101,13 @@ export function Composer({
    */
   onPasteText?: (text: string) => void
   onRemoveAttachment?: (id: string) => void
+  /**
+   * Attach something explicitly. It sits beside SEND rather than out with the
+   * context chips because it makes the same kind of move the composer's other
+   * controls do — it acts on the turn you are about to send, and the row you
+   * are typing in is where you reach for that.
+   */
+  onAttach?: () => void
   variant?: ComposerVariant
   className?: string
 }) {
@@ -179,6 +187,19 @@ export function Composer({
           there is text, outline to stop. Disabled states its availability.
           While busy WITH text, a third state: queue — the instruction stacks
           behind the running turn instead of interrupting it. */}
+      {onAttach && (
+        <Button
+          type="button"
+          size={variant === "inline" ? "icon-xs" : "icon-sm"}
+          variant="ghost"
+          aria-label="Attach context"
+          title="Attach a file, a selection, or paste text"
+          onClick={onAttach}
+          className="text-muted-foreground hover:text-foreground shrink-0 rounded-full"
+        >
+          <Icon name="plus" size={variant === "inline" ? 13 : 15} />
+        </Button>
+      )}
       {busy && value.trim() !== "" && (
         <Button
           type="button"

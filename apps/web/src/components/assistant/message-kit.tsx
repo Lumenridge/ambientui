@@ -653,38 +653,11 @@ export function MessageAttachments({
 
   if (compact) {
     return (
-      <div
-        className={cn(
-          "no-scrollbar flex items-center gap-1.5 overflow-x-auto",
-          className
-        )}
-      >
-        {attachments.map((a) => (
-          <span
-            key={a.id}
-            title={`${a.name}${a.meta ? ` · ${a.meta}` : ""}`}
-            className="border-border inline-flex max-w-full shrink-0 items-center gap-2 rounded-lg border bg-(--wash) py-1 ps-1.5 pe-1 text-xs font-medium"
-          >
-            <span className="text-muted-foreground bg-card flex size-5 shrink-0 items-center justify-center rounded-[5px]">
-              <Icon name={ATTACHMENT_ICON[a.kind ?? "file"]} size={12} />
-            </span>
-            <span className="max-w-44 min-w-0 truncate">{a.name}</span>
-            {onRemove && (
-              <Button
-                type="button"
-                size="icon-xs"
-                variant="ghost"
-                aria-label={`Remove ${a.name}`}
-                title="Remove"
-                onClick={() => onRemove(a.id)}
-                className="text-muted-foreground hover:text-foreground size-[22px] shrink-0 rounded-md bg-accent"
-              >
-                <Icon name="close" size={11} />
-              </Button>
-            )}
-          </span>
-        ))}
-      </div>
+      <CompactAttachments
+        attachments={attachments}
+        onRemove={onRemove}
+        className={className}
+      />
     )
   }
 
@@ -760,6 +733,110 @@ export function MessageAttachments({
     </div>
   )
 }
+
+/**
+ * The compact row, with its own paging. A row that scrolls and says nothing
+ * about it is a row most people will read as truncated — the arrows are the
+ * only thing that distinguishes "there is more" from "that is all". They
+ * appear only when the content actually overflows, so a single attachment
+ * carries no chrome.
+ */
+function CompactAttachments({
+  attachments,
+  onRemove,
+  className,
+}: {
+  attachments: MessageAttachment[]
+  onRemove?: (id: string) => void
+  className?: string
+}) {
+  const ref = React.useRef<HTMLDivElement | null>(null)
+  const [edges, setEdges] = React.useState({ left: false, right: false })
+
+  const measure = React.useCallback(() => {
+    const el = ref.current
+    if (!el) return
+    const max = el.scrollWidth - el.clientWidth
+    setEdges({ left: el.scrollLeft > 4, right: el.scrollLeft < max - 4 })
+  }, [])
+
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    // measured from the observer/scroll callbacks, never synchronously in the
+    // effect body — the first paint has no layout to read yet anyway
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    el.addEventListener("scroll", measure, { passive: true })
+    return () => {
+      ro.disconnect()
+      el.removeEventListener("scroll", measure)
+    }
+  }, [measure, attachments.length])
+
+  const page = (dir: -1 | 1) => {
+    const el = ref.current
+    if (!el) return
+    el.scrollBy({ left: dir * Math.max(160, el.clientWidth * 0.8), behavior: "smooth" })
+  }
+
+  const arrow = (dir: -1 | 1, shown: boolean) => (
+    <Button
+      type="button"
+      size="icon-xs"
+      variant="ghost"
+      aria-label={dir === -1 ? "Previous attachments" : "More attachments"}
+      disabled={!shown}
+      onClick={() => page(dir)}
+      className={cn(
+        "text-muted-foreground hover:text-foreground shrink-0 rounded-md transition-opacity",
+        shown ? "opacity-100" : "pointer-events-none opacity-0"
+      )}
+    >
+      <Icon name={dir === -1 ? "chevron-left" : "chevron-right"} size={13} />
+    </Button>
+  )
+
+  const overflowing = edges.left || edges.right
+
+  return (
+    <div className={cn("flex items-center gap-1", className)}>
+      {overflowing && arrow(-1, edges.left)}
+      <div
+        ref={ref}
+        className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto"
+      >
+        {attachments.map((a) => (
+          <span
+            key={a.id}
+            title={`${a.name}${a.meta ? ` · ${a.meta}` : ""}`}
+            className="border-border inline-flex max-w-full shrink-0 items-center gap-2 rounded-lg border bg-(--wash) py-1 ps-1.5 pe-1 text-xs font-medium"
+          >
+            <span className="text-muted-foreground bg-card flex size-5 shrink-0 items-center justify-center rounded-[5px]">
+              <Icon name={ATTACHMENT_ICON[a.kind ?? "file"]} size={12} />
+            </span>
+            <span className="max-w-44 min-w-0 truncate">{a.name}</span>
+            {onRemove && (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label={`Remove ${a.name}`}
+                title="Remove"
+                onClick={() => onRemove(a.id)}
+                className="text-muted-foreground hover:text-foreground size-[22px] shrink-0 rounded-md bg-accent"
+              >
+                <Icon name="close" size={11} />
+              </Button>
+            )}
+          </span>
+        ))}
+      </div>
+      {overflowing && arrow(1, edges.right)}
+    </div>
+  )
+}
+
 
 /* ----------------------------- quote reply ----------------------------- */
 

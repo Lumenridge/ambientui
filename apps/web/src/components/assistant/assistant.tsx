@@ -41,7 +41,6 @@ import { composeResponse } from "./compose-response"
 import { OrbCharacter, OrbField, OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
 import { Composer } from "./composer"
-import { Button } from "@workspace/ui/components/button"
 import { Icon, type IconName } from "@workspace/ui/components/icon"
 import {
   Sidebar,
@@ -727,7 +726,6 @@ export function Assistant() {
             onTogglePage={setPagePinned}
             chips={chips}
             removeChip={removeChip}
-            onAttach={() => attachText(SAMPLE_ATTACHMENT)}
           />
           {queued.length > 0 && (
             <MessageQueue
@@ -746,6 +744,7 @@ export function Assistant() {
             onStop={stop}
             busy={busy}
             attachments={pasted}
+            onAttach={() => attachText(SAMPLE_ATTACHMENT)}
             onPasteText={attachText}
             onRemoveAttachment={(id) =>
               setPasted((a) => a.filter((x) => x.id !== id))
@@ -1219,7 +1218,7 @@ export function Assistant() {
             per mode kept alive). */}
         {renderField("screen")}
         <div className="relative flex min-h-0 flex-1 flex-col">
-        <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
+        <div className="ambient-field-frost border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
           <span className="text-sm font-medium">History</span>
           <span className="text-muted-foreground font-mono text-xs">
             {recents.length} conversation{recents.length === 1 ? "" : "s"}
@@ -1250,13 +1249,13 @@ export function Assistant() {
           <SidebarProvider className="min-h-0! w-auto! flex-none">
             <Sidebar
               collapsible="none"
-              // NOTHING INSIDE AN AMBIENT SURFACE IS OPAQUE (DESIGN.md §8).
-              // The rail wore bg-sidebar to read as a pane you navigate, and
-              // it did — but it also punched a solid hole through the heat
-              // field and the work behind it, which is the one thing every
-              // surface of this layer is supposed to keep. The layer's own
-              // wash separates it and stays translucent.
-              className="w-72 shrink-0 border-e border-(--glass-border) bg-(--glass-wash)"
+              // NOTHING INSIDE AN AMBIENT SURFACE IS OPAQUE (DESIGN.md §8),
+              // and the veil sits over the field. The rail wore bg-sidebar to
+              // read as a pane you navigate, and it did — while punching a
+              // solid hole through the field and the work behind it. It wears
+              // the same frost as the surface's other chrome instead:
+              // translucent, and the shader stays veiled under it.
+              className="ambient-field-frost w-72 shrink-0 border-e border-(--glass-border) bg-transparent"
             >
               <SidebarHeader>
                 <SidebarMenu>
@@ -1321,7 +1320,13 @@ export function Assistant() {
               answer move under it is what says the conversation continues */}
           <div className="relative flex min-h-0 flex-1 flex-col">
             {renderTranscript("mx-auto w-full max-w-2xl pb-28")}
-            <div className="ambient-clear border-(--glass-border) absolute inset-x-0 bottom-0 border-t px-4 py-2">
+            {/* the frost, not the clear blur: this bar sits directly over the
+                heat field, and blur alone re-samples the field without
+                veiling it — the one place on the surface where the shader
+                came through raw. The frost is neutral (it derives from
+                --popover, not from the accent), so this is translucency, not
+                a tint. */}
+            <div className="ambient-field-frost border-(--glass-border) absolute inset-x-0 bottom-0 border-t px-4 py-2">
               <div className="mx-auto w-full max-w-2xl">
               <ContextRow
                 pageChip={pageChip}
@@ -1329,7 +1334,6 @@ export function Assistant() {
                 onTogglePage={setPagePinned}
                 chips={chips}
                 removeChip={removeChip}
-                onAttach={() => attachText(SAMPLE_ATTACHMENT)}
               />
               <Composer
                 value={input}
@@ -1338,6 +1342,7 @@ export function Assistant() {
                 onStop={stop}
                 busy={busy}
                 attachments={pasted}
+                onAttach={() => attachText(SAMPLE_ATTACHMENT)}
                 onPasteText={attachText}
                 onRemoveAttachment={(id) =>
                   setPasted((a) => a.filter((x) => x.id !== id))
@@ -1710,7 +1715,6 @@ function ContextRow({
   chips,
   removeChip,
 
-  onAttach,
 }: {
   pageChip: ContextChip | null
   pagePinned: boolean
@@ -1719,25 +1723,10 @@ function ContextRow({
   removeChip: (id: string) => void
 
   /** Offered as a `+` at the head of the row; omit and no control appears. */
-  onAttach?: () => void
 }) {
-  if (!pageChip && chips.length === 0 && !onAttach)
-    return null
+  if (!pageChip && chips.length === 0) return null
   return (
     <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-2">
-      {onAttach && (
-        <Button
-          type="button"
-          size="icon-xs"
-          variant="outline"
-          aria-label="Attach context"
-          title="Attach a file, a selection, or paste text"
-          onClick={onAttach}
-          className="shrink-0 rounded-lg"
-        >
-          <Icon name="plus" size={13} />
-        </Button>
-      )}
       {pageChip &&
         (pagePinned ? (
           <ContextChipView
