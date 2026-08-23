@@ -606,7 +606,7 @@ export interface MessageAttachment {
   size?: string
   /** Extra fact worth showing, e.g. "14 pages". */
   meta?: string
-  kind?: "image" | "document" | "file"
+  kind?: "image" | "document" | "file" | "text"
   /** A thumbnail for images; falls back to the kind's icon. */
   thumbnail?: string
   onOpen?: () => void
@@ -615,21 +615,29 @@ export interface MessageAttachment {
 const ATTACHMENT_ICON: Record<
   NonNullable<MessageAttachment["kind"]>,
   IconName
-> = { image: "image", document: "document", file: "paperclip" }
+> = { image: "image", document: "document", file: "paperclip", text: "quote" }
 
 /**
- * MESSAGE ATTACHMENTS — files as RECEIVED, not as staged.
+ * MESSAGE ATTACHMENTS — what was attached, before or after sending.
  *
- * The composer's attachment chips are editable and removable; these are a
- * record of what was sent, so they carry no remove control. An image can be
- * opened, everything else states what it is and how big — enough to know
- * whether it is the file you meant.
+ * One component for both, because they are the same object at two moments,
+ * and REMOVABILITY is the only honest difference: pass `onRemove` while the
+ * attachment is still staged in the composer, omit it once the message is
+ * sent and the attachment is a record. Two components would have drifted
+ * into two ideas of what an attachment looks like.
+ *
+ * An image can be opened; everything else states what it is and how big —
+ * enough to know whether it is the thing you meant. Pasted text is a `text`
+ * attachment: it is quoted material, not a file, and it says so.
  */
 export function MessageAttachments({
   attachments,
+  onRemove,
   className,
 }: {
   attachments: MessageAttachment[]
+  /** Present while the attachment can still be taken back — see above. */
+  onRemove?: (id: string) => void
   className?: string
 }) {
   if (attachments.length === 0) return null
@@ -637,7 +645,9 @@ export function MessageAttachments({
     <div className={cn("flex flex-col gap-1.5", className)}>
       {attachments.map((a) => {
         const kind = a.kind ?? "file"
-        const openable = Boolean(a.onOpen)
+        // a removable row already contains a button, so it must not BE one:
+        // while staged, removing wins over opening
+        const openable = Boolean(a.onOpen) && !onRemove
         const Row = openable ? "button" : "div"
         return (
           <Row
@@ -676,10 +686,26 @@ export function MessageAttachments({
                 </span>
               )}
             </span>
-            {openable && (
+            {openable && !onRemove && (
               <span className="text-muted-foreground shrink-0">
                 <Icon name={ATTACHMENT_ICON[kind]} size={14} />
               </span>
+            )}
+            {onRemove && (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label={`Remove ${a.name}`}
+                title="Remove"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRemove(a.id)
+                }}
+                className="text-muted-foreground hover:text-foreground shrink-0"
+              >
+                <Icon name="close" size={12} />
+              </Button>
             )}
           </Row>
         )

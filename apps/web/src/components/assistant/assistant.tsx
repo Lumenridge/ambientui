@@ -33,7 +33,10 @@ import {
   UserMessage,
   type KitResponse,
 } from "./response-kit"
-import { FollowUpSuggestions } from "./message-kit"
+import {
+  FollowUpSuggestions,
+  type MessageAttachment,
+} from "./message-kit"
 import { composeResponse } from "./compose-response"
 import { OrbCharacter, OrbField, OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
@@ -324,6 +327,27 @@ export function Assistant() {
     queuedRef.current = queued
   })
   const [runningPrompt, setRunningPrompt] = React.useState("")
+  /**
+   * PASTED MATERIAL IS CONTEXT, NOT THE QUESTION. A stack trace dropped into
+   * a one-line input buries whatever was being written; it becomes an
+   * attachment instead, named by its first line so it is identifiable
+   * without being read, and removable until the turn is sent.
+   */
+  const [pasted, setPasted] = React.useState<MessageAttachment[]>([])
+  const attachText = (text: string) => {
+    const trimmed = text.trim()
+    const firstLine = trimmed.split("\n")[0]?.slice(0, 60) ?? "Pasted text"
+    const lines = trimmed.split("\n").length
+    setPasted((a) => [
+      ...a,
+      {
+        id: `paste-${a.length}-${trimmed.length}`,
+        name: firstLine || "Pasted text",
+        kind: "text" as const,
+        meta: `${lines} line${lines === 1 ? "" : "s"} · ${trimmed.length} chars`,
+      },
+    ])
+  }
   // mirrored so the ambient effect below can consult the current state
   // without taking it as a dependency (which would loop)
   const orbStateRef = React.useRef(orbState)
@@ -386,6 +410,7 @@ export function Assistant() {
       return
     }
     setInput("")
+    setPasted([])
     setRunningPrompt(text)
     setMessages((m) => [...m, { id: nextId(m), role: "user", text }])
     if (mode === "line") setMode("panel")
@@ -648,6 +673,11 @@ export function Assistant() {
             onSend={send}
             onStop={stop}
             busy={busy}
+            attachments={pasted}
+            onPasteText={attachText}
+            onRemoveAttachment={(id) =>
+              setPasted((a) => a.filter((x) => x.id !== id))
+            }
             placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
           />
         </div>
@@ -894,6 +924,11 @@ export function Assistant() {
                       onSend={send}
                       onStop={stop}
                       busy={busy}
+                      attachments={pasted}
+                      onPasteText={attachText}
+                      onRemoveAttachment={(id) =>
+                        setPasted((a) => a.filter((x) => x.id !== id))
+                      }
                       placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
                     />
                   </div>

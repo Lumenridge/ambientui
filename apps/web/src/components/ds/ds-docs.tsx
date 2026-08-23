@@ -92,6 +92,7 @@ import {
   MessageActions,
   type MessageRating,
   MessageAttachments,
+  type MessageAttachment,
   MessageQueue,
   MessageTime,
   QuoteReply,
@@ -1166,6 +1167,14 @@ function OrbStatesStory() {
 /** Seconds each state holds during a lifecycle run. */
 const LIFECYCLE_DWELL = 3
 
+/**
+ * A run plays the TRANSITIONS, not the states: three moves for four states.
+ * Starting on `still` — the state the orb is already resting in — spent the
+ * first dwell showing nothing changing, which reads as stuck rather than as
+ * a beat. Pressing play now moves immediately.
+ */
+const LIFECYCLE_STEPS = ORB_STATES.length - 1
+
 function LifecycleSegment({
   progress,
   index,
@@ -1211,7 +1220,7 @@ function OrbLifecycleBar({
     const rect = trackRef.current?.getBoundingClientRect()
     if (!rect) return
     const f = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
-    onSeek(f * ORB_STATES.length)
+    onSeek(f * LIFECYCLE_STEPS)
   }
   return (
     <div className="flex w-64 items-center gap-3">
@@ -1237,7 +1246,7 @@ function OrbLifecycleBar({
           if (e.currentTarget.hasPointerCapture(e.pointerId)) seekFromEvent(e)
         }}
       >
-        {ORB_STATES.map((st, i) => (
+        {ORB_STATES.slice(1).map((st, i) => (
           <LifecycleSegment key={st} progress={progress} index={i} />
         ))}
       </div>
@@ -1260,16 +1269,18 @@ function OrbPlayground() {
   React.useEffect(() => {
     stateRef.current = state
   })
+  // p is measured in TRANSITIONS: at p=0 the orb is already moving to the
+  // second state, so the run has something to show from its first frame.
   const syncState = (p: number) => {
     const st =
-      ORB_STATES[Math.min(ORB_STATES.length - 1, Math.floor(p))] ?? "still"
+      ORB_STATES[Math.min(ORB_STATES.length - 1, Math.floor(p) + 1)] ?? "still"
     if (st !== stateRef.current) setState(st)
   }
   useAnimationFrame((_, delta) => {
     if (!playing) return
     let p = progress.get() + delta / 1000 / LIFECYCLE_DWELL
-    if (p >= ORB_STATES.length) {
-      p = ORB_STATES.length
+    if (p >= LIFECYCLE_STEPS) {
+      p = LIFECYCLE_STEPS
       setPlaying(false)
       setEnded(true)
     }
@@ -1283,9 +1294,12 @@ function OrbPlayground() {
     syncState(p)
   }
   const togglePlay = () => {
-    if (!playing && progress.get() >= ORB_STATES.length - 0.001) {
+    // restarting rewinds to the resting state, so the first move is a real
+    // transition rather than a jump-cut into the middle of the journey
+    if (!playing && progress.get() >= LIFECYCLE_STEPS - 0.001) {
       progress.set(0)
-      syncState(0)
+      setState("still")
+      stateRef.current = "still"
     }
     setEnded(false)
     setPlaying((v) => !v)
@@ -1593,6 +1607,20 @@ function ComposerPlayground() {
   const [busy, setBusy] = React.useState(false)
   const [mark, setMark] = React.useState(true)
   const [offering, setOffering] = React.useState(false)
+  const [attachments, setAttachments] = React.useState<MessageAttachment[]>([])
+  const attach = (text: string) => {
+    const trimmed = text.trim()
+    const lines = trimmed.split("\n").length
+    setAttachments((a) => [
+      ...a,
+      {
+        id: `paste-${a.length}-${trimmed.length}`,
+        name: trimmed.split("\n")[0]?.slice(0, 60) || "Pasted text",
+        kind: "text" as const,
+        meta: `${lines} line${lines === 1 ? "" : "s"} · ${trimmed.length} chars`,
+      },
+    ])
+  }
   return (
     <Playground
       preview={
@@ -1608,6 +1636,11 @@ function ComposerPlayground() {
             onStop={() => setBusy(false)}
             busy={busy}
             mark={mark}
+            attachments={attachments}
+            onPasteText={attach}
+            onRemoveAttachment={(id) =>
+              setAttachments((a) => a.filter((x) => x.id !== id))
+            }
             suggestion={
               offering ? "Fix all the problems in this workspace" : undefined
             }
@@ -1640,10 +1673,26 @@ function ComposerPlayground() {
               onCheckedChange={(v) => setBusy(v === true)}
             />
           </ControlRow>
+          {/* `action`: a one-shot that sets no value, so it does not raise
+              the save reminder (CLAUDE.md rule 9's only exemption) */}
+          <ControlRow name="paste a stack trace" action>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() =>
+                attach(
+                  'TypeError: Cannot read properties of undefined (reading "draft")\n    at Composer (composer.tsx:9:14)\n    at renderWithHooks (react-dom.js:14985:18)'
+                )
+              }
+            >
+              Attach
+            </Button>
+          </ControlRow>
           <p className="text-muted-foreground px-3 py-2 text-xs">
             The mark defaults on for the panel variant. With a suggestion and
-            an empty field, Tab accepts it. Sending flips the control to Stop;
-            here Stop just returns it, since nothing is really composing.
+            an empty field, Tab accepts it. Pasting multi-line text into the
+            input attaches it instead of filling the field — the button above
+            does the same thing without a clipboard.
           </p>
         </>
       }
@@ -2428,6 +2477,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "`mark` puts the assistant's CHARACTER at the head of the row, reacting through still / listening / thinking / answer. It is an identity mark, never the control: the send slot stays a control, which is the distinction that made the orb-as-send experiment fail.",
       "The mark DEFAULTS PER VARIANT, not per caller: `panel` carries it because it is the row that stands alone; `quick` does not, because the orb it would duplicate is the pill it sits in; `inline` does not, because it belongs to the object hosting it. Pass `mark` only to override the usual answer.",
       "`suggestion` offers what to do next as ghost text in the empty field, with Tab to accept and run it. The offer stands only while the field is empty — the moment the user types, their words win.",
+      "PASTING BULK TEXT ATTACHES IT rather than filling the field (onPasteText). A stack trace dropped into a one-line input buries the question being written under material the user only meant to REFER to; it becomes a MessageAttachments row above the input, removable until the turn is sent. Short pastes stay in the field, because a short paste is almost always part of the sentence being typed.",
       "Context chips ride in compact size ahead of the input; the shimmer placeholder says the assistant is listening.",
     ],
     whenToUse: [
@@ -2695,9 +2745,11 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
     group: "Messages",
     name: "MessageAttachments",
     description:
-      "Files as received rather than staged: an image to open, a document with its page count.",
+      "What was attached, before or after sending — a pasted stack trace, an image to open, a document with its page count.",
     behavior: [
-      "No remove control, deliberately: these are a record of what was SENT. The composer's chips are the editable ones.",
+      "ONE COMPONENT FOR BOTH MOMENTS, because removability is the only honest difference: pass onRemove while the attachment is still staged in the composer, omit it once the message is sent and the attachment is a record. Two components would have drifted into two ideas of what an attachment looks like.",
+      "A removable row is never also an openable one — it already contains a button, so it must not be one. While staged, removing wins.",
+      "Pasted text is a `text` attachment: it is quoted material rather than a file, it says so with the quote mark, and its meta counts lines and characters so it is identifiable without being read.",
       "An openable attachment is a raised, bordered card; the rest sit on the quiet fill — affordance is carried by the surface, not by a hover-only cue.",
       "An image shows its thumbnail; everything else shows the icon for its kind, drawn by the configured icon library.",
       "Size and meta are formatted by the caller and shown in mono — they are facts about a file, not prose.",
@@ -2706,7 +2758,6 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "On a user turn that carried files, and on assistant turns that produced them.",
     ],
     whenNotToUse: [
-      "In the composer while attaching — that is a staging UI, with removal and progress.",
       "For links or references; those are ContextChip and ReferenceChips.",
     ],
     stories: [

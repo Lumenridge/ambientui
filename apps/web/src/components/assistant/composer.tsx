@@ -6,6 +6,10 @@ import { Button } from "@workspace/ui/components/button"
 import { Icon } from "@workspace/ui/components/icon"
 
 import { AssistantMark, ContextChipView, ShimmerPlaceholder } from "./assistant"
+import {
+  MessageAttachments,
+  type MessageAttachment,
+} from "./message-kit"
 import type { ContextChip } from "./assistant-context"
 
 /**
@@ -45,6 +49,9 @@ export function Composer({
   mark,
   suggestion,
   onAcceptSuggestion,
+  attachments = [],
+  onPasteText,
+  onRemoveAttachment,
   variant = "panel",
   className,
 }: {
@@ -83,6 +90,16 @@ export function Composer({
   suggestion?: string
   /** Tab was pressed on the offer — run it. */
   onAcceptSuggestion?: () => void
+  /** Staged attachments, shown above the row and removable until sent. */
+  attachments?: MessageAttachment[]
+  /**
+   * A substantial paste became an attachment instead of filling the field.
+   * Pasting a stack trace or a whole file into a one-line input buries the
+   * question you were writing under material you only meant to REFER to — so
+   * the material becomes context and the input stays yours.
+   */
+  onPasteText?: (text: string) => void
+  onRemoveAttachment?: (id: string) => void
   variant?: ComposerVariant
   className?: string
 }) {
@@ -90,7 +107,11 @@ export function Composer({
   // their own words win
   const offering = Boolean(suggestion && onAcceptSuggestion && value === "")
   const showMark = mark ?? variant === "panel"
-  return (
+  // What counts as "substantial": more than one line, or longer than a
+  // sentence someone would have typed. A short paste is almost always part of
+  // the question being written, and must stay in the field.
+  const isBulk = (t: string) => t.includes("\n") || t.length > 180
+  const row = (
     <div
       className={cn(
         "flex items-center gap-3",
@@ -127,6 +148,13 @@ export function Composer({
               e.preventDefault()
               onAcceptSuggestion?.()
             }
+          }}
+          onPaste={(e) => {
+            if (!onPasteText) return
+            const text = e.clipboardData.getData("text")
+            if (!isBulk(text)) return
+            e.preventDefault()
+            onPasteText(text)
           }}
           aria-label={placeholder}
           className={cn(
@@ -190,6 +218,21 @@ export function Composer({
           <Icon name="arrow-up" size={variant === "inline" ? 13 : 15} />
         </Button>
       )}
+    </div>
+  )
+
+  // Attachments sit ABOVE the row: they are what the question is about, and
+  // reading them after the question would be reading the answer's evidence
+  // out of order.
+  if (attachments.length === 0) return row
+  return (
+    <div className="flex w-full flex-col gap-2">
+      <MessageAttachments
+        attachments={attachments}
+        onRemove={onRemoveAttachment}
+        className={variant === "panel" ? "pt-2" : undefined}
+      />
+      {row}
     </div>
   )
 }
