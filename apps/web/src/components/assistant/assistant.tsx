@@ -661,7 +661,6 @@ export function Assistant() {
             onSend={send}
             onStop={stop}
             busy={busy}
-            mark
             placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
           />
         </div>
@@ -908,8 +907,7 @@ export function Assistant() {
                       onSend={send}
                       onStop={stop}
                       busy={busy}
-                      mark
-            placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
+                      placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
                     />
                   </div>
                 </>

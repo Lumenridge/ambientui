@@ -1591,6 +1591,8 @@ function TabsPlayground() {
 function ComposerPlayground() {
   const [value, setValue] = React.useState("")
   const [busy, setBusy] = React.useState(false)
+  const [mark, setMark] = React.useState(true)
+  const [offering, setOffering] = React.useState(false)
   return (
     <Playground
       preview={
@@ -1605,12 +1607,33 @@ function ComposerPlayground() {
             }}
             onStop={() => setBusy(false)}
             busy={busy}
+            mark={mark}
+            suggestion={
+              offering ? "Fix all the problems in this workspace" : undefined
+            }
+            onAcceptSuggestion={
+              offering
+                ? () => setValue("Fix all the problems in this workspace")
+                : undefined
+            }
             placeholder="Ask a follow-up…"
           />
         </div>
       }
       controls={
         <>
+          <ControlRow name="mark">
+            <Checkbox
+              checked={mark}
+              onCheckedChange={(v) => setMark(v === true)}
+            />
+          </ControlRow>
+          <ControlRow name="suggestion">
+            <Checkbox
+              checked={offering}
+              onCheckedChange={(v) => setOffering(v === true)}
+            />
+          </ControlRow>
           <ControlRow name="busy">
             <Checkbox
               checked={busy}
@@ -1618,8 +1641,9 @@ function ComposerPlayground() {
             />
           </ControlRow>
           <p className="text-muted-foreground px-3 py-2 text-xs">
-            Sending flips the control to Stop; here Stop just returns it,
-            since nothing is really composing.
+            The mark defaults on for the panel variant. With a suggestion and
+            an empty field, Tab accepts it. Sending flips the control to Stop;
+            here Stop just returns it, since nothing is really composing.
           </p>
         </>
       }
@@ -2402,6 +2426,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "While an answer is running the same position becomes STOP — one control, two meanings, always the one that applies. Stopping mid-compose cancels cleanly; stopping mid-stream settles what has already arrived, because it was already said.",
       "Every form factor shares this anatomy: `panel` for the in-surface row (panel and dock), `quick` inside quick ask's pill — the pill supplies the glass and the height — and `inline` for a composer standing inside another object (a review thread), which brings its own frame and the smaller type size. The spotlight band is next.",
       "`mark` puts the assistant's CHARACTER at the head of the row, reacting through still / listening / thinking / answer. It is an identity mark, never the control: the send slot stays a control, which is the distinction that made the orb-as-send experiment fail.",
+      "The mark DEFAULTS PER VARIANT, not per caller: `panel` carries it because it is the row that stands alone; `quick` does not, because the orb it would duplicate is the pill it sits in; `inline` does not, because it belongs to the object hosting it. Pass `mark` only to override the usual answer.",
       "`suggestion` offers what to do next as ghost text in the empty field, with Tab to accept and run it. The offer stands only while the field is empty — the moment the user types, their words win.",
       "Context chips ride in compact size ahead of the input; the shimmer placeholder says the assistant is listening.",
     ],

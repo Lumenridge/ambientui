@@ -42,7 +42,7 @@ export function Composer({
   chips = [],
   removeChip,
   placeholder,
-  mark = false,
+  mark,
   suggestion,
   onAcceptSuggestion,
   variant = "panel",
@@ -67,6 +67,12 @@ export function Composer({
    * MARK, not a control — it reacts (still / listening / thinking / answer)
    * so the row says who is listening, and it never takes the send slot,
    * where a character reads as decoration rather than an affordance.
+   *
+   * Defaults per variant rather than per caller: `panel` carries the mark
+   * because it is the row that stands alone; `quick` does not, because the
+   * orb it would duplicate is the pill it sits inside; `inline` does not,
+   * because it belongs to the object hosting it. A caller that needs the
+   * other answer says so, but no caller has to remember the usual one.
    */
   mark?: boolean
   /**
@@ -83,6 +89,7 @@ export function Composer({
   // an offer only stands while the field is empty: the moment the user types,
   // their own words win
   const offering = Boolean(suggestion && onAcceptSuggestion && value === "")
+  const showMark = mark ?? variant === "panel"
   return (
     <div
       className={cn(
@@ -96,7 +103,7 @@ export function Composer({
         className
       )}
     >
-      {mark && <AssistantMark size={28} />}
+      {showMark && <AssistantMark size={28} />}
       {pageChip && <ContextChipView chip={pageChip} compact />}
       {chips.map((c) => (
         <ContextChipView
