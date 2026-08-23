@@ -29,10 +29,16 @@ import { useMotionSpring, useMotionTransition } from "@/foundation/foundation-co
  * reached by hand rather than by ⌘K. They must never disagree: both read the
  * same list.
  *
- * THE TRIGGER DOES NOT MOVE. The list drops beneath the pill rather than
- * growing it, and both of the pill's controls are the same icon box, so
- * opening cannot resize the row: a control that walks out from under the
- * pointer as it opens makes closing a game of catch-up. Appearance and the
+ * IT IS ONE FORM IN TWO SHAPES. Closed, the pill is the width of the view's
+ * own name; open, it takes the width of the list beneath it, animated on the
+ * surface spring, so the pair reads as a single object changing shape rather
+ * than two panels that happen to be stacked. The width is measured from the
+ * menu, never guessed — the list is sized by its longest row, and that
+ * changes with whatever destinations an app registers.
+ *
+ * The trigger stays where the pointer left it VERTICALLY: the list drops
+ * beneath the pill rather than pushing it, and both pill controls are the
+ * same icon box, so opening never changes the row's height. Appearance and the
  * disclosure wear one treatment, because they are peers — two controls on
  * the pill, neither of which is a destination. Both are icon-only, so both
  * carry a real tooltip rather than a native `title`: the name of an
@@ -77,6 +83,8 @@ export function ViewMenu({
   const spring = useMotionSpring()
   const micro = useMotionTransition("micro")
   const ref = React.useRef<HTMLDivElement | null>(null)
+  const menuRef = React.useRef<HTMLDivElement | null>(null)
+  const [menuWidth, setMenuWidth] = React.useState<number | null>(null)
   const current = items.find((i) => i.id === value)
 
   React.useEffect(() => {
@@ -95,12 +103,34 @@ export function ViewMenu({
     }
   }, [open])
 
+  // THE PILL TAKES THE MENU'S WIDTH. Measured rather than guessed: the list
+  // is sized by its own longest row, and that changes with the destinations
+  // an app registers. Written from a ResizeObserver callback, never
+  // synchronously in the effect body — the first paint has no layout to read.
+  React.useEffect(() => {
+    const el = menuRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setMenuWidth(el.offsetWidth))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [open])
+
   return (
     <div ref={ref} className={cn("pointer-events-auto relative", className)}>
-      {/* the pill never changes size, so nothing under the pointer moves */}
       {/* leading padding drops to p-1: the icon button carries its own inset,
           and ps-3 was there for a text label that no longer starts the row */}
-      <div className="ambient-glass border-(--glass-border) flex items-center gap-2 rounded-full border p-1">
+      {/* One form, two shapes: closed it is the width of its own label, open
+          it is the width of the list beneath it, and the change is animated
+          on the Foundation's surface spring so the two read as one object
+          rather than two panels that happen to be stacked. The label takes
+          the slack (flex-1), so the disclosure stays pinned to the trailing
+          edge and the pill grows around the controls instead of pushing
+          them apart unevenly. */}
+      <motion.div
+        animate={{ width: open && menuWidth ? menuWidth : "auto" }}
+        transition={spring}
+        className="ambient-glass border-(--glass-border) flex items-center gap-2 overflow-hidden rounded-full border p-1"
+      >
         {/* Appearance sits on the CLOSED pill, not inside the menu: it is
             the one thing here you reach for without meaning to go anywhere,
             and burying a two-state setting one click deep — drawn like the
@@ -125,7 +155,7 @@ export function ViewMenu({
           </TooltipContent>
         </Tooltip>
         {current && (
-          <span className="pe-1 text-sm font-medium whitespace-nowrap">
+          <span className="min-w-0 flex-1 truncate pe-1 text-sm font-medium whitespace-nowrap">
             {current.label}
           </span>
         )}
@@ -150,7 +180,7 @@ export function ViewMenu({
               and a hint floating over the list it describes is noise */}
           {!open && <TooltipContent>Change view</TooltipContent>}
         </Tooltip>
-      </div>
+      </motion.div>
 
       <AnimatePresence initial={false}>
         {open && (
@@ -162,7 +192,11 @@ export function ViewMenu({
             // sized by its OWN content, never by the pill: the pill's width
             // follows the current view's name, so inheriting it truncated
             // the longest row and pushed the keycap past the edge
-            className="ambient-glass border-(--glass-border) absolute start-0 top-full z-10 mt-2 flex w-max max-w-xs min-w-full origin-top flex-col gap-0.5 rounded-2xl border p-1.5"
+            ref={menuRef}
+            // NO min-w-full any more: the pill now takes ITS width, and a
+            // menu that also took the pill's would leave the two with no
+            // content driving either — each waiting on the other
+            className="ambient-glass border-(--glass-border) absolute start-0 top-full z-10 mt-2 flex w-max max-w-xs origin-top flex-col gap-0.5 rounded-2xl border p-1.5"
           >
             {items.map((item) => (
               <Button
