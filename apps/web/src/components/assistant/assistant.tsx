@@ -35,13 +35,15 @@ import {
 } from "./response-kit"
 import {
   FollowUpSuggestions,
+  MessageAttachments,
   type MessageAttachment,
 } from "./message-kit"
 import { composeResponse } from "./compose-response"
 import { OrbCharacter, OrbField, OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
 import { Composer } from "./composer"
-import { Icon } from "@workspace/ui/components/icon"
+import { Button } from "@workspace/ui/components/button"
+import { Icon, type IconName } from "@workspace/ui/components/icon"
 import {
   Sidebar,
   SidebarContent,
@@ -84,11 +86,26 @@ type Msg = {
  */
 const nextId = (m: Msg[]) => (m.length ? m[m.length - 1]!.id + 1 : 1)
 
+/**
+ * What the `+` attaches. A real file picker belongs to the host product, not
+ * to the layer — the layer's job is to hold what it is given — so this stands
+ * in for one until a host supplies the gesture.
+ */
+const SAMPLE_ATTACHMENT =
+  'TypeError: Cannot read properties of undefined (reading "draft")\n    at Composer (composer.tsx:9:14)\n    at renderWithHooks (react-dom.js:14985:18)'
+
 const RECENT_CHATS = [
   { text: "Which components lack vocabulary docs?", when: "2h ago" },
   { text: "Show every surface using ad-hoc colors", when: "Yesterday" },
   { text: "Draft usage rules for the new table density", when: "Mon" },
 ]
+
+/** What each command family is called when it is being counted. */
+const HINT_NOUNS: Record<string, string> = {
+  Components: "component",
+  Documentation: "document",
+  Demos: "demo",
+}
 
 const SUGGESTED_PROMPTS = [
   "Summarize what's on this canvas",
@@ -102,8 +119,10 @@ type PaletteItem = {
   label: string
   desc?: string
   trailing?: string
-  iconKind: "recent" | "prompt" | "avatar" | "nav" | "ask"
+  iconKind: "recent" | "prompt" | "avatar" | "nav" | "ask" | "command"
   navIcon?: typeof SparklesIcon
+  /** A vocabulary icon name, drawn by the configured library. */
+  iconName?: string
   run: () => void
 }
 
@@ -165,6 +184,7 @@ export function Assistant() {
     setOrbState,
     pageChip,
     pageIntel,
+    commands,
     chips,
     removeChip,
     seedVersion,
@@ -685,6 +705,11 @@ export function Assistant() {
             onTogglePage={setPagePinned}
             chips={chips}
             removeChip={removeChip}
+            attachments={pasted}
+            onRemoveAttachment={(id) =>
+              setPasted((a) => a.filter((x) => x.id !== id))
+            }
+            onAttach={() => attachText(SAMPLE_ATTACHMENT)}
           />
           {queued.length > 0 && (
             <MessageQueue
@@ -780,6 +805,41 @@ export function Assistant() {
             (t.desc ?? "").toLowerCase().includes(ql)
         )
       : []
+    // EVERYTHING ⌘K CAN DO, matched on what was typed. Commands are
+    // registered by the app (see CommandRegistry) — the palette matches and
+    // runs them without knowing what any of them means. Sections keep their
+    // registered order so Components never buries Switch form.
+    const matched = q
+      ? commands.filter((c) =>
+          `${c.label} ${c.desc ?? ""} ${c.keywords ?? ""} ${c.section}`
+            .toLowerCase()
+            .includes(ql)
+        )
+      : []
+    // CAPPED PER SECTION, not overall. A single cap over the whole list let
+    // the first family spend the entire budget — forty components matching
+    // "panel" pushed Switch form off the end, so the one command the word
+    // most obviously meant was the one you could not reach.
+    const groupedCommands: PaletteItem[] = [
+      ...new Set(matched.map((c) => c.section)),
+    ].flatMap((sec) =>
+      matched
+        .filter((c) => c.section === sec)
+        .slice(0, 5)
+        .map((c) => ({
+          id: c.id,
+          section: c.section,
+          label: c.label,
+          desc: c.desc,
+          iconKind: "command" as const,
+          iconName: c.icon,
+          run: () => {
+            c.run()
+            setInput("")
+          },
+        }))
+    )
+
     // One expression, not a binding filled across branches: reassigning
     // mid-render reads as a mutable box, and hiding the same branches behind
     // a call reads as passing one around. What the palette shows is a pure
@@ -789,7 +849,7 @@ export function Assistant() {
       : question
         ? [askItem]
         : q
-          ? [askItem, ...navItems(queryMatches)]
+          ? [askItem, ...groupedCommands, ...navItems(queryMatches)]
           : [
               ...(pageIntel?.recents ?? RECENT_CHATS).map((r) => ({
                 id: `recent-${r.text}`,
@@ -815,8 +875,43 @@ export function Assistant() {
                 iconKind: "avatar" as const,
                 run: () => setMode("panel"),
               },
+              // Switch form belongs in the RESTING list: five rows, always
+              // relevant, and the only family small enough to show whole.
+              ...commands
+                .filter((c) => c.section === "Switch form")
+                .map((c) => ({
+                  id: c.id,
+                  section: c.section,
+                  label: c.label,
+                  desc: c.desc,
+                  iconKind: "command" as const,
+                  iconName: c.icon,
+                  run: c.run,
+                })),
               ...navItems(jumpTargets),
             ]
+    /**
+     * WHAT TYPING WOULD FIND. The big command families — components,
+     * documents, demos — cannot be listed at rest without burying everything
+     * else, and a capability nobody can see is one that does not exist as far
+     * as the user is concerned. So the palette states the shape of them, with
+     * counts derived from what is actually registered rather than written
+     * down: a family that goes away takes its own hint with it.
+     */
+    const hint = [
+      ...new Set(
+        commands
+          .filter((c) => c.section !== "Switch form")
+          .map((c) => c.section)
+      ),
+    ].map((sec) => {
+      const n = commands.filter((c) => c.section === sec).length
+      // a section NAME is a heading, not a countable noun — "10
+      // documentation" is what happens when you lowercase one and hope
+      const noun = HINT_NOUNS[sec] ?? sec.toLowerCase()
+      return `${n} ${noun}${n === 1 ? "" : "s"}`
+    })
+
     const onPaletteKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey)) {
         e.preventDefault()
@@ -991,8 +1086,12 @@ export function Assistant() {
                         Answers are grounded in the attached context.
                       </p>
                     ) : q && queryMatches.length === 0 ? (
-                      <p className="px-2 py-3 text-[13px] text-muted-foreground">
+                      <p className="text-muted-foreground px-2 py-3 text-sm">
                         No pages match — ↵ asks ambientui instead.
+                      </p>
+                    ) : !q && hint.length > 0 ? (
+                      <p className="text-muted-foreground px-2 pt-3 pb-1 text-sm">
+                        Start typing to search {hint.join(", ")}.
                       </p>
                     ) : null
                   }
@@ -1192,7 +1291,7 @@ export function Assistant() {
               answer move under it is what says the conversation continues */}
           <div className="relative flex min-h-0 flex-1 flex-col">
             {renderTranscript("mx-auto w-full max-w-2xl pb-28")}
-            <div className="ambient-glass border-(--glass-border) absolute inset-x-0 bottom-0 border-t px-4 py-2">
+            <div className="ambient-clear border-(--glass-border) absolute inset-x-0 bottom-0 border-t px-4 py-2">
               <div className="mx-auto w-full max-w-2xl">
               <ContextRow
                 pageChip={pageChip}
@@ -1200,6 +1299,11 @@ export function Assistant() {
                 onTogglePage={setPagePinned}
                 chips={chips}
                 removeChip={removeChip}
+                attachments={pasted}
+                onRemoveAttachment={(id) =>
+                  setPasted((a) => a.filter((x) => x.id !== id))
+                }
+                onAttach={() => attachText(SAMPLE_ATTACHMENT)}
               />
               <Composer
                 value={input}
@@ -1320,6 +1424,12 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function PaletteItemIcon({ item }: { item: PaletteItem }) {
   if (item.iconKind === "avatar") return <MiniAvatar small />
+  if (item.iconKind === "command")
+    return (
+      <span className="text-muted-foreground">
+        <Icon name={(item.iconName ?? "arrow-up-right") as IconName} size={16} />
+      </span>
+    )
   if (item.iconKind === "prompt" || item.iconKind === "ask")
     return (
       <span className="text-muted-foreground">
@@ -1546,22 +1656,54 @@ export function ContextChipView({
  * button (unattached) or an icon-tile chip with a squared ✕ (attached), plus
  * any explicit attachment chips in the same anatomy.
  */
+/**
+ * THE CONTEXT ROW — everything the assistant can currently see, in one line
+ * above the input.
+ *
+ * It SCROLLS rather than wraps. Wrapping grew the composer upward as context
+ * accumulated, pushing the transcript around while the user was still
+ * writing; a single scrolling row costs the same height whether it holds one
+ * chip or nine. Attachments ride here too, through MessageAttachments, so
+ * a pasted stack trace and an attached file are the same kind of object in
+ * the same place.
+ */
 function ContextRow({
   pageChip,
   pagePinned,
   onTogglePage,
   chips,
   removeChip,
+  attachments = [],
+  onRemoveAttachment,
+  onAttach,
 }: {
   pageChip: ContextChip | null
   pagePinned: boolean
   onTogglePage: (pinned: boolean) => void
   chips: ContextChip[]
   removeChip: (id: string) => void
+  attachments?: MessageAttachment[]
+  onRemoveAttachment?: (id: string) => void
+  /** Offered as a `+` at the head of the row; omit and no control appears. */
+  onAttach?: () => void
 }) {
-  if (!pageChip && chips.length === 0) return null
+  if (!pageChip && chips.length === 0 && attachments.length === 0 && !onAttach)
+    return null
   return (
-    <div className="flex flex-wrap items-center gap-1.5 pb-2">
+    <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-2">
+      {onAttach && (
+        <Button
+          type="button"
+          size="icon-xs"
+          variant="outline"
+          aria-label="Attach context"
+          title="Attach a file, a selection, or paste text"
+          onClick={onAttach}
+          className="shrink-0 rounded-lg"
+        >
+          <Icon name="plus" size={13} />
+        </Button>
+      )}
       {pageChip &&
         (pagePinned ? (
           <ContextChipView
@@ -1589,6 +1731,15 @@ function ContextRow({
           onRemove={() => removeChip(c.id)}
         />
       ))}
+      {attachments.length > 0 && (
+        <div className="flex shrink-0 items-center gap-1.5">
+          <MessageAttachments
+            attachments={attachments}
+            onRemove={onRemoveAttachment}
+            className="flex-row gap-1.5"
+          />
+        </div>
+      )}
     </div>
   )
 }

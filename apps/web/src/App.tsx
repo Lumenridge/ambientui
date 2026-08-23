@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import { Toaster } from "@workspace/ui/components/sonner"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
@@ -6,6 +6,7 @@ import { TooltipProvider } from "@workspace/ui/components/tooltip"
 import { Assistant } from "@/components/assistant/assistant"
 import { useTheme } from "@/components/theme-provider"
 import { AssistantProvider } from "@/components/assistant/assistant-context"
+import { CommandRegistry } from "@/components/command-registry"
 import { DsPage } from "@/components/ds/ds-page"
 import { HomePage } from "@/components/home/home-page"
 import { FoundationProvider } from "@/foundation/foundation-context"
@@ -34,12 +35,19 @@ export function App() {
     sectionFromPath(window.location.pathname)
   )
 
-  const navigateTo = (id: SectionId) => {
+  // STABLE IDENTITY MATTERS HERE: this reaches the assistant context, and
+  // anything registering against it (the command registry) re-runs whenever
+  // it changes. A fresh closure per render made that registration churn.
+  const navigateTo = useCallback((id: SectionId) => {
     setActive(id)
     if (window.location.pathname !== pathFromSection(id)) {
       window.history.pushState(null, "", pathFromSection(id))
     }
-  }
+  }, [])
+  const onNavigate = useCallback(
+    (id: string) => navigateTo(id as SectionId),
+    [navigateTo]
+  )
 
   useEffect(() => {
     const onPopState = () =>
@@ -51,7 +59,7 @@ export function App() {
   return (
     <TooltipProvider>
       <FoundationProvider>
-      <AssistantProvider onNavigate={(id) => navigateTo(id as SectionId)}>
+      <AssistantProvider onNavigate={onNavigate}>
         <div className="bg-background flex h-svh flex-col overflow-hidden">
           {active === "ds" ? (
             <DsPage />
@@ -60,6 +68,7 @@ export function App() {
               <HomePage />
             </main>
           )}
+          <CommandRegistry />
           <Assistant />
           <AppToaster />
         </div>

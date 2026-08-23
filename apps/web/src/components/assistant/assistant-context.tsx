@@ -51,6 +51,24 @@ export type PageIntel = {
   jumpLabel?: string
 }
 
+/**
+ * A COMMAND the palette can run. The app registers these; the layer renders
+ * them and calls `run`. It never learns what a command means — same contract
+ * as the context chip, in the other direction.
+ */
+export type AmbientCommand = {
+  id: string
+  /** The group heading it files under: "Components", "Documentation"… */
+  section: string
+  label: string
+  desc?: string
+  /** Extra words to match on that are not worth showing. */
+  keywords?: string
+  /** An icon NAME from the vocabulary, drawn by the configured library. */
+  icon?: string
+  run: () => void
+}
+
 type AssistantState = {
   mode: AssistantMode
   setMode: (m: AssistantMode) => void
@@ -60,6 +78,9 @@ type AssistantState = {
   /** What the current page suggests and remembers — see PageIntel. */
   pageIntel: PageIntel | null
   setPageIntel: (i: PageIntel | null) => void
+  /** Everything ⌘K can DO, registered by the app — see AmbientCommand. */
+  commands: AmbientCommand[]
+  setCommands: (c: AmbientCommand[]) => void
   /** Explicit context added by the user (right-click → Explain / Add to context). */
   chips: ContextChip[]
   addChip: (c: ContextChip) => void
@@ -104,6 +125,7 @@ export function AssistantProvider({
   const [mode, setMode] = React.useState<AssistantMode>("line")
   const [pageChip, setPageChip] = React.useState<ContextChip | null>(null)
   const [pageIntel, setPageIntel] = React.useState<PageIntel | null>(null)
+  const [commands, setCommands] = React.useState<AmbientCommand[]>([])
   const [chips, setChips] = React.useState<ContextChip[]>([])
   const [seedVersion, setSeedVersion] = React.useState(0)
   const [workspaceEffect, announceEffect] = React.useState<string | null>(null)
@@ -165,6 +187,8 @@ export function AssistantProvider({
       setPageChip,
       pageIntel,
       setPageIntel,
+      commands,
+      setCommands,
       chips,
       addChip,
       removeChip,
@@ -182,7 +206,7 @@ export function AssistantProvider({
       workspaceEffect,
       announceEffect,
     }),
-    [mode, pageChip, pageIntel, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeImmediate, consumeSeededPrompt, orbAnchor, orbState, onNavigate, workspaceEffect]
+    [mode, pageChip, pageIntel, commands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeImmediate, consumeSeededPrompt, orbAnchor, orbState, onNavigate, workspaceEffect]
   )
 
   return (

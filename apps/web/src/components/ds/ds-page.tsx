@@ -43,6 +43,7 @@ import { ShadowsPage } from "@/components/ds/shadows-page"
 import { SpacingPage } from "@/components/ds/spacing-page"
 import { FoundationPage } from "@/foundation/foundation-page"
 import { Markdown } from "@/components/ds/markdown"
+import { DS_PARAM, dsHref } from "@/ds-route"
 import { SYSTEM_DOCS } from "@/components/ds/system-docs"
 
 /**
@@ -97,7 +98,24 @@ function RailItem({
 }
 
 export function DsPage() {
-  const [selectedId, setSelectedId] = React.useState<string>("foundation")
+  // THE SELECTION LIVES IN THE URL, so a component or a document can be
+  // linked, reloaded into, and jumped to from ⌘K. Local state alone made
+  // every entry unaddressable.
+  const readSelection = () =>
+    new URLSearchParams(window.location.search).get(DS_PARAM) ?? "foundation"
+  const [selectedId, setSelectedIdState] = React.useState<string>(readSelection)
+  const setSelectedId = React.useCallback((id: string) => {
+    setSelectedIdState(id)
+    const url = id === "foundation" ? "/ds" : dsHref(id)
+    if (window.location.pathname + window.location.search !== url) {
+      window.history.replaceState(null, "", url)
+    }
+  }, [])
+  React.useEffect(() => {
+    const onPop = () => setSelectedIdState(readSelection())
+    window.addEventListener("popstate", onPop)
+    return () => window.removeEventListener("popstate", onPop)
+  }, [])
   const { setMode } = useAssistant()
 
   // the rail's search: filters every list; groups with no matches hide, and

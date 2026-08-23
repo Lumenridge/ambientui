@@ -40,6 +40,16 @@ body {
   backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
 }
 
+/* THE GLASS WITHOUT ITS FILL — for a bar that floats ON an ambient surface
+   rather than over the product. The fill exists to lift a surface off the
+   page; a bar already sitting on the scrim would only be tinting a tint, and
+   the content passing underneath is the thing worth seeing. Same blur, no
+   ground. */
+.ambient-clear {
+  -webkit-backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
+}
+
 /* THE SCRIM — the same recipe at full-screen weight. A panel floats on the
    product and can afford to be thin; a surface that covers it has to carry
    its own legibility, so the fill is heavier and the blur is stronger. Still
