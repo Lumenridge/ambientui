@@ -1,10 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
+"use client"
+
 import * as React from "react"
 
 import {
   AmbientRuntimeProvider,
   type AmbientRuntime,
-} from "@ambientui/ambient/ambient-runtime"
+} from "ambientui/ambient-runtime"
 
 import { IconLibraryProvider } from "@ambientui/ui/components/icon"
 

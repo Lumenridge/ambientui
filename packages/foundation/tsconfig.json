@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "target": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
@@ -10,9 +11,13 @@
     "noEmit": true,
     "paths": {
       "@ambientui/ui/*": ["../ui/src/*"],
-      "@ambientui/ambient/*": ["../ambient/src/*"]
+      "ambientui/*": ["../ambient/src/*"]
     }
   },
   "include": ["."],
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tsup.config.ts"
+  ]
 }

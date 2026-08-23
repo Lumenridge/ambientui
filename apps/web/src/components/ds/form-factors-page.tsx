@@ -3,7 +3,7 @@ import { Button } from "@ambientui/ui/components/button"
 import {
   useAssistant,
   type AssistantMode,
-} from "@ambientui/ambient/assistant-context"
+} from "ambientui/assistant-context"
 
 /**
  * The Form factors page: the ambient layer's surface model — four modes of

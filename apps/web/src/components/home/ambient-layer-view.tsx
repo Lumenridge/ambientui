@@ -4,21 +4,21 @@ import { Button } from "@ambientui/ui/components/button"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
 
-import { useAssistant } from "@ambientui/ambient/assistant-context"
-import { Composer } from "@ambientui/ambient/composer"
-import { OrbGlyph } from "@ambientui/ambient/orb-character"
+import { useAssistant } from "ambientui/assistant-context"
+import { Composer } from "ambientui/composer"
+import { OrbGlyph } from "ambientui/orb-character"
 import {
   FollowUpSuggestions,
   MessageAttachments,
   ReasoningPanel,
-} from "@ambientui/ambient/message-kit"
-import { ReferenceChips } from "@ambientui/ambient/response-kit"
+} from "ambientui/message-kit"
+import { ReferenceChips } from "ambientui/response-kit"
 import {
   ReviewableDiff,
   ToolCall,
   ToolTimeline,
-} from "@ambientui/ambient/tool-kit"
-import { InlineCitation, WebSearch } from "@ambientui/ambient/knowledge-kit"
+} from "ambientui/tool-kit"
+import { InlineCitation, WebSearch } from "ambientui/knowledge-kit"
 
 /**
  * THE ARGUMENT, MADE WITH ITS OWN EVIDENCE.

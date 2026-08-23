@@ -76,14 +76,14 @@ import { cn } from "@ambientui/ui/lib/utils"
 import {
   OrbCharacter,
   type OrbState,
-} from "@ambientui/ambient/orb-character"
+} from "ambientui/orb-character"
 import {
   ContextChipView,
   ShimmerPlaceholder,
-} from "@ambientui/ambient/ambient-marks"
-import { useAssistant } from "@ambientui/ambient/assistant-context"
-import { AskAI } from "@ambientui/ambient/attach-menu"
-import { Composer } from "@ambientui/ambient/composer"
+} from "ambientui/ambient-marks"
+import { useAssistant } from "ambientui/assistant-context"
+import { AskAI } from "ambientui/attach-menu"
+import { Composer } from "ambientui/composer"
 import {
   DayDivider,
   ErrorState,
@@ -100,7 +100,7 @@ import {
   ReasoningPanel,
   type ReasoningEffortLevel,
   ReviewComment,
-} from "@ambientui/ambient/message-kit"
+} from "ambientui/message-kit"
 import { ViewMenu } from "@/components/view-menu"
 import {
   CodeDiff,
@@ -111,12 +111,12 @@ import {
   ToolCall,
   ToolFailure,
   ToolTimeline,
-} from "@ambientui/ambient/tool-kit"
+} from "ambientui/tool-kit"
 import {
   InlineCitation,
   ResearchReport,
   WebSearch,
-} from "@ambientui/ambient/knowledge-kit"
+} from "ambientui/knowledge-kit"
 import {
   MessageBranches,
   MessagePair,
@@ -125,12 +125,12 @@ import {
   type KitReference,
   type KitResponse,
   type MessageVariant,
-} from "@ambientui/ambient/response-kit"
-import { composeResponse } from "@ambientui/ambient/compose-response"
+} from "ambientui/response-kit"
+import { composeResponse } from "ambientui/compose-response"
 import {
   ORB_STATES,
   REASONING_EFFORTS,
-} from "@ambientui/ambient/kit-vocabulary"
+} from "ambientui/kit-vocabulary"
 import {
   STREAM_SPEEDS,
   useFoundation,

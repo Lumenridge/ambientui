@@ -4,8 +4,8 @@ import { Badge } from "@ambientui/ui/components/badge"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { Separator } from "@ambientui/ui/components/separator"
 
-import { useAssistant } from "@ambientui/ambient/assistant-context"
-import { OrbGlyph } from "@ambientui/ambient/orb-character"
+import { useAssistant } from "ambientui/assistant-context"
+import { OrbGlyph } from "ambientui/orb-character"
 import { useFoundation } from "@ambientui/foundation"
 import {
   AMBIENT_COMPONENTS,

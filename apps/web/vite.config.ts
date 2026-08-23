@@ -12,7 +12,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       // the layer is a package now; resolve it by name, not by path
-      "@ambientui/ambient": path.resolve(__dirname, "../../packages/ambient/src"),
+      "ambientui": path.resolve(__dirname, "../../packages/ambient/src"),
       "@ambientui/foundation": path.resolve(
         __dirname,
         "../../packages/foundation/src/foundation-context.tsx"

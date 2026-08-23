@@ -7,10 +7,10 @@ import { cn } from "@ambientui/ui/lib/utils"
 import {
   useAssistant,
   type ContextChip,
-} from "@ambientui/ambient/assistant-context"
-import { AskAI, AttachMenu } from "@ambientui/ambient/attach-menu"
-import { ReviewComment } from "@ambientui/ambient/message-kit"
-import { useAttachMenu } from "@ambientui/ambient/use-attach-menu"
+} from "ambientui/assistant-context"
+import { AskAI, AttachMenu } from "ambientui/attach-menu"
+import { ReviewComment } from "ambientui/message-kit"
+import { useAttachMenu } from "ambientui/use-attach-menu"
 
 /**
  * THE DEV TOOL TAB — a working editor, full screen, with the ambient layer

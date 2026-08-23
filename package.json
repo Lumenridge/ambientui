@@ -5,14 +5,17 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "gate": "npm run registry:check && turbo typecheck lint build",
+    "gate": "npm run registry:check && npm run vendor:check && turbo typecheck lint build",
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
     "registry:build": "node scripts/build-registry.mjs && shadcn build --output apps/web/public/r",
-    "registry:check": "node scripts/build-registry.mjs --check"
+    "registry:check": "node scripts/build-registry.mjs --check",
+    "vendor:check": "node scripts/check-vendored-css.mjs",
+    "release": "turbo build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.1",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "turbo": "^2.9.18",
