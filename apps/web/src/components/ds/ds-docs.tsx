@@ -764,8 +764,9 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
     description:
       "The app's destinations as a disclosure that morphs from a pill into a card — an ambientui extension to the product vocabulary (promoted via the watchlist).",
     behavior: [
-      "Collapsed, it is one pill carrying the assistant's mark and the view you are on. Opening is what costs space, and only while you are choosing — a tab strip spends room proportional to how many destinations exist, permanently, on a surface whose argument is that chrome should get out of the way.",
-      "The morph is a LAYOUT animation, not a swap: the pill becomes the card, so the thing you clicked is the thing that opened. Rides the Foundation's surface spring; the label crossfades on the micro role.",
+      "Collapsed, it is one pill naming the view you are on. Opening is what costs space, and only while you are choosing — a tab strip spends room proportional to how many destinations exist, permanently, on a surface whose argument is that chrome should get out of the way.",
+      "THE TRIGGER DOES NOT MOVE: the list drops beneath the pill rather than growing it, and the trigger holds a fixed width so Menu and Close occupy the same box. A control that walks out from under the pointer as it opens makes closing a game of catch-up.",
+      "It carries no character mark. The assistant's identity belongs to the assistant; a navigation control wearing it says the wrong thing about what it does.",
       "Closes on Escape or an outside pointer-down — a menu you cannot dismiss the ordinary way is a trap.",
       "The current view is marked with aria-current and carries the foreground weight; the others sit muted.",
       "It is the pointer twin of the spotlight's \"Jump to\" — same destinations, reached by hand rather than ⌘K. They read the same list, so they cannot disagree.",
