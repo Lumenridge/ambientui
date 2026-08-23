@@ -7,9 +7,14 @@
 @import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
-@source "../../../apps/**/*.{ts,tsx}";
-@source "../../../components/**/*.{ts,tsx}";
-@source "../**/*.{ts,tsx}";
+/* @source resolves relative to THIS FILE. From packages/ui/src/styles that is
+   four levels to the repo root, not three — the old globs pointed at
+   packages/apps/** and packages/components/**, neither of which has ever
+   existed, so they matched nothing and the app's classes survived only on
+   Tailwind v4's automatic detection from the Vite root. That crutch
+   disappears the moment code moves into another package. */
+@source "../../../../apps/*/src/**/*.{ts,tsx}";
+@source "../../../../packages/*/src/**/*.{ts,tsx}";
 
 @theme inline {
     --font-heading: var(--font-sans);

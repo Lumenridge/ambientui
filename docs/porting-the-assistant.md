@@ -1,5 +1,18 @@
 # Porting the ambientui assistant layer to another repo
 
+> **⚠️ This document is out of date and is being replaced.**
+>
+> It was written when the layer was four files and a 1,054-line `assistant.tsx`.
+> It is now **17 files and 8,269 lines**, the `beam.tsx` it repeatedly references
+> no longer exists, and the `@/components/app-sidebar` import it tells you to
+> delete is not in the tree. The general shape of the procedure still holds;
+> the specifics do not.
+>
+> It exists at all because there is no install mechanism. That is the thing
+> being fixed: a shadcn registry replaces this file with one command. Until
+> then, treat the steps below as orientation, not instructions, and read the
+> real import surface from `apps/web/src/components/assistant/` directly.
+
 This describes how to lift the assistant experience — floating AI orb, glass chat
 panel/dock, and the ⌘K command palette — out of this repo and mount it on a
 page in a **different** repo, reusing that repo's own shadcn tokens.
