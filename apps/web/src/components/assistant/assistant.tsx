@@ -1620,7 +1620,7 @@ function SnapZones({ hot }: { hot: "dock" | "spotlight" | null }) {
       // glass: translucent fill + backdrop blur keeps the labels readable over content
       "pointer-events-none fixed z-40 flex items-center justify-center rounded-lg border border-dashed text-xs font-medium backdrop-blur-md",
       active
-        ? "border-[var(--app-blue)] bg-[var(--app-blue-wash)] text-[var(--app-blue)]"
+        ? "border-[var(--ambient-accent)] bg-[var(--ambient-accent-wash)] text-[var(--ambient-accent)]"
         : "border-muted-foreground/40 bg-(--scrim) text-muted-foreground"
     )
   return (
@@ -1691,7 +1691,7 @@ function IconTile({
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center bg-[var(--app-blue-wash)] text-[var(--app-blue)]",
+        "flex shrink-0 items-center justify-center bg-[var(--ambient-accent-wash)] text-[var(--ambient-accent)]",
         compact ? "size-4 rounded-[4px]" : "size-5 rounded-[5px]"
       )}
     >

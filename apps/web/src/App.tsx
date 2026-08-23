@@ -12,6 +12,7 @@ import { HomePage } from "@/components/home/home-page"
 import { FoundationProvider } from "@/foundation/foundation-context"
 import { sections, type SectionId } from "@/nav"
 
+import "@/components/assistant/ambient.css"
 import "@/theme.css"
 import "@/viz.css"
 

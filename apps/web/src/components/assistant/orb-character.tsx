@@ -91,7 +91,7 @@ function rgbToHex(r: number, g: number, b: number): string {
 /** Accent-linked thermal ramp: cold deep accent -> accent -> pale -> hot complement. */
 function accentRamp(): string[] {
   const css = getComputedStyle(document.documentElement).getPropertyValue(
-    "--app-blue"
+    "--ambient-accent"
   )
   const [r, g, b] = hexToRgb(resolveHex(css))
   return [
@@ -126,7 +126,7 @@ export function OrbGlyph({
   state?: OrbState
   className?: string
 }) {
-  const core = color ?? "var(--app-blue)"
+  const core = color ?? "var(--ambient-accent)"
   return (
     <span
       aria-hidden
@@ -314,7 +314,7 @@ export function OrbCharacter({
   const coreColor =
     colors && colors.length > 0
       ? colors[Math.min(1, colors.length - 1)]!
-      : "var(--app-blue)"
+      : "var(--ambient-accent)"
 
   return (
     <div

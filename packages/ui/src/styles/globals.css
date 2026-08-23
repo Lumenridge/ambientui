@@ -180,7 +180,6 @@
 :root {
     /* Glass blur — the one blur radius ambient surfaces use
        (backdrop-blur-[var(--ambient-blur)]). */
-    --ambient-blur: 48px;
 }
 
 

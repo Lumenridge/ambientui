@@ -16,8 +16,11 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 
+// Only the primitives' tokens and the layer's own material — NOT the app's
+// theme.css. If the layer ever needs that file again, the CSS split has
+// regressed exactly the way the import split would.
 import "@workspace/ui/globals.css"
-import "@/theme.css"
+import "@/components/assistant/ambient.css"
 
 import { Assistant } from "@/components/assistant/assistant"
 import { AssistantProvider } from "@/components/assistant/assistant-context"

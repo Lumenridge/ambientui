@@ -1,0 +1,312 @@
+/**
+ * THE AMBIENT LAYER'S MATERIAL — the glass, the veils, the live border, the
+ * glyph's breath, the stream's leading edge.
+ *
+ * This file travels WITH the layer. It used to live in the app's theme.css
+ * alongside that app's charcoal shell and its scroll behaviour, which was fine
+ * while the two shipped together and wrong the moment anyone wanted one
+ * without the other.
+ *
+ * IT DERIVES, IT DOES NOT DECLARE. Every value here is a color-mix over the
+ * standard shadcn roles (--popover, --border, --foreground, --accent,
+ * --background), so an adopter's own theme retints the whole ambient surface
+ * without touching this file. That is the propagation rule (DESIGN.md §2)
+ * applied to the layer's own material.
+ *
+ * The two exceptions carry fallbacks, because they are NOT standard shadcn and
+ * an undefined var inside color-mix() silently resolves to transparent — which
+ * looks like a rendering bug and reads as one:
+ *   --positive  is an ambientui token
+ *   --spacing   is Tailwind v4's, absent if the grid is not configured
+ *
+ * Requires Tailwind v4. Import it after tailwindcss and after your token block.
+ */
+
+/* THE LAYER'S OWN KNOBS — the four values an adopter is expected to retune.
+   --ambient-blur lived in packages/ui globals.css, which is the primitives
+   package: an ambient token sitting there was a filing error, not a decision. */
+:root {
+  --ambient-blur: 48px;
+  --ambient-accent: #2563eb;
+  --ambient-accent-wash: rgba(59, 130, 246, 0.1);
+}
+
+.dark {
+  --ambient-accent: #4d9aff;
+  --ambient-accent-wash: rgba(61, 130, 246, 0.16);
+}
+
+/* THE TRANSLUCENCY TOKENS — every alpha in the system is one of these;
+   no raw /NN opacity modifiers or ad-hoc color-mix in component code.
+   They derive from semantic roles, so the role map retints them. */
+:root {
+  --glass-fill: color-mix(in oklab, var(--popover) 55%, transparent);   /* ambient glass body */
+  --glass-core: color-mix(in oklab, var(--popover) 60%, transparent);   /* orb/glyph shells */
+  --glass-border: color-mix(in oklab, var(--border) 70%, transparent);  /* hairlines on glass */
+  --glass-wash: color-mix(in oklab, var(--foreground) 9%, transparent); /* neutral fills ON glass: selections, keycaps */
+  --wash: color-mix(in oklab, var(--accent) 40%, transparent);          /* quiet fills at rest */
+  --wash-strong: color-mix(in oklab, var(--accent) 60%, transparent);   /* hover/active washes */
+  --scrim: color-mix(in oklab, var(--background) 50%, transparent);     /* translucent covers (drag zones) */
+  --positive-wash: color-mix(in oklab, var(--positive, oklch(0.596 0.145 163.225)) 12%, transparent);      /* added lines, passing runs */
+  --destructive-wash: color-mix(in oklab, var(--destructive) 12%, transparent); /* removed lines, failures */
+  --glass-veil: color-mix(in oklab, var(--popover) 62%, transparent);  /* the frost between a heat field and content */
+  --glass-veil-stage: color-mix(in oklab, var(--popover) 48%, transparent); /* the veil over a STAGE field (canvas ground, projectors). 32% was tuned against aerial photography; abstract gradients carry far more saturation and put a light ground under the canvas text, so the stage needed weight. Still the lightest veil there is — a stage is meant to read as ground */
+  --glass-scrim: color-mix(in oklab, var(--popover) 82%, transparent);  /* a FULL-SCREEN ambient surface: heavier, because it covers the product rather than floating on it */
+  --glass-veil-screen: color-mix(in oklab, var(--popover) 92%, transparent); /* the veil over a FULL-PRESENCE field: the panel's 62% leaves a stage-strength shader glowing through the content, and even 84% read as weather rather than ground */
+}
+
+/* The ambient layer's ONE glass recipe — every AI surface (bar, panel,
+   dock, spotlight, orb shell) wears the same frost: the glass-fill token
+   over a backdrop blur on the --ambient-blur token. Never a one-off blur
+   on an ambient surface. */
+.ambient-glass {
+  background-color: var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--ambient-blur)) saturate(1.5);
+}
+
+/* THE SCRIM — the same recipe at full-screen weight. A panel floats on the
+   product and can afford to be thin; a surface that covers it has to carry
+   its own legibility, so the fill is heavier and the blur is stronger. Still
+   translucent on purpose: the work underneath is the reason this opened, and
+   it should stay visible as ground even when it is not readable. */
+.ambient-scrim {
+  background-color: var(--glass-scrim);
+  -webkit-backdrop-filter: blur(calc(var(--ambient-blur) * 1.6)) saturate(1.3);
+  backdrop-filter: blur(calc(var(--ambient-blur) * 1.6)) saturate(1.3);
+}
+
+/* THE SCREEN VEIL — the frost for a field running at STAGE strength under a
+   full-screen surface. The panel's veil is tuned to a field at low presence;
+   over a full-presence one it leaves the shader glowing through the content,
+   which is legible in a 440px panel and distracting across a whole window.
+   Heavier fill, same blur. */
+.ambient-screen-frost {
+  background-color: var(--glass-veil-screen);
+  -webkit-backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
+}
+
+/* The frost BETWEEN a surface's heat field (OrbField) and its content —
+   blurs the field, not the page; lighter tint so the heat glows through. */
+.ambient-field-frost {
+  background-color: var(--glass-veil);
+  -webkit-backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
+}
+
+/* The STAGE veil — for a field that IS the ground (canvas page,
+   presentations): thin tint, softer blur, so the heat reads across a room
+   while text on top stays legible. */
+.ambient-stage-frost {
+  background-color: var(--glass-veil-stage);
+  /* saturate below 1: a gradient ground already carries its own colour, and
+     pushing it further is what made text on the pale ones hard to read */
+  -webkit-backdrop-filter: blur(calc(var(--ambient-blur) * 0.8)) saturate(1.1);
+  backdrop-filter: blur(calc(var(--ambient-blur) * 0.8)) saturate(1.1);
+}
+
+/* THE ENGINEERING GRID — the canvas ground reads as aworked surface, not a
+   wallpaper: a dot lattice on the border role, spaced on the Foundation's
+   spacing unit (×6), so density follows the grid like everything else. */
+.ambient-grid {
+  /* barely there by design — the lattice should register as texture, not
+     as pattern: a hairline dot on the border role, at a fraction of its
+     strength, on a wide gauge */
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--border) 45%, transparent) 0.5px,
+    transparent 0.5px
+  );
+  background-size: calc(var(--spacing, 0.25rem) * 8) calc(var(--spacing, 0.25rem) * 8);
+  background-position: center;
+}
+
+/* THE LIVE BORDER — the orb's states projected onto an AI surface's
+   border: a conic comet on the ambient accent sweeping the perimeter.
+   One CSS ring, no shaders (a WebGL border per surface is the exact cost
+   the OrbGlyph decision removed). State decides cadence and presence:
+   still barely breathes, listening turns slow and attentive, thinking
+   sweeps hard, answer glows and settles. */
+@property --ambient-border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* NOTE: this class sets NO position. theme.css is unlayered and Tailwind's
+   utilities live in @layer — unlayered rules beat layered ones at any
+   specificity, so a `position` here would override .fixed on every surface
+   wearing the class (it did: the dock lost its fixed position and rendered
+   at the wrong edge). Consumers bring their own positioning utility. */
+/* Two identical comet rings; ::after always runs, ::before joins only
+   while thinking, counter-rotating — the shader's "heat radiating both
+   ways". Fully opaque stops: the tail resolves into the ordinary border
+   color, never into transparency. */
+.ambient-live-border::before,
+.ambient-live-border::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid transparent;
+  background: conic-gradient(
+      from var(--ambient-border-angle),
+      var(--border) 0deg,
+      color-mix(in oklab, var(--ambient-accent) 45%, var(--border)) 60deg,
+      var(--ambient-accent) 110deg,
+      color-mix(in oklab, var(--ambient-accent) 45%, white) 135deg,
+      color-mix(in oklab, var(--ambient-accent) 25%, var(--border)) 180deg,
+      var(--border) 230deg
+    )
+    border-box;
+  mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0) border-box;
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0) border-box;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  animation: ambient-border-spin 14s linear infinite;
+}
+.ambient-live-border::before {
+  display: none;
+}
+/* STATE CHARACTERS — the same movements as the orb shader's states
+   (orb-character.tsx STATE_PARAMS), translated to the perimeter:
+   listening draws INWARD (reverse, slower), thinking churns both ways
+   (fast + counter-comet), answer blooms then settles into a slow glide. */
+.ambient-live-border[data-orb-state="listening"]::after {
+  animation-direction: reverse;
+  animation-duration: 10s;
+}
+.ambient-live-border[data-orb-state="thinking"]::after {
+  animation-duration: 3.2s;
+}
+.ambient-live-border[data-orb-state="thinking"]::before {
+  display: block;
+  animation-direction: reverse;
+  animation-duration: 2.4s;
+}
+.ambient-live-border[data-orb-state="answer"]::after {
+  animation:
+    ambient-border-bloom 1.4s var(--motion-ease) 1,
+    ambient-border-spin 6s linear infinite;
+}
+@keyframes ambient-border-spin {
+  to {
+    --ambient-border-angle: 360deg;
+  }
+}
+/* the answer surge: the whole ring flares hot, then decays — the shader's
+   one-shot outward bloom */
+@keyframes ambient-border-bloom {
+  0% {
+    filter: brightness(1.9) saturate(1.6);
+  }
+  100% {
+    filter: none;
+  }
+}
+
+/* THE GLYPH'S BREATH — OrbGlyph stays pure CSS (no shader), but the
+   identity is never frozen: the core breathes, and the same state
+   language sets its pace (data-orb-state on the glyph). */
+.ambient-glyph-core {
+  animation: ambient-glyph-breathe 4s ease-in-out infinite alternate;
+}
+[data-orb-state="listening"] > .ambient-glyph-core {
+  animation-duration: 2.4s;
+}
+[data-orb-state="thinking"] > .ambient-glyph-core {
+  animation-duration: 1s;
+}
+[data-orb-state="answer"] > .ambient-glyph-core {
+  animation-duration: 1.8s;
+}
+/* the orbiting shine — a highlight circling the core, the glyph's
+   unmistakable "alive" signal; same state pacing as the breath */
+.ambient-glyph-orbit {
+  animation: ambient-glyph-orbit 3.6s linear infinite;
+}
+.ambient-glyph-orbit::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -4%;
+  width: 42%;
+  height: 42%;
+  margin-left: -21%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), transparent 68%);
+}
+[data-orb-state="listening"] > .ambient-glyph-orbit {
+  animation-duration: 2.2s;
+  animation-direction: reverse;
+}
+[data-orb-state="thinking"] > .ambient-glyph-orbit {
+  animation-duration: 0.9s;
+}
+[data-orb-state="answer"] > .ambient-glyph-orbit {
+  animation-duration: 1.6s;
+}
+@keyframes ambient-glyph-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ambient-glyph-breathe {
+  from {
+    transform: scale(0.88);
+    filter: blur(0.5px) brightness(0.92);
+  }
+  to {
+    transform: scale(1.24);
+    filter: blur(0.7px) brightness(1.35);
+  }
+}
+
+/* THE STREAM'S LEADING EDGE — text that has just arrived is still
+   settling: the newest words carry the ambient accent and fade out toward
+   the tip, with the very edge blurred, so a stream reads as writing rather
+   than as text appearing. Purely presentational; the characters are
+   already in the DOM. */
+.ambient-stream-warm {
+  color: var(--ambient-accent);
+}
+.ambient-stream-edge {
+  color: var(--ambient-accent);
+  filter: blur(1.4px);
+  opacity: 0.55;
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 95%);
+  mask-image: linear-gradient(90deg, #000 0%, transparent 95%);
+}
+
+/* Shimmering placeholder text (palette input) */
+.ambient-shimmer {
+  color: transparent;
+  /* the travelling highlight is the AMBIENT ACCENT — the assistant's own
+     colour passing through the words, so the placeholder is identity, not
+     just animated grey. Rest tone stays secondary text. */
+  background: linear-gradient(
+    100deg,
+    var(--muted-foreground) 40%,
+    color-mix(in oklab, var(--ambient-accent) 65%, var(--foreground)) 48%,
+    var(--ambient-accent) 52%,
+    color-mix(in oklab, var(--ambient-accent) 65%, var(--foreground)) 56%,
+    var(--muted-foreground) 64%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: ambient-shimmer 2.8s linear infinite;
+}
+@keyframes ambient-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
