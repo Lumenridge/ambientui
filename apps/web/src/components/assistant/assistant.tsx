@@ -1124,7 +1124,9 @@ export function Assistant() {
           <SidebarProvider className="min-h-0! w-auto! flex-none">
             <Sidebar
               collapsible="none"
-              className="w-72 shrink-0 border-e border-(--glass-border) bg-transparent"
+              // the rail takes the sidebar's own ground, so the record reads as a
+              // pane you navigate rather than more of the translucent field
+              className="w-72 shrink-0 border-e border-(--glass-border) bg-sidebar"
             >
               <SidebarHeader>
                 <SidebarMenu>
