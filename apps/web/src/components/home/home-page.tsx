@@ -24,7 +24,10 @@ import { ViewMenu } from "@/components/view-menu"
 const VIEWS = [
   // `icon` is what each view IS, for the context chip: every one of these is
   // kind "page", which is too coarse to tell a bare canvas from an essay.
-  { id: "canvas", label: "Canvas", chip: "Home · Canvas", icon: "image" },
+  //
+  // ORDER IS THE VISIT. The layer leads because it is the front door — a
+  // stranger used to arrive at an empty gradient reading "Press ⌘K", which
+  // invites you to use a thing nobody has explained yet.
   {
     id: "layer",
     label: "The ambient layer",
@@ -32,13 +35,14 @@ const VIEWS = [
     icon: "document",
   },
   { id: "devtool", label: "Dev tool", chip: "Home · Dev tool", icon: "code" },
+  { id: "canvas", label: "Canvas", chip: "Home · Canvas", icon: "image" },
 ] as const
 
 type ViewId = (typeof VIEWS)[number]["id"]
 
 const readView = (): ViewId => {
   const v = new URLSearchParams(window.location.search).get("view")
-  return VIEWS.some((x) => x.id === v) ? (v as ViewId) : "canvas"
+  return VIEWS.some((x) => x.id === v) ? (v as ViewId) : "layer"
 }
 
 export function HomePage() {
@@ -103,7 +107,7 @@ export function HomePage() {
           items={VIEWS}
           value={view}
           onSelect={select}
-          home={{ label: "Home", onSelect: () => select("canvas") }}
+          home={{ label: "Home", onSelect: () => select("layer") }}
         />
       </div>
 

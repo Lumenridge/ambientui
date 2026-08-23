@@ -4,6 +4,8 @@ import { Button } from "@ambientui/ui/components/button"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
 
+import { InstallSection } from "@/components/home/install-section"
+
 import { useAssistant } from "ambientui/assistant-context"
 import { Composer } from "ambientui/composer"
 import { OrbGlyph } from "ambientui/orb-character"
@@ -534,14 +536,19 @@ export function AmbientLayerView() {
         </div>
       </Section>
 
+      {/* ── how you take it ────────────────────────────────────────────── */}
+      <InstallSection onDocs={() => navigate?.("ds")} />
+
       {/* ── the way out ────────────────────────────────────────────────── */}
       <section className="border-border flex flex-col items-center gap-6 border-t py-16 text-center">
         <h2 className="max-w-lg text-4xl leading-tight font-semibold tracking-tight text-balance">
-          Build one yourself
+          Every piece of it is documented
         </h2>
         <p className="text-muted-foreground max-w-md text-base leading-relaxed">
-          Every component on this page is documented in the registry, with its
-          behavior, its boundaries and a playground. The whole system is open.
+          Fifty components, each with its behavior, its boundaries and a
+          playground — and the constitution they all answer to. The rules ship
+          with the code: install one and its when-to-use prints in your
+          terminal.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Button size="lg" onClick={() => navigate?.("ds")}>
