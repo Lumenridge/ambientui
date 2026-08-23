@@ -1,7 +1,6 @@
 import * as React from "react"
 
 import {
-  ArrowUpRight01Icon,
   Cancel01Icon,
   CheckListIcon,
   CubeIcon,
@@ -34,6 +33,7 @@ import {
   UserMessage,
   type KitResponse,
 } from "./response-kit"
+import { FollowUpSuggestions } from "./message-kit"
 import { composeResponse } from "./compose-response"
 import { OrbCharacter, OrbField, OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
@@ -520,35 +520,22 @@ export function Assistant() {
     <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
       {messages.length === 0 && (
         <div className="px-1 pt-3">
-          <h3 className="text-[15px] font-semibold">
+          {/* the character opens the conversation, then the same
+              FollowUpSuggestions the answers use — an empty state that
+              hand-rolls its own list is a second component nobody maintains */}
+          <AssistantMark size={32} />
+          <h3 className="mt-3 text-base font-semibold">
             {pageChip ? "Ask about this page" : "Ask about ambientui"}
           </h3>
-          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-            I can see this page and its context. Try one of these:
+          <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+            {pageChip
+              ? `I can see ${pageChip.label} and what is open around it. Right-click anything — a line, a file, a control — to attach it as context.`
+              : "I can see the page you are on. Right-click anything — a row, a control, a value — to attach it as context."}
           </p>
-          <div className="mt-4 flex flex-col gap-2">
-            {SUGGESTED_PROMPTS.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => send(p)}
-                className="flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-start text-[13px] hover:bg-(--wash-strong)"
-              >
-                <span className="min-w-0 flex-1">{p}</span>
-                <span className="shrink-0 text-muted-foreground">
-                  <HugeiconsIcon
-                    icon={ArrowUpRight01Icon}
-                    size={14}
-                    strokeWidth={1.8}
-                  />
-                </span>
-              </button>
-            ))}
-          </div>
-          <p className="mt-4 text-[12px] text-muted-foreground">
-            Tip: right-click anything on the page to explain it or add it to
-            this chat's context.
-          </p>
+          <FollowUpSuggestions
+            suggestions={pageIntel?.suggestions ?? SUGGESTED_PROMPTS}
+            onPick={(text) => send(text)}
+          />
         </div>
       )}
       <div className="flex flex-col gap-3">

@@ -2567,6 +2567,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "ONE SHAPE, deliberately. A pill row was the obvious second variant and it was removed: a real follow-up is a sentence, so it wraps to two lines and needs a target the width of the surface. A pill could hold neither.",
       "Each row carries the open-arrow that says picking it goes somewhere; the heading (\"Ask more\") names the group, and label={null} drops it.",
       "Renders nothing when there are no suggestions; an empty invitation row is worse than none.",
+      "It is ALSO the panel's empty state — the character opens the conversation and this card carries the offers, drawing them from the page's own suggestions (setPageIntel). An empty state that hand-rolls its own list is a second component nobody maintains, and it drifts the moment this one changes.",
     ],
     whenToUse: [
       "After an answer that opens obvious next questions — a diff to review, a test to write.",
