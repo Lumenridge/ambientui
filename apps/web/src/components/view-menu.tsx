@@ -112,7 +112,10 @@ export function ViewMenu({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.99, transition: micro }}
             transition={spring}
-            className="ambient-glass border-(--glass-border) absolute inset-x-0 top-full z-10 mt-2 flex origin-top flex-col gap-0.5 rounded-2xl border p-1.5"
+            // sized by its OWN content, never by the pill: the pill's width
+            // follows the current view's name, so inheriting it truncated
+            // the longest row and pushed the keycap past the edge
+            className="ambient-glass border-(--glass-border) absolute start-0 top-full z-10 mt-2 flex w-max max-w-xs min-w-full origin-top flex-col gap-0.5 rounded-2xl border p-1.5"
           >
             {items.map((item) => (
               <Button
