@@ -344,12 +344,15 @@ export function AssistantOrb() {
                   setMode("history")
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="ambient-glass text-muted-foreground hover:text-foreground absolute top-1/2 flex size-9 items-center justify-center rounded-full border border-(--glass-border) shadow-lg shadow-black/25"
-                // cleared past the PILL, not the orb: both are absolute in
-                // the same wrapper, so "beside the object" has to be measured
-                // from the object's own width
+                className="ambient-glass text-muted-foreground hover:text-foreground absolute top-1/2 flex items-center justify-center rounded-full border border-(--glass-border) shadow-lg shadow-black/25"
+                // Sized to the ORB, so the two round objects on this row read
+                // as the same kind of thing. Cleared past the PILL, not the
+                // orb: both are absolute in the same wrapper, so "beside the
+                // object" has to be measured from the object's own width.
                 style={{
                   y: "-50%",
+                  height: ORB,
+                  width: ORB,
                   ...(growsLeft
                     ? { right: QUICK_W + 8 }
                     : { left: QUICK_W + 8 }),
@@ -359,7 +362,7 @@ export function AssistantOrb() {
                 exit={{ opacity: 0, scale: 0.95, transition: microT }}
                 transition={{ ...spring, opacity: microT }}
               >
-                <Icon name="history" size={15} />
+                <Icon name="history" size={18} />
               </motion.button>
             )}
           </AnimatePresence>

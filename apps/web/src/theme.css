@@ -47,6 +47,69 @@ body {
   backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
 }
 
+/* PROGRESSIVE EDGE BLUR — a bar's edge as a falloff, not a line.
+   A hard border says "two panes stacked". A blur that fades says "one
+   surface, and the content continues underneath this" — which is what a
+   scrolling transcript under a header or a composer actually is.
+
+   Three layers, not one: a single masked blur has a visible seam where its
+   mask ends, because the blur stops at full strength. Each layer blurs more
+   and is revealed over a shorter band, so the strength falls off gradually
+   and the seam has nothing to land on. The band reaches PAST the bar into
+   the scroll area, which is where the fade needs the room.
+
+   Sits behind its own content (z-index -1), so the bar must not paint an
+   opaque background over it. */
+.ambient-blur-top,
+.ambient-blur-bottom {
+  --ambient-edge-fade: 1.75rem;
+  position: relative;
+}
+.ambient-blur-top::before,
+.ambient-blur-top::after,
+.ambient-blur-bottom::before,
+.ambient-blur-bottom::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+/* the far half: the strongest blur, revealed over the shortest band */
+.ambient-blur-top::before {
+  top: 0;
+  bottom: calc(var(--ambient-edge-fade) * -0.4);
+  -webkit-backdrop-filter: blur(var(--ambient-blur));
+  backdrop-filter: blur(var(--ambient-blur));
+  -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 85%);
+  mask-image: linear-gradient(to bottom, #000 30%, transparent 85%);
+}
+/* the tail: half the blur, carried further, so the falloff has no edge */
+.ambient-blur-top::after {
+  top: 0;
+  bottom: calc(var(--ambient-edge-fade) * -1);
+  -webkit-backdrop-filter: blur(calc(var(--ambient-blur) * 0.45));
+  backdrop-filter: blur(calc(var(--ambient-blur) * 0.45));
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+}
+.ambient-blur-bottom::before {
+  bottom: 0;
+  top: calc(var(--ambient-edge-fade) * -0.4);
+  -webkit-backdrop-filter: blur(var(--ambient-blur));
+  backdrop-filter: blur(var(--ambient-blur));
+  -webkit-mask-image: linear-gradient(to top, #000 30%, transparent 85%);
+  mask-image: linear-gradient(to top, #000 30%, transparent 85%);
+}
+.ambient-blur-bottom::after {
+  bottom: 0;
+  top: calc(var(--ambient-edge-fade) * -1);
+  -webkit-backdrop-filter: blur(calc(var(--ambient-blur) * 0.45));
+  backdrop-filter: blur(calc(var(--ambient-blur) * 0.45));
+  -webkit-mask-image: linear-gradient(to top, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 55%, transparent 100%);
+}
+
 /* The STAGE veil — for a field that IS the ground (canvas page,
    presentations): thin tint, softer blur, so the heat reads across a room
    while text on top stays legible. */

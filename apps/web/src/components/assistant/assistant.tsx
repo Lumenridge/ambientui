@@ -561,10 +561,16 @@ export function Assistant() {
 
   let surfaceEl: React.ReactNode = null
 
-  const transcriptBlock = (
+  /**
+   * `columnClass` caps the message column. Only a surface wider than a
+   * comfortable reading measure needs it — history, which is full-screen. The
+   * panel, dock and spotlight are already narrower than any cap, so applying
+   * one there just inset their content from their own edges.
+   */
+  const renderTranscript = (columnClass = "") => (
     <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
       {messages.length === 0 && (
-        <div className="mx-auto w-full max-w-2xl px-1 pt-3">
+        <div className={cn("px-1 pt-3", columnClass)}>
           {/* the character opens the conversation, then the same
               FollowUpSuggestions the answers use — an empty state that
               hand-rolls its own list is a second component nobody maintains */}
@@ -583,7 +589,7 @@ export function Assistant() {
           />
         </div>
       )}
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-3">
+      <div className={cn("flex flex-col gap-3", columnClass)}>
         {messages.map((m) =>
           m.role === "user" ? (
             <UserMessage key={m.id} text={m.text} />
@@ -669,7 +675,7 @@ export function Assistant() {
           </div>
         </div>
 
-        {transcriptBlock}
+        {renderTranscript()}
 
         {/* input */}
         <div className="border-t border-(--glass-border) px-4 py-2">
@@ -937,7 +943,7 @@ export function Assistant() {
                       </HeaderBtn>
                     </div>
                   </div>
-                  {transcriptBlock}
+                  {renderTranscript()}
                   {/* follow-up bar at the bottom, with context attached — like the panel */}
                   <div className="border-t border-(--glass-border) px-4 py-2">
                     <ContextRow
@@ -1087,7 +1093,7 @@ export function Assistant() {
         transition={microT}
         className="ambient-glass fixed inset-0 z-50 flex flex-col"
       >
-        <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
+        <div className="ambient-blur-top flex shrink-0 items-center gap-3 px-4 py-3">
           <span className="text-sm font-medium">History</span>
           <span className="text-muted-foreground font-mono text-xs">
             {recents.length} conversation{recents.length === 1 ? "" : "s"}
@@ -1178,8 +1184,8 @@ export function Assistant() {
           </SidebarProvider>
 
           <div className="flex min-h-0 flex-1 flex-col">
-            {transcriptBlock}
-            <div className="border-t border-(--glass-border) px-4 py-2">
+            {renderTranscript("mx-auto w-full max-w-2xl")}
+            <div className="ambient-blur-bottom px-4 py-2">
               <div className="mx-auto w-full max-w-2xl">
               <ContextRow
                 pageChip={pageChip}
