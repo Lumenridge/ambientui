@@ -277,7 +277,7 @@ render in the `/ds` Inspect rail.
   should go, and the words the palette uses to offer them. The layer renders it
   and keeps its generic defaults for pages that stay quiet.
 
-## 8. The Ambient Layer contract — the six things that must not drift
+## 8. The Ambient Layer contract — the seven things that must not drift
 
 1. **One surface, five modes**: `line` (orb, which expands in place into
    quick ask) · `panel` · `dock` · `spotlight` · `history`. New modes are
@@ -306,13 +306,21 @@ render in the `/ds` Inspect rail.
    menu. The dev tool publishes its problem inventory there — every suggestion
    is a question one of its errors deserves, and a fixed problem leaves the
    palette the moment it heals.
-5. **No glows.** The beam was removed; nothing glows without governance.
+5. **Nothing inside an ambient surface is opaque.** Every mode wears the
+   layer's material — the glass recipes and the heat field behind them
+   (`renderField`, which pairs the field's strength with its matching veil so
+   half of the pairing cannot be applied on its own). A pane WITHIN a surface
+   uses the layer's wash, never a product ground: `bg-sidebar` on history's
+   rail read correctly as a navigable pane and punched a solid hole through
+   the field and the work behind it, which is the one thing every surface of
+   this layer exists to keep.
+6. **No glows.** The beam was removed; nothing glows without governance.
    The orb's face is the **OrbCharacter** — four states (still / listening /
    thinking / answer) driven through `orbState` in the assistant context.
    The response pipeline sets the state; components only read it. The
    character's palette derives from the accent bridge; it renders via the
    system's one sanctioned WebGL shader (§5).
-6. **The response kit seam.** `send()` appends the user message and stops — the
+7. **The response kit seam.** `send()` appends the user message and stops — the
    canned plan/answer machinery was deliberately removed. Responses will be
    composed from the component vocabulary (plan → streamed progress → composed
    answer). Do not reintroduce mock responses outside that kit.
@@ -519,6 +527,7 @@ rules, or states. ambientui does not have it yet; building it is logged debt.
 | 2026-08-23 | **A fifth mode: `history`** — full-screen, translucent, the record of what has been asked here beside a live transcript and composer. Adding a mode is the governance event §8 names, and the test it has to pass is whether the new thing is a new GEOMETRY or a new set of parts: this is the former, composing the sanctioned Sidebar with the same transcript and Composer every other mode uses. It earns the whole screen by not being about a single exchange — the other four are sized to how much attention one answer deserves, and "what have I asked here" is a different question. It stays translucent rather than navigating away, because the work is the reason you opened the record, and Esc returns you to the conversation rather than to rest. Picking a past conversation asks it again rather than restoring a transcript; the docs say so plainly instead of implying a persistence the layer does not have. New icon `history`, mapped across all five libraries | The honest limit is the interesting part. A history surface that pretended to restore transcripts would have been one mock away, and it would have been the kind of lie the response kit exists to avoid — so the record offers what it can actually do, and says which that is |
 | 2026-08-23 | **Progressive edge blur: built, then removed** — history's bars briefly traded their borders for a layered backdrop-blur falloff (three masked layers, because one has a visible seam where its mask ends). It worked and was still wrong: on a full-screen surface it competed with the scrim behind it for the same job, and a border says where a bar ends more cheaply and more quietly. Reverted. What replaced it is the thing the blur was reaching for: the composer now OVERLAYS the transcript on the layer's own glass, so the answer visibly moves underneath it — a bar the content cannot pass behind has nothing to be translucent about. Full-screen also earned its own translucency step, `--glass-scrim` / `.ambient-scrim`: heavier fill and stronger blur than the panel's glass, because a surface that covers the product has to carry its own legibility, while staying translucent so the work stays visible as ground. Kept from the same batch: the readable-column cap moved off the shared transcript onto the surface that needs it | Two lessons. The cap was the second time this session a constraint got attached to the wrong owner — the composer's `mark` was the first — so ask of any prop like that: whose problem is this? And the blur is the second effect built then cut for competing with something that already worked; the beam glow was the precedent, and the pattern is that an effect solving a problem another layer already solves reads as noise no matter how well it is made |
 | 2026-08-23 | **⌘K becomes the way around the whole system** — components, documentation, demos and the assistant's own forms, all reachable by typing. The commands are registered by the APP (`command-registry.tsx`) and merely rendered by the layer: the context-chip contract pointed the other way, which is what lets the palette reach a product the layer knows nothing about. Lists are derived from the registries that already document those things, so a command for something that does not exist cannot be written. Two fixes the build surfaced: matches are capped PER SECTION, because one cap across the whole list let forty components matching "panel" push Switch form off the end — the command the word most obviously meant was the one you could not reach; and the resting palette now states its own capabilities, with Switch form shown whole and the big families advertised by a counted hint derived from what is registered. Also: /ds selections live in the URL (`?c=`), and the governing documents render there from their real bytes via `?raw` | The feature had been built and still was not real, because at rest the palette advertised none of it — a capability nobody can see does not exist as far as the user is concerned. Worth generalising: shipping a command surface means shipping its discoverability, and the hint has to be derived, or it will outlive the thing it describes |
+| 2026-08-23 | **History wears the layer's material, and the rule is written down.** It had the scrim but no heat field, so the one full-screen surface was the loudest possible place to drop the identity. `fieldLayers` became `renderField(strength)`, which pairs the field's presence with its matching veil — I applied the stage frost without `strength="stage"` first and got a field so diffuse it was invisible, which is exactly the half-application the paired signature now prevents. The rail's `bg-sidebar` went the same way: it read correctly as a navigable pane and punched a solid hole through the field and the work behind it. §8 gains the rule — nothing inside an ambient surface is opaque. Also: staged attachments render as compact chips in one scrolling row (four stacked cards pushed the input off the surface), and the Composer is now their ONLY owner — ContextRow was rendering them too, so every staged item appeared twice with two remove buttons for one thing | Third time this session for the same class of bug: two components rendering one thing, with no rule about which owns it. The composer's `mark`, the readable-column cap, now attachments. The tell is always a prop threaded to two places "so either can show it" — and the fix is always to name the owner, which here is whoever creates the thing |
 
 ## 13. Pattern watchlist
 

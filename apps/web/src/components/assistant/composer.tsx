@@ -228,6 +228,7 @@ export function Composer({
   return (
     <div className="flex w-full flex-col gap-2">
       <MessageAttachments
+        compact
         attachments={attachments}
         onRemove={onRemoveAttachment}
         className={variant === "panel" ? "pt-2" : undefined}

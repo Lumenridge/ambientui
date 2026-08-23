@@ -35,7 +35,6 @@ import {
 } from "./response-kit"
 import {
   FollowUpSuggestions,
-  MessageAttachments,
   type MessageAttachment,
 } from "./message-kit"
 import { composeResponse } from "./compose-response"
@@ -641,23 +640,38 @@ export function Assistant() {
   // The heat field + its frost, self-clipped: the field canvas is
   // oversized past the surface, so the clip MUST live here — relying on
   // the outer container's overflow leaks the field (the dock has none).
-  const fieldLayers = (
+  /**
+   * The heat field and its veil, as ONE decision. What the field is doing
+   * here decides both: behind a panel's content it stays low-presence under
+   * the heavier frost; full-screen it IS the ground, which is what
+   * strength="stage" and the lighter .ambient-stage-frost exist for. They are
+   * a pair in theme.css and in OrbField's own docs, so passing them
+   * separately just invites applying half of it — which is exactly what
+   * happened the first time.
+   */
+  const renderField = (strength: "ambient" | "stage" = "ambient") => (
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]"
     >
       <OrbField
         state={orbState}
+        strength={strength}
         colors={config.orb.useAccent ? undefined : config.orb.colors}
         speeds={config.orb.speeds}
       />
-      <div className="ambient-field-frost pointer-events-none absolute inset-0" />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0",
+          strength === "stage" ? "ambient-stage-frost" : "ambient-field-frost"
+        )}
+      />
     </div>
   )
 
   const surface = (
     <div className="ambient-glass relative flex h-full min-h-0 flex-col rounded-[inherit] border border-(--glass-border)">
-      {fieldLayers}
+      {renderField()}
       <div className="relative flex min-h-0 flex-1 flex-col">
         {/* header — the drag handle IS the form switcher: drag to float, dock, or spotlight */}
         <div
@@ -705,10 +719,6 @@ export function Assistant() {
             onTogglePage={setPagePinned}
             chips={chips}
             removeChip={removeChip}
-            attachments={pasted}
-            onRemoveAttachment={(id) =>
-              setPasted((a) => a.filter((x) => x.id !== id))
-            }
             onAttach={() => attachText(SAMPLE_ATTACHMENT)}
           />
           {queued.length > 0 && (
@@ -953,7 +963,7 @@ export function Assistant() {
             className="ambient-glass ambient-live-border relative flex max-h-[72vh] flex-col overflow-hidden rounded-2xl border border-(--glass-border) shadow-[0_32px_100px_-16px_rgba(0,0,0,0.6),0_8px_32px_-12px_rgba(0,0,0,0.4)]"
             data-orb-state={orbState}
           >
-            {fieldLayers}
+            {renderField()}
             <div className="relative flex min-h-0 flex-col">
               {/* search / ask input — hidden in answer mode (follow-up bar takes over) */}
               {!asking && (
@@ -1193,6 +1203,14 @@ export function Assistant() {
         // the scrim, not the panel's glass: this one covers the product
         className="ambient-scrim fixed inset-0 z-50 flex flex-col"
       >
+        {/* THE SAME HEAT FIELD THE PANELS WEAR. History is a surface of
+            the ambient layer, not a page it opened — the field is how a
+            surface says so, and a full-screen one going flat was the
+            loudest possible place to drop the identity. Self-clipped, and
+            mounted only while this mode is (one shader instance, not one
+            per mode kept alive). */}
+        {renderField("stage")}
+        <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
           <span className="text-sm font-medium">History</span>
           <span className="text-muted-foreground font-mono text-xs">
@@ -1224,9 +1242,13 @@ export function Assistant() {
           <SidebarProvider className="min-h-0! w-auto! flex-none">
             <Sidebar
               collapsible="none"
-              // the rail takes the sidebar's own ground, so the record reads as a
-              // pane you navigate rather than more of the translucent field
-              className="w-72 shrink-0 border-e border-(--glass-border) bg-sidebar"
+              // NOTHING INSIDE AN AMBIENT SURFACE IS OPAQUE (DESIGN.md §8).
+              // The rail wore bg-sidebar to read as a pane you navigate, and
+              // it did — but it also punched a solid hole through the heat
+              // field and the work behind it, which is the one thing every
+              // surface of this layer is supposed to keep. The layer's own
+              // wash separates it and stays translucent.
+              className="w-72 shrink-0 border-e border-(--glass-border) bg-(--glass-wash)"
             >
               <SidebarHeader>
                 <SidebarMenu>
@@ -1299,10 +1321,6 @@ export function Assistant() {
                 onTogglePage={setPagePinned}
                 chips={chips}
                 removeChip={removeChip}
-                attachments={pasted}
-                onRemoveAttachment={(id) =>
-                  setPasted((a) => a.filter((x) => x.id !== id))
-                }
                 onAttach={() => attachText(SAMPLE_ATTACHMENT)}
               />
               <Composer
@@ -1323,6 +1341,7 @@ export function Assistant() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </motion.div>
     )
@@ -1682,8 +1701,7 @@ function ContextRow({
   onTogglePage,
   chips,
   removeChip,
-  attachments = [],
-  onRemoveAttachment,
+
   onAttach,
 }: {
   pageChip: ContextChip | null
@@ -1691,12 +1709,11 @@ function ContextRow({
   onTogglePage: (pinned: boolean) => void
   chips: ContextChip[]
   removeChip: (id: string) => void
-  attachments?: MessageAttachment[]
-  onRemoveAttachment?: (id: string) => void
+
   /** Offered as a `+` at the head of the row; omit and no control appears. */
   onAttach?: () => void
 }) {
-  if (!pageChip && chips.length === 0 && attachments.length === 0 && !onAttach)
+  if (!pageChip && chips.length === 0 && !onAttach)
     return null
   return (
     <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-2">
@@ -1740,15 +1757,7 @@ function ContextRow({
           onRemove={() => removeChip(c.id)}
         />
       ))}
-      {attachments.length > 0 && (
-        <div className="flex shrink-0 items-center gap-1.5">
-          <MessageAttachments
-            attachments={attachments}
-            onRemove={onRemoveAttachment}
-            className="flex-row gap-1.5"
-          />
-        </div>
-      )}
+
     </div>
   )
 }

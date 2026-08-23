@@ -72,7 +72,10 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    in headers, footers, navigation or product chrome. **An answer arrives in order**:
    thinking, then each evidence block, then the prose, then artifacts —
    enforced by the stage queue inside `useStagedReveal`, never by a block
-   scheduling itself. The beam glow was removed — do not reintroduce glows.
+   scheduling itself. **Nothing inside an ambient surface is opaque** — every
+   mode wears the glass and the heat field, and a pane within one uses the
+   layer's wash, never a product ground. The beam glow was removed — do not
+   reintroduce glows.
 9. **Any Inspect-rail change raises the save reminder.** The rail has one
    commit affordance and nothing in it changes silently. This is enforced in
    the primitives — `ControlRow` and `ChoiceControl` call the Foundation's

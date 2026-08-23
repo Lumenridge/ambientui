@@ -633,14 +633,61 @@ const ATTACHMENT_ICON: Record<
 export function MessageAttachments({
   attachments,
   onRemove,
+  compact = false,
   className,
 }: {
   attachments: MessageAttachment[]
   /** Present while the attachment can still be taken back — see above. */
   onRemove?: (id: string) => void
+  /**
+   * The composer's density: chips in one scrolling row rather than stacked
+   * cards. Staged attachments sit BESIDE context chips and mean the same
+   * thing — here is what the question is about — so they read as the same
+   * kind of object. Stacked, four of them pushed the input off the surface,
+   * which is the wrong trade for material you are only referring to.
+   */
+  compact?: boolean
   className?: string
 }) {
   if (attachments.length === 0) return null
+
+  if (compact) {
+    return (
+      <div
+        className={cn(
+          "no-scrollbar flex items-center gap-1.5 overflow-x-auto",
+          className
+        )}
+      >
+        {attachments.map((a) => (
+          <span
+            key={a.id}
+            title={`${a.name}${a.meta ? ` · ${a.meta}` : ""}`}
+            className="border-border inline-flex max-w-full shrink-0 items-center gap-2 rounded-lg border bg-(--wash) py-1 ps-1.5 pe-1 text-xs font-medium"
+          >
+            <span className="text-muted-foreground bg-card flex size-5 shrink-0 items-center justify-center rounded-[5px]">
+              <Icon name={ATTACHMENT_ICON[a.kind ?? "file"]} size={12} />
+            </span>
+            <span className="max-w-44 min-w-0 truncate">{a.name}</span>
+            {onRemove && (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label={`Remove ${a.name}`}
+                title="Remove"
+                onClick={() => onRemove(a.id)}
+                className="text-muted-foreground hover:text-foreground size-[22px] shrink-0 rounded-md bg-accent"
+              >
+                <Icon name="close" size={11} />
+              </Button>
+            )}
+          </span>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {attachments.map((a) => {
