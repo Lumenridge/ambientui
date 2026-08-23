@@ -51,6 +51,7 @@ export type IconName =
   | "ruler"
   | "layers"
   | "sliders"
+  | "history"
   | "image"
   | "paperclip"
 
@@ -94,6 +95,7 @@ export const ICON_NAMES: IconName[] = [
   "ruler",
   "layers",
   "sliders",
+  "history",
   "image",
   "paperclip",
 ]

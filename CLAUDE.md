@@ -61,7 +61,8 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    `framer-motion` (the one sanctioned library) for interruptible/
    gestural/layout/presence motion. No other animation libraries, no
    one-off keyframes in component files, no raw durations or springs.
-8. **The ambient layer contract (DESIGN.md §8) must not drift**: four modes,
+8. **The ambient layer contract (DESIGN.md §8) must not drift**: five modes
+   (line · panel · dock · spotlight · history),
    drag-as-mode-switch, page context via `setPageChip` (and what the page
    knows via `setPageIntel`), and the response kit (v0, `response-kit.tsx`)
    fills the `send()` seam with composed answer objects — a model replaces

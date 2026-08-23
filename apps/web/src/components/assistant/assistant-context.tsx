@@ -3,7 +3,12 @@ import * as React from "react"
 
 import type { OrbState } from "./orb-character"
 
-export type AssistantMode = "line" | "panel" | "dock" | "spotlight"
+export type AssistantMode =
+  | "line"
+  | "panel"
+  | "dock"
+  | "spotlight"
+  | "history"
 
 export type OrbAnchor = "tl" | "tc" | "tr" | "ml" | "mr" | "bl" | "bc" | "br"
 

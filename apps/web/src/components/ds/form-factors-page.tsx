@@ -66,6 +66,15 @@ const FORMS: {
     reach: "⌘K anywhere, or dragging the panel to the top-center zone.",
     leaves: "⌘K or Esc; asking transforms it in place into the answer view.",
   },
+  {
+    mode: "history",
+    name: "History",
+    line: "The record, not an exchange.",
+    purpose:
+      "The only mode that takes the whole screen, because it is the only one that is not about a single answer. The other four are sized to how much attention one exchange deserves; this one answers a different question — what have I asked here — and that is the question that legitimately wants the room. It stays translucent over the product rather than navigating away, because the work you were doing is the reason you opened the record. Picking a past conversation ASKS IT AGAIN rather than restoring a transcript, which is what the layer can honestly offer today.",
+    reach: "The history control in the panel header.",
+    leaves: "Esc or Close, both of which return you to the conversation you were having — you opened the record to get back to something.",
+  },
 ]
 
 export function FormFactorsPage() {

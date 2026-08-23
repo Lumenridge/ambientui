@@ -41,6 +41,19 @@ import { composeResponse } from "./compose-response"
 import { OrbCharacter, OrbField, OrbGlyph } from "./orb-character"
 import { AssistantOrb } from "./orb"
 import { Composer } from "./composer"
+import { Icon } from "@workspace/ui/components/icon"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "@workspace/ui/components/sidebar"
 import { MessageQueue } from "./message-kit"
 
 type Msg = {
@@ -273,6 +286,12 @@ export function Assistant() {
       } else if (e.key === "Escape") {
         if (mode === "spotlight" && input !== "") {
           setInput("")
+          return
+        }
+        // history returns you to the conversation you were having, not to
+        // rest: you opened the record to get back to something
+        if (mode === "history") {
+          setMode(messages.length > 0 ? "panel" : "line")
           return
         }
         setMode(mode === "spotlight" && messages.length > 0 ? "panel" : "line")
@@ -640,6 +659,9 @@ export function Assistant() {
             />
           </span>
           <div className="ms-auto flex items-center gap-1 text-muted-foreground">
+            <HeaderBtn label="History" onClick={() => setMode("history")}>
+              <Icon name="history" size={15} />
+            </HeaderBtn>
             <HeaderBtn label="Minimize" onClick={() => setMode("line")}>
               <HugeiconsIcon icon={Cancel01Icon} size={15} strokeWidth={1.8} />
             </HeaderBtn>
@@ -997,6 +1019,138 @@ export function Assistant() {
         transition={enterT}
       >
         {surface}
+      </motion.div>
+    )
+  }
+
+  /**
+   * HISTORY — the fifth mode, and the only one that takes the whole screen.
+   *
+   * The other four are sized to how much attention a single exchange
+   * deserves. This one is not about an exchange at all: it is about the
+   * RECORD of them, which is a different question ("what have I asked here?")
+   * and the only one that legitimately wants the room. It floats translucent
+   * over the product rather than navigating away, because the work you were
+   * doing is the reason you are looking at the history in the first place.
+   *
+   * Adding it was a governance event (DESIGN.md §8). It composes the
+   * sanctioned Sidebar for the record and the same transcript and Composer as
+   * every other mode — a new mode is a new GEOMETRY, never new parts.
+   */
+  if (mode === "history") {
+    const recents = pageIntel?.recents ?? RECENT_CHATS
+    // the buckets a person actually thinks in; anything with "ago" happened
+    // within the day, and the rest keeps whatever the source called it
+    const groups = [
+      { label: "Today", items: recents.filter((r) => /ago/.test(r.when)) },
+      {
+        label: "Yesterday",
+        items: recents.filter((r) => /yesterday/i.test(r.when)),
+      },
+      {
+        label: "Earlier",
+        items: recents.filter(
+          (r) => !/ago/.test(r.when) && !/yesterday/i.test(r.when)
+        ),
+      },
+    ].filter((g) => g.items.length > 0)
+
+    surfaceEl = (
+      <motion.div
+        key="history"
+        data-orb-state={orbState}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0, transition: microT }}
+        transition={microT}
+        className="ambient-glass fixed inset-0 z-50 flex flex-col"
+      >
+        <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
+          <span className="text-sm font-medium">History</span>
+          <span className="text-muted-foreground font-mono text-xs">
+            {recents.length} conversation{recents.length === 1 ? "" : "s"}
+          </span>
+          <div className="ms-auto flex items-center gap-1 text-muted-foreground">
+            <HeaderBtn label="Close history" onClick={() => setMode("panel")}>
+              <HugeiconsIcon icon={Cancel01Icon} size={15} strokeWidth={1.8} />
+            </HeaderBtn>
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-1">
+          <SidebarProvider className="min-h-0! w-auto! flex-none">
+            <Sidebar
+              collapsible="none"
+              className="w-72 shrink-0 border-e border-(--glass-border) bg-transparent"
+            >
+              <SidebarHeader>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={clearConversation}>
+                      <Icon name="plus" size={15} />
+                      <span>New chat</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarHeader>
+              <SidebarContent>
+                {groups.map((g) => (
+                  <SidebarGroup key={g.label}>
+                    <SidebarGroupLabel>{g.label}</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {g.items.map((r) => (
+                          <SidebarMenuItem key={r.text}>
+                            <SidebarMenuButton
+                              onClick={() => {
+                                setMode("panel")
+                                send(r.text)
+                              }}
+                              className="h-auto flex-col items-start gap-0.5 py-2"
+                            >
+                              <span className="w-full truncate">{r.text}</span>
+                              <span className="text-muted-foreground font-mono text-xs">
+                                {r.when}
+                              </span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                ))}
+              </SidebarContent>
+            </Sidebar>
+          </SidebarProvider>
+
+          <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-col">
+            {transcriptBlock}
+            <div className="border-t border-(--glass-border) px-4 py-2">
+              <ContextRow
+                pageChip={pageChip}
+                pagePinned={pagePinned}
+                onTogglePage={setPagePinned}
+                chips={chips}
+                removeChip={removeChip}
+              />
+              <Composer
+                value={input}
+                onChange={setInput}
+                onSend={send}
+                onStop={stop}
+                busy={busy}
+                attachments={pasted}
+                onPasteText={attachText}
+                onRemoveAttachment={(id) =>
+                  setPasted((a) => a.filter((x) => x.id !== id))
+                }
+                placeholder={
+                  busy ? "Queue another instruction…" : "Ask a follow-up…"
+                }
+              />
+            </div>
+          </div>
+        </div>
       </motion.div>
     )
   }
