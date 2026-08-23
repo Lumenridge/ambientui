@@ -65,6 +65,22 @@ export type PageIntel = {
  * them and calls `run`. It never learns what a command means — same contract
  * as the context chip, in the other direction.
  */
+/**
+ * A place the host app can navigate to, offered in the palette's "Jump to".
+ *
+ * THE LAYER IS TOLD, NEVER IMPORTS. assistant.tsx used to `import { sections }
+ * from "@/nav"` — a UI layer reaching into one particular app's route table,
+ * and the single thing that made it un-liftable. `icon` is deliberately
+ * `unknown`: the layer only forwards it to the host's own Icon, so no icon
+ * library leaks into the public contract.
+ */
+export type NavItem = {
+  id: string
+  label: string
+  desc?: string
+  icon?: unknown
+}
+
 export type AmbientCommand = {
   id: string
   /** The group heading it files under: "Components", "Documentation"… */
@@ -90,6 +106,8 @@ type AssistantState = {
   /** Everything ⌘K can DO, registered by the app — see AmbientCommand. */
   commands: AmbientCommand[]
   setCommands: (c: AmbientCommand[]) => void
+  /** Where the host can go — see NavItem. Empty is a valid state. */
+  navItems: NavItem[]
   /** Explicit context added by the user (right-click → Explain / Add to context). */
   chips: ContextChip[]
   addChip: (c: ContextChip) => void
@@ -127,9 +145,11 @@ const AssistantContext = React.createContext<AssistantState | undefined>(undefin
 export function AssistantProvider({
   children,
   onNavigate,
+  navItems = [],
 }: {
   children: React.ReactNode
   onNavigate?: (sectionId: string) => void
+  navItems?: NavItem[]
 }) {
   const [mode, setMode] = React.useState<AssistantMode>("line")
   const [pageChip, setPageChip] = React.useState<ContextChip | null>(null)
@@ -212,10 +232,11 @@ export function AssistantProvider({
       orbState,
       setOrbState,
       navigate: onNavigate,
+      navItems,
       workspaceEffect,
       announceEffect,
     }),
-    [mode, pageChip, pageIntel, commands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeImmediate, consumeSeededPrompt, orbAnchor, orbState, onNavigate, workspaceEffect]
+    [mode, pageChip, pageIntel, commands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeImmediate, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, workspaceEffect]
   )
 
   return (

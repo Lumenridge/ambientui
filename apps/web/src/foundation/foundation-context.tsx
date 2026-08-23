@@ -1,6 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 
+import {
+  AmbientRuntimeProvider,
+  type AmbientRuntime,
+} from "@/components/assistant/ambient-runtime"
+
 import { IconLibraryProvider } from "@workspace/ui/components/icon"
 
 /**
@@ -763,10 +768,32 @@ export function FoundationProvider({
     [config, saved, touched, generation]
   )
 
+  // THE BRIDGE. The ambient layer states what it needs from a design system
+  // (AmbientRuntime); the Foundation implements it. Mounting this here means
+  // the app is unchanged — the layer still animates and paints from the live
+  // config — while the layer itself no longer knows the Foundation exists.
+  //
+  // `satisfies` is doing real work: add a required field to AmbientRuntime and
+  // this file fails to compile, rather than the layer silently falling back to
+  // a default nobody chose.
+  const ambientRuntime = React.useMemo(
+    () =>
+      ({
+        messageVariant: config.components.messageVariant,
+        streamCharsPerSecond: config.components.streamCharsPerSecond,
+        orb: config.orb,
+        motionTransition: (role: MotionRole) => motionTransition(config, role),
+        motionSpring: () => motionSpring(config),
+      }) satisfies AmbientRuntime,
+    [config]
+  )
+
   return (
     <FoundationContext.Provider value={value}>
       <IconLibraryProvider library={config.icons}>
-        {children}
+        <AmbientRuntimeProvider value={ambientRuntime}>
+          {children}
+        </AmbientRuntimeProvider>
       </IconLibraryProvider>
     </FoundationContext.Provider>
   )

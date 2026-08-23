@@ -13,15 +13,13 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { sections } from "@/nav"
-
 import { AnimatePresence, motion } from "framer-motion"
 
 import {
-  useFoundation,
+  useAmbientRuntime,
   useMotionSpring,
   useMotionTransition,
-} from "@/foundation/foundation-context"
+} from "./ambient-runtime"
 
 import { useAssistant, type ContextChip } from "./assistant-context"
 import {
@@ -196,7 +194,7 @@ export function Assistant() {
   // Surfaces move on the motion system (DESIGN.md §5): transforms ride the
   // configured character's spring — instantly responsive, settles naturally —
   // while opacity fades on the micro tween. Exits are a quick micro fade.
-  const { config } = useFoundation()
+  const runtime = useAmbientRuntime()
   const microT = useMotionTransition("micro")
   const surfaceSpring = useMotionSpring()
   const enterT = { ...surfaceSpring, opacity: microT }
@@ -208,6 +206,7 @@ export function Assistant() {
     pageChip,
     pageIntel,
     commands,
+    navItems: navTargets,
     chips,
     removeChip,
     seedVersion,
@@ -689,8 +688,8 @@ export function Assistant() {
       <OrbField
         state={orbState}
         strength={place === "panel" ? "ambient" : "stage"}
-        colors={config.orb.useAccent ? undefined : config.orb.colors}
-        speeds={config.orb.speeds}
+        colors={runtime.orb.useAccent ? undefined : runtime.orb.colors}
+        speeds={runtime.orb.speeds}
       />
       <div
         className={cn(
@@ -823,11 +822,11 @@ export function Assistant() {
             setMode("line")
           },
         }))
-      : sections.map((s) => ({
+      : navTargets.map((s) => ({
           id: s.id,
           label: s.label,
-          desc: s.description,
-          icon: s.icon,
+          desc: s.desc,
+          icon: s.icon as typeof SparklesIcon | undefined,
           go: () => goNav(s.id),
         }))
     const navItems = (list: typeof jumpTargets): PaletteItem[] =>
@@ -1455,15 +1454,15 @@ export function Assistant() {
  * where a context per row would stack up — DESIGN.md §12.)
  */
 export function AssistantMark({ size }: { size: number }) {
-  const { config } = useFoundation()
+  const runtime = useAmbientRuntime()
   const { orbState } = useAssistant()
   return (
     <span className="inline-flex shrink-0">
       <OrbCharacter
         size={size}
         state={orbState}
-        colors={config.orb.useAccent ? undefined : config.orb.colors}
-        speeds={config.orb.speeds}
+        colors={runtime.orb.useAccent ? undefined : runtime.orb.colors}
+        speeds={runtime.orb.speeds}
       />
     </span>
   )
@@ -1471,7 +1470,7 @@ export function AssistantMark({ size }: { size: number }) {
 
 /** The AI avatar, pulled in close to the palette input. */
 function MiniAvatar({ small }: { small?: boolean }) {
-  const { config } = useFoundation()
+  const runtime = useAmbientRuntime()
   // `small` is the list-row variant: incidental, so it wears the CSS twin.
   // The surface's own mark (the input avatar) keeps the real character.
   if (small)
@@ -1479,9 +1478,9 @@ function MiniAvatar({ small }: { small?: boolean }) {
       <OrbGlyph
         size={24}
         color={
-          config.orb.useAccent
+          runtime.orb.useAccent
             ? undefined
-            : config.orb.colors[Math.min(1, config.orb.colors.length - 1)]
+            : runtime.orb.colors[Math.min(1, runtime.orb.colors.length - 1)]
         }
       />
     )

@@ -6,10 +6,10 @@ import { AnimatePresence, motion } from "framer-motion"
 import { cn } from "@workspace/ui/lib/utils"
 
 import {
-  useFoundation,
+  useAmbientRuntime,
   useMotionSpring,
   useMotionTransition,
-} from "@/foundation/foundation-context"
+} from "./ambient-runtime"
 
 import { useAssistant, type OrbAnchor } from "./assistant-context"
 import { Icon } from "@workspace/ui/components/icon"
@@ -58,7 +58,7 @@ export function AssistantOrb() {
     seedPrompt,
     pageIntel,
   } = useAssistant()
-  const { config } = useFoundation()
+  const runtime = useAmbientRuntime()
   const microT = useMotionTransition("micro")
   const spring = useMotionSpring()
   // QUICK ASK — the orb's own expanded form: hovering grows an input out of
@@ -267,8 +267,8 @@ export function AssistantOrb() {
             <OrbCharacter
               state={orbState}
               size={ORB}
-              colors={config.orb.useAccent ? undefined : config.orb.colors}
-              speeds={config.orb.speeds}
+              colors={runtime.orb.useAccent ? undefined : runtime.orb.colors}
+              speeds={runtime.orb.speeds}
             />
           </button>
 

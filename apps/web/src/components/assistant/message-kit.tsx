@@ -7,7 +7,7 @@ import { Icon, type IconName } from "@workspace/ui/components/icon"
 import { Input } from "@workspace/ui/components/input"
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useMotionTransition } from "@/foundation/foundation-context"
+import { useMotionTransition } from "./ambient-runtime"
 
 import { Composer } from "./composer"
 import { StageSkeleton, StagedItem } from "./staging"

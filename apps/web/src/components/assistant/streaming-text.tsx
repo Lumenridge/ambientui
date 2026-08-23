@@ -3,7 +3,7 @@ import * as React from "react"
 import { useAnimationFrame } from "framer-motion"
 
 
-import { useFoundation } from "@/foundation/foundation-context"
+import { useAmbientRuntime } from "./ambient-runtime"
 
 /**
  * STREAMING TEXT — text that arrives rather than appears.
@@ -33,7 +33,7 @@ export function StreamingText({
   text: string
   live?: boolean
   /**
-   * Override the saved pace (config.components.streamCharsPerSecond). The
+   * Override the runtime pace (streamCharsPerSecond). The
    * default reads as deliberate writing, not a printer.
    */
   charsPerSecond?: number
@@ -43,8 +43,8 @@ export function StreamingText({
   // THE COMPONENT-LAYER CONFIG: the pace is a saved product decision, so the
   // prop is an override, not the source of truth. Same rule as the orb's
   // palette — the rail edits the theme, the theme drives every instance.
-  const { config } = useFoundation()
-  const cps = charsPerSecond ?? config.components.streamCharsPerSecond
+  const runtime = useAmbientRuntime()
+  const cps = charsPerSecond ?? runtime.streamCharsPerSecond
   const [shown, setShown] = React.useState(() => (live ? 0 : text.length))
   const settledRef = React.useRef(!live)
   const onSettledRef = React.useRef(onSettled)

@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Icon } from "@workspace/ui/components/icon"
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useMotionTransition } from "@/foundation/foundation-context"
+import { useMotionTransition } from "./ambient-runtime"
 
 import { StageSkeleton, StagedItem } from "./staging"
 import { StreamingText } from "./streaming-text"

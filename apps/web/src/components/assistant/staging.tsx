@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useMotionTransition } from "@/foundation/foundation-context"
+import { useMotionTransition } from "./ambient-runtime"
 
 /**
  * The two rendering halves of staged arrival; the hook that drives them is

@@ -6,7 +6,7 @@ import { Button } from "@workspace/ui/components/button"
 import { Icon, type IconName } from "@workspace/ui/components/icon"
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useMotionTransition } from "@/foundation/foundation-context"
+import { useMotionTransition } from "./ambient-runtime"
 
 import { FeedbackDialog } from "./message-kit"
 import { StageSkeleton, StagedItem } from "./staging"

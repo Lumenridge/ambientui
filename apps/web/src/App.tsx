@@ -59,7 +59,17 @@ export function App() {
   return (
     <TooltipProvider>
       <FoundationProvider>
-      <AssistantProvider onNavigate={onNavigate}>
+      {/* the APP names its destinations; the layer only offers them, so the
+          assistant no longer imports this product's route table */}
+      <AssistantProvider
+        onNavigate={onNavigate}
+        navItems={sections.map((s) => ({
+          id: s.id,
+          label: s.label,
+          desc: s.description,
+          icon: s.icon,
+        }))}
+      >
         <div className="bg-background flex h-svh flex-col overflow-hidden">
           {active === "ds" ? (
             <DsPage />

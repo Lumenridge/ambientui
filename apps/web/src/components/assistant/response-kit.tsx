@@ -4,7 +4,7 @@ import { Button } from "@workspace/ui/components/button"
 import { Icon, type IconName } from "@workspace/ui/components/icon"
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useFoundation } from "@/foundation/foundation-context"
+import { useAmbientRuntime } from "./ambient-runtime"
 
 import { StageQueueContext, useStageQueue } from "./stage-queue"
 import { StreamingText } from "./streaming-text"
@@ -235,12 +235,12 @@ export function UserMessage({
   className,
 }: {
   text: string
-  /** Override the saved presentation (config.components.messageVariant). */
+  /** Override the runtime presentation (messageVariant). */
   variant?: MessageVariant
   className?: string
 }) {
-  const { config } = useFoundation()
-  const shape = variant ?? config.components.messageVariant
+  const runtime = useAmbientRuntime()
+  const shape = variant ?? runtime.messageVariant
   return (
     <div
       className={cn(
@@ -495,7 +495,7 @@ export function ResponseBlock({
    * was composed, it is over when the answer starts being said.
    */
   onAnswerStart?: () => void
-  /** Override the saved presentation (config.components.messageVariant). */
+  /** Override the runtime presentation (messageVariant). */
   variant?: MessageVariant
   live?: boolean
   /** Offered under a settled answer; omit and the row does not appear. */
@@ -506,8 +506,8 @@ export function ResponseBlock({
 }) {
   // the saved component config decides presentation, so a variant chosen in
   // the Inspect rail reaches the real transcript, not just /ds
-  const { config } = useFoundation()
-  const shape = variant ?? config.components.messageVariant
+  const runtime = useAmbientRuntime()
+  const shape = variant ?? runtime.messageVariant
 
   // the stream owns its own reveal; the block only needs to know when the
   // answer has landed, to settle its mark and show the references
