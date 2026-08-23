@@ -12,6 +12,7 @@ import {
 } from "@/foundation/foundation-context"
 
 import { useAssistant, type OrbAnchor } from "./assistant-context"
+import { Icon } from "@workspace/ui/components/icon"
 import { Composer } from "./composer"
 import { OrbCharacter } from "./orb-character"
 
@@ -324,6 +325,42 @@ export function AssistantOrb() {
                   />
                 )}
               </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* THE RECORD, beside the object rather than inside it. The pill is
+              one thing — the character and the field it grew — so a second
+              control in there would make it two. This sits alongside, on the
+              side the pill did not take, and only while the pill is open. */}
+          <AnimatePresence>
+            {quick && !drag?.moved && !asking && (
+              <motion.button
+                key="quick-history"
+                type="button"
+                aria-label="History"
+                title="History"
+                onClick={() => {
+                  closeQuick()
+                  setMode("history")
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="ambient-glass text-muted-foreground hover:text-foreground absolute top-1/2 flex size-9 items-center justify-center rounded-full border border-(--glass-border) shadow-lg shadow-black/25"
+                // cleared past the PILL, not the orb: both are absolute in
+                // the same wrapper, so "beside the object" has to be measured
+                // from the object's own width
+                style={{
+                  y: "-50%",
+                  ...(growsLeft
+                    ? { right: QUICK_W + 8 }
+                    : { left: QUICK_W + 8 }),
+                }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95, transition: microT }}
+                transition={{ ...spring, opacity: microT }}
+              >
+                <Icon name="history" size={15} />
+              </motion.button>
             )}
           </AnimatePresence>
       </div>

@@ -35,7 +35,7 @@ const FORMS: {
     line: "Ask without arriving anywhere.",
     purpose:
       "The orb's own expanded form: clicking grows an input out of the character, sharing its glass and its live border. It opens IN the zone the orb is docked to — centered on that anchor rather than hanging off the orb's edge, and clamped into the content region so a corner never pushes it off-screen. The orb keeps its side: docked right, it becomes the right end of the form and the input extends leftward. A question costs no surface, no travel, and no mode change until there is an answer to hold.",
-    reach: "Clicking the orb. The character turns to listening as it opens.",
+    reach: "Clicking the orb. The character turns to listening as it opens. A history control sits BESIDE the pill rather than inside it — the pill is one object (the character and the field it grew), and a second control within it would make it two.",
     leaves:
       "Clicking the orb again, clicking anywhere else, or Esc. Asking holds the thinking here — the question stays where it was asked, the character churns in place — and hands over to the panel at the moment the answer is ready.",
   },
@@ -71,9 +71,9 @@ const FORMS: {
     name: "History",
     line: "The record, not an exchange.",
     purpose:
-      "The only mode that takes the whole screen, because it is the only one that is not about a single answer. The other four are sized to how much attention one exchange deserves; this one answers a different question — what have I asked here — and that is the question that legitimately wants the room. It stays translucent over the product rather than navigating away, because the work you were doing is the reason you opened the record. Picking a past conversation ASKS IT AGAIN rather than restoring a transcript, which is what the layer can honestly offer today.",
-    reach: "The history control in the panel header.",
-    leaves: "Esc or Close, both of which return you to the conversation you were having — you opened the record to get back to something.",
+      "The only mode that takes the whole screen, because it is the only one that is not about a single answer. The other four are sized to how much attention one exchange deserves; this one answers a different question — what have I asked here — and that is the question that legitimately wants the room. It stays translucent over the product rather than navigating away, because the work you were doing is the reason you opened the record. The conversation you are currently having appears in the list too, marked open and shimmering while it runs: a record that omitted the session on screen would be the strangest possible omission. Picking any row opens it IN PLACE — the record is somewhere you can work, not a launcher that ejects you — and asks the question again rather than restoring a transcript, which is what the layer can honestly offer today.",
+    reach: "The history control, offered wherever a conversation lives: beside the quick-ask pill, in the panel header, and in the spotlight's answer view.",
+    leaves: "Close or Esc goes all the way to rest — dropping a full-screen surface into a floating panel would leave two things open when the user asked to put one away. The header also offers the panel and the dock, for keeping the conversation while putting the record down.",
   },
 ]
 

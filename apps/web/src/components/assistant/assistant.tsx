@@ -288,10 +288,11 @@ export function Assistant() {
           setInput("")
           return
         }
-        // history returns you to the conversation you were having, not to
-        // rest: you opened the record to get back to something
+        // history closes all the way to rest: it is a full-screen surface,
+        // and dropping from it into a floating panel leaves two things open
+        // when the user asked to put one away
         if (mode === "history") {
-          setMode(messages.length > 0 ? "panel" : "line")
+          setMode("line")
           return
         }
         setMode(mode === "spotlight" && messages.length > 0 ? "panel" : "line")
@@ -563,7 +564,7 @@ export function Assistant() {
   const transcriptBlock = (
     <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
       {messages.length === 0 && (
-        <div className="px-1 pt-3">
+        <div className="mx-auto w-full max-w-2xl px-1 pt-3">
           {/* the character opens the conversation, then the same
               FollowUpSuggestions the answers use — an empty state that
               hand-rolls its own list is a second component nobody maintains */}
@@ -582,7 +583,7 @@ export function Assistant() {
           />
         </div>
       )}
-      <div className="flex flex-col gap-3">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-3">
         {messages.map((m) =>
           m.role === "user" ? (
             <UserMessage key={m.id} text={m.text} />
@@ -906,6 +907,15 @@ export function Assistant() {
                     </span>
                     <div className="ms-auto flex items-center gap-1 text-muted-foreground">
                       <HeaderBtn
+                        label="History"
+                        onClick={() => setMode("history")}
+                      >
+                        <Icon name="history" size={14} />
+                      </HeaderBtn>
+                      <HeaderBtn label="Dock it" onClick={() => setMode("dock")}>
+                        <Icon name="sidebar" size={14} />
+                      </HeaderBtn>
+                      <HeaderBtn
                         label="Open in chat window"
                         onClick={() => setMode("panel")}
                       >
@@ -1038,11 +1048,23 @@ export function Assistant() {
    * every other mode — a new mode is a new GEOMETRY, never new parts.
    */
   if (mode === "history") {
-    const recents = pageIntel?.recents ?? RECENT_CHATS
+    // THE CONVERSATION YOU ARE HAVING IS PART OF THE RECORD. Without this the
+    // list showed only past questions, so the session actually on screen —
+    // the one that might still be running — was the one thing missing from
+    // the history of it.
+    const past = pageIntel?.recents ?? RECENT_CHATS
+    const live = messages.find((m) => m.role === "user")?.text
+    const recents =
+      live && !past.some((r) => r.text === live)
+        ? [{ text: live, when: busy ? "now" : "just now" }, ...past]
+        : past
     // the buckets a person actually thinks in; anything with "ago" happened
     // within the day, and the rest keeps whatever the source called it
     const groups = [
-      { label: "Today", items: recents.filter((r) => /ago/.test(r.when)) },
+      {
+        label: "Today",
+        items: recents.filter((r) => /ago|now/i.test(r.when)),
+      },
       {
         label: "Yesterday",
         items: recents.filter((r) => /yesterday/i.test(r.when)),
@@ -1050,7 +1072,7 @@ export function Assistant() {
       {
         label: "Earlier",
         items: recents.filter(
-          (r) => !/ago/.test(r.when) && !/yesterday/i.test(r.when)
+          (r) => !/ago|now/i.test(r.when) && !/yesterday/i.test(r.when)
         ),
       },
     ].filter((g) => g.items.length > 0)
@@ -1071,7 +1093,22 @@ export function Assistant() {
             {recents.length} conversation{recents.length === 1 ? "" : "s"}
           </span>
           <div className="ms-auto flex items-center gap-1 text-muted-foreground">
-            <HeaderBtn label="Close history" onClick={() => setMode("panel")}>
+            {/* keep the conversation, put the record away — the panel to
+                float it, the dock to park it beside the work */}
+            <HeaderBtn
+              label="Open in chat window"
+              onClick={() => setMode("panel")}
+            >
+              <HugeiconsIcon
+                icon={PictureInPictureOnIcon}
+                size={14}
+                strokeWidth={1.8}
+              />
+            </HeaderBtn>
+            <HeaderBtn label="Dock it" onClick={() => setMode("dock")}>
+              <Icon name="sidebar" size={15} />
+            </HeaderBtn>
+            <HeaderBtn label="Close history" onClick={() => setMode("line")}>
               <HugeiconsIcon icon={Cancel01Icon} size={15} strokeWidth={1.8} />
             </HeaderBtn>
           </div>
@@ -1099,22 +1136,39 @@ export function Assistant() {
                     <SidebarGroupLabel>{g.label}</SidebarGroupLabel>
                     <SidebarGroupContent>
                       <SidebarMenu>
-                        {g.items.map((r) => (
-                          <SidebarMenuItem key={r.text}>
-                            <SidebarMenuButton
-                              onClick={() => {
-                                setMode("panel")
-                                send(r.text)
-                              }}
-                              className="h-auto flex-col items-start gap-0.5 py-2"
-                            >
-                              <span className="w-full truncate">{r.text}</span>
-                              <span className="text-muted-foreground font-mono text-xs">
-                                {r.when}
-                              </span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))}
+                        {g.items.map((r) => {
+                          // the row IS the conversation, so it carries its
+                          // state: open while it is the one on screen,
+                          // shimmering while that one is still working
+                          const open = live === r.text || runningPrompt === r.text
+                          const working = open && busy
+                          return (
+                            <SidebarMenuItem key={r.text}>
+                              <SidebarMenuButton
+                                isActive={open}
+                                onClick={() => {
+                                  // opens in place: the record is somewhere
+                                  // you can work, not a launcher that ejects
+                                  clearConversation()
+                                  send(r.text)
+                                }}
+                                className="h-auto flex-col items-start gap-0.5 py-2"
+                              >
+                                <span
+                                  className={cn(
+                                    "w-full truncate",
+                                    working && "ambient-shimmer"
+                                  )}
+                                >
+                                  {r.text}
+                                </span>
+                                <span className="text-muted-foreground font-mono text-xs">
+                                  {working ? "Working…" : r.when}
+                                </span>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          )
+                        })}
                       </SidebarMenu>
                     </SidebarGroupContent>
                   </SidebarGroup>
@@ -1123,9 +1177,10 @@ export function Assistant() {
             </Sidebar>
           </SidebarProvider>
 
-          <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             {transcriptBlock}
             <div className="border-t border-(--glass-border) px-4 py-2">
+              <div className="mx-auto w-full max-w-2xl">
               <ContextRow
                 pageChip={pageChip}
                 pagePinned={pagePinned}
@@ -1148,6 +1203,7 @@ export function Assistant() {
                   busy ? "Queue another instruction…" : "Ask a follow-up…"
                 }
               />
+              </div>
             </div>
           </div>
         </div>
