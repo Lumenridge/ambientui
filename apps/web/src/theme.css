@@ -28,6 +28,7 @@ body {
   --glass-veil: color-mix(in oklab, var(--popover) 62%, transparent);  /* the frost between a heat field and content */
   --glass-veil-stage: color-mix(in oklab, var(--popover) 32%, transparent); /* the thin veil over a STAGE field (canvas ground, projectors) */
   --glass-scrim: color-mix(in oklab, var(--popover) 82%, transparent);  /* a FULL-SCREEN ambient surface: heavier, because it covers the product rather than floating on it */
+  --glass-veil-screen: color-mix(in oklab, var(--popover) 84%, transparent); /* the veil over a FULL-PRESENCE field: the panel's 62% leaves a stage-strength shader still glowing through the content */
 }
 
 /* The ambient layer's ONE glass recipe — every AI surface (bar, panel,
@@ -49,6 +50,17 @@ body {
   background-color: var(--glass-scrim);
   -webkit-backdrop-filter: blur(calc(var(--ambient-blur) * 1.6)) saturate(1.3);
   backdrop-filter: blur(calc(var(--ambient-blur) * 1.6)) saturate(1.3);
+}
+
+/* THE SCREEN VEIL — the frost for a field running at STAGE strength under a
+   full-screen surface. The panel's veil is tuned to a field at low presence;
+   over a full-presence one it leaves the shader glowing through the content,
+   which is legible in a 440px panel and distracting across a whole window.
+   Heavier fill, same blur. */
+.ambient-screen-frost {
+  background-color: var(--glass-veil-screen);
+  -webkit-backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--ambient-blur)) saturate(1.2);
 }
 
 /* The frost BETWEEN a surface's heat field (OrbField) and its content —

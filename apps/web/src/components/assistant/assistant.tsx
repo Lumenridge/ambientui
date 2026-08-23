@@ -670,7 +670,11 @@ export function Assistant() {
       <div
         className={cn(
           "pointer-events-none absolute inset-0",
-          place === "ground" ? "ambient-stage-frost" : "ambient-field-frost"
+          place === "ground"
+            ? "ambient-stage-frost"
+            : place === "screen"
+              ? "ambient-screen-frost"
+              : "ambient-field-frost"
         )}
       />
     </div>
@@ -1218,7 +1222,7 @@ export function Assistant() {
             per mode kept alive). */}
         {renderField("screen")}
         <div className="relative flex min-h-0 flex-1 flex-col">
-        <div className="ambient-field-frost border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
+        <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
           <span className="text-sm font-medium">History</span>
           <span className="text-muted-foreground font-mono text-xs">
             {recents.length} conversation{recents.length === 1 ? "" : "s"}
@@ -1255,7 +1259,7 @@ export function Assistant() {
               // solid hole through the field and the work behind it. It wears
               // the same frost as the surface's other chrome instead:
               // translucent, and the shader stays veiled under it.
-              className="ambient-field-frost w-72 shrink-0 border-e border-(--glass-border) bg-transparent"
+              className="w-72 shrink-0 border-e border-(--glass-border) bg-transparent"
             >
               <SidebarHeader>
                 <SidebarMenu>
@@ -1320,13 +1324,10 @@ export function Assistant() {
               answer move under it is what says the conversation continues */}
           <div className="relative flex min-h-0 flex-1 flex-col">
             {renderTranscript("mx-auto w-full max-w-2xl pb-28")}
-            {/* the frost, not the clear blur: this bar sits directly over the
-                heat field, and blur alone re-samples the field without
-                veiling it — the one place on the surface where the shader
-                came through raw. The frost is neutral (it derives from
-                --popover, not from the accent), so this is translucency, not
-                a tint. */}
-            <div className="ambient-field-frost border-(--glass-border) absolute inset-x-0 bottom-0 border-t px-4 py-2">
+            {/* no frost of its own: the surface's screen veil already covers
+                the field for the whole window, and a second veil here made
+                the bar read as a solid pane inside a translucent surface */}
+            <div className="border-(--glass-border) absolute inset-x-0 bottom-0 border-t px-4 py-2">
               <div className="mx-auto w-full max-w-2xl">
               <ContextRow
                 pageChip={pageChip}
