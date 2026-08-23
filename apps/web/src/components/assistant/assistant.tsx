@@ -31,6 +31,8 @@ import {
   type KitResponse,
 } from "./response-kit"
 import {
+  AttachmentChip,
+  ChipSlider,
   FollowUpSuggestions,
   type MessageAttachment,
 } from "./message-kit"
@@ -727,6 +729,10 @@ export function Assistant() {
             onTogglePage={setPagePinned}
             chips={chips}
             removeChip={removeChip}
+            attachments={pasted}
+            onRemoveAttachment={(id) =>
+              setPasted((a) => a.filter((x) => x.id !== id))
+            }
           />
           {queued.length > 0 && (
             <MessageQueue
@@ -744,12 +750,8 @@ export function Assistant() {
             onSend={send}
             onStop={stop}
             busy={busy}
-            attachments={pasted}
-            onAttach={() => attachText(SAMPLE_ATTACHMENT)}
+                onAttach={() => attachText(SAMPLE_ATTACHMENT)}
             onPasteText={attachText}
-            onRemoveAttachment={(id) =>
-              setPasted((a) => a.filter((x) => x.id !== id))
-            }
             placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
           />
         </div>
@@ -995,7 +997,7 @@ export function Assistant() {
                     </div>
 
                     {/* attached context lives inside the header band — one hairline */}
-                    {(pageChip || chips.length > 0) && (
+                    {(pageChip || chips.length > 0 || pasted.length > 0) && (
                       <div className="pt-2">
                         <ContextRow
                           pageChip={pageChip}
@@ -1003,6 +1005,10 @@ export function Assistant() {
                           onTogglePage={setPagePinned}
                           chips={chips}
                           removeChip={removeChip}
+                          attachments={pasted}
+                          onRemoveAttachment={(id) =>
+                            setPasted((a) => a.filter((x) => x.id !== id))
+                          }
                         />
                       </div>
                     )}
@@ -1065,6 +1071,10 @@ export function Assistant() {
                       onTogglePage={setPagePinned}
                       chips={chips}
                       removeChip={removeChip}
+                      attachments={pasted}
+                      onRemoveAttachment={(id) =>
+                        setPasted((a) => a.filter((x) => x.id !== id))
+                      }
                     />
                     {queued.length > 0 && (
                       <MessageQueue
@@ -1084,11 +1094,7 @@ export function Assistant() {
                       onSend={send}
                       onStop={stop}
                       busy={busy}
-                      attachments={pasted}
                       onPasteText={attachText}
-                      onRemoveAttachment={(id) =>
-                        setPasted((a) => a.filter((x) => x.id !== id))
-                      }
                       placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
                     />
                   </div>
@@ -1341,6 +1347,10 @@ export function Assistant() {
                 onTogglePage={setPagePinned}
                 chips={chips}
                 removeChip={removeChip}
+                attachments={pasted}
+                onRemoveAttachment={(id) =>
+                  setPasted((a) => a.filter((x) => x.id !== id))
+                }
               />
               <Composer
                 value={input}
@@ -1348,12 +1358,8 @@ export function Assistant() {
                 onSend={send}
                 onStop={stop}
                 busy={busy}
-                attachments={pasted}
                 onAttach={() => attachText(SAMPLE_ATTACHMENT)}
                 onPasteText={attachText}
-                onRemoveAttachment={(id) =>
-                  setPasted((a) => a.filter((x) => x.id !== id))
-                }
                 placeholder={
                   busy ? "Queue another instruction…" : "Ask a follow-up…"
                 }
@@ -1679,7 +1685,9 @@ export function ContextChipView({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full items-center rounded-lg border border-border bg-(--wash) font-medium",
+        // shrink-0: these ride in a scrolling slider, where a flex child that
+        // shrinks squeezes instead of scrolling and every chip loses its label
+        "inline-flex max-w-full shrink-0 items-center rounded-lg border border-border bg-(--wash) font-medium",
         compact
           ? "gap-1.5 py-0.5 ps-1 pe-0.5 text-[11.5px]"
           : "gap-2 py-1 ps-1.5 pe-1 text-[12.5px]",
@@ -1711,20 +1719,24 @@ export function ContextChipView({
 }
 
 /**
- * Context row above the chat input: the page context as an "Attach context +"
- * button (unattached) or an icon-tile chip with a squared ✕ (attached), plus
- * any explicit attachment chips in the same anatomy.
- */
-/**
- * THE CONTEXT ROW — everything the assistant can currently see, in one line
- * above the input.
+ * THE CONTEXT ROW — everything the question is about, in ONE slider above
+ * the input.
+ *
+ * The page's chip, anything explicitly attached, and any pasted text are the
+ * same kind of object: material the answer will rest on. They were drawn in
+ * two stacked rows — context in one, attachments in another — which read as
+ * two different kinds of thing and cost twice the height above an input that
+ * is already the smallest part of the surface. One run, one owner.
  *
  * It SCROLLS rather than wraps. Wrapping grew the composer upward as context
  * accumulated, pushing the transcript around while the user was still
  * writing; a single scrolling row costs the same height whether it holds one
- * chip or nine. Attachments ride here too, through MessageAttachments, so
- * a pasted stack trace and an attached file are the same kind of object in
- * the same place.
+ * chip or nine, and ChipSlider's arrows say when there is more.
+ *
+ * THIS ROW OWNS ATTACHMENTS wherever it appears. Composer can draw its own
+ * for a composer standing alone (the /ds playground, a bare embed) — but the
+ * two must never both be given them, or every attachment gets two remove
+ * buttons. Where there is a context row, the composer is handed none.
  */
 function ContextRow({
   pageChip,
@@ -1732,19 +1744,24 @@ function ContextRow({
   onTogglePage,
   chips,
   removeChip,
-
+  attachments = [],
+  onRemoveAttachment,
 }: {
   pageChip: ContextChip | null
   pagePinned: boolean
   onTogglePage: (pinned: boolean) => void
   chips: ContextChip[]
   removeChip: (id: string) => void
-
-  /** Offered as a `+` at the head of the row; omit and no control appears. */
+  /** Staged attachments — see the ownership note above. */
+  attachments?: MessageAttachment[]
+  onRemoveAttachment?: (id: string) => void
 }) {
-  if (!pageChip && chips.length === 0) return null
+  if (!pageChip && chips.length === 0 && attachments.length === 0) return null
   return (
-    <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-2">
+    <ChipSlider
+      deps={chips.length + attachments.length}
+      className="pb-2"
+    >
       {pageChip &&
         (pagePinned ? (
           <ContextChipView
@@ -1756,7 +1773,7 @@ function ContextRow({
             type="button"
             title="Attach this page as context"
             onClick={() => onTogglePage(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-popover py-1 ps-1.5 pe-2.5 text-[12.5px] font-medium transition-colors hover:bg-(--wash-strong)"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-border bg-popover py-1 ps-1.5 pe-2.5 text-[12.5px] font-medium transition-colors hover:bg-(--wash-strong)"
           >
             <IconTile icon="document" />
             Attach context
@@ -1772,8 +1789,14 @@ function ContextRow({
           onRemove={() => removeChip(c.id)}
         />
       ))}
-
-    </div>
+      {attachments.map((a) => (
+        <AttachmentChip
+          key={a.id}
+          attachment={a}
+          onRemove={onRemoveAttachment}
+        />
+      ))}
+    </ChipSlider>
   )
 }
 

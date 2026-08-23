@@ -26,7 +26,7 @@ body {
   --positive-wash: color-mix(in oklab, var(--positive) 12%, transparent);      /* added lines, passing runs */
   --destructive-wash: color-mix(in oklab, var(--destructive) 12%, transparent); /* removed lines, failures */
   --glass-veil: color-mix(in oklab, var(--popover) 62%, transparent);  /* the frost between a heat field and content */
-  --glass-veil-stage: color-mix(in oklab, var(--popover) 32%, transparent); /* the thin veil over a STAGE field (canvas ground, projectors) */
+  --glass-veil-stage: color-mix(in oklab, var(--popover) 48%, transparent); /* the veil over a STAGE field (canvas ground, projectors). 32% was tuned against aerial photography; abstract gradients carry far more saturation and put a light ground under the canvas text, so the stage needed weight. Still the lightest veil there is — a stage is meant to read as ground */
   --glass-scrim: color-mix(in oklab, var(--popover) 82%, transparent);  /* a FULL-SCREEN ambient surface: heavier, because it covers the product rather than floating on it */
   --glass-veil-screen: color-mix(in oklab, var(--popover) 92%, transparent); /* the veil over a FULL-PRESENCE field: the panel's 62% leaves a stage-strength shader glowing through the content, and even 84% read as weather rather than ground */
 }
@@ -76,8 +76,10 @@ body {
    while text on top stays legible. */
 .ambient-stage-frost {
   background-color: var(--glass-veil-stage);
-  -webkit-backdrop-filter: blur(calc(var(--ambient-blur) * 0.5)) saturate(1.35);
-  backdrop-filter: blur(calc(var(--ambient-blur) * 0.5)) saturate(1.35);
+  /* saturate below 1: a gradient ground already carries its own colour, and
+     pushing it further is what made text on the pale ones hard to read */
+  -webkit-backdrop-filter: blur(calc(var(--ambient-blur) * 0.8)) saturate(1.1);
+  backdrop-filter: blur(calc(var(--ambient-blur) * 0.8)) saturate(1.1);
 }
 
 /* THE ENGINEERING GRID — the canvas ground reads as aworked surface, not a

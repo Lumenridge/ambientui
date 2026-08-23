@@ -2386,6 +2386,8 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "Every chip carries a remove control, because everything here is a decision that can be undone — including keeping the page attached.",
       "Truncates rather than wraps: a chip names its source, it does not quote it.",
       "Chips ride every AI form factor, so what the assistant can see is the same wherever you ask from.",
+      "ONE ROW ABOVE THE INPUT, and everything the question is about rides in it — the page chip, attached chips, and staged attachments, in a single ChipSlider that pages with arrows. Context and attachments were two stacked rows, which read as two different kinds of thing and cost twice the height above the smallest part of the surface. They are one kind of thing: material the answer will rest on.",
+      "It SCROLLS rather than wraps. Wrapping grew the composer upward as context accumulated, pushing the transcript around while the user was still writing; one scrolling row costs the same height whether it holds one chip or nine.",
       "Removing one takes it out of the next question's grounding, and the answer's references will show the difference.",
     ],
     whenToUse: [
@@ -2768,18 +2770,19 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "A removable row is never also an openable one — it already contains a button, so it must not be one. While staged, removing wins.",
       "Pasted text is a `text` attachment: it is quoted material rather than a file, it says so with the quote mark, and its meta counts lines and characters so it is identifiable without being read.",
       "`compact` is the composer's density: chips in one row rather than stacked cards, because staged attachments sit beside context chips and mean the same thing. Four stacked cards pushed the input off the surface, which is the wrong trade for material you are only referring to.",
-      "The compact row PAGES with arrows when it overflows, and carries none when it does not. A row that scrolls silently is one most people read as truncated — the arrows are the only thing separating \"there is more\" from \"that is all\".",
+      "It is the SAME chip wherever it is drawn (AttachmentChip) inside the SAME slider (ChipSlider). The ambient layer's context row renders attachments beside the page chip in one run; `compact` here is for a composer standing alone, with no context row above it. Two components drawing an attachment is how two drawings of one thing drift apart.",
+      "The row PAGES with arrows when it overflows, and carries none when it does not. A row that scrolls silently is one most people read as truncated — the arrows are the only thing separating \"there is more\" from \"that is all\".",
       "An openable attachment is a raised, bordered card; the rest sit on the quiet fill — affordance is carried by the surface, not by a hover-only cue.",
       "An image shows its thumbnail; everything else shows the icon for its kind, drawn by the configured icon library.",
       "Size and meta are formatted by the caller and shown in mono — they are facts about a file, not prose.",
     ],
     whenToUse: [
       "On a user turn that carried files, and on assistant turns that produced them.",
-      "In the Composer (`compact`), for anything staged — pasted text, attached files — while the turn is still being written.",
+      "In a composer that stands alone (`compact`), for anything staged while the turn is still being written. Inside the ambient layer, the context row does this instead.",
     ],
     whenNotToUse: [
       "For links or references; those are ContextChip and ReferenceChips.",
-      "As a second place to show what is already staged. The Composer owns staged attachments because it owns the paste that creates them; rendering them in the context row as well produced two of every chip, each with its own remove button.",
+      "As a second place to show what is already staged. ONE ROW OWNS THE STAGE: where a context row exists it draws the attachments itself, in its own slider, and the composer is handed none. Rendering them in both produced two of every chip, each with its own remove button — and later, when that was fixed by stacking them instead, two rows that read as two different kinds of thing.",
     ],
     stories: [
       {

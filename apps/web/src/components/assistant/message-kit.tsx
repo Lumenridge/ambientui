@@ -735,19 +735,27 @@ export function MessageAttachments({
 }
 
 /**
- * The compact row, with its own paging. A row that scrolls and says nothing
- * about it is a row most people will read as truncated — the arrows are the
- * only thing that distinguishes "there is more" from "that is all". They
- * appear only when the content actually overflows, so a single attachment
- * carries no chrome.
+ * CHIP SLIDER — one horizontal run of chips, with paging arrows.
+ *
+ * A row that scrolls and says nothing about it is a row most people read as
+ * truncated: the arrows are the only thing that distinguishes "there is more"
+ * from "that is all". They appear only when the content actually overflows,
+ * so a single chip carries no chrome.
+ *
+ * It is a SLIDER, not a stack of sliders. Everything the question is about —
+ * the page's own chip, attached context, pasted text, files — rides in this
+ * one run. Two stacked rows read as two different kinds of thing and cost
+ * twice the height above an input that is already the smallest part of the
+ * surface.
  */
-function CompactAttachments({
-  attachments,
-  onRemove,
+export function ChipSlider({
+  children,
+  /** Anything that can change the content width, so paging re-measures. */
+  deps,
   className,
 }: {
-  attachments: MessageAttachment[]
-  onRemove?: (id: string) => void
+  children: React.ReactNode
+  deps?: number
   className?: string
 }) {
   const ref = React.useRef<HTMLDivElement | null>(null)
@@ -772,12 +780,15 @@ function CompactAttachments({
       ro.disconnect()
       el.removeEventListener("scroll", measure)
     }
-  }, [measure, attachments.length])
+  }, [measure, deps])
 
   const page = (dir: -1 | 1) => {
     const el = ref.current
     if (!el) return
-    el.scrollBy({ left: dir * Math.max(160, el.clientWidth * 0.8), behavior: "smooth" })
+    el.scrollBy({
+      left: dir * Math.max(160, el.clientWidth * 0.8),
+      behavior: "smooth",
+    })
   }
 
   const arrow = (dir: -1 | 1, shown: boolean) => (
@@ -785,7 +796,7 @@ function CompactAttachments({
       type="button"
       size="icon-xs"
       variant="ghost"
-      aria-label={dir === -1 ? "Previous attachments" : "More attachments"}
+      aria-label={dir === -1 ? "Scroll back" : "Scroll forward"}
       disabled={!shown}
       onClick={() => page(dir)}
       className={cn(
@@ -806,34 +817,72 @@ function CompactAttachments({
         ref={ref}
         className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto"
       >
-        {attachments.map((a) => (
-          <span
-            key={a.id}
-            title={`${a.name}${a.meta ? ` · ${a.meta}` : ""}`}
-            className="border-border inline-flex max-w-full shrink-0 items-center gap-2 rounded-lg border bg-(--wash) py-1 ps-1.5 pe-1 text-xs font-medium"
-          >
-            <span className="text-muted-foreground bg-card flex size-5 shrink-0 items-center justify-center rounded-[5px]">
-              <Icon name={ATTACHMENT_ICON[a.kind ?? "file"]} size={12} />
-            </span>
-            <span className="max-w-44 min-w-0 truncate">{a.name}</span>
-            {onRemove && (
-              <Button
-                type="button"
-                size="icon-xs"
-                variant="ghost"
-                aria-label={`Remove ${a.name}`}
-                title="Remove"
-                onClick={() => onRemove(a.id)}
-                className="text-muted-foreground hover:text-foreground size-[22px] shrink-0 rounded-md bg-accent"
-              >
-                <Icon name="close" size={11} />
-              </Button>
-            )}
-          </span>
-        ))}
+        {children}
       </div>
       {overflowing && arrow(1, edges.right)}
     </div>
+  )
+}
+
+/**
+ * ONE STAGED ATTACHMENT, as a chip. Exported because the ambient layer's
+ * context row renders these beside its own chips in the same slider — the
+ * alternative was two places drawing an attachment, which is how two
+ * drawings of one thing drift apart.
+ */
+export function AttachmentChip({
+  attachment: a,
+  onRemove,
+}: {
+  attachment: MessageAttachment
+  onRemove?: (id: string) => void
+}) {
+  return (
+    <span
+      title={`${a.name}${a.meta ? ` · ${a.meta}` : ""}`}
+      className="border-border inline-flex max-w-full shrink-0 items-center gap-2 rounded-lg border bg-(--wash) py-1 ps-1.5 pe-1 text-xs font-medium"
+    >
+      <span className="text-muted-foreground bg-card flex size-5 shrink-0 items-center justify-center rounded-[5px]">
+        <Icon name={ATTACHMENT_ICON[a.kind ?? "file"]} size={12} />
+      </span>
+      <span className="max-w-44 min-w-0 truncate">{a.name}</span>
+      {onRemove && (
+        <Button
+          type="button"
+          size="icon-xs"
+          variant="ghost"
+          aria-label={`Remove ${a.name}`}
+          title="Remove"
+          onClick={() => onRemove(a.id)}
+          className="text-muted-foreground hover:text-foreground size-[22px] shrink-0 rounded-md bg-accent"
+        >
+          <Icon name="close" size={11} />
+        </Button>
+      )}
+    </span>
+  )
+}
+
+/**
+ * The compact row: attachments alone in a slider, for a composer with NO
+ * context row above it. Where there is one, the context row owns the slider
+ * and these chips ride inside it — one row, one owner.
+ */
+function CompactAttachments({
+  attachments,
+  onRemove,
+  className,
+}: {
+  attachments: MessageAttachment[]
+  onRemove?: (id: string) => void
+  className?: string
+}) {
+  return (
+    <ChipSlider deps={attachments.length} className={className}>
+      {attachments.map((a) => (
+        <AttachmentChip key={a.id} attachment={a} onRemove={onRemove} />
+      ))}
+    </ChipSlider>
   )
 }
 
