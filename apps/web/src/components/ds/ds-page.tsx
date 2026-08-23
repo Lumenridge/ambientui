@@ -198,7 +198,9 @@ export function DsPage() {
   const chipIcon: IconName = doc
     ? "document"
     : entry
-      ? "sparkles"
+      // NOT sparkles: that mark means the assistant, and a component page is
+      // a thing the assistant can see, not the assistant
+      ? "layers"
       : selectedId === "colors"
         ? "palette"
         : selectedId === "spacing"
