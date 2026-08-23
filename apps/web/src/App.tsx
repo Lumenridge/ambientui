@@ -11,6 +11,7 @@ import { DsPage } from "@/components/ds/ds-page"
 import { HomePage } from "@/components/home/home-page"
 import { FoundationProvider } from "@ambientui/foundation"
 import { sections, type SectionId } from "@/nav"
+import { stripBase, withBase } from "@/base"
 
 import "ambientui/ambient.css"
 import "@/theme.css"
@@ -23,7 +24,8 @@ const sectionFromPath = (path: string): SectionId => {
   return sections.some((s) => s.id === id) ? (id as SectionId) : "canvas"
 }
 
-const pathFromSection = (id: SectionId) => (id === "canvas" ? "/" : `/${id}`)
+const pathFromSection = (id: SectionId) =>
+  withBase(id === "canvas" ? "/" : `/${id}`)
 
 /** The one toast outlet — follows the app's appearance. */
 function AppToaster() {
@@ -33,7 +35,7 @@ function AppToaster() {
 
 export function App() {
   const [active, setActive] = useState<SectionId>(() =>
-    sectionFromPath(window.location.pathname)
+    sectionFromPath(stripBase(window.location.pathname))
   )
 
   // STABLE IDENTITY MATTERS HERE: this reaches the assistant context, and
@@ -52,7 +54,7 @@ export function App() {
 
   useEffect(() => {
     const onPopState = () =>
-      setActive(sectionFromPath(window.location.pathname))
+      setActive(sectionFromPath(stripBase(window.location.pathname)))
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
   }, [])

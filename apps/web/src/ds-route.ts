@@ -5,7 +5,9 @@
  * Fast Refresh for everything importing it — the same reason the icon
  * vocabulary sits apart from the icon component.
  */
+import { withBase } from "@/base"
+
 export const DS_PARAM = "c"
 
 export const dsHref = (id: string) =>
-  `/ds?${DS_PARAM}=${encodeURIComponent(id)}`
+  withBase(`/ds?${DS_PARAM}=${encodeURIComponent(id)}`)

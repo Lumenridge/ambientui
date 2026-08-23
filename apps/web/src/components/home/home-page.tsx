@@ -5,6 +5,8 @@ import { Tabs, TabsContent } from "@ambientui/ui/components/tabs"
 import { cn } from "@ambientui/ui/lib/utils"
 
 import { useAssistant } from "ambientui/assistant-context"
+
+import { withBase } from "@/base"
 import { CanvasBackdrop } from "@/components/canvas-backdrop"
 import { AmbientLayerView } from "@/components/home/ambient-layer-view"
 import { DevToolView } from "@/components/home/devtool-view"
@@ -75,7 +77,7 @@ export function HomePage() {
   const select = (next: string) => {
     const id = next as ViewId
     setView(id)
-    const url = id === "canvas" ? "/" : `/?view=${id}`
+    const url = withBase(id === "canvas" ? "/" : `/?view=${id}`)
     if (window.location.pathname + window.location.search !== url) {
       window.history.pushState(null, "", url)
     }

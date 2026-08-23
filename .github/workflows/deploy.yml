@@ -1,0 +1,72 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deployment at a time, and never cancel one midway: a half-published
+# site is worse than a slightly stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The same gate that guards every local commit. If the site can be
+      # published while the gate is red, the gate is advice.
+      - name: Gate (typecheck · lint · build · registry · vendored CSS)
+        run: npm run gate
+
+      # The registry is generated, not committed — the published JSON must be
+      # built from the sources in THIS commit, or the install commands on the
+      # site can point at files that no longer look like that.
+      - name: Build the registry
+        run: npm run registry:build
+
+      - name: Build the site
+        env:
+          # Project Pages serve from /<repo>/. Set here rather than baked into
+          # the build, so a custom domain later is one line in this file.
+          AMBIENTUI_BASE: /${{ github.event.repository.name }}/
+        run: npm run build --workspace=@ambientui/site
+
+      - name: Prepare the artifact
+        run: |
+          # Pages runs Jekyll by default, which drops directories beginning
+          # with an underscore — including Vite's _next-style asset output.
+          touch apps/web/dist/.nojekyll
+          # Pages has no SPA rewrite. It serves 404.html for an unknown path
+          # WITHOUT redirecting, so the app boots with the original URL intact
+          # and its own router resolves it. That is what makes /ds reloadable.
+          cp apps/web/dist/index.html apps/web/dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

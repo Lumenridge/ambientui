@@ -10,6 +10,7 @@ import {
   SHADCN_DEFAULT_COMPONENTS,
 } from "@/components/ds/ds-docs"
 import { SYSTEM_DOCS } from "@/components/ds/system-docs"
+import { withBase } from "@/base"
 import { dsHref } from "@/ds-route"
 import { sections } from "@/nav"
 
@@ -59,7 +60,7 @@ export function CommandRegistry() {
       window.history.pushState(
         null,
         "",
-        view === "canvas" ? "/" : `/?view=${view}`
+        withBase(view === "canvas" ? "/" : `/?view=${view}`)
       )
       window.dispatchEvent(new PopStateEvent("popstate"))
       navigate?.("canvas")

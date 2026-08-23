@@ -1,0 +1,33 @@
+name: Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # typecheck · lint · build across every package, plus two drift checks:
+      # that registry.json still matches what the sources generate, and that
+      # the vendored shadcn stylesheet still matches upstream.
+      #
+      # The same command runs in .githooks/pre-commit. Contributors without
+      # the hook installed hit it here instead — the rule is enforced in both
+      # places rather than trusted to a local setup step.
+      - run: npm run gate
+
+      # A registry that builds locally and not in CI is a registry that will
+      # publish broken install commands on the next deploy.
+      - name: Registry builds from a clean checkout
+        run: npm run registry:build

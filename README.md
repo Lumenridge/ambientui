@@ -1,139 +1,108 @@
 # ambientui
 
-**An AI-native interface layer, built inside a governance layer.**
+**An AI assistant that lives above your product — and the design system that
+lets it build inside your rules.**
 
-ambientui is a working environment for a simple thesis: AI can build and evolve
-product UI safely only when it composes from a governed system — a fixed
-vocabulary of tokens, components, and patterns — instead of inventing outside
-it. This repo is that thesis applied to its own construction: one design
-system, two vocabularies, and an ambient assistant that lives on top.
+Built on [shadcn/ui](https://ui.shadcn.com) and [Tailwind CSS](https://tailwindcss.com).
+Installs as source you own and can edit.
 
-The primary rule, and the reason the rest holds together: **a reference is a
-request for a configuration.** "Make it feel like X" is answered by selecting
-Foundation values — accent, gray family, radius, spacing unit, scaling, motion
-character — never by styling components toward the reference. If the config
-can't reach the look, the system is extended through governance.
+```bash
+npx shadcn add https://lumenridge.github.io/ambientui/r/ambient-layer.json
+```
 
-## What's inside
+---
 
-**The governance layer** — the drift boundary the whole project builds within:
+## The idea
 
-- [`DESIGN.md`](DESIGN.md) — the constitution: the primary rule, token rules
-  ("a stated pixel is a request for a token"), the role glossary, the motion
-  system, the ambient layer contract, the propagation rule ("saving the theme
-  must restyle every component"), and a decision log recording every design
-  decision with its why.
-- [`CLAUDE.md`](CLAUDE.md) — the AI-facing distillation: the hard rules an
-  agent works under in this repo.
-- [`tokens/tokens.json`](tokens/tokens.json) — the serialized master of the
-  token system.
-- [`figma/`](figma/figma-sync.md) — the code → Figma sync contract: variables
-  only, idempotent, code wins on conflict.
-- [`.claude/skills/`](.claude/skills/) — governance roles: `ds-manager` guards
-  the system, `product-design-manager` guards the product, `product-copy`
-  guards the words.
+AI can generate interfaces. The problem is that what it generates is
+*unattached* — every value an invention, nothing answerable to anything.
+Documentation doesn't fix that, because documentation is advice, and advice
+does not constrain a generator. Architecture does.
 
-**The scales of record are Tailwind's.** Colors are Tailwind's full palette,
-spacing its scale, type its ramp, elevation its shadows. The Foundation doesn't
-invent scales — it *selects* from them, and components consume the selection
-through semantic roles.
+So this repo is one argument, applied to itself: **a design system has to
+become a bounded configuration space before an AI can safely build inside
+it.** Pick the accent, the gray, the radius step, the spacing unit, the motion
+character — and every surface follows, because each one resolves from that
+choice rather than restating it. An AI working here cannot invent a colour.
+There is nowhere to put one.
 
-### The Foundation
+The ambient layer is what that buys you: an assistant with no palette, no type
+scale and no motion of its own, composed entirely from your vocabulary, sitting
+*above* your product instead of inside its component tree.
 
-`/ds` → Foundation is the project's global design config and single source of
-truth. Every dimension resolves from it, and **Save Theme** is the only thing
-that commits — edits apply live, reloading returns to the last saved theme.
+The full argument is [PAPER.md](PAPER.md). The rules it produced are
+[DESIGN.md](DESIGN.md).
 
-- **Scaling is the base layer.** Every dimension is nominal px at the 100% base
-  and emitted in rem, so one base-size choice re-derives the entire app.
-- **The role map** — the whole color contract, visible and editable: each
-  semantic token (`--primary`, `--background`, `--muted`, `--sidebar`, …) is one
-  visual job with a plain-language description and a configurable palette step.
-  Pick the light step and the dark one derives automatically; set dark yourself
-  to override.
-- **Shape and density** — the full radius ramp, and a spacing unit that drives
-  Tailwind's core `--spacing`, so changing it re-densifies every component.
-- **Motion as a dimension** — see below.
-- **Icons and type** — five icon libraries (Lucide, Tabler, HugeIcons, Phosphor,
-  Remix) drawn through semantic `<Icon name>`, and a font choice that loads
-  Google families on demand.
-- **Reset** returns every dimension to system defaults, live, before you commit.
+## What you can take
 
-### The motion system
+| | | |
+|---|---|---|
+| **The whole layer** | orb · line · panel · dock · spotlight · history | `npx shadcn add @ambientui/ambient-layer` |
+| **One component** | 31 of them, each with its behavior and its boundaries | `npx shadcn add @ambientui/reasoning-panel` |
+| **The rules your AI works under** | the constitution + three review roles | `npx shadcn add @ambientui/governance` |
+| **A design system to build inside** | the Foundation, the token master, the Figma contract | *documented; one-command setup in progress* |
 
-Motion is a Foundation dimension like color and spacing. Components consume
-**motion roles** — never literal timings:
+Register the namespace once and the commands stay short:
 
-| Role | Job |
-|---|---|
-| `--motion-micro` | hover, press, focus — the default for every `transition-*` utility |
-| `--motion-control` | control state changes: checks, switches, selection |
-| `--motion-surface` | menus, popovers, sheets entering and leaving |
-| `--motion-page` | section- and page-level moves |
+```bash
+npx shadcn registry add @ambientui=https://lumenridge.github.io/ambientui/r/{name}.json
+```
 
-A configured **character** (Productive / Smooth / Expressive — easing, duration,
-and spring families) and **pace** decide what every role feels like, product-wide,
-on Save. CSS rides the emitted variables; Framer Motion consumers use
-`useMotionTransition(role)` / `useMotionSpring()`.
+The layer runs with **no providers at all** — it falls back to sane defaults and
+binds to a full design system when you give it one. `apps/web/bare.html` is the
+proof, and it is a test we keep.
 
-### The design system
+Prefer a versioned dependency to owned source? `npm i ambientui`. The docs say
+plainly which to choose: the registry if you will restyle it (most people, given
+the whole argument), npm if you want upgrades and will not touch it.
 
-`/ds` is a three-pane browser (list · canvas · Inspect rail). Foundations —
-Colors, Spacing, Shadows, Motion — document the scales of record. The product
-vocabulary (shadcn/ui) and the ambient vocabulary each carry live stories,
-behavior docs, when-to-use / when-not-to guidance, and interactive playgrounds
-whose controls render in the Inspect rail. The documentation doubles as the
-vocabulary the AI layer reasons over — including honest gaps, so nothing
-composes components that don't exist.
+## What's in here
 
-### The assistant
+```
+packages/ambient      the ambient layer            → npm: ambientui
+packages/foundation   the configuration engine     → @ambientui/foundation
+packages/ui           the product primitives       → @ambientui/ui
+apps/web              the website, /ds reference and dev-tool demo
+skills/               the governance roles an AI works under here
+tokens/tokens.json    the serialized token master
+figma/                the code → Figma variable contract
+```
 
-One surface, five modes (orb · bar · panel · dock · spotlight), where drag is
-the mode switcher and pages declare their context via chips.
+**The governing documents are the control surface**, not a description of one:
 
-Its face is the **OrbCharacter**: a heatmap shader wrapped around a
-frosted-glass sphere, expressing the AI's lifecycle through four states —
-*still*, *listening* (heat drawn inward), *thinking* (hot, churning), *answer*
-(a one-shot outward bloom) — with spring transitions on the configured motion
-character, and per-state speeds and palette configurable on its `/ds` page.
+- [DESIGN.md](DESIGN.md) — the constitution: token rules, the two vocabularies,
+  the ambient layer contract, and a dated decision log recording every design
+  decision with its *why*.
+- [CLAUDE.md](CLAUDE.md) — the hard rules an AI works under in this repo.
+- [PAPER.md](PAPER.md) — the argument the repo is evidence for.
 
-That identity runs through the whole ambient layer, all driven by one state:
+They are rendered at `/ds` from their real bytes, so the documentation cannot
+drift from the rules. The registry is generated from the same component docs,
+so a component is installable *because* it is documented — install one and its
+when-to-use prints in your terminal.
 
-- **The live border** — a conic comet on every AI surface's edge, carrying the
-  same state characters (listening reverses inward, thinking adds a
-  counter-rotating comet, answer blooms then settles).
-- **The heat field** — the shader as a surface *background*, behind a frost
-  veil, so the glass itself is made of the identity.
-- **Marks** — the real character wherever the assistant signs its name at the
-  SHELL level (the floating orb, a surface's brand row); messages themselves
-  carry no mark — the identity is the surface's, not each reply's.
-
-**The response kit** composes answers as objects rather than paragraphs:
-`ResponseBlock` (streamed text, evidence and artifact blocks, settle handoff) and
-`ReferenceChips` (what the answer was grounded in). The composer is canned —
-wiring a model in replaces `composeResponse`, never the objects or the states.
-The full pipeline is real: typing a question turns the layer to *listening*,
-send to *thinking*, streaming to *answer*, completion back to *still*.
-
-## Development
+## Running it
 
 ```bash
 npm install
-npm run dev        # the app at :5173 — / canvas, /ds design system
-npm run typecheck
-npm run build
+npm run dev          # the site at :5173
 ```
 
-Turborepo monorepo: `apps/web` (Vite + React 19 + Tailwind v4) and
-`packages/ui` (the shadcn component library and global tokens).
+- `/` — the argument, built from the real running components
+- `/ds` — 50 documented components, the Foundation, and the governing docs
+- `/?view=devtool` — the layer inside a simulated real workspace
 
-## The flow this repo demonstrates
+`npm run gate` runs typecheck, lint and build, plus the registry and vendored-CSS
+drift checks. A pre-commit hook runs it, so a failing gate blocks the commit.
+If hooks aren't firing: `git config core.hooksPath .githooks`.
 
-```
-Project setup → Foundation (global design config) → Components & tokens
-      → Build product → Sync to Figma
-```
+## Contributing
 
-…with the ambient layer inheriting every decision automatically, because it is
-built from the same tokens as everything else. Start with the system. Make it
-yours. Then give AI the same vocabulary your product already speaks.
+The unusual thing about this repo is that its rules are written down and
+enforced. Read [CLAUDE.md](CLAUDE.md) — the rules an AI works under here are the
+rules you work under. New patterns go through the watchlist in DESIGN.md §13
+rather than landing quietly.
+
+## License
+
+MIT © Lumenridge
