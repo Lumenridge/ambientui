@@ -2505,7 +2505,8 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "Two verbs, deliberately: Explain (attach, ask, open the panel) for the impatient path, Add to chat context (attach, say nothing) for the deliberate one. A third would make it a menu.",
       "AskAI is the inline entry point — it lives IN the row, revealed on hover, because a question asked where the thing is costs no navigation and no retyping. Requires `relative group/row` on the row.",
       "It FLOATS rather than sitting in flow: an affordance that resizes the thing being hovered makes the whole list flinch under the pointer. Revealing it costs no layout.",
-      "Any click, scroll, or Escape dismisses the menu: a context menu that survives the next interaction is a modal nobody asked for.",
+      "Any click OUTSIDE, scroll, or Escape dismisses the menu: a context menu that survives the next interaction is a modal nobody asked for. Pointerdown inside it is the first half of choosing an item, so it must not dismiss — that is what made both verbs unreachable.",
+      "openAt(x, y, chip) opens it without a pointer, so a guided tour can perform the gesture ON the real row rather than describe it. The user still picks the verb; nothing is executed for them.",
       "This is the whole product side of the contract. A surface hands over a chip; it never learns how an answer is rendered.",
     ],
     whenToUse: [

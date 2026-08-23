@@ -18,12 +18,20 @@ export function AttachMenu({
   onClose: () => void
 }) {
   const { explain, addChip, setMode } = useAssistant()
+  const ref = React.useRef<HTMLDivElement | null>(null)
 
   React.useEffect(() => {
     if (!menu) return
-    const dismiss = () => onClose()
-    // any click, scroll, or Escape closes it — a context menu that survives
-    // the next interaction is a modal nobody asked for
+    // A pointerdown INSIDE the menu is the first half of choosing an item.
+    // Dismissing on it unmounts the menu before the click can land, which is
+    // why both verbs were unreachable: the gesture that opens the item is the
+    // same gesture that was closing it.
+    const dismiss = (e: Event) => {
+      if (ref.current?.contains(e.target as Node)) return
+      onClose()
+    }
+    // any click outside, scroll, or Escape closes it — a context menu that
+    // survives the next interaction is a modal nobody asked for
     window.addEventListener("pointerdown", dismiss)
     window.addEventListener("scroll", dismiss, true)
     const key = (e: KeyboardEvent) => e.key === "Escape" && onClose()
@@ -42,6 +50,7 @@ export function AttachMenu({
 
   return (
     <div
+      ref={ref}
       role="menu"
       // clamped so a right-click near an edge still lands on screen
       style={{

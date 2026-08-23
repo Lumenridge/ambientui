@@ -28,5 +28,16 @@ export function useAttachMenu() {
     setMenu({ x: e.clientX, y: e.clientY, chip })
   }
 
-  return { menu, open, close: () => setMenu(null) }
+  /**
+   * Open it without a pointer. The gesture is the layer's most important and
+   * its least discoverable — nothing on screen says "right-click me" — so a
+   * guided tour has to be able to perform it ON the real thing rather than
+   * describe it. The menu that appears is the same menu, and the user still
+   * picks the verb.
+   */
+  const openAt = (x: number, y: number, chip: ContextChip) => {
+    setMenu({ x, y, chip })
+  }
+
+  return { menu, open, openAt, close: () => setMenu(null) }
 }

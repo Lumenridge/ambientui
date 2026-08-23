@@ -324,9 +324,24 @@ type JourneyStep = {
   focus?: { file: string; line?: number }
   /** A second instruction fired while the first runs — the queue scenario. */
   queue?: string
+  /**
+   * Perform the attach GESTURE on the focused line instead of asking
+   * outright: the real context menu opens where the code is and the user
+   * picks the verb. The layer's most important gesture is also its least
+   * discoverable, so the tour has to show it rather than describe it.
+   */
+  gesture?: "attach"
 }
 
 const JOURNEY: JourneyStep[] = [
+  {
+    id: "attach",
+    group: "Context",
+    label: "Attach a line and ask",
+    prompt: "Explain composer.tsx:9",
+    focus: { file: "composer.tsx", line: 9 },
+    gesture: "attach",
+  },
   {
     id: "fix",
     group: "Frontend errors",
@@ -484,7 +499,7 @@ export function DevToolView() {
   // worn by the editor as a ring, cleared when the file's fix lands
   const [spot, setSpot] = React.useState<{ file: string; line?: number } | null>(null)
 
-  const { menu, open, close } = useAttachMenu()
+  const { menu, open, openAt, close } = useAttachMenu()
   const [activePath, setActivePath] = React.useState("composer.tsx")
   const [openTabs, setOpenTabs] = React.useState([
     "composer.tsx",
@@ -542,6 +557,24 @@ export function DevToolView() {
     if (step.focus) {
       openFile(step.focus.file)
       setSpot(step.focus)
+    }
+    if (step.gesture === "attach" && step.focus?.line) {
+      // let the file render, then open the real menu on the real row
+      const { file, line } = step.focus
+      window.setTimeout(() => {
+        const row = document.querySelector(
+          `[data-file="${file}"][data-line="${line}"]`
+        )
+        if (!row) return
+        row.scrollIntoView({ block: "center", behavior: "smooth" })
+        const r = row.getBoundingClientRect()
+        openAt(r.left + 120, r.bottom - 4, {
+          id: `line-${file}-${line}`,
+          kind: "symbol",
+          label: `${file}:${line}`,
+        })
+      }, 260)
+      return
     }
     if (step.chip) addChip(step.chip)
     seedPrompt(step.prompt, true)
@@ -889,6 +922,8 @@ export function DevToolView() {
             return (
               <React.Fragment key={n}>
               <div
+                data-file={file.path}
+                data-line={n}
                 className={cn(
                   "group/row hover:bg-(--wash) relative flex items-start gap-3 px-4",
                   sign === "+" && "bg-(--positive-wash)",
