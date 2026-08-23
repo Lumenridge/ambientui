@@ -5,29 +5,34 @@ import { Icon } from "@workspace/ui/components/icon"
 import { cn } from "@workspace/ui/lib/utils"
 
 /**
- * The canvas ground: a photographic backdrop behind the ambient layer's
- * frost and grid. Two families only — abstract light and aerial nature —
- * because the ground has to stay legible under glass surfaces: both read
- * as fields of colour at this scale rather than as subjects competing
- * with the UI.
+ * The canvas ground: an abstract gradient behind the ambient layer's frost
+ * and grid. Gradients only, and only ones that read as a FIELD OF COLOUR at
+ * this scale — the ground sits under glass surfaces carrying text, so
+ * anything with a subject, a hard edge or fine detail competes with the UI
+ * instead of supporting it. Candidates that loaded fine but failed that test
+ * were dropped: pastel colour-blocks (hard edges), ink-in-water (busy at
+ * every scale), a starfield, and one that turned out to be a photograph of
+ * an office.
  *
- * Every id below was verified to load; the set is deliberately small and
- * hand-picked rather than a random feed, so the page can't surprise a
+ * `tone` is what the ground does to the surfaces on it: `light` grounds lift
+ * a dark surface, `deep` ones let a light surface float. Both are kept so
+ * the canvas has range in either appearance.
+ *
+ * Every id was verified to load AND looked at; the set is deliberately small
+ * and hand-picked rather than a random feed, so the page cannot surprise a
  * presentation with a busy or off-tone image.
  */
 
-type Backdrop = { id: string; family: "light" | "aerial"; note: string }
+type Backdrop = { id: string; tone: "light" | "deep"; note: string }
 
 const BACKDROPS: Backdrop[] = [
-  { id: "1506744038136-46273834b3fb", family: "aerial", note: "lake and treeline at dusk" },
-  { id: "1518495973542-4542c06a5843", family: "light", note: "sunlight through leaves" },
-  { id: "1497436072909-60f360e1d4b1", family: "aerial", note: "alpine ridge and mist" },
-  { id: "1470071459604-3b5ec3a7fe05", family: "aerial", note: "fog over dark forest" },
-  { id: "1439066615861-d1af74d74000", family: "aerial", note: "snowfield and pines" },
-  { id: "1500530855697-b586d89ba3ee", family: "light", note: "sky gradient at altitude" },
-  { id: "1502082553048-f009c37129b9", family: "aerial", note: "still water and rock" },
-  { id: "1447752875215-b2761acb3c5d", family: "aerial", note: "forest canopy in sun" },
-  { id: "1465146344425-f00d5f5c8f07", family: "light", note: "blossom against sky" },
+  { id: "1579546929518-9e396f3cc809", tone: "light", note: "soft spectrum wash" },
+  { id: "1550859492-d5da9d8e45f3", tone: "light", note: "warm blurred field" },
+  { id: "1604079628040-94301bb21b91", tone: "light", note: "amber glow on pale ground" },
+  { id: "1557682250-33bd709cbe85", tone: "deep", note: "violet into indigo" },
+  { id: "1557682224-5b8590cd9ec5", tone: "deep", note: "crimson into blue" },
+  { id: "1620121692029-d088224ddc74", tone: "deep", note: "deep blue liquid folds" },
+  { id: "1618005182384-a83a8bd57fbe", tone: "deep", note: "purple and cyan waves" },
 ]
 
 const src = (b: Backdrop) =>

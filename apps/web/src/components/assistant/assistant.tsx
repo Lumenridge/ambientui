@@ -589,7 +589,7 @@ export function Assistant() {
           {/* the character opens the conversation, then the same
               FollowUpSuggestions the answers use — an empty state that
               hand-rolls its own list is a second component nobody maintains */}
-          <AssistantMark size={32} />
+          <AssistantMark size={44} />
           <h3 className="mt-3 text-base font-semibold">
             {pageChip ? "Ask about this page" : "Ask about ambientui"}
           </h3>
