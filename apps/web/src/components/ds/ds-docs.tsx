@@ -2379,6 +2379,9 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "One attached thing the assistant can see — the chip that makes context visible instead of implied.",
     behavior: [
       "ONE anatomy everywhere: an icon tile typed by what was attached, the label, and a squared remove control. Two sizes only — default where the composer has a row of its own, compact where chips share the input's line — and a surface picks the size, never the look.",
+      "The tile is typed by KIND: page → document, control → sliders, target and cell → layers, file and symbol → code, selection → type. Names from the icon vocabulary, so chips redraw with the Foundation's configured library like everything else.",
+      "A chip may override that with its own `icon`. Every page is kind \"page\", which is too coarse to tell an editor from a colour map from an essay, and the page is the only thing that knows which — so /ds sends the icon of the rail row you are standing on, and the dev tool sends `code`.",
+      "SPARKLES IS NEVER A CHIP ICON. In this system that mark means the assistant — its character, AskAI, the follow-up heading — and a chip is what the assistant can SEE, not the assistant. It was the page kind's icon and the component page's icon until both were caught; an icon is a word, and lending the assistant's word to a page costs that word its precision.",
       "The page's own chip arrives automatically (setPageChip); anything else is something the user attached by right-clicking an element.",
       "Every chip carries a remove control, because everything here is a decision that can be undone — including keeping the page attached.",
       "Truncates rather than wraps: a chip names its source, it does not quote it.",
@@ -2400,6 +2403,15 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
           <div className="flex flex-wrap items-center gap-1.5">
             <ContextChipView
               chip={{ id: "p", kind: "page", label: "Design system · Foundation" }}
+              onRemove={() => {}}
+            />
+            <ContextChipView
+              chip={{
+                id: "o",
+                kind: "page",
+                label: "Editor · composer.tsx",
+                icon: "code",
+              }}
               onRemove={() => {}}
             />
             <ContextChipView

@@ -19,6 +19,7 @@ import {
   SettingsSection,
   SettingsTitle,
 } from "@/components/ds/settings-kit"
+import { ICON_NAMES } from "@/components/icon"
 import { useTheme } from "@/components/theme-provider"
 import {
   ACCENTS,
@@ -553,6 +554,41 @@ export function FoundationPage() {
         <p className="text-muted-foreground mt-2 text-xs">
           Components name icons semantically; the library you pick draws them
           everywhere.
+        </p>
+
+        {/* THE VOCABULARY, not a sample of it. A component may only use a
+            name from this list, and adding one is a governance event that
+            costs five mappings — so the legal set has to be visible, or the
+            rule is unenforceable by anyone who has not read icon-library.ts.
+            Rendered live, so it is also the proof that the picked library
+            covers every name. */}
+        <div className="mt-3">
+        <SettingsCard>
+          <div className="px-5 py-4">
+            <div className="mb-3 flex items-baseline gap-2">
+              <span className="text-sm font-medium">The vocabulary</span>
+              <span className="text-muted-foreground font-mono text-xs">
+                {ICON_NAMES.length} names
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
+              {ICON_NAMES.map((n) => (
+                <span
+                  key={n}
+                  className="text-muted-foreground flex items-center gap-2 text-xs"
+                >
+                  <Icon name={n} size={14} />
+                  <span className="truncate font-mono">{n}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </SettingsCard>
+        </div>
+        <p className="text-muted-foreground mt-2 text-xs">
+          A component may only use a name from this list. Adding one means
+          mapping it in all five libraries — a governance event, not a
+          convenience.
         </p>
       </SettingsSection>
 
