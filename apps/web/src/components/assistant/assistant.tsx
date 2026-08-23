@@ -1331,10 +1331,12 @@ export function Assistant() {
             {renderField("screen")}
             <div className="relative flex min-h-0 flex-1 flex-col">
             {renderTranscript("mx-auto w-full max-w-2xl pb-28")}
-            {/* no frost of its own: the surface's screen veil already covers
-                the field for the whole window, and a second veil here made
-                the bar read as a solid pane inside a translucent surface */}
-            <div className="border-(--glass-border) absolute inset-x-0 bottom-0 border-t px-4 py-2">
+            {/* TWO DIFFERENT JOBS, and removing this frost confused them. The
+                surface's veil covers the FIELD; this one covers the CONTENT
+                scrolling behind the bar, which is painted above that veil and
+                so cannot be reached by it. Without it the transcript passes
+                straight through the composer and collides with the input. */}
+            <div className="ambient-field-frost border-(--glass-border) absolute inset-x-0 bottom-0 border-t px-4 py-2">
               <div className="mx-auto w-full max-w-2xl">
               <ContextRow
                 pageChip={pageChip}
