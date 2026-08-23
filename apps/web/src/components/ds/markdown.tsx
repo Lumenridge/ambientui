@@ -87,11 +87,14 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
 
 /* -------------------------------- blocks -------------------------------- */
 
+// splits on the pipes that DELIMIT cells, leaving \| alone. A cell may hold
+// a union type in code (`light \| deep`), and splitting that pipe too would
+// silently invent a column and shift every cell after it out of its heading
 const splitRow = (line: string) =>
   line
-    .replace(/^\||\|$/g, "")
-    .split("|")
-    .map((c) => c.trim())
+    .replace(/^\||(?<!\\)\|$/g, "")
+    .split(/(?<!\\)\|/)
+    .map((c) => c.trim().replace(/\\\|/g, "|"))
 
 export function Markdown({
   source,
