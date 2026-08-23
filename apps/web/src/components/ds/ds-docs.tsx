@@ -765,11 +765,14 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
       "The app's destinations as a disclosure that morphs from a pill into a card — an ambientui extension to the product vocabulary (promoted via the watchlist).",
     behavior: [
       "Collapsed, it is one pill naming the view you are on. Opening is what costs space, and only while you are choosing — a tab strip spends room proportional to how many destinations exist, permanently, on a surface whose argument is that chrome should get out of the way.",
-      "THE TRIGGER DOES NOT MOVE: the list drops beneath the pill rather than growing it, and the trigger holds a fixed width so Menu and Close occupy the same box. A control that walks out from under the pointer as it opens makes closing a game of catch-up.",
+      "THE TRIGGER DOES NOT MOVE: the list drops beneath the pill rather than growing it, and both pill controls are the same icon box, so opening cannot resize the row. A control that walks out from under the pointer as it opens makes closing a game of catch-up.",
+      "The pill carries two icon-only controls — appearance and the disclosure — in ONE treatment, because they are peers: neither is a destination. The disclosure shows a chevron closed and a close mark open; appearance shows the step it takes.",
+      "Both carry a real Tooltip, not a native `title`. The name of an icon-only control is not optional, and `title` waits a second, cannot be styled, and never appears on keyboard focus. The disclosure's tooltip is suppressed while open — the menu it describes is already on screen, and a hint floating over that list is noise.",
       "It carries no character mark. The assistant's identity belongs to the assistant; a navigation control wearing it says the wrong thing about what it does.",
       "Closes on Escape or an outside pointer-down — a menu you cannot dismiss the ordinary way is a trap.",
       "The current view is marked with aria-current and carries the foreground weight; the others sit muted.",
       "It is the pointer twin of the spotlight's \"Jump to\" — same destinations, reached by hand rather than ⌘K. They read the same list, so they cannot disagree.",
+      "APPEARANCE RIDES AT THE HEAD OF THE PILL, as an icon naming the step it takes. It is the one control here that is not a destination, and it lived inside the menu — one click deep and drawn exactly like the three places you could go, which made a two-state setting read as a fourth destination. Outside, it is always one press away and cannot be mistaken for somewhere to be.",
     ],
     whenToUse: [
       "Switching between a small set of top-level views on a surface where permanent chrome would compete with the content.",
@@ -778,6 +781,7 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
       "Tabbed panes INSIDE a page — that is Tabs, and the relationship there is between siblings, not destinations.",
       "More than a handful of destinations, or anything needing search — that is the spotlight.",
       "Anywhere the current location must stay visible while a menu is open; this one covers itself when it expands.",
+      "As a home for settings. Appearance earns its place because it is reached without meaning to go anywhere; a second one would turn a list of destinations into a menu bar.",
     ],
     stories: [
       {

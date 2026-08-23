@@ -156,14 +156,40 @@ export function ShimmerPlaceholder({
 const AI_FORM_ROW = "flex min-h-14 items-center gap-3"
 
 /** Heuristic: is the palette input a question for the AI rather than a nav search? */
+/**
+ * Does what was typed read as a question rather than a search?
+ *
+ * THE OPENING WORD MUST BE THE WHOLE WORD. This was a bare prefix test, so
+ * every word beginning with an interrogative was read as one: "do" matched
+ * documentation, "can" matched canvas, "is" matched isolation, "are" matched
+ * area. Typing the name of the thing you wanted hid the command that went
+ * there, which is the one query the palette must not lose.
+ *
+ * "summar" stays a stem because summarize and summary are the same intent
+ * wearing different endings; the rest are whole words, because showcase is
+ * not show and domain is not do.
+ *
+ * This only decides what leads the list. A question no longer SUPPRESSES
+ * matching commands — see paletteItems.
+ */
+/**
+ * Words that carry intent but never identify a command. Dropped before
+ * matching so the way a request is phrased cannot hide what it names.
+ */
+const FILLER_WORDS = new Set([
+  "a", "an", "and", "for", "go", "in", "into", "it", "jump", "me", "my", "of",
+  "on", "open", "please", "show", "take", "that", "the", "this", "to", "with",
+])
+
+const INTERROGATIVE =
+  /^(what|why|how|which|where|when|who|can|should|does|do|is|are|explain|compare|show)\b/i
+
 function looksLikeQuestion(q: string) {
   const t = q.trim()
   if (!t) return false
   if (t.endsWith("?")) return true
   if (t.split(/\s+/).length >= 4) return true
-  return /^(what|why|how|which|where|when|who|can|should|does|do|is|are|explain|compare|show|summar)/i.test(
-    t
-  )
+  return INTERROGATIVE.test(t) || /^summar\w*/i.test(t)
 }
 
 export function Assistant() {
@@ -829,12 +855,23 @@ export function Assistant() {
     // registered by the app (see CommandRegistry) — the palette matches and
     // runs them without knowing what any of them means. Sections keep their
     // registered order so Components never buries Switch form.
+    // MATCHED ON TERMS, NOT ON THE WHOLE STRING. A substring match means the
+    // query has to be a fragment of the command, so anything phrased the way
+    // people actually ask — "go to the documentation", "jump to component" —
+    // matched nothing at all: no command contains that sentence. Every
+    // meaningful word must appear, which keeps precision without demanding
+    // that the user guess the label. Registered order is preserved (no
+    // relevance sort), so Components still never buries Switch form.
+    const terms = ql.split(/\s+/).filter((t) => t && !FILLER_WORDS.has(t))
     const matched = q
-      ? commands.filter((c) =>
-          `${c.label} ${c.desc ?? ""} ${c.keywords ?? ""} ${c.section}`
-            .toLowerCase()
-            .includes(ql)
-        )
+      ? commands.filter((c) => {
+          const hay = `${c.label} ${c.desc ?? ""} ${c.keywords ?? ""} ${c.section}`.toLowerCase()
+          // all filler ("show me") leaves nothing to match on; fall back to
+          // the literal query rather than matching everything
+          return terms.length
+            ? terms.every((t) => hay.includes(t))
+            : hay.includes(ql)
+        })
       : []
     // CAPPED PER SECTION, not overall. A single cap over the whole list let
     // the first family spend the entire budget — forty components matching
@@ -867,7 +904,10 @@ export function Assistant() {
     const paletteItems: PaletteItem[] = asking
       ? []
       : question
-        ? [askItem]
+        ? // asking leads, but whatever matched still follows: the phrasing
+          // that most obviously names a command ("go to the documentation")
+          // is also long enough to read as a question
+          [askItem, ...groupedCommands]
         : q
           ? [askItem, ...groupedCommands, ...navItems(queryMatches)]
           : [
