@@ -5,7 +5,11 @@ import { cn } from "@ambientui/ui/lib/utils"
 import { Button } from "@ambientui/ui/components/button"
 import { Icon } from "@ambientui/ui/components/icon"
 
-import { AssistantMark, ContextChipView, ShimmerPlaceholder } from "./assistant"
+import {
+  AssistantMark,
+  ContextChipView,
+  ShimmerPlaceholder,
+} from "./ambient-marks"
 import {
   MessageAttachments,
   type MessageAttachment,

@@ -49,6 +49,11 @@
       ],
       "files": [
         {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
           "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
           "type": "registry:component",
           "target": "components/ambient/ambient-runtime.tsx"
@@ -201,6 +206,2323 @@
         }
       ],
       "docs": "These files are written for THIS repo and reference its paths. Read them and adapt the paths to your own before relying on them — an unedited copy will point an agent at directories you do not have."
+    },
+    {
+      "name": "orb-character",
+      "type": "registry:ui",
+      "title": "OrbCharacter",
+      "description": "The assistant's animated identity — an iridescent sphere whose palette derives from the theme accent, with four states covering the AI's lifecycle.",
+      "dependencies": [
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • As the assistant's face — the floating orb is this character at 52px.\n  • Anywhere the AI's lifecycle needs to be visible: avatars, processing surfaces.\n\nWHEN NOT TO USE\n  • As decoration on pages where no AI is present — the character means the AI is here.\n  • ONE CHARACTER PER SURFACE, in the row you speak to it: the composer mark, the quick-ask pill, and the resting orb. Not headers, not footers, not navigation. A shell that stamps the character on every bar is signing itself once per component, and the mark stops meaning \"the assistant is listening here\" and starts meaning \"logo\".\n\nOrbCharacter ships inside orb-character.tsx, alongside 2 sibling components (OrbGlyph, OrbField). They share the stage queue and cannot be separated.\n\n  import { OrbCharacter } from \"@/components/ambient/orb-character\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "orb-character.tsx"
+      }
+    },
+    {
+      "name": "streaming-text",
+      "type": "registry:ui",
+      "title": "StreamingText",
+      "description": "Text that arrives rather than appears — the assistant writing, with a warm tail and a blurred leading edge.",
+      "dependencies": [
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Any assistant text that is genuinely being produced as you watch.\n  • When the pace of arrival is information — a slow answer should look slow.\n\nWHEN NOT TO USE\n  • Text that is already known — faking a stream is a lie about latency.\n  • Long documents or code; use a settled block and show progress elsewhere.\n  • Product copy of any kind: this treatment says an assistant is writing.\n\nStreamingText ships inside streaming-text.tsx.\n\n  import { StreamingText } from \"@/components/ambient/streaming-text\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "streaming-text.tsx"
+      }
+    },
+    {
+      "name": "message-branches",
+      "type": "registry:ui",
+      "title": "MessageBranches",
+      "description": "Regenerated versions of the same answer, navigable without losing your place.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/knowledge-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/knowledge-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/response-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/response-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Wherever regeneration is offered — the alternative is silently destroying an answer the user might have preferred.\n  • When comparing phrasings or approaches matters more than the latest attempt.\n\nWHEN NOT TO USE\n  • Across different questions; branches are versions of one answer, not a history.\n  • For editing a sent message — that is a different object, with its own consequence disclosure.\n\nMessageBranches ships inside response-kit.tsx, alongside 4 sibling components (ReferenceChips, UserMessage, MessagePair, ResponseBlock). They share the stage queue and cannot be separated.\n\n  import { MessageBranches } from \"@/components/ambient/response-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "response-kit.tsx"
+      }
+    },
+    {
+      "name": "message-pair",
+      "type": "registry:ui",
+      "title": "MessagePair",
+      "description": "The unit of a conversation: one question and the answer it produced, presented together.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/knowledge-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/knowledge-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/response-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/response-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Any assistant exchange in a conversation surface — panel, dock, or the spotlight's AI Overview.\n  • When the question needs to stay visible next to its answer, which is nearly always.\n\nWHEN NOT TO USE\n  • A one-shot answer with no question worth showing — render the answer alone.\n  • System notices or confirmations; those are toasts or an error object.\n\nMessagePair ships inside response-kit.tsx, alongside 4 sibling components (ReferenceChips, UserMessage, MessageBranches, ResponseBlock). They share the stage queue and cannot be separated.\n\n  import { MessagePair } from \"@/components/ambient/response-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "response-kit.tsx"
+      }
+    },
+    {
+      "name": "reference-chips",
+      "type": "registry:ui",
+      "title": "ReferenceChips",
+      "description": "Numbered provenance chips under an answer — what the assistant grounded its reply in.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/knowledge-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/knowledge-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/response-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/response-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Under any composed answer that used page context or attached items.\n  • For citations — give web sources their logo and internal ones a typed icon, so provenance is recognizable before it is read.\n  • When the user needs to audit what the assistant saw — the governance habit applied to answers.\n\nWHEN NOT TO USE\n  • As navigation through the product — a reference opens its source, it is not a menu.\n  • For attaching context, which is the AI form's ContextRow.\n  • To dress up an unsourced claim: a mark makes a reference look authoritative, so never add one the answer did not actually use.\n\nReferenceChips ships inside response-kit.tsx, alongside 4 sibling components (UserMessage, MessagePair, MessageBranches, ResponseBlock). They share the stage queue and cannot be separated.\n\n  import { ReferenceChips } from \"@/components/ambient/response-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "response-kit.tsx"
+      }
+    },
+    {
+      "name": "shimmer-placeholder",
+      "type": "registry:ui",
+      "title": "ShimmerPlaceholder",
+      "description": "The placeholder every AI form wears — text with a highlight travelling through it, the ambient layer's way of saying the assistant is listening before anything is typed.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/icon.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Any input that talks to the assistant, in any form factor.\n  • When a field should feel awake before it is used — the shimmer is presence, not decoration.\n\nWHEN NOT TO USE\n  • Product inputs (settings, forms, filters) — a shimmering placeholder there claims an AI is listening when none is.\n  • Fields that already have a value, or read-only text; motion on stable content is noise.\n  • As a loading indicator — the orb's states carry progress, this only carries availability.\n\nShimmerPlaceholder ships inside ambient-marks.tsx, alongside 3 sibling components (AssistantMark, IconTile, ContextChipView). They share the stage queue and cannot be separated.\n\n  import { ShimmerPlaceholder } from \"@/components/ambient/ambient-marks\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "ambient-marks.tsx"
+      }
+    },
+    {
+      "name": "context-chip",
+      "type": "registry:ui",
+      "title": "ContextChip · ContextChipView",
+      "description": "One attached thing the assistant can see — the chip that makes context visible instead of implied.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/icon.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Above any AI input, to show what the answer will be grounded in before it is asked.\n  • Whenever the assistant gains access to something new mid-conversation.\n\nWHEN NOT TO USE\n  • For filters or tags in product UI — this pill claims 'the assistant can see this', which is a specific promise.\n  • For results or citations after an answer — that is ReferenceChips.\n\nContextChip and ContextChipView ship inside ambient-marks.tsx, alongside 3 sibling components (ShimmerPlaceholder, AssistantMark, IconTile). They share the stage queue and cannot be separated.\n\n  import { ContextChip, ContextChipView } from \"@/components/ambient/ambient-marks\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "ambient-marks.tsx"
+      }
+    },
+    {
+      "name": "composer",
+      "type": "registry:ui",
+      "title": "Composer",
+      "description": "The one place a question is written: an optional character mark, context chips, the input, and one control.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Anywhere a question is typed to the assistant — it is the only sanctioned composer.\n\nWHEN NOT TO USE\n  • For product search or filters; this control promises an AI on the other end.\n  • Never rebuild the input row inline in a surface — that is exactly the drift this extraction removes.\n\nComposer ships inside composer.tsx.\n\n  import { Composer } from \"@/components/ambient/composer\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "composer.tsx"
+      }
+    },
+    {
+      "name": "review-comment",
+      "type": "registry:ui",
+      "title": "ReviewComment",
+      "description": "A teammate's note threaded into the code it is about, with the assistant reachable from inside it.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Human review notes inside a diff or an editor, where the assistant may be asked to resolve them.\n  • Anywhere a comment's meaning depends on exactly which line it points at.\n\nWHEN NOT TO USE\n  • For the assistant's own output — that is the response kit; this component is for a person's words.\n  • As a general comment feed detached from code; without an anchor it is just a message list.\n\nReviewComment ships inside message-kit.tsx, alongside 14 sibling components (THINKING, MessageActions, FollowUpSuggestions, ErrorState, …). They share the stage queue and cannot be separated.\n\n  import { ReviewComment } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "attach-menu",
+      "type": "registry:ui",
+      "title": "AttachMenu · AskAI",
+      "description": "The attach gesture: right-click anything to make it context, or ask where the data is.",
+      "dependencies": [
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/icon.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/attach-menu.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/attach-menu.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • On any object a user might reasonably ask about — a row, a cell, a file, a line of code.\n  • Beside a problem or anomaly the product already surfaces; that is the moment the question exists.\n\nWHEN NOT TO USE\n  • On every element indiscriminately — if everything is attachable, the gesture stops meaning anything.\n  • As a replacement for the product's own actions; this attaches context, it does not perform work.\n\nAttachMenu and AskAI ship inside attach-menu.tsx.\n\n  import { AttachMenu, AskAI } from \"@/components/ambient/attach-menu\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "attach-menu.tsx"
+      }
+    },
+    {
+      "name": "message-actions",
+      "type": "registry:ui",
+      "title": "MessageActions",
+      "description": "Copy, rate, and regenerate — the quiet row under an answer, where each action confirms itself.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Under any completed assistant answer.\n  • Anywhere the user's reaction is worth capturing at the moment they have it.\n\nWHEN NOT TO USE\n  • On a message still streaming — rating an unfinished answer measures patience, not quality.\n  • For destructive actions; put those behind the More control with their own confirmation.\n\nMessageActions ships inside message-kit.tsx, alongside 14 sibling components (THINKING, FollowUpSuggestions, ErrorState, MessageQueue, …). They share the stage queue and cannot be separated.\n\n  import { MessageActions } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "follow-up-suggestions",
+      "type": "registry:ui",
+      "title": "FollowUpSuggestions",
+      "description": "A titled group of next turns, offered as prompts rather than performed.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • After an answer that opens obvious next questions — a diff to review, a test to write.\n  • In an empty conversation, as the fastest way to show what the assistant can do.\n\nWHEN NOT TO USE\n  • As navigation to product features; that is the palette's job.\n  • More than about four at a time — a menu of prompts is a decision, not a shortcut.\n\nFollowUpSuggestions ships inside message-kit.tsx, alongside 14 sibling components (THINKING, MessageActions, ErrorState, MessageQueue, …). They share the stage queue and cannot be separated.\n\n  import { FollowUpSuggestions } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "error-state",
+      "type": "registry:ui",
+      "title": "ErrorState",
+      "description": "A quiet failure banner with a retry path, not a modal in your face.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • A generation that stopped, timed out, or hit a limit.\n  • Any failure where retrying is genuinely the right next step.\n\nWHEN NOT TO USE\n  • For a failed tool call inside an otherwise fine answer — that is ToolFailure, which is scoped to the call.\n  • For validation or empty states; a failure claim should be reserved for actual failures.\n\nErrorState ships inside message-kit.tsx, alongside 14 sibling components (THINKING, MessageActions, FollowUpSuggestions, MessageQueue, …). They share the stage queue and cannot be separated.\n\n  import { ErrorState } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "message-queue",
+      "type": "registry:ui",
+      "title": "MessageQueue",
+      "description": "Turns you typed while a run was in flight, stacked and cancelable until it finishes.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Whenever the composer accepts input during a run — the alternative is blocking the input and making the user hold a thought.\n\nWHEN NOT TO USE\n  • As a task list; these are unsent messages, not work items.\n  • When turns cannot actually be reordered or canceled — showing controls that do nothing is worse than a plain count.\n\nMessageQueue ships inside message-kit.tsx, alongside 14 sibling components (THINKING, MessageActions, FollowUpSuggestions, ErrorState, …). They share the stage queue and cannot be separated.\n\n  import { MessageQueue } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "reasoning-panel",
+      "type": "registry:ui",
+      "title": "ReasoningPanel",
+      "description": "A collapsible trace that streams reasoning steps, then settles into a summary.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Any run where thinking takes long enough that silence reads as a hang.\n  • When the reasoning is genuinely reviewable — a plan, a search strategy, a chain of constraints.\n\nWHEN NOT TO USE\n  • To pad a fast answer with theatre; a trace on a 200ms reply is a costume.\n  • For tool activity, which has its own objects (ToolCall, ToolTimeline).\n\nReasoningPanel ships inside message-kit.tsx, alongside 14 sibling components (THINKING, MessageActions, FollowUpSuggestions, ErrorState, …). They share the stage queue and cannot be separated.\n\n  import { ReasoningPanel } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "reasoning-effort",
+      "type": "registry:ui",
+      "title": "ReasoningEffort",
+      "description": "How hard to think, and how much of that budget the run actually spent.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Wherever the user pays for thinking — in tokens, in latency, or in both.\n  • In settings AND beside a run, so the choice can be learned from its result.\n\nWHEN NOT TO USE\n  • When effort makes no observable difference; a control with no consequence teaches the user to ignore controls.\n\nReasoningEffort ships inside message-kit.tsx, alongside 14 sibling components (THINKING, MessageActions, FollowUpSuggestions, ErrorState, …). They share the stage queue and cannot be separated.\n\n  import { ReasoningEffort } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "message-attachments",
+      "type": "registry:ui",
+      "title": "MessageAttachments",
+      "description": "What was attached, before or after sending — a pasted stack trace, an image to open, a document with its page count.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • On a user turn that carried files, and on assistant turns that produced them.\n  • In a composer that stands alone (`compact`), for anything staged while the turn is still being written. Inside the ambient layer, the context row does this instead.\n\nWHEN NOT TO USE\n  • For links or references; those are ContextChip and ReferenceChips.\n  • As a second place to show what is already staged. ONE ROW OWNS THE STAGE: where a context row exists it draws the attachments itself, in its own slider, and the composer is handed none. Rendering them in both produced two of every chip, each with its own remove button — and later, when that was fixed by stacking them instead, two rows that read as two different kinds of thing.\n\nMessageAttachments ships inside message-kit.tsx, alongside 14 sibling components (THINKING, MessageActions, FollowUpSuggestions, ErrorState, …). They share the stage queue and cannot be separated.\n\n  import { MessageAttachments } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "quote-reply",
+      "type": "registry:ui",
+      "title": "QuoteReply",
+      "description": "Select a phrase and a contextual edit bar attaches beneath it — describe an edit, or pick one, and watch the rewrite arrive in place.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Around long assistant answers, especially ones mixing prose and code.\n\nWHEN NOT TO USE\n  • Around user messages — quoting yourself back to the assistant is what the composer is for.\n  • Where text is short enough to reference whole; a toolbar over one sentence is friction.\n\nQuoteReply ships inside message-kit.tsx, alongside 14 sibling components (THINKING, MessageActions, FollowUpSuggestions, ErrorState, …). They share the stage queue and cannot be separated.\n\n  import { QuoteReply } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "feedback-dialog",
+      "type": "registry:ui",
+      "title": "FeedbackDialog",
+      "description": "A thumbs-down that asks why, so the signal arrives with a reason attached.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Immediately after a negative rating, in place.\n\nWHEN NOT TO USE\n  • After a positive rating — interrogating praise is how you stop receiving it.\n  • As a general support form; this is about one answer.\n\nFeedbackDialog ships inside message-kit.tsx, alongside 14 sibling components (THINKING, MessageActions, FollowUpSuggestions, ErrorState, …). They share the stage queue and cannot be separated.\n\n  import { FeedbackDialog } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "timestamps",
+      "type": "registry:ui",
+      "title": "DayDivider · MessageTime",
+      "description": "Chronology in a long thread: days marked, exact times on hover.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Threads that span sessions or days.\n  • Anywhere the age of an answer changes how much to trust it.\n\nWHEN NOT TO USE\n  • In a short-lived surface — quick ask, the palette — where everything happened just now.\n\nDayDivider and MessageTime ship inside message-kit.tsx, alongside 13 sibling components (THINKING, MessageActions, FollowUpSuggestions, ErrorState, …). They share the stage queue and cannot be separated.\n\n  import { DayDivider, MessageTime } from \"@/components/ambient/message-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "message-kit.tsx"
+      }
+    },
+    {
+      "name": "tool-call",
+      "type": "registry:ui",
+      "title": "ToolCall",
+      "description": "One tool invocation with its request and result tucked behind a disclosure.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Every tool invocation the user should be able to audit.\n\nWHEN NOT TO USE\n  • For several calls that went out together — that is ParallelTools, which collapses them to one row.\n  • For a whole session's activity — that is ToolTimeline.\n\nToolCall ships inside tool-kit.tsx, alongside 7 sibling components (ToolTimeline, TerminalBlock, CodeDiff, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolCall } from \"@/components/ambient/tool-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "tool-kit.tsx"
+      }
+    },
+    {
+      "name": "tool-timeline",
+      "type": "registry:ui",
+      "title": "ToolTimeline",
+      "description": "A whole working session summarized as verbs, targets, and file stats.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • After an agent run of more than a couple of steps.\n  • Wherever the user needs to know what was touched before they trust the result.\n\nWHEN NOT TO USE\n  • For a single call, which reads better as a ToolCall.\n  • As a progress indicator during the run — it is a record, not a spinner.\n\nToolTimeline ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, TerminalBlock, CodeDiff, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolTimeline } from \"@/components/ambient/tool-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "tool-kit.tsx"
+      }
+    },
+    {
+      "name": "terminal-block",
+      "type": "registry:ui",
+      "title": "TerminalBlock",
+      "description": "Command output that streams line by line and ends with an exit status.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Any command the assistant ran on the user's behalf.\n\nWHEN NOT TO USE\n  • For code the assistant wrote — that is CodeRunner, where the output belongs to a snippet.\n  • For long logs; link to them rather than pasting a thousand lines into a conversation.\n\nTerminalBlock ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, CodeDiff, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { TerminalBlock } from \"@/components/ambient/tool-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "tool-kit.tsx"
+      }
+    },
+    {
+      "name": "code-diff",
+      "type": "registry:ui",
+      "title": "CodeDiff",
+      "description": "A unified diff with tinted additions and removals, sized for chat.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Whenever an answer changed code the user has not seen yet.\n\nWHEN NOT TO USE\n  • When the change still needs the user's approval — that is ReviewableDiff, where each hunk is a decision.\n  • For whole files; a diff is an argument about what changed.\n\nCodeDiff ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { CodeDiff } from \"@/components/ambient/tool-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "tool-kit.tsx"
+      }
+    },
+    {
+      "name": "reviewable-diff",
+      "type": "registry:ui",
+      "title": "ReviewableDiff",
+      "description": "The same diff, but each hunk is a decision: keep it, discard it, apply what survived.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Any change the assistant proposes to files the user owns.\n  • Wherever partial acceptance is genuinely possible.\n\nWHEN NOT TO USE\n  • For changes already applied — showing decisions for a fait accompli is theatre.\n  • When the hunks are not independent; offering per-hunk choice on a change that only works whole invites a broken state.\n\nReviewableDiff ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ReviewableDiff } from \"@/components/ambient/tool-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "tool-kit.tsx"
+      }
+    },
+    {
+      "name": "parallel-tools",
+      "type": "registry:ui",
+      "title": "ParallelTools",
+      "description": "Calls that went out together, collapsed to one row until you want the detail.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Any fan-out — reading several files, querying several sources at once.\n\nWHEN NOT TO USE\n  • For sequential calls, where order carries meaning that a batch hides.\n  • For two calls; a batch of two is just two rows.\n\nParallelTools ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ParallelTools } from \"@/components/ambient/tool-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "tool-kit.tsx"
+      }
+    },
+    {
+      "name": "tool-failure",
+      "type": "registry:ui",
+      "title": "ToolFailure",
+      "description": "One call failed. The error, the attempt count, and a retry that doesn't restart the turn.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Any tool call that failed inside an otherwise live turn.\n\nWHEN NOT TO USE\n  • When the whole generation stopped — that is ErrorState.\n  • For expected empty results; \"no matches\" is an answer, not a failure.\n\nToolFailure ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolFailure } from \"@/components/ambient/tool-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "tool-kit.tsx"
+      }
+    },
+    {
+      "name": "code-runner",
+      "type": "registry:ui",
+      "title": "CodeRunner",
+      "description": "A snippet with a run button, and the output it produced attached below it.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "button",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "input",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Executable snippets the user is meant to try, not just read.\n\nWHEN NOT TO USE\n  • For code that changes files or state — that needs a ReviewableDiff and an explicit apply.\n  • For output with no code behind it; that is a TerminalBlock.\n\nCodeRunner ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { CodeRunner } from \"@/components/ambient/tool-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "tool-kit.tsx"
+      }
+    },
+    {
+      "name": "web-search",
+      "type": "registry:ui",
+      "title": "WebSearch",
+      "description": "A search query and its results landing one by one as the agent reads.",
+      "dependencies": [
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/knowledge-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/knowledge-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Any answer grounded in a live search.\n  • Whenever the user should be able to challenge WHAT was searched, not just what was found.\n\nWHEN NOT TO USE\n  • As a final bibliography — that is ReferenceChips, under the answer.\n  • For internal retrieval with no user-visible sources.\n\nWebSearch ships inside knowledge-kit.tsx, alongside 2 sibling components (InlineCitation, ResearchReport). They share the stage queue and cannot be separated.\n\n  import { WebSearch } from \"@/components/ambient/knowledge-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "knowledge-kit.tsx"
+      }
+    },
+    {
+      "name": "inline-citation",
+      "type": "registry:ui",
+      "title": "InlineCitation",
+      "description": "Numbered references inside a sentence, each with a hover preview of its source.",
+      "dependencies": [
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/knowledge-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/knowledge-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Answers where individual claims have individual sources.\n  • Anywhere a reader may want to verify one sentence without auditing the whole reply.\n\nWHEN NOT TO USE\n  • On every sentence; a paragraph of superscripts is unreadable and reads as defensiveness.\n  • When the source does not actually support that specific claim — a citation is a promise.\n\nInlineCitation ships inside knowledge-kit.tsx, alongside 2 sibling components (WebSearch, ResearchReport). They share the stage queue and cannot be separated.\n\n  import { InlineCitation } from \"@/components/ambient/knowledge-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "knowledge-kit.tsx"
+      }
+    },
+    {
+      "name": "research-report",
+      "type": "registry:ui",
+      "title": "ResearchReport",
+      "description": "An outline that fills in section by section, each carrying the sources behind it.",
+      "dependencies": [
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "skeleton"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/knowledge-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/knowledge-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Long-running research where the shape of the answer is known before its content.\n  • Any deliverable a user will read in pieces rather than all at once.\n\nWHEN NOT TO USE\n  • For a conversational answer; an outline over three sentences is bureaucracy.\n  • When the sections are not known upfront — a skeleton that keeps changing is worse than none.\n\nResearchReport ships inside knowledge-kit.tsx, alongside 2 sibling components (WebSearch, InlineCitation). They share the stage queue and cannot be separated.\n\n  import { ResearchReport } from \"@/components/ambient/knowledge-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "knowledge-kit.tsx"
+      }
     }
   ]
 }

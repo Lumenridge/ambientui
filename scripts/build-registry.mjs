@@ -23,6 +23,7 @@ import {
   rmSync,
 } from "node:fs"
 import { resolve, dirname } from "node:path"
+import { readCatalog } from "./extract-catalog.mjs"
 import { fileURLToPath } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
@@ -75,6 +76,137 @@ const fileType = (f) =>
       : "registry:component"
 
 rmSync(resolve(ROOT, STAGE), { recursive: true, force: true })
+
+
+/* ------------------- deriving the per-component items ------------------- */
+
+/**
+ * WHICH FILE EXPORTS WHAT. Derived by reading the sources, never by a table
+ * someone maintains — a mapping kept by hand is a mapping that goes stale the
+ * first time a component moves between kits.
+ */
+function exportIndex() {
+  const index = new Map()
+  for (const f of layerFiles) {
+    const text = readFileSync(resolve(ROOT, SRC, f), "utf8")
+    for (const m of text.matchAll(/export (?:function|const) ([A-Z][A-Za-z0-9]*)/g)) {
+      if (!index.has(m[1])) index.set(m[1], f)
+    }
+  }
+  return index
+}
+
+/**
+ * Everything a file needs from inside the layer, transitively. This is what
+ * makes an alias item real: `add reasoning-panel` has to bring the stage
+ * queue and the staging primitives with it, or it installs and does not
+ * compile.
+ */
+function localClosure(entry) {
+  const seen = new Set()
+  const queue = [entry]
+  while (queue.length) {
+    const f = queue.shift()
+    if (seen.has(f)) continue
+    seen.add(f)
+    const text = readFileSync(resolve(ROOT, SRC, f), "utf8")
+    for (const m of text.matchAll(/from "\.\/([a-z-]+)"/g)) {
+      const hit = layerFiles.find((x) => x.replace(/\.tsx?$/, "") === m[1])
+      if (hit && !seen.has(hit)) queue.push(hit)
+    }
+  }
+  return [...seen].sort()
+}
+
+/** The shadcn primitives a set of files actually reaches for. */
+function shadcnDeps(files) {
+  const deps = new Set()
+  for (const f of files) {
+    const text = readFileSync(resolve(ROOT, SRC, f), "utf8")
+    for (const m of text.matchAll(/@ambientui\/ui\/components\/([a-z-]+)/g)) {
+      deps.add(m[1] === "icon" ? url("icon") : m[1])
+    }
+  }
+  return [...deps].sort()
+}
+
+const NPM_FOR = [
+  [/from "framer-motion"/, "framer-motion"],
+  [/@paper-design\/shaders-react/, "@paper-design/shaders-react"],
+  [/@hugeicons\/react/, "@hugeicons/react"],
+  [/@hugeicons\/core-free-icons/, "@hugeicons/core-free-icons"],
+]
+function npmDeps(files) {
+  const deps = new Set()
+  for (const f of files) {
+    const text = readFileSync(resolve(ROOT, SRC, f), "utf8")
+    for (const [re, name] of NPM_FOR) if (re.test(text)) deps.add(name)
+  }
+  return [...deps].sort()
+}
+
+const bullets = (label, list) =>
+  list?.length ? `${label}\n${list.map((l) => `  \u2022 ${l}`).join("\n")}\n\n` : ""
+
+/**
+ * Documented, deliberately NOT separately installable. Every entry needs a
+ * reason, and anything documented that is not here and does not resolve is a
+ * BUILD FAILURE — that is the bijection: a component cannot quietly fall out
+ * of the registry, and it cannot quietly appear in it undocumented either.
+ */
+const NOT_DISTRIBUTABLE = {
+  "command-palette":
+    "the palette is a surface of the Assistant, not a separate export — it ships with ambient-layer",
+}
+
+function componentItems() {
+  const index = exportIndex()
+  const catalog = readCatalog().filter((e) => e.vocabulary === "ambient")
+  const items = []
+  const orphans = []
+
+  for (const entry of catalog) {
+    // "DayDivider · MessageTime" — one documented entry covering sibling
+    // components. The first that resolves names the kit; they share a file.
+    const names = entry.name.split("·").map((n) => n.trim())
+    const primary = names.find((n) => index.has(n))
+    if (!primary) {
+      orphans.push(entry)
+      continue
+    }
+    const file = index.get(primary)
+    const files = localClosure(file)
+    const kitMates = [...index.entries()]
+      .filter(([n, f]) => f === file && !names.includes(n))
+      .map(([n]) => n)
+
+    items.push({
+      name: entry.id,
+      type: "registry:ui",
+      title: entry.name,
+      description: entry.description,
+      dependencies: npmDeps(files),
+      registryDependencies: [url("ambient-styles"), ...shadcnDeps(files)],
+      files: files.map((f) => ({
+        path: stage(`${SRC}/${f}`),
+        type: fileType(f),
+        target: `components/ambient/${f}`,
+      })),
+      docs:
+        bullets("WHEN TO USE", entry.whenToUse) +
+        bullets("WHEN NOT TO USE", entry.whenNotToUse) +
+        `${names.join(" and ")} ship${names.length > 1 ? "" : "s"} inside ${file}` +
+        (kitMates.length
+          ? `, alongside ${kitMates.length} sibling component${kitMates.length === 1 ? "" : "s"} (${kitMates.slice(0, 4).join(", ")}${kitMates.length > 4 ? ", …" : ""}). They share the stage queue and cannot be separated.`
+          : ".") +
+        `\n\n  import { ${names.join(", ")} } from "@/components/ambient/${file.replace(/\.tsx?$/, "")}"`,
+      meta: { vocabulary: "ambient", kit: file },
+    })
+  }
+  return { items, orphans }
+}
+
+const { items: perComponent, orphans } = componentItems()
 
 const items = [
   {
@@ -180,6 +312,19 @@ const items = [
     docs: "These files are written for THIS repo and reference its paths. Read them and adapt the paths to your own before relying on them — an unedited copy will point an agent at directories you do not have.",
   },
 ]
+
+items.push(...perComponent)
+
+const unexplained = orphans.filter((o) => !(o.id in NOT_DISTRIBUTABLE))
+if (unexplained.length) {
+  console.error(
+    "✗ documented but not resolvable to an export, and not listed as internal:\n" +
+      unexplained.map((o) => `    ${o.id} (looked for ${o.name})`).join("\n") +
+      "\n  Either name the export in ds-docs.tsx, or add it to NOT_DISTRIBUTABLE with a reason."
+  )
+  process.exit(1)
+}
+for (const o of orphans) console.log(`  · ${o.id}: ${NOT_DISTRIBUTABLE[o.id]}`)
 
 const registry = {
   $schema: "https://ui.shadcn.com/schema/registry.json",

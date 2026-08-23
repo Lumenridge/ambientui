@@ -80,7 +80,7 @@ import {
 import {
   ContextChipView,
   ShimmerPlaceholder,
-} from "@ambientui/ambient/assistant"
+} from "@ambientui/ambient/ambient-marks"
 import { useAssistant } from "@ambientui/ambient/assistant-context"
 import { AskAI } from "@ambientui/ambient/attach-menu"
 import { Composer } from "@ambientui/ambient/composer"
@@ -2381,7 +2381,9 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
   },
   {
     id: "context-chip",
-    name: "ContextChip",
+    // the concept and the export it actually is — the sibling convention,
+    // so what you read and what you import are both on the page
+    name: "ContextChip · ContextChipView",
     description:
       "One attached thing the assistant can see — the chip that makes context visible instead of implied.",
     behavior: [
