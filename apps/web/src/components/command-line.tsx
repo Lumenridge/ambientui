@@ -16,7 +16,7 @@ import { Icon } from "@/components/icon"
  *
  * COMPOSED, NOT PROMOTED (owner's call on the pattern watchlist, 2026-08-23).
  * It stays app-level rather than entering the vocabulary — but it is written
- * ONCE, here, because the install section and the gallery both need it and a
+ * ONCE, here, because more than one surface needs it and a
  * treatment re-decided per call site is exactly the drift a component would
  * have prevented. If a surface outside this app ever needs it, that is the
  * moment to revisit promotion properly.

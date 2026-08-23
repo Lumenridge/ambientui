@@ -793,11 +793,10 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
           <div className="flex min-h-44 w-full items-start justify-center">
             <ViewMenu
               items={[
-                { id: "canvas", label: "Canvas" },
-                { id: "layer", label: "The ambient layer" },
                 { id: "devtool", label: "Dev tool" },
+                { id: "canvas", label: "Canvas" },
               ]}
-              value="canvas"
+              value="devtool"
               onSelect={() => {}}
             />
           </div>

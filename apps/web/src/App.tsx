@@ -8,7 +8,6 @@ import { useTheme } from "@/components/theme-provider"
 import { AssistantProvider } from "ambientui/assistant-context"
 import { CommandRegistry } from "@/components/command-registry"
 import { DsPage } from "@/components/ds/ds-page"
-import { GalleryPage } from "@/components/gallery/gallery-page"
 import { HomePage } from "@/components/home/home-page"
 import { FoundationProvider } from "@ambientui/foundation"
 import { sections, type SectionId } from "@/nav"
@@ -77,11 +76,6 @@ export function App() {
         <div className="bg-background flex h-svh flex-col overflow-hidden">
           {active === "ds" ? (
             <DsPage />
-          ) : active === "gallery" ? (
-            <GalleryPage
-              onOpenDocs={() => navigateTo("ds")}
-              onHome={() => navigateTo("canvas")}
-            />
           ) : (
             <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
               <HomePage />

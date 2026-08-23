@@ -39,9 +39,8 @@ const FORMS: { mode: AssistantMode; label: string; desc: string }[] = [
 ]
 
 const VIEWS: { id: string; label: string; desc: string }[] = [
-  { id: "canvas", label: "Canvas", desc: "The ambient layer on a bare page" },
-  { id: "layer", label: "The ambient layer", desc: "What it is, explained" },
   { id: "devtool", label: "Dev tool", desc: "The layer inside real work" },
+  { id: "canvas", label: "Canvas", desc: "The ambient layer on a bare page" },
 ]
 
 export function CommandRegistry() {

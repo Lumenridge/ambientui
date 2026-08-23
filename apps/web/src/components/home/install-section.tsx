@@ -15,7 +15,7 @@ import { Icon } from "@/components/icon"
  * yourself into before you know what any of it is.
  *
  * The command block itself lives in components/command-line.tsx — composed,
- * not promoted (owner's call), but written once now that the gallery needs
+ * not promoted (owner's call), but written once now that more than one surface needs
  * it too.
  *
  * ONLY COMMANDS THAT RUN. Every command here was verified end to end by
