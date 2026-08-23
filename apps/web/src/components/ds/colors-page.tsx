@@ -9,7 +9,7 @@ import {
   deriveDark,
   resolveRole,
   useFoundation,
-} from "@/foundation/foundation-context"
+} from "@ambientui/foundation"
 import { toast } from "sonner"
 
 /**

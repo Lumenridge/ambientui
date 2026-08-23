@@ -36,7 +36,7 @@ import {
   TEXT_SECONDARY_STEPS,
   SPACING_STEPS,
   useFoundation,
-} from "@/foundation/foundation-context"
+} from "@ambientui/foundation"
 
 /**
  * The Foundation page: the project's global design configuration, in the

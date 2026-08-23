@@ -13,7 +13,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { useTheme } from "@/components/theme-provider"
 
-import { useMotionSpring, useMotionTransition } from "@/foundation/foundation-context"
+import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 
 /**
  * VIEW MENU — the app's destinations as a disclosure, not a tab strip.

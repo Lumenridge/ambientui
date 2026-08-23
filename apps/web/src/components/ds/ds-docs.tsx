@@ -134,7 +134,7 @@ import {
 import {
   STREAM_SPEEDS,
   useFoundation,
-} from "@/foundation/foundation-context"
+} from "@ambientui/foundation"
 
 /**
  * The design-system registry: every component installed from the shadcn

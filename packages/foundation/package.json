@@ -1,0 +1,34 @@
+{
+  "name": "@ambientui/foundation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Foundation engine \u2014 the design system's configuration space, compiled to CSS variables at runtime.",
+  "exports": {
+    ".": "./src/foundation-context.tsx"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ambientui/ambient": "*",
+    "@workspace/ui": "*",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^10",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17",
+    "tailwindcss": "^4",
+    "typescript": "~6",
+    "typescript-eslint": "^8"
+  }
+}

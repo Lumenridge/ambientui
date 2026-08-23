@@ -9,7 +9,7 @@ import { AssistantProvider } from "@ambientui/ambient/assistant-context"
 import { CommandRegistry } from "@/components/command-registry"
 import { DsPage } from "@/components/ds/ds-page"
 import { HomePage } from "@/components/home/home-page"
-import { FoundationProvider } from "@/foundation/foundation-context"
+import { FoundationProvider } from "@ambientui/foundation"
 import { sections, type SectionId } from "@/nav"
 
 import "@ambientui/ambient/ambient.css"

@@ -16,7 +16,7 @@ import {
   SPACING_GRIDS,
   SPACING_STEPS,
   useFoundation,
-} from "@/foundation/foundation-context"
+} from "@ambientui/foundation"
 
 /**
  * The Spacing page: the scale of record is Tailwind's own spacing scale.

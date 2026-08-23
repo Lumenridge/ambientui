@@ -8,7 +8,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import {
   useMotionSpring,
   useMotionTransition,
-} from "@/foundation/foundation-context"
+} from "@ambientui/foundation"
 
 /**
  * The settings-page pattern (promoted through governance, DESIGN.md §12):

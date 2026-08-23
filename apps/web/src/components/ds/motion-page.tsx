@@ -11,7 +11,7 @@ import {
   resolveMotion,
   useFoundation,
   type MotionRole,
-} from "@/foundation/foundation-context"
+} from "@ambientui/foundation"
 
 /**
  * The Motion page: documentation of the motion system — the four roles,

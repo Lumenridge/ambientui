@@ -6,7 +6,7 @@ import { Separator } from "@workspace/ui/components/separator"
 
 import { useAssistant } from "@ambientui/ambient/assistant-context"
 import { OrbGlyph } from "@ambientui/ambient/orb-character"
-import { useFoundation } from "@/foundation/foundation-context"
+import { useFoundation } from "@ambientui/foundation"
 import {
   AMBIENT_COMPONENTS,
   ControlsHostContext,
@@ -41,7 +41,7 @@ import { FormFactorsPage } from "@/components/ds/form-factors-page"
 import { TranslucencyPage } from "@/components/ds/translucency-page"
 import { ShadowsPage } from "@/components/ds/shadows-page"
 import { SpacingPage } from "@/components/ds/spacing-page"
-import { FoundationPage } from "@/foundation/foundation-page"
+import { FoundationPage } from "@/components/ds/foundation-page"
 import { Markdown } from "@/components/ds/markdown"
 import { DS_PARAM, dsHref } from "@/ds-route"
 import { SYSTEM_DOCS } from "@/components/ds/system-docs"

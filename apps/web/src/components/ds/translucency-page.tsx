@@ -1,4 +1,4 @@
-import { useFoundation } from "@/foundation/foundation-context"
+import { useFoundation } from "@ambientui/foundation"
 
 /**
  * The Translucency page: every alpha in the system, as tokens. Each swatch
