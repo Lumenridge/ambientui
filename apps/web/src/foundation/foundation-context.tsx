@@ -4,7 +4,7 @@ import * as React from "react"
 import {
   AmbientRuntimeProvider,
   type AmbientRuntime,
-} from "@/components/assistant/ambient-runtime"
+} from "@ambientui/ambient/ambient-runtime"
 
 import { IconLibraryProvider } from "@workspace/ui/components/icon"
 

@@ -76,14 +76,14 @@ import { cn } from "@workspace/ui/lib/utils"
 import {
   OrbCharacter,
   type OrbState,
-} from "@/components/assistant/orb-character"
+} from "@ambientui/ambient/orb-character"
 import {
   ContextChipView,
   ShimmerPlaceholder,
-} from "@/components/assistant/assistant"
-import { useAssistant } from "@/components/assistant/assistant-context"
-import { AskAI } from "@/components/assistant/attach-menu"
-import { Composer } from "@/components/assistant/composer"
+} from "@ambientui/ambient/assistant"
+import { useAssistant } from "@ambientui/ambient/assistant-context"
+import { AskAI } from "@ambientui/ambient/attach-menu"
+import { Composer } from "@ambientui/ambient/composer"
 import {
   DayDivider,
   ErrorState,
@@ -100,7 +100,7 @@ import {
   ReasoningPanel,
   type ReasoningEffortLevel,
   ReviewComment,
-} from "@/components/assistant/message-kit"
+} from "@ambientui/ambient/message-kit"
 import { ViewMenu } from "@/components/view-menu"
 import {
   CodeDiff,
@@ -111,12 +111,12 @@ import {
   ToolCall,
   ToolFailure,
   ToolTimeline,
-} from "@/components/assistant/tool-kit"
+} from "@ambientui/ambient/tool-kit"
 import {
   InlineCitation,
   ResearchReport,
   WebSearch,
-} from "@/components/assistant/knowledge-kit"
+} from "@ambientui/ambient/knowledge-kit"
 import {
   MessageBranches,
   MessagePair,
@@ -125,12 +125,12 @@ import {
   type KitReference,
   type KitResponse,
   type MessageVariant,
-} from "@/components/assistant/response-kit"
-import { composeResponse } from "@/components/assistant/compose-response"
+} from "@ambientui/ambient/response-kit"
+import { composeResponse } from "@ambientui/ambient/compose-response"
 import {
   ORB_STATES,
   REASONING_EFFORTS,
-} from "@/components/assistant/kit-vocabulary"
+} from "@ambientui/ambient/kit-vocabulary"
 import {
   STREAM_SPEEDS,
   useFoundation,

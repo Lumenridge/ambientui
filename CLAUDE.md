@@ -128,11 +128,19 @@ skill before any `use_figma` write.
   (with paired foregrounds), gray tints, radius set, scaling→base-px presets;
   compiled to `#ambientui-foundation` style tag; persisted on Save under
   `ambientui-foundation`.
-- Assistant: `apps/web/src/components/assistant/` (context, surfaces, orb,
+- Ambient layer: `packages/ambient/src/` (context, surfaces, orb,
   orb-character — the animated identity with states still/listening/thinking/
-  answer, driven via `orbState` in the context). App tokens and keyframes:
+  answer, driven via `orbState` in the context). **It is a package, not app
+  code: it may import `@workspace/ui` and npm, never `@/`.** Its material is
+  `packages/ambient/src/ambient.css`; the app's own shell tokens are
   `apps/web/src/theme.css`, `viz.css`.
-- Sections/routing: `src/nav.ts` + path mapping in `App.tsx` (`/`, `/ds`);
-  the palette's Jump-to builds from `nav.ts`.
+- What the layer needs from a design system is stated in
+  `packages/ambient/src/ambient-runtime.tsx` — seven values and two motion
+  hooks, with real defaults, so it renders with no providers at all
+  (`apps/web/bare.html` proves it). `FoundationProvider` implements that
+  interface; the layer does not know the Foundation exists.
+- Sections/routing: `src/nav.ts` + path mapping in `App.tsx` (`/`, `/ds`).
+  The palette's Jump-to is **supplied** to `AssistantProvider` as `navItems` —
+  the layer never imports the app's route table.
 - Component registry (docs + playgrounds): `apps/web/src/components/ds/ds-docs.tsx`;
   the `/ds` page renders it and portals playground controls into the Inspect rail.

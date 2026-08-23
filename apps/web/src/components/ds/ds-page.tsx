@@ -4,8 +4,8 @@ import { Badge } from "@workspace/ui/components/badge"
 import { Icon, type IconName } from "@workspace/ui/components/icon"
 import { Separator } from "@workspace/ui/components/separator"
 
-import { useAssistant } from "@/components/assistant/assistant-context"
-import { OrbGlyph } from "@/components/assistant/orb-character"
+import { useAssistant } from "@ambientui/ambient/assistant-context"
+import { OrbGlyph } from "@ambientui/ambient/orb-character"
 import { useFoundation } from "@/foundation/foundation-context"
 import {
   AMBIENT_COMPONENTS,

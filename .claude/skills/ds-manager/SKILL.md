@@ -10,7 +10,7 @@ one-way-to-do-a-thing, and the AI's ability to compose safely from it — outran
 any single feature's convenience. Authority: [DESIGN.md](../../../DESIGN.md) is
 the constitution; `tokens/tokens.json` is the value store;
 `packages/ui/src/components` (product vocabulary) and
-`apps/web/src/components/assistant` (ambient vocabulary) are the only sanctioned
+`packages/ambient/src` (ambient vocabulary) are the only sanctioned
 building blocks; `apps/web/src/components/ds/ds-docs.tsx` is the registry.
 
 Remember what this system is *for*: an AI composes UI from it. Every off-system

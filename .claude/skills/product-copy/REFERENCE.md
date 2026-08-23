@@ -31,7 +31,7 @@ unfilled entry as "not available", never as licence to invent the answer.
   copy of record)
 - `apps/web/src/foundation/foundation-page.tsx` — Foundation strings, Figma
   connection impact copy, Save Theme states
-- `apps/web/src/components/assistant/assistant.tsx` — assistant strings,
+- `packages/ambient/src/assistant.tsx` — assistant strings,
   suggested prompts, palette hints
 
 ## Open questions

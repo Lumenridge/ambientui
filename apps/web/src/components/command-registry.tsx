@@ -4,7 +4,7 @@ import {
   useAssistant,
   type AmbientCommand,
   type AssistantMode,
-} from "@/components/assistant/assistant-context"
+} from "@ambientui/ambient/assistant-context"
 import {
   AMBIENT_COMPONENTS,
   SHADCN_DEFAULT_COMPONENTS,

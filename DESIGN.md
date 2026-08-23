@@ -234,7 +234,7 @@ Checkbox, Collapsible, DropdownMenu, Input, Separator, Sheet, Sidebar,
 Skeleton, Table, Tabs, Tooltip. Installed from the shadcn radix-nova preset; extended only through the
 shadcn CLI or governance.
 
-**Ambient vocabulary** (`apps/web/src/components/assistant`): the assistant's
+**Ambient vocabulary** (`packages/ambient/src`): the assistant's
 four surfaces — orb (line), panel, dock, spotlight — plus the objects a
 conversation is made of, in four groups at `/ds` → Ambient vocabulary:
 
@@ -548,6 +548,8 @@ rules, or states. ambientui does not have it yet; building it is logged debt.
 | 2026-08-23 | **The layer's material moves out of the app's theme.** `theme.css` (320 lines) split: the glass recipes, translucency tokens, live border, glyph breath, stream edge and shimmer became `components/assistant/ambient.css` (298 lines); the app keeps 45 — its radius, its `overflow: hidden` shell, `--app-chip` and the charcoal `.dark` block. `--ambient-blur` also left `packages/ui/globals.css`, where an ambient token had no business sitting | The two shipped together, so nobody had to ask which file owned what. The split answers it: ambient.css DERIVES everything from standard shadcn roles, so an adopter's own theme retints the whole surface without editing it |
 | 2026-08-23 | **`--app-blue` becomes `--ambient-accent`.** It is public API — it drives the live border, the stream's leading edge and the shimmering placeholder — and a published token cannot be named after one app's blue. The layer's 8 references were renamed; `--app-blue: var(--ambient-accent)` stays in the app for one release so 8k lines need not move in the same commit | Verified in the bare mount, where `theme.css` is absent: `--app-blue` is undefined, `--ambient-accent` resolves, the orb renders, zero errors. The alias is a courtesy to this app, not a dependency of the layer |
 | 2026-08-23 | **Fallbacks for the two non-shadcn tokens.** `var(--positive, oklch(0.596 0.145 163.225))` and `var(--spacing, 0.25rem)` in ambient.css | An undefined custom property inside `color-mix()` does not fall back — it makes the whole declaration invalid, so the surface renders TRANSPARENT. In someone else's app that reads as a rendering bug in our component, and they would be right to think so |
+| 2026-08-23 | **The ambient layer becomes a package.** All 19 files moved `apps/web/src/components/assistant/` → `packages/ambient/src/` as `@ambientui/ambient`, with its own manifest, tsconfig and eslint config. Ten app files, the Foundation bridge, the tsconfig paths and a Vite alias were repointed. `CLAUDE.md`, `DESIGN.md §6` and two skills were updated in the same commit | The seam was already cut in P1 and P2; this makes it structural. The compiler is the enforcer now — `@/` does not resolve from inside the package, so the decoupling cannot silently rot back |
+| 2026-08-23 | **The `@source` repair from P0 paid for itself here.** The layer's code left `apps/**` for `packages/ambient/src`, which is exactly the move that would have silently dropped every `.ambient-*` class from the production stylesheet under the old broken globs. Verified after the move: 127,364 bytes, all 12 ambient classes, **zero selectors lost** against the phase-0 baseline | This is why the repair was made inert-but-correct three commits early rather than at the point of need. A silent CSS failure discovered after a framework migration would have been attributed to the migration |
 
 ## 13. Pattern watchlist
 

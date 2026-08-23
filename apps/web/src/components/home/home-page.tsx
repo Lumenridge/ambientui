@@ -4,7 +4,7 @@ import { Tabs, TabsContent } from "@workspace/ui/components/tabs"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useAssistant } from "@/components/assistant/assistant-context"
+import { useAssistant } from "@ambientui/ambient/assistant-context"
 import { CanvasBackdrop } from "@/components/canvas-backdrop"
 import { AmbientLayerView } from "@/components/home/ambient-layer-view"
 import { DevToolView } from "@/components/home/devtool-view"

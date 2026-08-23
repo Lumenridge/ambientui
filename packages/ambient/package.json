@@ -1,43 +1,38 @@
 {
-  "name": "web",
-  "version": "0.0.1",
-  "type": "module",
+  "name": "@ambientui/ambient",
+  "version": "0.0.0",
   "private": true,
+  "type": "module",
+  "description": "The ambient layer \u2014 an AI assistant surface that lives above a product rather than inside its component tree.",
+  "exports": {
+    "./styles/ambient.css": "./src/ambient.css",
+    "./*": "./src/*"
+  },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ambientui/ambient": "*",
+    "@workspace/ui": "*",
     "@hugeicons/core-free-icons": "^4.2.3",
     "@hugeicons/react": "^1.1.9",
     "@paper-design/shaders-react": "^0.0.80",
-    "@phosphor-icons/react": "^2.1.10",
-    "@remixicon/react": "^4.9.0",
-    "@tabler/icons-react": "^3.46.0",
-    "@workspace/ui": "*",
     "framer-motion": "^13.1.1",
-    "lucide-react": "^1.33.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@eslint/js": "^10",
-    "@tailwindcss/vite": "^4",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6",
     "eslint": "^10",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17",
+    "tailwindcss": "^4",
     "typescript": "~6",
-    "typescript-eslint": "^8",
-    "vite": "^8"
+    "typescript-eslint": "^8"
   }
 }

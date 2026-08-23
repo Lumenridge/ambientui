@@ -23,7 +23,8 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@workspace/ui/*": ["../../packages/ui/src/*"]
+      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@ambientui/ambient/*": ["../../packages/ambient/src/*"]
     }
   },
   "include": ["src"]
