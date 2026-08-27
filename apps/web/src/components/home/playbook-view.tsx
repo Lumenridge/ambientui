@@ -219,6 +219,108 @@ function usePaper() {
 
 /* --------------------------- the shell demos --------------------------- */
 
+/** A wireframe placeholder bar — the diagram's stand-in for content. */
+function Bar({ className }: { className?: string }) {
+  return <span className={cn("bg-muted block rounded-sm", className)} />
+}
+
+/** A small accent dot marking where AI got bolted on. */
+function AiMark({ label }: { label?: string }) {
+  return (
+    <span className="text-primary flex items-center gap-1 font-mono text-[9px] tracking-wide uppercase">
+      <span className="bg-primary size-1.5 rounded-full" />
+      {label}
+    </span>
+  )
+}
+
+/**
+ * After §1: the argument as a wireframe. Left, the common way — AI embedded
+ * three separate times, each blind to the others. Right, the ambient claim —
+ * the same product untouched, one presence floating above it. Every stroke
+ * is a token: borders are the border role, fills are muted, the AI is the
+ * primary role. No literal colors, because the diagram obeys the paper.
+ */
+function EmbeddedVsAmbientDiagram() {
+  return (
+    <WireframeShell tag="diagram · embedded vs ambient" className="my-10">
+      <div className="grid gap-6 sm:grid-cols-2">
+        {/* the common way: three AI features, fragmented */}
+        <figure className="min-w-0">
+          <div className="border-border bg-background flex h-44 overflow-hidden rounded-lg border">
+            {/* sidebar with the chat tab */}
+            <div className="border-border flex w-1/4 flex-col gap-2 border-r p-2.5">
+              <Bar className="h-2 w-3/4" />
+              <Bar className="h-2 w-2/3" />
+              <AiMark label="chat" />
+              <Bar className="h-2 w-3/4" />
+            </div>
+            {/* features, each with its own sparkle button */}
+            <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-2.5">
+              <div className="border-border rounded-md border p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Bar className="h-2 w-1/3" />
+                  <AiMark />
+                </div>
+                <Bar className="mt-2 h-2 w-5/6" />
+              </div>
+              <div className="border-border rounded-md border p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Bar className="h-2 w-1/2" />
+                  <AiMark />
+                </div>
+                <Bar className="mt-2 h-2 w-2/3" />
+              </div>
+              {/* the assistant panel that is really another page */}
+              <div className="border-primary/40 mt-auto rounded-md border border-dashed p-2">
+                <AiMark label="assistant panel" />
+              </div>
+            </div>
+          </div>
+          <figcaption className="text-muted-foreground mt-2 text-xs leading-relaxed">
+            Embedded: the AI three times over — a chat tab, sparkle buttons,
+            a panel — none of them knowing what the others did.
+          </figcaption>
+        </figure>
+
+        {/* the ambient claim: the product untouched, one layer above */}
+        <figure className="min-w-0">
+          <div className="relative h-44">
+            {/* the product, with no AI inside it at all */}
+            <div className="border-border bg-background absolute inset-x-0 bottom-0 top-3 flex overflow-hidden rounded-lg border">
+              <div className="border-border flex w-1/4 flex-col gap-2 border-r p-2.5">
+                <Bar className="h-2 w-3/4" />
+                <Bar className="h-2 w-2/3" />
+                <Bar className="h-2 w-3/4" />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-2.5">
+                <div className="border-border rounded-md border p-2">
+                  <Bar className="h-2 w-1/3" />
+                  <Bar className="mt-2 h-2 w-5/6" />
+                </div>
+                <div className="border-border rounded-md border p-2">
+                  <Bar className="h-2 w-1/2" />
+                  <Bar className="mt-2 h-2 w-2/3" />
+                </div>
+              </div>
+            </div>
+            {/* the one presence, floating above everything */}
+            <div className="border-primary/50 bg-background absolute right-3 -top-0.5 flex w-1/2 items-center gap-2 rounded-lg border px-2.5 py-2 shadow-sm">
+              <span className="bg-primary size-2 shrink-0 rounded-full" />
+              <Bar className="h-2 flex-1" />
+              <span className="text-muted-foreground font-mono text-[9px]">⌘K</span>
+            </div>
+          </div>
+          <figcaption className="text-muted-foreground mt-2 text-xs leading-relaxed">
+            Ambient: the product carries no AI at all. One presence sits
+            above it, sees where you are, and answers from anywhere.
+          </figcaption>
+        </figure>
+      </div>
+    </WireframeShell>
+  )
+}
+
 /** After §2: the shapes, opened for real on this page. */
 function ShapesDemo() {
   const { setMode } = useAssistant()
@@ -307,6 +409,7 @@ function AnswerDemo() {
 
 /** Which demo follows which section, matched on the section heading. */
 const DEMOS: { match: RegExp; node: React.ReactNode }[] = [
+  { match: /^## 1\. /, node: <EmbeddedVsAmbientDiagram /> },
   { match: /^## 2\. /, node: <ShapesDemo /> },
   { match: /^## 4\. /, node: <AnswerDemo /> },
 ]
