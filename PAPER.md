@@ -221,6 +221,19 @@ The core of the architecture is that every global design decision is a
 choice from a fixed menu, not a free value. Six moves build that menu, and
 each one earned its place by failing first in some softer form.
 
+The menu has a home, and setting it up is the first real act of adopting
+this framework: the Foundation. It is one place that holds the handful of
+decisions everything else derives from: accent, gray family, radius,
+spacing unit, type scaling, motion character. Half the game is played
+right here, before a single screen is designed, because every later
+decision either resolves against the Foundation or invents a value the
+system cannot see. A product that sets its Foundation first gets
+propagation for free: change a value, save, and the whole product follows.
+A product that skips this step and styles components directly is building
+the drift it will spend the next year removing, one hardcoded pixel at a
+time. The Foundation in this repository is a live page, and every value
+this paper renders with was chosen there.
+
 ### 9.1 Adopt scales of record; do not invent them
 
 The first instinct when building a system is to author its scales: a custom

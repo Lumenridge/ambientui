@@ -165,6 +165,12 @@ const openDoc = (docId: string) => {
   window.dispatchEvent(new PopStateEvent("popstate"))
 }
 
+/** /ds with no selection IS the Foundation — the setup this paper argues for. */
+const openFoundation = () => {
+  window.history.pushState(null, "", withBase("/ds"))
+  window.dispatchEvent(new PopStateEvent("popstate"))
+}
+
 /* ------------------------- the article chunks ------------------------- */
 
 type Chunk = {
@@ -433,11 +439,17 @@ function ConfigDiagram() {
           <Bar className="h-2 w-1/2" />
         </div>
       </div>
-      <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
-        The values on the left are not an example — they are read live from
-        the theme this page is rendered with. Save a different set and
-        everything you are reading, this diagram included, restyles.
-      </p>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-muted-foreground max-w-md text-xs leading-relaxed">
+          The values on the left are not an example — they are read live
+          from the theme this page is rendered with. Save a different set
+          and everything you are reading, this diagram included, restyles.
+        </p>
+        <Button variant="outline" size="sm" onClick={openFoundation}>
+          <Icon name="sliders" size={13} />
+          Set up your Foundation
+        </Button>
+      </div>
     </WireframeShell>
   )
 }
