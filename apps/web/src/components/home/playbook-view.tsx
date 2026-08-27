@@ -925,9 +925,11 @@ export function PlaybookView() {
 
         <article className="mt-2">
           {chunks.map((chunk) => {
-            // a part boundary renders as a designed chapter break, not prose
+            // a part boundary renders as a designed chapter break; any prose
+            // in the part chunk (the philosophy under Part I) follows it
             if (chunk.heading?.level === 1) {
               const m = chunk.heading.label.match(/^(Part [IVX]+):\s*(.*)$/)
+              const prose = chunk.md.split("\n").slice(1).join("\n").trim()
               return (
                 <Reveal key={chunk.id} id={chunk.id} className="scroll-mt-24">
                   <div className="border-border mt-20 border-t pt-12">
@@ -965,6 +967,7 @@ export function PlaybookView() {
                           ))}
                       </ol>
                     )}
+                    {prose && <Markdown source={prose} className="mt-6" />}
                   </div>
                 </Reveal>
               )

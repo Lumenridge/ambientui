@@ -33,6 +33,21 @@ working proof, and the failures recorded below happened in it.
 
 # Part I: Ambient UI
 
+The philosophy of Ambient UI is one inversion: the AI is not a feature of
+your product, it is a presence above it. A feature lives somewhere. It has
+a button, a page, a corner of the screen, and it competes with every other
+feature for attention. A presence is available everywhere, already knows
+where you are, and takes whatever shape the moment deserves, from a
+three-word question to a full working session.
+
+Everything in this part follows from that inversion, and the sections walk
+it piece by piece: why embedding fails and the layer has to sit above the
+interface, the shapes the presence takes and how they escalate, the
+context contract that means you never re-explain where you are, why
+answers are built from real components instead of prose, and why the layer
+has no look of its own, so it can wear your design system instead of
+fighting it.
+
 ## 1. AI does not belong inside your interface
 
 The common way to add AI to a product is to embed it. A chat tab in the
