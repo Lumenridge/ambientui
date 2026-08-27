@@ -745,9 +745,9 @@ function PlaybookContents({
             <CollapsibleTrigger asChild>
               <button
                 type="button"
-                className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between py-2.5 font-mono text-xs tracking-widest uppercase"
+                className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between gap-2 py-2 text-sm font-medium"
               >
-                {g.label}
+                <span className="truncate">{g.label}</span>
                 <span
                   className={cn(
                     "transition-transform",
@@ -808,7 +808,7 @@ function PlaybookNav(props: {
   return (
     <nav
       aria-label="Playbook contents"
-      className="fixed top-0 bottom-0 left-0 hidden w-64 overflow-y-auto px-6 pt-24 pb-10 lg:block"
+      className="fixed top-0 bottom-0 left-0 hidden w-72 overflow-y-auto px-6 pt-24 pb-10 lg:block"
     >
       <button
         type="button"
@@ -883,7 +883,7 @@ export function PlaybookView() {
     <div className="ambient-grid relative min-h-full">
       <PlaybookNav parts={navParts} scrollTo={scrollTo} active={active} />
 
-      <div className="lg:pl-64">
+      <div className="lg:pl-72">
         <div className="mx-auto w-full max-w-3xl px-6 pb-40">
         {/* hero — the paper's title block at display scale */}
         <header id="overview" className="scroll-mt-24 pt-10 sm:pt-16">
