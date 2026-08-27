@@ -273,7 +273,7 @@ files, each with one job. This section is the map.
 | `CLAUDE.md` | The standing orders for the AI. The hard rules it works under in every session, with the primary rule stated first. |
 | `.claude/skills/` | Three roles the AI can take on demand: a design system manager (compliance, promotion, blast radius), a product design manager (which surface fits a use case), and a product copywriter (the words, including the AI-facing documentation). |
 | `figma/figma-sync.md` | The contract between code and Figma. Direction, mapping, conflict rule. |
-| The gate (`npm run gate`) | Enforcement. Typecheck, lint, and build across every package, plus two drift checks: the generated registry still matches its sources, and the vendored upstream stylesheet still matches upstream. A pre-commit hook runs it, so a failing gate blocks the commit. |
+| The gate (`npm run gate`) | Enforcement. Typecheck, lint, and build across every package, plus three drift checks: the generated registry still matches its sources, the vendored upstream stylesheet still matches upstream, and every path a governing document cites still exists. A pre-commit hook runs it, so a failing gate blocks the commit. |
 
 Notice what the list is doing. The values are one file. The compilation is
 one file. The rules are readable documents that the AI actually loads. The

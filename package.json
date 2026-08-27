@@ -5,14 +5,15 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "gate": "npm run registry:check && npm run vendor:check && turbo typecheck lint build",
+    "gate": "npm run registry:check && npm run vendor:check && npm run docs:check && turbo typecheck lint build",
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
     "registry:build": "node scripts/build-registry.mjs && shadcn build --output apps/web/public/r",
     "registry:check": "node scripts/build-registry.mjs --check",
     "vendor:check": "node scripts/check-vendored-css.mjs",
-    "release": "turbo build && changeset publish"
+    "release": "turbo build && changeset publish",
+    "docs:check": "node scripts/check-doc-paths.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",

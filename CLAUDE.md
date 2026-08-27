@@ -11,7 +11,8 @@ product's thesis applied to its own construction.
 - `npm run dev` — the app at :5173 (Turborepo; the web app is `apps/web`).
   Routes: `/` home (Dev tool · Canvas views), `/ds` design system (Foundation + component vocabulary).
 - `npm run typecheck` / `npm run build` / `npm run lint`
-- `npm run gate` — all three at once. A `.githooks/pre-commit` runs it, so a
+- `npm run gate` — all three plus the drift checks (registry, vendored CSS,
+  governing-doc path claims). A `.githooks/pre-commit` runs it, so a
   failing gate blocks the commit (`--no-verify` to bypass deliberately). If
   hooks are not firing, run `git config core.hooksPath .githooks`.
 

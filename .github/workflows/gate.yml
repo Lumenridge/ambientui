@@ -18,9 +18,10 @@ jobs:
 
       - run: npm ci
 
-      # typecheck · lint · build across every package, plus two drift checks:
-      # that registry.json still matches what the sources generate, and that
-      # the vendored shadcn stylesheet still matches upstream.
+      # typecheck · lint · build across every package, plus three drift
+      # checks: registry.json still matches what the sources generate, the
+      # vendored shadcn stylesheet still matches upstream, and every path a
+      # governing document cites still exists.
       #
       # The same command runs in .githooks/pre-commit. Contributors without
       # the hook installed hit it here instead — the rule is enforced in both

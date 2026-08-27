@@ -31,7 +31,7 @@ jobs:
 
       # The same gate that guards every local commit. If the site can be
       # published while the gate is red, the gate is advice.
-      - name: Gate (typecheck · lint · build · registry · vendored CSS)
+      - name: Gate (typecheck · lint · build · registry · vendored CSS · doc paths)
         run: npm run gate
 
       # The registry is generated, not committed — the published JSON must be
