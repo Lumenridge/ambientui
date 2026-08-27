@@ -5,9 +5,10 @@ The Figma file mirrors them.
 **Target file:** set on the Foundation page (`/ds` → Foundation → Figma
 connection); the file key lives in the saved config (`figmaFileUrl`) and in
 `tokens/tokens.json` (`figma.fileKey`). **First sync ran 2026-08-22** into
-`DxCX3RUqjzefoUc9eOV8hr`, building all six collections from an empty file:
-Palette (244), Foundation (13, Light/Dark), Radius (13), Spacing (14), Type (9),
-Typography (1).
+`DxCX3RUqjzefoUc9eOV8hr`; the latest (accent blue, scaling 100%) ran
+2026-08-24. The file holds four collections: Palette (244, primitives
+verbatim) · Foundation (42, Light/Dark, aliases only) · Tailwind Primitives
+(120, nominal scales) · Typography (1).
 
 **Primitives are nominal; the Foundation is nothing but aliases.** Two
 primitive collections hold the scales verbatim — **Palette** (Tailwind's colour
@@ -112,9 +113,9 @@ const probe = (collName, varName) => {
 return {
   primary: probe("Foundation", "Color/Primary"),    // expect alias → Palette {hue}/600
   ambientAccent: probe("Foundation", "Color/Ambient Accent"),
-  radiusActive: probe("Radius", "Radius/Active"),   // expect alias → saved step
-  space4: probe("Spacing", "Step/4"),               // expect 4 × unit
-  textBase: probe("Type", "base"),                  // expect the saved base px
+  radiusActive: probe("Foundation", "Radius/Active"), // expect alias → saved step
+  spacingUnit: probe("Foundation", "Spacing/Unit"),    // expect alias → gap/gap-1
+  rootFontSize: probe("Foundation", "Scale/Root font size"), // expect saved base px
 }
 ```
 

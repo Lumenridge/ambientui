@@ -263,10 +263,10 @@ files, each with one job. This section is the map.
 | File | Job |
 |---|---|
 | `tokens/tokens.json` | The value store. Palette, roles, type, motion, shadows, translucency recipes, the Figma connection. What the system believes, as data. |
-| `packages/foundation/foundation-context.tsx` | The engine. Takes the saved configuration (accent, gray, radius, spacing, scaling, motion, orb) and compiles it into one injected style tag. Save Theme is the commit point: live edits preview, only Save persists. |
+| `packages/foundation/src/foundation-context.tsx` | The engine. Takes the saved configuration (accent, gray, radius, spacing, scaling, motion, orb) and compiles it into one injected style tag. Save Theme is the commit point: live edits preview, only Save persists. |
 | `packages/ui/` | The product vocabulary: the primitive components (buttons, inputs, sheets, tables), consuming only roles and scale utilities. |
 | `packages/ambient/` | The ambient vocabulary: the assistant layer from Part I, and everything its answers are composed from. |
-| `packages/ambient/ambient-runtime.tsx` | The seam. The complete list of what the layer needs from a design system, as one interface with working defaults, so the layer renders with no providers at all. The Foundation implements this interface; the layer does not know the Foundation exists. |
+| `packages/ambient/src/ambient-runtime.tsx` | The seam. The complete list of what the layer needs from a design system, as one interface with working defaults, so the layer renders with no providers at all. The Foundation implements this interface; the layer does not know the Foundation exists. |
 | `apps/web/ … /ds-docs.tsx` | The component registry: every vocabulary component with its behavior, when to use it, and when not to. Undocumented components do not exist, as far as the system is concerned. |
 | `registry.json` + `scripts/` | The distribution. Generated from the registry docs by script, never written by hand, so a component cannot be installable but undocumented, or documented but uninstallable. |
 | `DESIGN.md` | The constitution. The rules, the ambient layer contract, the governance procedure, and a decision log with over 160 entries recording not just what was decided but why. |

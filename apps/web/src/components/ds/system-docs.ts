@@ -78,7 +78,7 @@ export const SYSTEM_DOCS: SystemDoc[] = [
     name: "Porting the assistant",
     path: "docs/porting-the-assistant.md",
     group: "Working rules",
-    summary: "Taking the ambient layer into another product.",
+    summary: "Installing the ambient layer in another product.",
     source: portingMd,
   },
   {

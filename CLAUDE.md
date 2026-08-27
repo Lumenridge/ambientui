@@ -9,7 +9,7 @@ product's thesis applied to its own construction.
 ## Commands
 
 - `npm run dev` — the app at :5173 (Turborepo; the web app is `apps/web`).
-  Routes: `/` canvas, `/ds` design system (Foundation + component vocabulary).
+  Routes: `/` home (Dev tool · Canvas views), `/ds` design system (Foundation + component vocabulary).
 - `npm run typecheck` / `npm run build` / `npm run lint`
 - `npm run gate` — all three at once. A `.githooks/pre-commit` runs it, so a
   failing gate blocks the commit (`--no-verify` to bypass deliberately). If
@@ -47,7 +47,7 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    genuinely missing primitive is added through the **shadcn CLI**, then
    documented at `/ds` before it is used (Tabs, 2026-08-22).
 5. **Foundation is the single source of theme truth.** Theme changes flow through
-   `apps/web/src/foundation/foundation-context.tsx` (one injected style tag,
+   `packages/foundation/src/foundation-context.tsx` (one injected style tag,
    Save-to-persist). Never set theme variables ad hoc. New `--ambient-*` tokens
    must default to values derived from the base theme.
 6. **Icons via `<Icon name="…">`** (`packages/ui/src/components/icon.tsx`; the app re-exports it at `components/icon.tsx`) — semantic names,
@@ -124,7 +124,7 @@ skill before any `use_figma` write.
 
 - Monorepo: `apps/web` (Vite + React 19 + Tailwind v4) + `packages/ui` (the
   shadcn radix-nova preset; global tokens in `src/styles/globals.css`).
-- Foundation engine: `apps/web/src/foundation/foundation-context.tsx` — accents
+- Foundation engine: `packages/foundation/src/foundation-context.tsx` — accents
   (with paired foregrounds), gray tints, radius set, scaling→base-px presets;
   compiled to `#ambientui-foundation` style tag; persisted on Save under
   `ambientui-foundation`.
