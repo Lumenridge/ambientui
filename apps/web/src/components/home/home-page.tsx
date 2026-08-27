@@ -9,26 +9,29 @@ import { useAssistant } from "ambientui/assistant-context"
 import { withBase } from "@/base"
 import { CanvasBackdrop } from "@/components/canvas-backdrop"
 import { DevToolView } from "@/components/home/devtool-view"
+import { PlaybookView } from "@/components/home/playbook-view"
 import { ViewMenu } from "@/components/view-menu"
 
 /**
- * THE HOME SURFACE — two views of the same argument.
+ * THE HOME SURFACE — three views of the same argument.
  *
- * `devtool` shows an ambient layer docked beside real work; `canvas` is the
- * presentation ground, a page that is nothing but the layer, so the assistant
- * has no product to hide behind.
+ * `playbook` is the front door: the paper as a guided read, built from the
+ * system it explains. `devtool` shows an ambient layer docked beside real
+ * work; `canvas` is the presentation ground, a page that is nothing but the
+ * layer, so the assistant has no product to hide behind.
  *
  * The tab lives in the URL (`?view=`) rather than in component state, because
  * a view someone can't link to or reload into is a demo, not a page.
  */
 
 const VIEWS = [
-  // `icon` is what each view IS, for the context chip: both of these are
-  // kind "page", which is too coarse to tell a bare canvas from an editor.
+  // `icon` is what each view IS, for the context chip: every one of these is
+  // kind "page", which is too coarse to tell a guide from an editor.
   //
-  // ORDER IS THE VISIT, and the dev tool leads: it is the one view that shows
-  // the layer doing something. The canvas is the quieter claim and reads as
-  // an empty page until you already know what is meant to happen on it.
+  // ORDER IS THE VISIT, and the playbook leads: a stranger should meet the
+  // argument before the demo. The dev tool shows the layer doing something;
+  // the canvas is the quieter claim.
+  { id: "playbook", label: "Playbook", chip: "Home · The playbook", icon: "document" },
   { id: "devtool", label: "Dev tool", chip: "Home · Dev tool", icon: "code" },
   { id: "canvas", label: "Canvas", chip: "Home · Canvas", icon: "image" },
 ] as const
@@ -37,7 +40,7 @@ type ViewId = (typeof VIEWS)[number]["id"]
 
 const readView = (): ViewId => {
   const v = new URLSearchParams(window.location.search).get("view")
-  return VIEWS.some((x) => x.id === v) ? (v as ViewId) : "devtool"
+  return VIEWS.some((x) => x.id === v) ? (v as ViewId) : "playbook"
 }
 
 export function HomePage() {
@@ -95,14 +98,13 @@ export function HomePage() {
           view === "devtool" ? "top-1.5 justify-end pe-3" : "top-4 justify-center"
         )}
       >
-        {/* THE APP NAMES HOME, the menu only knows how to get there. Here it
-            is the dev tool — the view that shows the layer at work, and the
-            thing the canvas is a departure from. */}
+        {/* THE APP NAMES HOME, the menu only knows how to get there. Home is
+            the playbook — the front door the other views depart from. */}
         <ViewMenu
           items={VIEWS}
           value={view}
           onSelect={select}
-          home={{ label: "Home", onSelect: () => select("devtool") }}
+          home={{ label: "Home", onSelect: () => select("playbook") }}
         />
       </div>
 
@@ -123,6 +125,13 @@ export function HomePage() {
             — or drag the orb.
           </p>
         </div>
+      </TabsContent>
+
+      <TabsContent
+        value="playbook"
+        className="m-0 min-h-0 flex-1 overflow-y-auto pt-16"
+      >
+        <PlaybookView />
       </TabsContent>
 
       {/* the editor is a full-bleed app, not a document: it owns the whole
