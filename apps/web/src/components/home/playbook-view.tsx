@@ -21,6 +21,16 @@ import { ReferenceChips } from "ambientui/response-kit"
 import { CodeDiff, ToolCall } from "ambientui/tool-kit"
 
 import { CommandLine } from "@/components/command-line"
+import {
+  SBar,
+  SDot,
+  SLead,
+  SLink,
+  SNode,
+  SScreen,
+  SText,
+  Schematic,
+} from "@/components/home/schematic-kit"
 import { Markdown } from "@/components/ds/markdown"
 import { SYSTEM_DOCS } from "@/components/ds/system-docs"
 import { DS_PARAM } from "@/ds-route"
@@ -234,16 +244,6 @@ function Bar({ className }: { className?: string }) {
   return <span className={cn("bg-muted block rounded-sm", className)} />
 }
 
-/** A small accent dot marking where AI got bolted on. */
-function AiMark({ label }: { label?: string }) {
-  return (
-    <span className="text-primary flex items-center gap-1 font-mono text-[9px] tracking-wide uppercase">
-      <span className="bg-primary size-1.5 rounded-full" />
-      {label}
-    </span>
-  )
-}
-
 /**
  * After §1: the argument as a wireframe. Left, the common way — AI embedded
  * three separate times, each blind to the others. Right, the ambient claim —
@@ -255,38 +255,35 @@ function EmbeddedVsAmbientDiagram() {
   return (
     <WireframeShell tag="diagram · embedded vs ambient" className="my-10">
       <div className="grid gap-6 sm:grid-cols-2">
-        {/* the common way: three AI features, fragmented */}
+        {/* the common way: three AI features, fragmented, each annotated */}
         <figure className="min-w-0">
-          <div className="border-border bg-background flex h-44 overflow-hidden rounded-lg border">
+          <Schematic viewBox="0 0 360 210" label="Embedded AI: three disconnected features">
+            <SScreen x={14} y={26} w={250} h={170} />
+            <SLink x1={78} y1={32} x2={78} y2={190} bend={0} />
             {/* sidebar with the chat tab */}
-            <div className="border-border flex w-1/4 flex-col gap-2 border-r p-2.5">
-              <Bar className="h-2 w-3/4" />
-              <Bar className="h-2 w-2/3" />
-              <AiMark label="chat" />
-              <Bar className="h-2 w-3/4" />
-            </div>
-            {/* features, each with its own sparkle button */}
-            <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-2.5">
-              <div className="border-border rounded-md border p-2">
-                <div className="flex items-center justify-between gap-2">
-                  <Bar className="h-2 w-1/3" />
-                  <AiMark />
-                </div>
-                <Bar className="mt-2 h-2 w-5/6" />
-              </div>
-              <div className="border-border rounded-md border p-2">
-                <div className="flex items-center justify-between gap-2">
-                  <Bar className="h-2 w-1/2" />
-                  <AiMark />
-                </div>
-                <Bar className="mt-2 h-2 w-2/3" />
-              </div>
-              {/* the assistant panel that is really another page */}
-              <div className="border-primary/40 mt-auto rounded-md border border-dashed p-2">
-                <AiMark label="assistant panel" />
-              </div>
-            </div>
-          </div>
+            <SBar x={26} y={44} w={40} />
+            <SBar x={26} y={58} w={32} />
+            <SDot x={32} y={82} accent />
+            <SBar x={40} y={79} w={26} />
+            <SBar x={26} y={96} w={36} />
+            {/* two features, each wearing its own sparkle */}
+            <SScreen x={92} y={44} w={150} h={38} rx={4} />
+            <SBar x={102} y={56} w={50} />
+            <SBar x={102} y={66} w={90} />
+            <SDot x={228} y={56} accent />
+            <SScreen x={92} y={94} w={150} h={38} rx={4} />
+            <SBar x={102} y={106} w={60} />
+            <SBar x={102} y={116} w={80} />
+            <SDot x={228} y={106} accent />
+            {/* the assistant panel that is really another page */}
+            <SScreen x={92} y={146} w={150} h={36} rx={4} dashed accent />
+            <SDot x={104} y={164} accent />
+            {/* leader annotations, reference-style */}
+            <SLead x1={32} y1={82} x2={296} y2={36} label="chat tab" accent />
+            <SLead x1={228} y1={56} x2={296} y2={66} label="sparkle" accent />
+            <SLead x1={228} y1={106} x2={296} y2={106} label="sparkle" accent />
+            <SLead x1={168} y1={164} x2={296} y2={152} label="panel" accent />
+          </Schematic>
           <figcaption className="text-muted-foreground mt-2 text-xs leading-relaxed">
             Embedded: the AI three times over — a chat tab, sparkle buttons,
             a panel — none of them knowing what the others did.
@@ -295,32 +292,31 @@ function EmbeddedVsAmbientDiagram() {
 
         {/* the ambient claim: the product untouched, one layer above */}
         <figure className="min-w-0">
-          <div className="relative h-44">
+          <Schematic viewBox="0 0 360 210" label="Ambient: one presence above an untouched product">
             {/* the product, with no AI inside it at all */}
-            <div className="border-border bg-background absolute inset-x-0 bottom-0 top-3 flex overflow-hidden rounded-lg border">
-              <div className="border-border flex w-1/4 flex-col gap-2 border-r p-2.5">
-                <Bar className="h-2 w-3/4" />
-                <Bar className="h-2 w-2/3" />
-                <Bar className="h-2 w-3/4" />
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-2.5">
-                <div className="border-border rounded-md border p-2">
-                  <Bar className="h-2 w-1/3" />
-                  <Bar className="mt-2 h-2 w-5/6" />
-                </div>
-                <div className="border-border rounded-md border p-2">
-                  <Bar className="h-2 w-1/2" />
-                  <Bar className="mt-2 h-2 w-2/3" />
-                </div>
-              </div>
-            </div>
-            {/* the one presence, floating above everything */}
-            <div className="border-primary/50 bg-background absolute right-3 -top-0.5 flex w-1/2 items-center gap-2 rounded-lg border px-2.5 py-2 shadow-sm">
-              <span className="bg-primary size-2 shrink-0 rounded-full" />
-              <Bar className="h-2 flex-1" />
-              <span className="text-muted-foreground font-mono text-[9px]">⌘K</span>
-            </div>
-          </div>
+            <SScreen x={14} y={54} w={250} h={142} />
+            <SLink x1={78} y1={60} x2={78} y2={190} bend={0} />
+            <SBar x={26} y={72} w={40} />
+            <SBar x={26} y={86} w={32} />
+            <SBar x={26} y={100} w={36} />
+            <SScreen x={92} y={72} w={150} h={38} rx={4} />
+            <SBar x={102} y={84} w={50} />
+            <SBar x={102} y={94} w={90} />
+            <SScreen x={92} y={122} w={150} h={38} rx={4} />
+            <SBar x={102} y={134} w={60} />
+            <SBar x={102} y={144} w={80} />
+            {/* the one presence, floating above the screen's edge */}
+            <SScreen x={120} y={14} w={180} h={30} rx={15} accent />
+            <SDot x={138} y={29} r={4.5} accent />
+            <SBar x={150} y={26} w={100} />
+            <SText x={288} y={32} anchor="end" size={7} muted>
+              ⌘K
+            </SText>
+            <SLead x1={118} y1={29} x2={100} y2={29} label="one presence" anchor="end" accent />
+            {/* the page's context flowing up into it */}
+            <SDot x={242} y={91} accent />
+            <SLink x1={242} y1={91} x2={252} y2={44} bend={0.7} dashed accent />
+          </Schematic>
           <figcaption className="text-muted-foreground mt-2 text-xs leading-relaxed">
             Ambient: the product carries no AI at all. One presence sits
             above it, sees where you are, and answers from anywhere.
@@ -607,6 +603,94 @@ function AnswerDemo() {
         then evidence, then prose.
       </p>
     </WireframeShell>
+  )
+}
+
+/**
+ * §12's three-layer pipeline, drawn as a flow schematic instead of the
+ * paper's ascii block: the scales fan into primitives, roles alias the
+ * primitives with the save as the commit point, and components fan out
+ * binding roles only. Same statement as the ascii, drawn in line-work.
+ */
+const PIPE_IN = ["palette", "spacing", "type", "radius", "motion"]
+const PIPE_OUT = ["button", "input", "card", "panel", "orb"]
+
+function PipelineSchematic() {
+  const ys = [45, 85, 125, 165, 205]
+  return (
+    <Schematic
+      viewBox="0 0 720 250"
+      label="The token pipeline: scales into primitives, roles alias primitives, components bind roles"
+      className="my-6 w-full"
+    >
+      {/* the scales of record, fanning in */}
+      {PIPE_IN.map((k, i) => (
+        <g key={k}>
+          <SText x={70} y={ys[i] + 2.5} anchor="end" muted>
+            {k}
+          </SText>
+          <SDot x={80} y={ys[i]} />
+          <SLink x1={80} y1={ys[i]} x2={169} y2={125} bend={0.6} />
+        </g>
+      ))}
+      <SNode x={205} y={125} lines={["primitives"]} />
+      <SText x={205} y={176} anchor="middle" size={7} muted>
+        the scales of record
+      </SText>
+      <SText x={205} y={186} anchor="middle" size={7} muted>
+        verbatim, never bent
+      </SText>
+
+      <SLink x1={241} y1={125} x2={349} y2={125} bend={0} />
+      <SDot x={295} y={125} ring />
+
+      <SNode x={385} y={125} lines={["semantic", "roles"]} />
+      <SText x={385} y={176} anchor="middle" size={7} muted>
+        aliases into the primitives
+      </SText>
+      <SText x={385} y={186} anchor="middle" size={7} muted>
+        chosen by the saved config
+      </SText>
+
+      {/* the commit point */}
+      <SLink x1={421} y1={125} x2={529} y2={125} bend={0} />
+      <SDot x={475} y={125} accent />
+      <SLead x1={475} y1={118} x2={475} y2={82} label="save" anchor="start" accent />
+
+      <SNode x={565} y={125} lines={["components"]} />
+      <SText x={565} y={176} anchor="middle" size={7} muted>
+        bind roles only
+      </SText>
+      <SText x={565} y={186} anchor="middle" size={7} muted>
+        never primitives
+      </SText>
+
+      {/* everything downstream, fanning out */}
+      {PIPE_OUT.map((k, i) => (
+        <g key={k}>
+          <SLink x1={601} y1={125} x2={660} y2={ys[i]} bend={0.6} />
+          <SDot x={660} y={ys[i]} />
+          <SText x={670} y={ys[i] + 2.5} muted>
+            {k}
+          </SText>
+        </g>
+      ))}
+    </Schematic>
+  )
+}
+
+/**
+ * §12 renders with the ascii pipeline block swapped for the schematic.
+ * Everything else in the section is the paper's bytes, untouched.
+ */
+function TokenPipelineSection({ md }: { md: string }) {
+  const parts = md.split("```")
+  return (
+    <>
+      <Markdown source={parts[0].trim()} />
+      <PipelineSchematic />
+      <Markdown source={parts.slice(2).join("```").trim()} />
+    </>
   )
 }
 
@@ -1073,13 +1157,17 @@ export function PlaybookView() {
               )
             }
             const demo = DEMOS.find((d) => d.match.test(chunk.md))
-            // §10's File/Job table reads better as cards with GitHub links
+            // two sections carry richer presentations of their own bytes:
+            // §10's table as cards, §12's ascii pipeline as a schematic
             const isAnatomy = /^## 10\. /.test(chunk.md)
+            const isPipeline = /^## 12\. /.test(chunk.md)
             return (
               <React.Fragment key={chunk.id}>
                 <Reveal id={chunk.id} className="scroll-mt-24">
                   {isAnatomy ? (
                     <AnatomySection md={chunk.md} />
+                  ) : isPipeline ? (
+                    <TokenPipelineSection md={chunk.md} />
                   ) : (
                     <Markdown source={chunk.md} />
                   )}
