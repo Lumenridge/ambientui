@@ -8,6 +8,7 @@ import claudeMd from "../../../../../CLAUDE.md?raw"
 import designMd from "../../../../../DESIGN.md?raw"
 import paperMd from "../../../../../PAPER.md?raw"
 import readmeMd from "../../../../../README.md?raw"
+import shellSpecMd from "../../../../../docs/ambient-shell-spec.md?raw"
 import figmaMd from "../../../../../figma/figma-sync.md?raw"
 import dsManagerMd from "../../../../../.claude/skills/ds-manager/SKILL.md?raw"
 import productDesignManagerMd from "../../../../../.claude/skills/product-design-manager/SKILL.md?raw"
@@ -62,6 +63,14 @@ export const SYSTEM_DOCS: SystemDoc[] = [
     summary:
       "The rules the AI works under: tokens only, sanctioned components only, and what counts as a governance event.",
     source: claudeMd,
+  },
+  {
+    id: "doc-shell-spec",
+    name: "Ambient shell spec",
+    path: "docs/ambient-shell-spec.md",
+    group: "Working rules",
+    summary: "The complete behavior contract for porting the shell.",
+    source: shellSpecMd,
   },
   {
     id: "doc-figma",
