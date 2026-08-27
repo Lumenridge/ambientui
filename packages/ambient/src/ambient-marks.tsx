@@ -46,11 +46,15 @@ export function ShimmerPlaceholder({
     <span
       aria-hidden
       className={cn(
-        "ambient-shimmer pointer-events-none absolute inset-y-0 left-0 flex items-center text-base",
+        // inset-0, not left-0: the ghost stands in for a single-line <input>,
+        // so it must be bounded by the field's box and truncate the way the
+        // input would. Unbounded, a long suggestion wrapped to two lines the
+        // moment the scaling base grew (95% fit by luck; 100% did not).
+        "ambient-shimmer pointer-events-none absolute inset-0 flex items-center text-base",
         className
       )}
     >
-      {children}
+      <span className="truncate">{children}</span>
     </span>
   )
 }
