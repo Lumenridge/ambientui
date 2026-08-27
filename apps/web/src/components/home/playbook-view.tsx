@@ -610,6 +610,94 @@ function AnswerDemo() {
   )
 }
 
+/* ------------------------ the anatomy as cards ------------------------ */
+
+const GITHUB = "https://github.com/Lumenridge/ambientui"
+
+/**
+ * Resolve a File cell from the anatomy table to a GitHub URL. Directories
+ * get tree links, files get blob links; the two rows whose cells are not a
+ * clean path (the elided ds-docs path, the gate) carry explicit targets.
+ */
+function anatomyHref(cell: string): string | null {
+  if (cell.includes("…")) return `${GITHUB}/blob/main/apps/web/src/components/ds/ds-docs.tsx`
+  if (cell.startsWith("The gate")) return `${GITHUB}/blob/main/package.json`
+  const path = cell.match(/`([^`]+)`/)?.[1]
+  if (!path) return null
+  const clean = path.replace(/\/$/, "")
+  const isDir = path.endsWith("/") || !clean.split("/").pop()?.includes(".")
+  return `${GITHUB}/${isDir ? "tree" : "blob"}/main/${clean}`
+}
+
+/**
+ * §10's File/Job table, rendered as cards instead of rows — but DERIVED
+ * from the table's own bytes in the paper, never written here. Each card:
+ * the job's first sentence as its name, the path in mono, the rest of the
+ * job as the description, and the file on GitHub one click away. Edit the
+ * table in PAPER.md and the cards follow; there is no second copy.
+ */
+function AnatomySection({ md }: { md: string }) {
+  const lines = md.split("\n")
+  const first = lines.findIndex((l) => l.startsWith("|"))
+  let last = first
+  while (last < lines.length && lines[last].startsWith("|")) last++
+  const before = lines.slice(0, first).join("\n").trim()
+  const after = lines.slice(last).join("\n").trim()
+  const rows = lines
+    .slice(first + 2, last) // skip header + divider
+    .map((l) => l.split("|").map((c) => c.trim()))
+    .filter((c) => c.length >= 3)
+    .map(([, file, job]) => {
+      // the job's lead — up to the first ". " or ": " — names the card
+      const cut = [job.indexOf(". "), job.indexOf(": ")]
+        .filter((i) => i > 0)
+        .sort((a, b) => a - b)[0]
+      const rest = cut ? job.slice(cut + 2) : ""
+      return {
+        file,
+        title: cut ? job.slice(0, cut) : job,
+        desc: rest ? rest[0].toUpperCase() + rest.slice(1) : "",
+        href: anatomyHref(file),
+        path: file.match(/`([^`]+)`/)?.[1] ?? file,
+      }
+    })
+  return (
+    <>
+      <Markdown source={before} />
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {rows.map((r) => (
+          <div
+            key={r.path}
+            className="border-border bg-card flex flex-col gap-1.5 rounded-xl border p-4"
+          >
+            <p className="text-sm font-medium">{r.title}</p>
+            <p className="text-muted-foreground truncate font-mono text-xs">
+              {r.path}
+            </p>
+            {r.desc && (
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {r.desc}
+              </p>
+            )}
+            {r.href && (
+              <a
+                href={r.href}
+                target="_blank"
+                rel="noreferrer"
+                className="text-muted-foreground hover:text-foreground mt-auto flex items-center gap-1 pt-2 text-xs font-medium"
+              >
+                View on GitHub
+                <Icon name="arrow-up-right" size={12} />
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+      {after && <Markdown source={after} className="mt-8" />}
+    </>
+  )
+}
+
 /** Which demo follows which section, matched on the section heading. */
 const DEMOS: { match: RegExp; node: React.ReactNode }[] = [
   { match: /^## 1\. /, node: <EmbeddedVsAmbientDiagram /> },
@@ -985,10 +1073,16 @@ export function PlaybookView() {
               )
             }
             const demo = DEMOS.find((d) => d.match.test(chunk.md))
+            // §10's File/Job table reads better as cards with GitHub links
+            const isAnatomy = /^## 10\. /.test(chunk.md)
             return (
               <React.Fragment key={chunk.id}>
                 <Reveal id={chunk.id} className="scroll-mt-24">
-                  <Markdown source={chunk.md} />
+                  {isAnatomy ? (
+                    <AnatomySection md={chunk.md} />
+                  ) : (
+                    <Markdown source={chunk.md} />
+                  )}
                 </Reveal>
                 {demo && <Reveal>{demo.node}</Reveal>}
               </React.Fragment>
