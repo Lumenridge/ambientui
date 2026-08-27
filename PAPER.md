@@ -2,19 +2,21 @@
 
 **What a design system has to become before an AI can build inside it.**
 
-This paper has two parts. Part I describes Ambient UI: an AI assistant that
-lives above a product instead of inside it. Part II describes the structure
-underneath it: a design system reshaped into an architecture, so interfaces
-can be generated, changed, and experimented with without drifting into slop.
+AI can produce interfaces faster than anyone can audit them, and what it
+produces is unattached: values invented at the moment of generation,
+connected to nothing. Rules on a docs page do not stop this, because a
+generator cannot be advised, only constrained. This paper is about the
+structure that constrains one, and about the assistant that structure
+makes possible.
 
-The two parts need each other. The assistant is the demand: an AI surface
-touches every corner of a product, so it exposes every weakness in how that
-product stores its design decisions. The architecture is the supply: a way of
-storing those decisions so a generator, human or machine, cannot detach from
-them.
+Part I is Ambient UI: an AI assistant that lives above a product instead
+of inside it. It is the demand, because an assistant touches every corner
+of a product and exposes every weakness in how design decisions are
+stored. Part II is design architecture: the supply, a way of storing those
+decisions so a generator, human or machine, cannot detach from them.
 
-Everything here was built. The repository this file lives in is the working
-proof, and the failures recorded below happened in it.
+Everything here was built. The repository this file lives in is the
+working proof, and the failures recorded below happened in it.
 
 ---
 
