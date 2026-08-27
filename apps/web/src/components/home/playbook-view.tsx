@@ -544,7 +544,7 @@ export function PlaybookView() {
               </Button>
             </div>
             <CommandLine
-              className="mt-6 max-w-xl"
+              className="mt-6"
               command="npx shadcn add https://lumenridge.github.io/ambientui/r/ambient-layer.json"
             />
           </Reveal>
