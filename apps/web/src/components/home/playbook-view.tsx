@@ -3,179 +3,52 @@ import * as React from "react"
 import { motion } from "framer-motion"
 
 import { Button } from "@ambientui/ui/components/button"
-import { Icon, type IconName } from "@ambientui/ui/components/icon"
+import { Icon } from "@ambientui/ui/components/icon"
 import { SectionRail } from "@ambientui/ui/components/section-rail"
+import { Tabs, TabsList, TabsTrigger } from "@ambientui/ui/components/tabs"
+import { cn } from "@ambientui/ui/lib/utils"
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 import { useAssistant } from "ambientui/assistant-context"
+import { ReasoningPanel } from "ambientui/message-kit"
+import { ReferenceChips } from "ambientui/response-kit"
+import { CodeDiff, ToolCall } from "ambientui/tool-kit"
 
 import { CommandLine } from "@/components/command-line"
+import { Markdown } from "@/components/ds/markdown"
 import { SYSTEM_DOCS } from "@/components/ds/system-docs"
 import { DS_PARAM } from "@/ds-route"
 import { withBase } from "@/base"
 
 /**
- * THE PLAYBOOK — the front door, structured like a guide someone reads top
- * to bottom: a hero, a framing paragraph, numbered parts, and a porting kit.
+ * THE PLAYBOOK — the front door: the paper itself, read as an article.
  *
- * IT IS BUILT FROM THE SYSTEM IT EXPLAINS, deliberately. The reference this
- * page answers (a playbook-style guide site) was translated per the primary
- * rule, never cloned: its left TOC became our SectionRail (the system's own
- * in-page nav), its serif display became our configured type at the top of
- * the Tailwind scale, its ground became the ambient engineering grid, and
- * its per-entry pages became the real documents at /ds, rendered from their
- * actual bytes. Every control is vocabulary: Button, CommandLine, Icon,
- * SectionRail.
+ * THE ARTICLE IS THE PAPER'S REAL BYTES. The body is PAPER.md rendered
+ * through the same Markdown reader /ds uses — not a rewrite, not entries
+ * that link away. Edit the paper and this page changes, because there is no
+ * copy to fall out of step. One presentation transform: the file's title
+ * block (H1 + bold subtitle) is sliced off, because the hero renders those
+ * two lines at display scale — showing them twice would be the page
+ * stuttering.
  *
- * IT IS INTERACTIVE THROUGH THE REAL LAYER, not through mockups: the try
- * buttons call setMode on the live assistant, and the page declares its
- * intel so the quick-ask suggestion is about the playbook.
+ * TWO WAYS TO HOLD IT (the reference's Read/Plan duality, translated):
+ * Read is the article, section by section on the motion roles. Browse is a
+ * numbered index DERIVED FROM THE SAME BYTES — headings and first lines
+ * parsed from the chunks, never hand-written — that jumps into the article.
  *
- * Two local compositions, kept local on purpose (watchlist, DESIGN.md §13):
- * - `Reveal` — a whileInView wrapper on the surface role, so sections land
- *   as the reader arrives. Not promoted: this page is its only consumer.
- * - `DocDownload` — a Button that hands the visitor the governing file
- *   itself, built from the same ?raw bytes /ds renders. No copy to rot.
+ * THE DEMOS ARE THE REAL COMPONENTS IN A SHELL FRAME: after the section on
+ * the six shapes, buttons that open the live layer's actual surfaces; after
+ * the section on composed answers, the ambient vocabulary itself —
+ * ReasoningPanel, ToolCall, CodeDiff, ReferenceChips — rendered settled
+ * inside a wireframe shell, so the article shows the thing it just argued.
+ *
+ * Kept-local compositions (watchlist, DESIGN.md §13): `Reveal`,
+ * `DocDownload`, and `WireframeShell` (a dashed, corner-ticked frame with a
+ * mono tag — the page's blueprint device, drawn entirely from the border
+ * role and the type scale).
  */
 
-/* One entry in a part: number · title · description · where it lives. */
-type Entry = {
-  n: string
-  title: string
-  desc: string
-  /** The paper section (or doc) this entry opens at /ds. */
-  ref: string
-  docId: string
-  try_?: { label: string; icon?: IconName; run: (a: TryApi) => void }[]
-}
-type TryApi = { setMode: (m: "spotlight" | "panel" | "history") => void }
-
-type Part = {
-  id: string
-  part: string
-  title: string
-  lede: string
-  entries: Entry[]
-}
-
-const PARTS: Part[] = [
-  {
-    id: "part-1",
-    part: "PART 1",
-    title: "The layer",
-    lede: "An AI assistant that lives above the product instead of inside it. It is running on this page right now.",
-    entries: [
-      {
-        n: "00",
-        title: "AI does not belong inside your interface",
-        desc: "A chat tab, a sparkle button, an assistant page: each treats AI as a feature among features, and each fragments it. The claim that starts everything: the AI is a layer above the product, a presence rather than a destination.",
-        ref: "§1",
-        docId: "doc-paper",
-      },
-      {
-        n: "01",
-        title: "One presence, six shapes",
-        desc: "Orb, quick ask, panel, dock, spotlight, history. Not six features: one thing changing geometry to match how much of your attention the moment deserves. Try them on this page.",
-        ref: "§2",
-        docId: "doc-paper",
-        try_: [
-          { label: "Spotlight", icon: "search", run: (a) => a.setMode("spotlight") },
-          { label: "Panel", run: (a) => a.setMode("panel") },
-          { label: "History", icon: "history", run: (a) => a.setMode("history") },
-        ],
-      },
-      {
-        n: "02",
-        title: "It already knows where you are",
-        desc: "Pages declare their context; you never re-explain it. The chip in the assistant's composer names this page because this page told it to. Ask the orb what the playbook is.",
-        ref: "§3",
-        docId: "doc-paper",
-      },
-      {
-        n: "03",
-        title: "Every answer is built from components",
-        desc: "Diffs you review hunk by hunk, terminals with exit codes, reports whose outlines fill in. A model fills the structure; it never invents it.",
-        ref: "§4",
-        docId: "doc-paper",
-      },
-      {
-        n: "04",
-        title: "A layer with no look of its own",
-        desc: "No palette, no type scale, no motion of its own. Change this product's accent and the assistant follows, because it was never carrying one.",
-        ref: "§5–6",
-        docId: "doc-paper",
-      },
-    ],
-  },
-  {
-    id: "part-2",
-    part: "PART 2",
-    title: "The architecture",
-    lede: "Why generated interfaces become slop, and the structure that makes drift impossible to express.",
-    entries: [
-      {
-        n: "05",
-        title: "Drift, or how interfaces become slop",
-        desc: "Values invented at the moment of generation, connected to nothing. A hundred small design systems that happen to sit next to each other. Documentation is advice, and advice cannot constrain a generator.",
-        ref: "§7–8",
-        docId: "doc-paper",
-      },
-      {
-        n: "06",
-        title: "The bounded configuration space",
-        desc: "Scales of record, roles over values, references answered by configuration, propagation as a guarantee, and the docs as the control surface. Six moves, each one earned by failing first in a softer form.",
-        ref: "§9",
-        docId: "doc-paper",
-      },
-      {
-        n: "07",
-        title: "The anatomy",
-        desc: "The architecture as actual files: one value store, one compiler, two vocabularies, a registry the distribution is generated from, and a gate that turns drift into a red build.",
-        ref: "§10",
-        docId: "doc-paper",
-      },
-      {
-        n: "08",
-        title: "Building without drift",
-        desc: "Every opening an unattached value could enter through, closed one at a time — including the generator itself, which works here as a governed contributor with a constitution, not a free hand with a catalog.",
-        ref: "§11",
-        docId: "doc-paper",
-      },
-    ],
-  },
-  {
-    id: "part-3",
-    part: "PART 3",
-    title: "One source of truth",
-    lede: "The token pipeline that makes the codebase and the Figma file two projections of the same data.",
-    entries: [
-      {
-        n: "09",
-        title: "The data layer",
-        desc: "Primitives, semantic roles, components: the same three layers in code and in Figma, synced by rule. Changing this system's accent was six alias edits; both environments re-themed and zero components were touched.",
-        ref: "§12",
-        docId: "doc-paper",
-      },
-      {
-        n: "10",
-        title: "What it buys design, engineering, and speed",
-        desc: "Designers experiment against the variables the product runs on. Handoff becomes a diff, not a meeting. A new product starts from a fork, and fifty interfaces are one system with fifty configurations.",
-        ref: "§13",
-        docId: "doc-paper",
-      },
-      {
-        n: "11",
-        title: "Where it breaks anyway",
-        desc: "Cascade layers beating specificity, tokens that are not strings, state in stale closures. The failures live in the seams, and they are recorded because they were the most informative part.",
-        ref: "§14",
-        docId: "doc-paper",
-      },
-    ],
-  },
-]
-
-/** The porting kit: the governing files themselves, downloadable. */
 const KIT: { docId: string; blurb: string }[] = [
-  { docId: "doc-paper", blurb: "The whole argument, both parts." },
+  { docId: "doc-paper", blurb: "This article, as the file it is." },
   { docId: "doc-motion-spec", blurb: "Roles, characters, and the arrival choreography. Read first when porting." },
   { docId: "doc-shell-spec", blurb: "The layer's complete behavior contract, shape by shape." },
   { docId: "doc-design", blurb: "The constitution: rules, contracts, and the decision log." },
@@ -188,14 +61,17 @@ const KIT: { docId: string; blurb: string }[] = [
 function Reveal({
   children,
   className,
+  id,
 }: {
   children: React.ReactNode
   className?: string
+  id?: string
 }) {
   const spring = useMotionSpring()
   const micro = useMotionTransition("micro")
   return (
     <motion.div
+      id={id}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
@@ -204,6 +80,40 @@ function Reveal({
     >
       {children}
     </motion.div>
+  )
+}
+
+/**
+ * The blueprint device: a dashed frame with corner ticks and a mono tag.
+ * Everything is the border role and the type scale — a wireframe drawn
+ * from tokens, not an image of one.
+ */
+function WireframeShell({
+  tag,
+  children,
+  className,
+}: {
+  tag: string
+  children: React.ReactNode
+  className?: string
+}) {
+  const tick = "border-border absolute size-2"
+  return (
+    <div
+      className={cn(
+        "border-border relative rounded-xl border border-dashed p-5 sm:p-6",
+        className
+      )}
+    >
+      <span className={cn(tick, "-top-px -left-px rounded-tl border-t-2 border-l-2")} />
+      <span className={cn(tick, "-top-px -right-px rounded-tr border-t-2 border-r-2")} />
+      <span className={cn(tick, "-bottom-px -left-px rounded-bl border-b-2 border-l-2")} />
+      <span className={cn(tick, "-bottom-px -right-px rounded-br border-b-2 border-r-2")} />
+      <span className="bg-background text-muted-foreground absolute -top-2.5 left-4 px-2 font-mono text-[11px] tracking-wide uppercase">
+        {tag}
+      </span>
+      {children}
+    </div>
   )
 }
 
@@ -248,60 +158,168 @@ const openDoc = (docId: string) => {
   window.dispatchEvent(new PopStateEvent("popstate"))
 }
 
-function EntryRow({ entry }: { entry: Entry }) {
+/* ------------------------- the article chunks ------------------------- */
+
+type Chunk = {
+  id: string
+  md: string
+  /** parsed for the Browse index; absent on non-section chunks */
+  heading?: { level: 1 | 2; label: string; firstLine: string }
+}
+
+/**
+ * The paper, sliced for staged reading and indexed for Browse: the title
+ * block the hero renders is dropped, the body splits at part and section
+ * headings, and each chunk's heading + first line feed the index. The bytes
+ * inside each chunk are untouched, and the index cannot drift from the
+ * article because both come from the same split.
+ */
+function usePaper() {
+  return React.useMemo(() => {
+    const source = SYSTEM_DOCS.find((d) => d.id === "doc-paper")?.source ?? ""
+    const lines = source.split("\n")
+    let start = 0
+    if (lines[0]?.startsWith("# ")) {
+      start = 1
+      while (lines[start] === "") start++
+      if (lines[start]?.startsWith("**")) {
+        start++
+        while (lines[start] === "") start++
+      }
+    }
+    const body = lines.slice(start)
+    const chunks: Chunk[] = []
+    let current: string[] = []
+    const flush = () => {
+      const md = current.join("\n").trim()
+      if (!md) return (current = [])
+      const first = md.split("\n")[0] ?? ""
+      let heading: Chunk["heading"]
+      if (first.startsWith("# Part "))
+        heading = { level: 1, label: first.slice(2), firstLine: "" }
+      else if (first.startsWith("## ")) {
+        const rest = md.split("\n").slice(1)
+        const firstLine = rest.find((l) => l.trim() !== "") ?? ""
+        heading = { level: 2, label: first.slice(3), firstLine }
+      }
+      chunks.push({ id: `s-${chunks.length}`, md, heading })
+      current = []
+    }
+    for (const line of body) {
+      if (/^## /.test(line) || /^# Part /.test(line)) flush()
+      current.push(line)
+    }
+    flush()
+    for (const c of chunks) {
+      if (c.md.startsWith("# Part I:")) c.id = "part-1"
+      if (c.md.startsWith("# Part II:")) c.id = "part-2"
+    }
+    const words = source.split(/\s+/).length
+    return { chunks, minutes: Math.max(1, Math.round(words / 220)) }
+  }, [])
+}
+
+/* --------------------------- the shell demos --------------------------- */
+
+/** After §2: the shapes, opened for real on this page. */
+function ShapesDemo() {
   const { setMode } = useAssistant()
   return (
-    <div className="border-border group border-t py-6 first:border-t-0">
-      <button
-        type="button"
-        onClick={() => openDoc(entry.docId)}
-        className="flex w-full items-start gap-5 text-start"
-      >
-        <span className="text-muted-foreground pt-0.5 font-mono text-sm tabular-nums">
-          {entry.n}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-baseline gap-3">
-            <span className="text-base font-medium group-hover:underline">
-              {entry.title}
-            </span>
-            <span className="text-muted-foreground ms-auto shrink-0 font-mono text-xs">
-              {entry.ref}
-            </span>
-          </span>
-          <span className="text-muted-foreground mt-1 block max-w-2xl text-sm leading-relaxed">
-            {entry.desc}
-          </span>
-        </span>
-      </button>
-      {entry.try_ && (
-        <div className="mt-3 flex items-center gap-1.5 ps-10">
-          <span className="text-muted-foreground me-1 font-mono text-xs">
-            try
-          </span>
-          {entry.try_.map((t) => (
-            <Button
-              key={t.label}
-              variant="outline"
-              size="sm"
-              onClick={() => t.run({ setMode })}
-            >
-              {t.icon && <Icon name={t.icon} size={13} />}
-              {t.label}
-            </Button>
-          ))}
-        </div>
-      )}
-    </div>
+    <WireframeShell tag="live · this page is the shell" className="my-10">
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        The presence this section describes is running here. Press{" "}
+        <kbd className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
+          ⌘K
+        </kbd>
+        , drag the orb at the edge of this page, or open a shape:
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <Button variant="outline" size="sm" onClick={() => setMode("spotlight")}>
+          <Icon name="search" size={13} />
+          Spotlight
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setMode("panel")}>
+          Panel
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setMode("history")}>
+          <Icon name="history" size={13} />
+          History
+        </Button>
+      </div>
+    </WireframeShell>
   )
 }
+
+/** After §4: an answer, composed from the real vocabulary, settled. */
+function AnswerDemo() {
+  return (
+    <WireframeShell tag="demo · the answer vocabulary, settled" className="my-10">
+      <div className="flex flex-col gap-4">
+        <ReasoningPanel
+          steps={[
+            {
+              title: "Reading the request",
+              detail:
+                "Drafts should survive a thread switch, so the state has to move out of the component.",
+            },
+            {
+              title: "Locating the seam",
+              detail:
+                "The composer already receives its thread id; the draft store can key on it.",
+            },
+          ]}
+          seconds={4}
+          running={false}
+          staged={false}
+          defaultOpen
+        />
+        <ToolCall
+          verb="Searched the docs"
+          request={'{"query": "draft persistence"}'}
+          result="3 matches, best hit /docs/runtime/drafts"
+          staged={false}
+          defaultOpen
+        />
+        <CodeDiff
+          path="composer.tsx"
+          staged={false}
+          lines={[
+            { sign: " ", text: "export function Composer() {" },
+            { sign: " ", text: "  const threadId = useThreadId();" },
+            { sign: "-", text: '  const [draft, setDraft] = useState("");' },
+            { sign: "+", text: "  const draft = useDraft(threadId);" },
+            { sign: " ", text: "  return (" },
+          ]}
+        />
+        <ReferenceChips
+          refs={[
+            { label: "DESIGN.md · §8 The contract", icon: "document" },
+            { label: "Response kit v0" },
+          ]}
+        />
+      </div>
+      <p className="text-muted-foreground mt-4 text-xs leading-relaxed">
+        Every block above is the real component from the ambient vocabulary,
+        rendered settled. In the live layer they arrive staged: thinking,
+        then evidence, then prose.
+      </p>
+    </WireframeShell>
+  )
+}
+
+/** Which demo follows which section, matched on the section heading. */
+const DEMOS: { match: RegExp; node: React.ReactNode }[] = [
+  { match: /^## 2\. /, node: <ShapesDemo /> },
+  { match: /^## 4\. /, node: <AnswerDemo /> },
+]
 
 /* ---------------------------------------------------------------- */
 
 export function PlaybookView() {
   const { setPageIntel } = useAssistant()
+  const { chunks, minutes } = usePaper()
+  const [tab, setTab] = React.useState("read")
 
-  // what this page invites the assistant to be asked
   React.useEffect(() => {
     setPageIntel({
       suggestions: [
@@ -314,27 +332,33 @@ export function PlaybookView() {
     return () => setPageIntel(null)
   }, [setPageIntel])
 
-  const scrollTo = (id: string) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
+  const scrollTo = (id: string) => {
+    setTab("read")
+    // let Read remount before jumping to an anchor inside it
+    requestAnimationFrame(() =>
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
+    )
+  }
 
   return (
     <div className="ambient-grid relative min-h-full">
-      <SectionRail
-        sections={[
-          { id: "overview", label: "Overview" },
-          { id: "part-1", label: "The layer" },
-          { id: "part-2", label: "Architecture" },
-          { id: "part-3", label: "One truth" },
-          { id: "kit", label: "The kit" },
-        ]}
-      />
+      {tab === "read" && (
+        <SectionRail
+          sections={[
+            { id: "overview", label: "Overview" },
+            { id: "part-1", label: "The layer" },
+            { id: "part-2", label: "Architecture" },
+            { id: "kit", label: "The kit" },
+          ]}
+        />
+      )}
 
       <div className="mx-auto w-full max-w-3xl px-6 pb-40">
-        {/* hero */}
+        {/* hero — the paper's title block at display scale */}
         <header id="overview" className="scroll-mt-24 pt-10 sm:pt-16">
           <Reveal>
             <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-              ambientui / the playbook
+              ambientui / the playbook · {minutes} min read
             </p>
             <h1 className="mt-6 text-6xl font-semibold tracking-tight text-balance sm:text-7xl">
               Design
@@ -346,7 +370,7 @@ export function PlaybookView() {
               inside it.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button onClick={() => scrollTo("part-1")}>Get started</Button>
+              <Button onClick={() => scrollTo("part-1")}>Start reading</Button>
               <Button variant="ghost" onClick={() => scrollTo("kit")}>
                 Take the kit
                 <Icon name="chevron-down" size={14} />
@@ -357,68 +381,77 @@ export function PlaybookView() {
               command="npx shadcn add https://lumenridge.github.io/ambientui/r/ambient-layer.json"
             />
           </Reveal>
-
-          <Reveal className="mt-14">
-            <p className="border-border max-w-2xl border-t pt-8 text-base leading-relaxed">
-              AI can produce interfaces faster than anyone can audit them,
-              and what it produces is unattached: every value an invention,
-              answerable to nothing. This playbook is the structure that
-              fixes that, in the order it has to be built — and the page you
-              are reading is made of it. The grid behind this text is the
-              system&apos;s engineering ground, the type is its configured
-              scale, and the assistant is already here.{" "}
-              <span className="text-muted-foreground">
-                Press{" "}
-                <kbd className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
-                  ⌘K
-                </kbd>{" "}
-                — or drag the orb.
-              </span>
-            </p>
-          </Reveal>
         </header>
 
-        {/* parts */}
-        {PARTS.map((part) => (
-          <section
-            key={part.id}
-            id={part.id}
-            className="mt-24 scroll-mt-24"
-          >
-            <Reveal>
-              <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-                {part.part}
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                {part.title}
-              </h2>
-              <p className="text-muted-foreground mt-2 max-w-xl text-sm leading-relaxed">
-                {part.lede}
-              </p>
-            </Reveal>
-            <Reveal className="mt-8">
-              <div>
-                {part.entries.map((e) => (
-                  <EntryRow key={e.n} entry={e} />
-                ))}
-              </div>
-            </Reveal>
-          </section>
-        ))}
+        {/* Read | Browse — the whole article, or its derived index */}
+        <Tabs value={tab} onValueChange={setTab} className="mt-12">
+          <TabsList>
+            <TabsTrigger value="read">Read</TabsTrigger>
+            <TabsTrigger value="browse">Browse</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {tab === "browse" ? (
+          <nav aria-label="Contents" className="mt-6">
+            {chunks.map((c, i) =>
+              !c.heading ? null : c.heading.level === 1 ? (
+                <p
+                  key={c.id}
+                  className="text-muted-foreground mt-10 mb-2 font-mono text-xs tracking-widest uppercase first:mt-4"
+                >
+                  {c.heading.label}
+                </p>
+              ) : (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => scrollTo(c.id)}
+                  className="group border-border flex w-full items-baseline gap-4 border-t py-3.5 text-start"
+                >
+                  <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                    {String(i).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="text-sm font-medium group-hover:underline">
+                      {c.heading.label}
+                    </span>
+                    <span className="text-muted-foreground mt-0.5 line-clamp-1 block text-sm">
+                      {c.heading.firstLine}
+                    </span>
+                  </span>
+                </button>
+              )
+            )}
+          </nav>
+        ) : (
+          <article className="mt-2">
+            {chunks.map((chunk) => {
+              const demo = DEMOS.find((d) => d.match.test(chunk.md))
+              return (
+                <React.Fragment key={chunk.id}>
+                  <Reveal id={chunk.id} className="scroll-mt-24">
+                    <Markdown source={chunk.md} />
+                  </Reveal>
+                  {demo && <Reveal>{demo.node}</Reveal>}
+                </React.Fragment>
+              )
+            })}
+          </article>
+        )}
 
         {/* the porting kit */}
         <section id="kit" className="mt-24 scroll-mt-24">
           <Reveal>
             <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-              PART 4
+              THE PORTING KIT
             </p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-              The porting kit
+              Take it with you
             </h2>
             <p className="text-muted-foreground mt-2 max-w-xl text-sm leading-relaxed">
               The governing documents, downloadable as the exact bytes this
-              site renders. Hand them to an agent in another repository and
-              it can rebuild what this page describes.
+              page renders. Hand them to an agent in another repository and
+              it can rebuild what this article describes.
             </p>
           </Reveal>
           <Reveal className="mt-8">
@@ -429,7 +462,7 @@ export function PlaybookView() {
             </div>
           </Reveal>
           <Reveal className="mt-14">
-            <div className="border-border rounded-2xl border p-6">
+            <WireframeShell tag="install">
               <h3 className="text-lg font-medium">Or take the whole thing</h3>
               <p className="text-muted-foreground mt-1 max-w-xl text-sm leading-relaxed">
                 One component, the entire ambient layer, or the full design
@@ -441,7 +474,11 @@ export function PlaybookView() {
                 command="npx shadcn add https://lumenridge.github.io/ambientui/r/ambient-layer.json"
               />
               <div className="mt-4 flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => openDoc("doc-readme")}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openDoc("doc-readme")}
+                >
                   Read the README
                 </Button>
                 <Button
@@ -449,11 +486,11 @@ export function PlaybookView() {
                   size="sm"
                   onClick={() => openDoc("doc-paper")}
                 >
-                  Open the paper at /ds
+                  View this article at /ds
                   <Icon name="arrow-up-right" size={13} />
                 </Button>
               </div>
-            </div>
+            </WireframeShell>
           </Reveal>
         </section>
       </div>
