@@ -375,66 +375,69 @@ function ContextDiagram() {
 }
 
 /**
- * After §9: the bounded configuration space, live. The left panel is not an
- * illustration of a config — it reads the ACTUAL saved Foundation values
- * this page is wearing right now, so the diagram can never drift from the
- * theme it explains.
+ * After §9: the bounded configuration space, live and drawn with the kit.
+ * The knob values on the left are not an illustration — they read the
+ * ACTUAL saved Foundation via useFoundation(), so the schematic can never
+ * drift from the theme it explains. Save flows the knobs through the
+ * Foundation into every component.
  */
 function ConfigDiagram() {
   const { config } = useFoundation()
   const knobs: [string, string][] = [
-    ["Accent", config.accent],
-    ["Gray", config.gray],
-    ["Radius", `${config.radius}px`],
-    ["Spacing", config.spacingGrid],
-    ["Scaling", `${config.scaling}%`],
-    ["Motion", config.motion.character],
+    ["accent", config.accent],
+    ["gray", config.gray],
+    ["radius", `${config.radius}px`],
+    ["spacing", config.spacingGrid],
+    ["scaling", `${config.scaling}%`],
+    ["motion", config.motion.character],
   ]
+  const ysIn = [35, 70, 105, 140, 175, 210]
+  const ysOut = [47, 87, 127, 167, 207]
+  const out = ["button", "input", "card", "toggle", "orb"]
   return (
     <WireframeShell tag="live · the configuration this page is wearing" className="my-10">
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-        {/* the knobs — read from the saved Foundation, not written here */}
-        <div className="border-border bg-background rounded-lg border p-3 sm:w-2/5">
-          <p className="text-muted-foreground mb-2 font-mono text-[9px] tracking-widest uppercase">
-            Foundation
-          </p>
-          <ul className="flex flex-col gap-1.5">
-            {knobs.map(([label, value]) => (
-              <li key={label} className="flex items-baseline justify-between gap-3">
-                <span className="text-muted-foreground text-xs">{label}</span>
-                <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-[10px] capitalize">
-                  {value}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <span className="text-muted-foreground shrink-0 self-center font-mono text-xs">
-          → save →
-        </span>
-        {/* everything downstream of one save */}
-        <div className="border-border bg-background flex flex-1 flex-col gap-2.5 rounded-lg border p-3">
-          <p className="text-muted-foreground font-mono text-[9px] tracking-widest uppercase">
-            Every component
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs font-medium">
-              Button
-            </span>
-            <span className="border-border text-muted-foreground rounded-md border px-3 py-1 text-xs">
-              Input
-            </span>
-            <span className="border-border rounded-md border px-2 py-1">
-              <Bar className="h-2 w-10" />
-            </span>
-            <span className="bg-muted flex h-5 w-9 items-center rounded-full p-0.5">
-              <span className="bg-background size-4 rounded-full shadow-sm" />
-            </span>
-          </div>
-          <Bar className="h-2 w-3/4" />
-          <Bar className="h-2 w-1/2" />
-        </div>
-      </div>
+      <Schematic
+        viewBox="0 0 720 250"
+        label="The saved Foundation configuration flowing through save into every component"
+        className="w-full"
+      >
+        {/* the six knobs, values read live from the saved theme */}
+        {knobs.map(([label, value], i) => (
+          <g key={label}>
+            <SText x={64} y={ysIn[i] + 2.5} anchor="end" muted>
+              {label}
+            </SText>
+            <SText x={72} y={ysIn[i] + 2.5}>{value}</SText>
+            <SDot x={175} y={ysIn[i]} />
+            <SLink x1={175} y1={ysIn[i]} x2={261} y2={127} bend={0.6} />
+          </g>
+        ))}
+        <SNode x={300} y={127} r={40} lines={["foundation"]} />
+        <SText x={300} y={184} anchor="middle" size={7} muted>
+          one place, one save
+        </SText>
+
+        {/* the commit point */}
+        <SLink x1={340} y1={127} x2={450} y2={127} bend={0} />
+        <SDot x={395} y={127} accent />
+        <SLead x1={395} y1={120} x2={395} y2={86} label="save" accent />
+
+        <SNode x={490} y={127} r={40} lines={["every", "component"]} />
+        <SText x={490} y={184} anchor="middle" size={7} muted>
+          nothing opts out
+        </SText>
+
+        {/* everything downstream */}
+        {out.map((k, i) => (
+          <g key={k}>
+            <SLink x1={530} y1={127} x2={640} y2={ysOut[i]} bend={0.6} />
+            <SDot x={640} y={ysOut[i]} />
+            <SText x={650} y={ysOut[i] + 2.5} muted>
+              {k}
+            </SText>
+          </g>
+        ))}
+      </Schematic>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground max-w-md text-xs leading-relaxed">
           The values on the left are not an example — they are read live
