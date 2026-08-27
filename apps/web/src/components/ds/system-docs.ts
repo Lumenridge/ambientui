@@ -8,7 +8,6 @@ import claudeMd from "../../../../../CLAUDE.md?raw"
 import designMd from "../../../../../DESIGN.md?raw"
 import paperMd from "../../../../../PAPER.md?raw"
 import readmeMd from "../../../../../README.md?raw"
-import portingMd from "../../../../../docs/porting-the-assistant.md?raw"
 import figmaMd from "../../../../../figma/figma-sync.md?raw"
 import dsManagerMd from "../../../../../.claude/skills/ds-manager/SKILL.md?raw"
 import productDesignManagerMd from "../../../../../.claude/skills/product-design-manager/SKILL.md?raw"
@@ -72,14 +71,6 @@ export const SYSTEM_DOCS: SystemDoc[] = [
     summary:
       "Code → Figma, variables only, code wins on conflict — the procedure and the drift check.",
     source: figmaMd,
-  },
-  {
-    id: "doc-porting",
-    name: "Porting the assistant",
-    path: "docs/porting-the-assistant.md",
-    group: "Working rules",
-    summary: "Installing the ambient layer in another product.",
-    source: portingMd,
   },
   {
     id: "doc-ds-manager",
