@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url"
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
 /** The governing set: prose whose path claims must stay true. */
-const DOCS = ["CLAUDE.md", "README.md", "PAPER.md", "DESIGN.md", "figma/figma-sync.md", "docs/ambient-shell-spec.md"]
+const DOCS = ["CLAUDE.md", "README.md", "PAPER.md", "DESIGN.md", "figma/figma-sync.md", "docs/ambient-shell-spec.md", "docs/motion-spec.md"]
 
 // project skills join dynamically; symlinks (a contributor's personal
 // tooling, e.g. a writing aid) are not the project's governance and skip

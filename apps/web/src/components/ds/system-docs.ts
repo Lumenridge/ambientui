@@ -8,6 +8,7 @@ import claudeMd from "../../../../../CLAUDE.md?raw"
 import designMd from "../../../../../DESIGN.md?raw"
 import paperMd from "../../../../../PAPER.md?raw"
 import readmeMd from "../../../../../README.md?raw"
+import motionSpecMd from "../../../../../docs/motion-spec.md?raw"
 import shellSpecMd from "../../../../../docs/ambient-shell-spec.md?raw"
 import figmaMd from "../../../../../figma/figma-sync.md?raw"
 import dsManagerMd from "../../../../../.claude/skills/ds-manager/SKILL.md?raw"
@@ -63,6 +64,14 @@ export const SYSTEM_DOCS: SystemDoc[] = [
     summary:
       "The rules the AI works under: tokens only, sanctioned components only, and what counts as a governance event.",
     source: claudeMd,
+  },
+  {
+    id: "doc-motion-spec",
+    name: "Motion spec",
+    path: "docs/motion-spec.md",
+    group: "Working rules",
+    summary: "The global motion contract for porting — roles, characters, and the arrival choreography.",
+    source: motionSpecMd,
   },
   {
     id: "doc-shell-spec",

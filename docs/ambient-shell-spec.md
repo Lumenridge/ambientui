@@ -6,6 +6,9 @@ the shell faithfully without reading this repo's source. Everything here is
 derived from the source, not from intention; file references point at where
 each behavior lives.
 
+Its companion, `docs/motion-spec.md`, is the timing half of this contract
+— read that one FIRST; every duration below resolves through it.
+
 Read it in order once. The single most important sentence: **the shell is
 one assistant with one conversation state, changing geometry — never five
 features.** Every porting mistake traces back to forgetting that.
