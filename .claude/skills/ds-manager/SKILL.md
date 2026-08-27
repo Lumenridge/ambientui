@@ -37,8 +37,11 @@ scaling) — or into a governance proposal if the config can't reach it.
    scroll internally, the document never scrolls. A new pane arrangement =
    new pattern → governance.
 4. **Icons**: semantic `<Icon name>` only — direct icon-library imports fail (assistant grandfathered).
-5. **Motion**: `theme.css` keyframes + Tailwind transitions only. A new
-   `@keyframes` in a component file fails.
+5. **Motion**: components consume MOTION ROLES, never literal timings.
+   `transition-*` utilities default to the micro role; explicit sites use
+   `duration-(--motion-{role})`; Framer goes through `useMotionTransition` /
+   `useMotionSpring`. A raw duration, a one-off `@keyframes` in a component
+   file, or a second animation library fails (DESIGN.md §5).
 6. **Ambient contract** (DESIGN.md §8): five modes, drag-as-mode-switch,
    `setPageChip` on every page, no glow effects (the beam was removed), the
    response-kit seam stays empty.
@@ -68,7 +71,8 @@ State what a change touches before making it:
 - The gray family → every surface token (backgrounds, cards, borders,
   sidebar) in both modes; the accent hue → primary/ring/ambient accent.
 - A scaling preset's base px → all rem-based text product-wide.
-- Component prop changes → search usages across `apps/web/src` and report the
+- Component prop changes → search usages across `apps/web/src` AND
+  `packages/*/src` (the vocabularies live in packages now) and report the
   blast radius.
 Verify visually at `/ds` in light AND dark.
 

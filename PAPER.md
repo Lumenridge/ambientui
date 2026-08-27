@@ -285,6 +285,43 @@ these files. The docs site does not paraphrase `DESIGN.md`; it displays it.
 A paraphrase is a second copy, and the second copy is always the one that
 rots.
 
+### How the governance files actually load
+
+The rules above are only real if the AI reads them, so it is worth being
+concrete about the mechanism. It has two modes.
+
+`CLAUDE.md` loads automatically at the start of every session. The AI does
+not choose to read it; the tooling injects it before any work begins. That
+is what makes its rules standing orders rather than suggestions.
+
+The skills load on demand. Each skill is a markdown file that begins with a
+name and a one-paragraph description, and the description is the trigger:
+the tooling shows the AI the list of descriptions, and when the work at
+hand matches one, the full file is pulled into context. A skill is a role
+the AI puts on. The design system manager loads for a compliance review or
+a promote-or-reject call. The product design manager loads when a use case
+needs a surface decision. The copywriter loads for strings and for the
+AI-facing component docs. The rest of the time they cost nothing.
+
+Because they are plain files in the repository, the rules are versioned,
+diffable, and reviewable in a pull request like any other code, and they
+install into another repository the same way components do.
+
+And because they are files, they rot like files. The revision of this paper
+audited all three skills against the tree and found the design system
+manager's motion rule still describing the system as it was before motion
+roles existed, its blast-radius instruction still searching only the app
+after the vocabularies had moved into packages, and the copywriter's
+reference pointing at a page that had moved. All three are fixed, and the
+finding is the point: the audit practice in the next section applies to the
+governance layer itself, not just to the configuration it governs.
+
+One boundary is worth stating. The same directory also holds tool
+configuration (how the agent runs the app for itself) and may hold personal
+aids a contributor installs for their own writing. Those are not the
+project's governance, and they stay out of the repository. The governance
+is exactly four documents: the constitution and the three roles.
+
 ## 11. Building without drift
 
 Drift needs an opening: some place where an unattached value can enter the

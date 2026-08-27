@@ -29,7 +29,7 @@ unfilled entry as "not available", never as licence to invent the answer.
   contract (surface names), §9 save semantics
 - `apps/web/src/components/ds/ds-docs.tsx` — the vocabulary docs (AI-facing
   copy of record)
-- `apps/web/src/foundation/foundation-page.tsx` — Foundation strings, Figma
+- `apps/web/src/components/ds/foundation-page.tsx` — Foundation strings, Figma
   connection impact copy, Save Theme states
 - `packages/ambient/src/assistant.tsx` — assistant strings,
   suggested prompts, palette hints

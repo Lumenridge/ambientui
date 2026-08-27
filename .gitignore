@@ -38,3 +38,7 @@ apps/web/public/r/
 
 # staged, rewritten sources for the registry build
 .registry/
+
+# personal agent tooling (a contributor's own aids, not project governance)
+.agents/
+.claude/skills/humanizer
