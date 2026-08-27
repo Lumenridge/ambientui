@@ -611,19 +611,47 @@ const DEMOS: { match: RegExp; node: React.ReactNode }[] = [
 /* ---------------------------- the contents nav ---------------------------- */
 
 /**
- * The paper's sixteen sections, divided by what each stretch is doing.
- * Groups name section NUMBERS, and the nav resolves them against the live
- * chunk split — so a renumbered paper drops a section from the nav loudly
- * instead of pointing it at the wrong prose.
+ * The paper's two parts, each holding its groups of sections — the page's
+ * top-level division: the philosophy (Ambient UI), then the structure
+ * (Design Architecture). Groups name section NUMBERS, and the nav resolves
+ * them against the live chunk split — so a renumbered paper drops a section
+ * from the nav loudly instead of pointing it at the wrong prose.
  */
-const NAV_GROUPS: { label: string; nums: number[] }[] = [
-  { label: "The layer", nums: [1, 2, 3] },
-  { label: "The answer", nums: [4, 5, 6] },
-  { label: "The problem", nums: [7, 8] },
-  { label: "The architecture", nums: [9, 10, 11] },
-  { label: "The data layer", nums: [12, 13] },
-  { label: "Take it", nums: [14, 15, 16] },
+const NAV_PARTS: {
+  id: string
+  part: string
+  title: string
+  groups: { label: string; nums: number[] }[]
+}[] = [
+  {
+    id: "part-1",
+    part: "Part I",
+    title: "Ambient UI",
+    groups: [
+      { label: "The layer", nums: [1, 2, 3] },
+      { label: "The answer", nums: [4, 5, 6] },
+    ],
+  },
+  {
+    id: "part-2",
+    part: "Part II",
+    title: "Design Architecture",
+    groups: [
+      { label: "The problem", nums: [7, 8] },
+      { label: "The architecture", nums: [9, 10, 11] },
+      { label: "The data layer", nums: [12, 13] },
+      { label: "Take it", nums: [14, 15, 16] },
+    ],
+  },
 ]
+
+/** What each part is doing — the one-line frame under its divider. */
+const PART_INTRO: Record<string, string> = {
+  "part-1":
+    "The philosophy: the AI is not a feature inside the product — it is a presence above it.",
+  "part-2":
+    "The structure: what a design system must become before a generator can build inside it without drift.",
+}
 
 /** Which section heading is currently at the top of the reading line. */
 function useActiveSection(ids: string[]) {
@@ -654,28 +682,31 @@ function useActiveSection(ids: string[]) {
   return active
 }
 
-type NavGroups = {
-  label: string
-  entries: { id: string; num: number; title: string }[]
-}[]
+type NavPart = {
+  id: string
+  part: string
+  title: string
+  groups: { label: string; entries: { id: string; num: number; title: string }[] }[]
+}
 
 /**
- * The contents: six groups as collapsibles. The group being read opens
- * itself; everything else stays folded, the way the reference's contents
- * rail works. Rendered twice — as the fixed column from lg up, and in flow
- * above the article on smaller screens.
+ * The contents: the two parts as headers, their groups as collapsibles.
+ * The group being read opens itself; everything else stays folded, the way
+ * the reference's contents rail works. Rendered twice — as the fixed column
+ * from lg up, and in flow above the article on smaller screens.
  */
 function PlaybookContents({
-  groups,
+  parts,
   scrollTo,
   active,
   className,
 }: {
-  groups: NavGroups
+  parts: NavPart[]
   scrollTo: (id: string) => void
   active?: string
   className?: string
 }) {
+  const groups = parts.flatMap((p) => p.groups)
   // open = the group being read, unless the reader has toggled it herself —
   // derived, so the accordion follows the scroll without any state syncing
   const [overrides, setOverrides] = React.useState<Record<string, boolean>>({})
@@ -683,10 +714,29 @@ function PlaybookContents({
     groups.find((g) => g.entries.some((e) => e.id === active))?.label ??
     groups[0]?.label
   const isOpen = (label: string) => overrides[label] ?? label === activeGroup
+  const activePart = parts.find((p) =>
+    p.groups.some((g) => g.entries.some((e) => e.id === active))
+  )?.id
 
   return (
     <div className={className}>
-        {groups.map((g) => (
+      {parts.map((p) => (
+        <div key={p.id} className="mb-5">
+          <button
+            type="button"
+            onClick={() => scrollTo(p.id)}
+            className={cn(
+              "hover:text-foreground w-full py-1.5 text-start",
+              activePart === p.id ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
+            <span className="font-mono text-[10px] tracking-widest uppercase">
+              {p.part}
+            </span>
+            <span className="mt-0.5 block text-sm font-semibold">{p.title}</span>
+          </button>
+          <div className="border-border mt-1 border-s ps-3">
+        {p.groups.map((g) => (
           <Collapsible
             key={g.label}
             open={isOpen(g.label)}
@@ -734,6 +784,9 @@ function PlaybookContents({
             </CollapsibleContent>
           </Collapsible>
         ))}
+          </div>
+        </div>
+      ))}
       <button
         type="button"
         onClick={() => scrollTo("kit")}
@@ -748,7 +801,7 @@ function PlaybookContents({
 
 /** The fixed contents column, lg and up. */
 function PlaybookNav(props: {
-  groups: NavGroups
+  parts: NavPart[]
   scrollTo: (id: string) => void
   active?: string
 }) {
@@ -791,30 +844,44 @@ export function PlaybookView() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
 
   // resolve the nav's section numbers against the live chunk split
-  const navGroups = React.useMemo(
+  const navParts = React.useMemo(
     () =>
-      NAV_GROUPS.map((g) => ({
-        label: g.label,
-        entries: g.nums.flatMap((num) => {
-          const chunk = chunks.find((c) =>
-            c.heading?.level === 2 ? c.heading.label.startsWith(`${num}. `) : false
-          )
-          return chunk
-            ? [{ id: chunk.id, num, title: chunk.heading!.label.slice(`${num}. `.length) }]
-            : []
-        }),
+      NAV_PARTS.map((p) => ({
+        ...p,
+        groups: p.groups.map((g) => ({
+          label: g.label,
+          entries: g.nums.flatMap((num) => {
+            const chunk = chunks.find((c) =>
+              c.heading?.level === 2
+                ? c.heading.label.startsWith(`${num}. `)
+                : false
+            )
+            return chunk
+              ? [
+                  {
+                    id: chunk.id,
+                    num,
+                    title: chunk.heading!.label.slice(`${num}. `.length),
+                  },
+                ]
+              : []
+          }),
+        })),
       })),
     [chunks]
   )
   const sectionIds = React.useMemo(
-    () => navGroups.flatMap((g) => g.entries.map((e) => e.id)),
-    [navGroups]
+    () =>
+      navParts.flatMap((p) =>
+        p.groups.flatMap((g) => g.entries.map((e) => e.id))
+      ),
+    [navParts]
   )
   const active = useActiveSection(sectionIds)
 
   return (
     <div className="ambient-grid relative min-h-full">
-      <PlaybookNav groups={navGroups} scrollTo={scrollTo} active={active} />
+      <PlaybookNav parts={navParts} scrollTo={scrollTo} active={active} />
 
       <div className="lg:pl-64">
         <div className="mx-auto w-full max-w-3xl px-6 pb-40">
@@ -850,7 +917,7 @@ export function PlaybookView() {
         {/* the contents, in flow, for screens without the fixed column */}
         <nav aria-label="Playbook contents" className="mt-12 lg:hidden">
           <PlaybookContents
-            groups={navGroups}
+            parts={navParts}
             scrollTo={scrollTo}
             active={active}
           />
@@ -858,6 +925,27 @@ export function PlaybookView() {
 
         <article className="mt-2">
           {chunks.map((chunk) => {
+            // a part boundary renders as a designed chapter break, not prose
+            if (chunk.heading?.level === 1) {
+              const m = chunk.heading.label.match(/^(Part [IVX]+):\s*(.*)$/)
+              return (
+                <Reveal key={chunk.id} id={chunk.id} className="scroll-mt-24">
+                  <div className="border-border mt-20 border-t pt-12">
+                    <p className="text-primary font-mono text-xs tracking-widest uppercase">
+                      {m?.[1] ?? chunk.heading.label}
+                    </p>
+                    <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+                      {m?.[2] ?? ""}
+                    </h2>
+                    {PART_INTRO[chunk.id] && (
+                      <p className="text-muted-foreground mt-4 max-w-xl text-base leading-relaxed">
+                        {PART_INTRO[chunk.id]}
+                      </p>
+                    )}
+                  </div>
+                </Reveal>
+              )
+            }
             const demo = DEMOS.find((d) => d.match.test(chunk.md))
             return (
               <React.Fragment key={chunk.id}>
