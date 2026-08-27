@@ -10,7 +10,11 @@ import {
 } from "@ambientui/ui/components/collapsible"
 import { Icon } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
-import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
+import {
+  useFoundation,
+  useMotionSpring,
+  useMotionTransition,
+} from "@ambientui/foundation"
 import { useAssistant } from "ambientui/assistant-context"
 import { ReasoningPanel } from "ambientui/message-kit"
 import { ReferenceChips } from "ambientui/response-kit"
@@ -321,6 +325,193 @@ function EmbeddedVsAmbientDiagram() {
   )
 }
 
+/**
+ * After §3: the context contract as a wireframe. The page declares what is
+ * selected; the chip appears in the presence before you ask. Same token
+ * palette as every diagram: border for strokes, muted for content, primary
+ * for the layer and what it can see.
+ */
+function ContextDiagram() {
+  return (
+    <WireframeShell tag="diagram · the page declares, the layer knows" className="my-10">
+      <div className="relative mx-auto h-48 max-w-md">
+        {/* the product screen */}
+        <div className="border-border bg-background absolute inset-x-0 top-6 bottom-0 flex flex-col gap-2.5 overflow-hidden rounded-lg border p-2.5">
+          <Bar className="h-2 w-1/3" />
+          <div className="border-border rounded-md border p-2">
+            <Bar className="h-2 w-1/2" />
+            <Bar className="mt-2 h-2 w-5/6" />
+          </div>
+          {/* the thing the user clicked — the page tells the layer */}
+          <div className="border-primary/50 relative rounded-md border p-2">
+            <span className="bg-background text-primary absolute -top-2 left-2 px-1 font-mono text-[9px] tracking-wide uppercase">
+              selected
+            </span>
+            <Bar className="h-2 w-2/3" />
+            <Bar className="mt-2 h-2 w-1/2" />
+          </div>
+        </div>
+        {/* the presence, already carrying the page's chip */}
+        <div className="border-primary/50 bg-background absolute right-2 top-0 flex w-2/3 items-center gap-2 rounded-lg border px-2.5 py-2 shadow-sm">
+          <span className="bg-primary size-2 shrink-0 rounded-full" />
+          <span className="border-border flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5">
+            <span className="bg-primary/60 size-1.5 rounded-[2px]" />
+            <span className="text-muted-foreground font-mono text-[9px] tracking-wide uppercase">
+              selected
+            </span>
+          </span>
+          <Bar className="h-2 flex-1" />
+        </div>
+      </div>
+      <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
+        The page declares what you are looking at; the layer wears it as a
+        chip before you type a word. You can see exactly what the assistant
+        sees — and you never re-explain where you are.
+      </p>
+    </WireframeShell>
+  )
+}
+
+/**
+ * After §9: the bounded configuration space, live. The left panel is not an
+ * illustration of a config — it reads the ACTUAL saved Foundation values
+ * this page is wearing right now, so the diagram can never drift from the
+ * theme it explains.
+ */
+function ConfigDiagram() {
+  const { config } = useFoundation()
+  const knobs: [string, string][] = [
+    ["Accent", config.accent],
+    ["Gray", config.gray],
+    ["Radius", `${config.radius}px`],
+    ["Spacing", config.spacingGrid],
+    ["Scaling", `${config.scaling}%`],
+    ["Motion", config.motion.character],
+  ]
+  return (
+    <WireframeShell tag="live · the configuration this page is wearing" className="my-10">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+        {/* the knobs — read from the saved Foundation, not written here */}
+        <div className="border-border bg-background rounded-lg border p-3 sm:w-2/5">
+          <p className="text-muted-foreground mb-2 font-mono text-[9px] tracking-widest uppercase">
+            Foundation
+          </p>
+          <ul className="flex flex-col gap-1.5">
+            {knobs.map(([label, value]) => (
+              <li key={label} className="flex items-baseline justify-between gap-3">
+                <span className="text-muted-foreground text-xs">{label}</span>
+                <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-[10px] capitalize">
+                  {value}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <span className="text-muted-foreground shrink-0 self-center font-mono text-xs">
+          → save →
+        </span>
+        {/* everything downstream of one save */}
+        <div className="border-border bg-background flex flex-1 flex-col gap-2.5 rounded-lg border p-3">
+          <p className="text-muted-foreground font-mono text-[9px] tracking-widest uppercase">
+            Every component
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs font-medium">
+              Button
+            </span>
+            <span className="border-border text-muted-foreground rounded-md border px-3 py-1 text-xs">
+              Input
+            </span>
+            <span className="border-border rounded-md border px-2 py-1">
+              <Bar className="h-2 w-10" />
+            </span>
+            <span className="bg-muted flex h-5 w-9 items-center rounded-full p-0.5">
+              <span className="bg-background size-4 rounded-full shadow-sm" />
+            </span>
+          </div>
+          <Bar className="h-2 w-3/4" />
+          <Bar className="h-2 w-1/2" />
+        </div>
+      </div>
+      <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
+        The values on the left are not an example — they are read live from
+        the theme this page is rendered with. Save a different set and
+        everything you are reading, this diagram included, restyles.
+      </p>
+    </WireframeShell>
+  )
+}
+
+/**
+ * After §12: the token pipeline. One master file, two projections — the
+ * running product and the Figma variables — and no hand-copying anywhere.
+ */
+function PipelineDiagram() {
+  return (
+    <WireframeShell tag="diagram · one master, two projections" className="my-10">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+        {/* the master */}
+        <div className="border-border bg-background rounded-lg border p-3 sm:w-1/3">
+          <p className="mb-2 font-mono text-[10px]">tokens/tokens.json</p>
+          <ul className="flex flex-col gap-1.5">
+            {["palette", "roles", "radius", "type", "motion"].map((k) => (
+              <li key={k} className="flex items-center gap-2">
+                <span className="bg-primary/60 size-1.5 shrink-0 rounded-[2px]" />
+                <span className="text-muted-foreground font-mono text-[10px]">{k}</span>
+                <Bar className="h-1.5 flex-1" />
+              </li>
+            ))}
+          </ul>
+        </div>
+        <span className="text-muted-foreground shrink-0 self-center font-mono text-xs">
+          →
+        </span>
+        {/* the two projections */}
+        <div className="flex flex-1 flex-col gap-3">
+          <div className="border-border bg-background flex items-center gap-3 rounded-lg border p-2.5">
+            <div className="border-border flex h-12 w-16 shrink-0 gap-1 rounded border p-1">
+              <div className="border-border w-1/3 border-r pr-1">
+                <Bar className="h-1 w-full" />
+                <Bar className="mt-1 h-1 w-2/3" />
+              </div>
+              <div className="flex-1">
+                <Bar className="h-1 w-full" />
+                <Bar className="mt-1 h-1 w-3/4" />
+              </div>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium">The running product</p>
+              <p className="text-muted-foreground text-[10px] leading-relaxed">
+                compiled to CSS variables on Save
+              </p>
+            </div>
+          </div>
+          <div className="border-border bg-background flex items-center gap-3 rounded-lg border p-2.5">
+            <div className="border-border flex h-12 w-16 shrink-0 flex-col justify-center gap-1 rounded border p-1.5">
+              {[0, 1, 2].map((i) => (
+                <span key={i} className="flex items-center gap-1">
+                  <span className="bg-primary/60 size-1.5 shrink-0 rounded-[2px]" />
+                  <Bar className="h-1 flex-1" />
+                </span>
+              ))}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium">The Figma variables</p>
+              <p className="text-muted-foreground text-[10px] leading-relaxed">
+                written by the sync — variables only, never components
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
+        Code is master. Designers and the running product read the same
+        values, so a divergence is a bug with a location — not a meeting.
+      </p>
+    </WireframeShell>
+  )
+}
+
 /** After §2: the shapes, opened for real on this page. */
 function ShapesDemo() {
   const { setMode } = useAssistant()
@@ -411,7 +602,10 @@ function AnswerDemo() {
 const DEMOS: { match: RegExp; node: React.ReactNode }[] = [
   { match: /^## 1\. /, node: <EmbeddedVsAmbientDiagram /> },
   { match: /^## 2\. /, node: <ShapesDemo /> },
+  { match: /^## 3\. /, node: <ContextDiagram /> },
   { match: /^## 4\. /, node: <AnswerDemo /> },
+  { match: /^## 9\. /, node: <ConfigDiagram /> },
+  { match: /^## 12\. /, node: <PipelineDiagram /> },
 ]
 
 /* ---------------------------- the contents nav ---------------------------- */
