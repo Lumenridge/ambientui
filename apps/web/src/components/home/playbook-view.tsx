@@ -451,67 +451,75 @@ function ConfigDiagram() {
 }
 
 /**
- * After §12: the token pipeline. One master file, two projections — the
- * running product and the Figma variables — and no hand-copying anywhere.
+ * After §12: one master, two projections — drawn with the schematic kit.
+ * The token file's keys fan into the master station; the flow splits at a
+ * waypoint into the two projections, compile (to the running product) and
+ * sync (to the Figma variables), each drawn as a small wireframe.
  */
 function PipelineDiagram() {
+  const keys = ["palette", "roles", "radius", "type", "motion"]
+  const ys = [55, 85, 115, 145, 175]
   return (
     <WireframeShell tag="diagram · one master, two projections" className="my-10">
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-        {/* the master */}
-        <div className="border-border bg-background rounded-lg border p-3 sm:w-1/3">
-          <p className="mb-2 font-mono text-[10px]">tokens/tokens.json</p>
-          <ul className="flex flex-col gap-1.5">
-            {["palette", "roles", "radius", "type", "motion"].map((k) => (
-              <li key={k} className="flex items-center gap-2">
-                <span className="bg-primary/60 size-1.5 shrink-0 rounded-[2px]" />
-                <span className="text-muted-foreground font-mono text-[10px]">{k}</span>
-                <Bar className="h-1.5 flex-1" />
-              </li>
-            ))}
-          </ul>
-        </div>
-        <span className="text-muted-foreground shrink-0 self-center font-mono text-xs">
-          →
-        </span>
-        {/* the two projections */}
-        <div className="flex flex-1 flex-col gap-3">
-          <div className="border-border bg-background flex items-center gap-3 rounded-lg border p-2.5">
-            <div className="border-border flex h-12 w-16 shrink-0 gap-1 rounded border p-1">
-              <div className="border-border w-1/3 border-r pr-1">
-                <Bar className="h-1 w-full" />
-                <Bar className="mt-1 h-1 w-2/3" />
-              </div>
-              <div className="flex-1">
-                <Bar className="h-1 w-full" />
-                <Bar className="mt-1 h-1 w-3/4" />
-              </div>
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium">The running product</p>
-              <p className="text-muted-foreground text-[10px] leading-relaxed">
-                compiled to CSS variables on Save
-              </p>
-            </div>
-          </div>
-          <div className="border-border bg-background flex items-center gap-3 rounded-lg border p-2.5">
-            <div className="border-border flex h-12 w-16 shrink-0 flex-col justify-center gap-1 rounded border p-1.5">
-              {[0, 1, 2].map((i) => (
-                <span key={i} className="flex items-center gap-1">
-                  <span className="bg-primary/60 size-1.5 shrink-0 rounded-[2px]" />
-                  <Bar className="h-1 flex-1" />
-                </span>
-              ))}
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium">The Figma variables</p>
-              <p className="text-muted-foreground text-[10px] leading-relaxed">
-                written by the sync — variables only, never components
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Schematic
+        viewBox="0 0 720 240"
+        label="One master, two projections: tokens.json compiled to the product and synced to Figma"
+        className="w-full"
+      >
+        {/* the master's keys, fanning in */}
+        {keys.map((k, i) => (
+          <g key={k}>
+            <SText x={70} y={ys[i] + 2.5} anchor="end" muted>
+              {k}
+            </SText>
+            <SDot x={80} y={ys[i]} />
+            <SLink x1={80} y1={ys[i]} x2={138} y2={115} bend={0.6} />
+          </g>
+        ))}
+        <SNode x={177} y={115} r={39} lines={["tokens/", "tokens.json"]} />
+        <SText x={177} y={170} anchor="middle" size={7} muted>
+          the one master
+        </SText>
+
+        {/* the split */}
+        <SLink x1={216} y1={115} x2={300} y2={115} bend={0} />
+        <SDot x={300} y={115} ring />
+
+        {/* projection one: compiled into the running product */}
+        <SLink x1={300} y1={115} x2={416} y2={65} bend={0.6} />
+        <SText x={352} y={72} size={7} accent>
+          compile · on save
+        </SText>
+        <SScreen x={420} y={30} w={116} h={70} />
+        <SLink x1={452} y1={36} x2={452} y2={94} bend={0} />
+        <SBar x={428} y={44} w={16} h={3} />
+        <SBar x={428} y={54} w={12} h={3} />
+        <SScreen x={460} y={42} w={64} h={20} rx={3} />
+        <SBar x={466} y={49} w={30} h={3} />
+        <SScreen x={460} y={68} w={64} h={20} rx={3} />
+        <SBar x={466} y={75} w={38} h={3} />
+        <SText x={552} y={60}>the running product</SText>
+        <SText x={552} y={73} size={7} muted>
+          css variables, per save
+        </SText>
+
+        {/* projection two: synced into the Figma variables */}
+        <SLink x1={300} y1={115} x2={416} y2={165} bend={0.6} />
+        <SText x={352} y={162} size={7} accent>
+          sync
+        </SText>
+        <SScreen x={420} y={130} w={116} h={70} />
+        {[146, 160, 174].map((y) => (
+          <g key={y}>
+            <SDot x={434} y={y} r={2} accent />
+            <SBar x={442} y={y - 1.5} w={60} h={3} />
+          </g>
+        ))}
+        <SText x={552} y={160}>the figma variables</SText>
+        <SText x={552} y={173} size={7} muted>
+          variables only, never components
+        </SText>
+      </Schematic>
       <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
         Code is master. Designers and the running product read the same
         values, so a divergence is a bug with a location — not a meeting.
