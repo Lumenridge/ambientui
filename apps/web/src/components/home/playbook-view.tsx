@@ -9,7 +9,6 @@ import {
   CollapsibleTrigger,
 } from "@ambientui/ui/components/collapsible"
 import { Icon } from "@ambientui/ui/components/icon"
-import { Tabs, TabsList, TabsTrigger } from "@ambientui/ui/components/tabs"
 import { cn } from "@ambientui/ui/lib/utils"
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 import { useAssistant } from "ambientui/assistant-context"
@@ -34,11 +33,6 @@ import { withBase } from "@/base"
  * two lines at display scale — showing them twice would be the page
  * stuttering.
  *
- * TWO WAYS TO HOLD IT (the reference's Read/Plan duality, translated):
- * Read is the article, section by section on the motion roles. Browse is a
- * numbered index DERIVED FROM THE SAME BYTES — headings and first lines
- * parsed from the chunks, never hand-written — that jumps into the article.
- *
  * THE DEMOS ARE THE REAL COMPONENTS IN A SHELL FRAME: after the section on
  * the six shapes, buttons that open the live layer's actual surfaces; after
  * the section on composed answers, the ambient vocabulary itself —
@@ -47,8 +41,8 @@ import { withBase } from "@/base"
  *
  * THE CONTENTS COLUMN (wide screens): the paper's sixteen sections divided
  * into six labeled groups, each a Collapsible — the group being read opens
- * itself as the reader scrolls. Same anchors as Browse; on narrower screens
- * the inline Read · Browse toggle is the nav.
+ * itself as the reader scrolls, entries jump the article, and everything is
+ * DERIVED from the same chunk split, never hand-written.
  *
  * Kept-local compositions (watchlist, DESIGN.md §13): `Reveal`,
  * `DocDownload`, `WireframeShell` (a dashed, corner-ticked frame with a
@@ -172,15 +166,15 @@ const openDoc = (docId: string) => {
 type Chunk = {
   id: string
   md: string
-  /** parsed for the Browse index; absent on non-section chunks */
-  heading?: { level: 1 | 2; label: string; firstLine: string }
+  /** parsed for the contents nav; absent on non-section chunks */
+  heading?: { level: 1 | 2; label: string }
 }
 
 /**
- * The paper, sliced for staged reading and indexed for Browse: the title
- * block the hero renders is dropped, the body splits at part and section
- * headings, and each chunk's heading + first line feed the index. The bytes
- * inside each chunk are untouched, and the index cannot drift from the
+ * The paper, sliced for staged reading and for the contents column: the
+ * title block the hero renders is dropped, the body splits at part and
+ * section headings, and each chunk's heading feeds the nav. The bytes
+ * inside each chunk are untouched, and the nav cannot drift from the
  * article because both come from the same split.
  */
 function usePaper() {
@@ -204,13 +198,8 @@ function usePaper() {
       if (!md) return (current = [])
       const first = md.split("\n")[0] ?? ""
       let heading: Chunk["heading"]
-      if (first.startsWith("# Part "))
-        heading = { level: 1, label: first.slice(2), firstLine: "" }
-      else if (first.startsWith("## ")) {
-        const rest = md.split("\n").slice(1)
-        const firstLine = rest.find((l) => l.trim() !== "") ?? ""
-        heading = { level: 2, label: first.slice(3), firstLine }
-      }
+      if (first.startsWith("# Part ")) heading = { level: 1, label: first.slice(2) }
+      else if (first.startsWith("## ")) heading = { level: 2, label: first.slice(3) }
       chunks.push({ id: `s-${chunks.length}`, md, heading })
       current = []
     }
@@ -368,27 +357,27 @@ function useActiveSection(ids: string[]) {
   return active
 }
 
+type NavGroups = {
+  label: string
+  entries: { id: string; num: number; title: string }[]
+}[]
+
 /**
- * The fixed contents column (wide screens): home line, the Read · Browse
- * toggle, and the six groups as collapsibles. The group being read opens
+ * The contents: six groups as collapsibles. The group being read opens
  * itself; everything else stays folded, the way the reference's contents
- * rail works.
+ * rail works. Rendered twice — as the fixed column from lg up, and in flow
+ * above the article on smaller screens.
  */
-function PlaybookNav({
+function PlaybookContents({
   groups,
-  tab,
-  setTab,
   scrollTo,
   active,
+  className,
 }: {
-  groups: {
-    label: string
-    entries: { id: string; num: number; title: string }[]
-  }[]
-  tab: string
-  setTab: (t: string) => void
+  groups: NavGroups
   scrollTo: (id: string) => void
   active?: string
+  className?: string
 }) {
   // open = the group being read, unless the reader has toggled it herself —
   // derived, so the accordion follows the scroll without any state syncing
@@ -399,30 +388,7 @@ function PlaybookNav({
   const isOpen = (label: string) => overrides[label] ?? label === activeGroup
 
   return (
-    <nav
-      aria-label="Playbook contents"
-      className="fixed top-0 bottom-0 left-0 hidden w-64 overflow-y-auto px-6 pt-24 pb-10 xl:block"
-    >
-      <button
-        type="button"
-        onClick={() => scrollTo("overview")}
-        className="text-muted-foreground hover:text-foreground font-mono text-xs tracking-widest uppercase"
-      >
-        The playbook
-      </button>
-
-      <Tabs value={tab} onValueChange={setTab} className="mt-4">
-        <TabsList className="w-full">
-          <TabsTrigger value="read" className="flex-1">
-            Read
-          </TabsTrigger>
-          <TabsTrigger value="browse" className="flex-1">
-            Browse
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      <div className="mt-6">
+    <div className={className}>
         {groups.map((g) => (
           <Collapsible
             key={g.label}
@@ -471,15 +437,37 @@ function PlaybookNav({
             </CollapsibleContent>
           </Collapsible>
         ))}
-        <button
-          type="button"
-          onClick={() => scrollTo("kit")}
-          className="text-muted-foreground hover:text-foreground mt-2 flex w-full items-center justify-between py-2.5 font-mono text-xs tracking-widest uppercase"
-        >
-          The kit
-          <Icon name="chevron-right" size={12} />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => scrollTo("kit")}
+        className="text-muted-foreground hover:text-foreground mt-2 flex w-full items-center justify-between py-2.5 font-mono text-xs tracking-widest uppercase"
+      >
+        The kit
+        <Icon name="chevron-right" size={12} />
+      </button>
+    </div>
+  )
+}
+
+/** The fixed contents column, lg and up. */
+function PlaybookNav(props: {
+  groups: NavGroups
+  scrollTo: (id: string) => void
+  active?: string
+}) {
+  return (
+    <nav
+      aria-label="Playbook contents"
+      className="fixed top-0 bottom-0 left-0 hidden w-64 overflow-y-auto px-6 pt-24 pb-10 lg:block"
+    >
+      <button
+        type="button"
+        onClick={() => props.scrollTo("overview")}
+        className="text-muted-foreground hover:text-foreground font-mono text-xs tracking-widest uppercase"
+      >
+        The playbook
+      </button>
+      <PlaybookContents {...props} className="mt-6" />
     </nav>
   )
 }
@@ -489,7 +477,6 @@ function PlaybookNav({
 export function PlaybookView() {
   const { setPageIntel } = useAssistant()
   const { chunks, minutes } = usePaper()
-  const [tab, setTab] = React.useState("read")
 
   React.useEffect(() => {
     setPageIntel({
@@ -503,13 +490,8 @@ export function PlaybookView() {
     return () => setPageIntel(null)
   }, [setPageIntel])
 
-  const scrollTo = (id: string) => {
-    setTab("read")
-    // let Read remount before jumping to an anchor inside it
-    requestAnimationFrame(() =>
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
-    )
-  }
+  const scrollTo = (id: string) =>
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
 
   // resolve the nav's section numbers against the live chunk split
   const navGroups = React.useMemo(
@@ -535,15 +517,10 @@ export function PlaybookView() {
 
   return (
     <div className="ambient-grid relative min-h-full">
-      <PlaybookNav
-        groups={navGroups}
-        tab={tab}
-        setTab={setTab}
-        scrollTo={scrollTo}
-        active={active}
-      />
+      <PlaybookNav groups={navGroups} scrollTo={scrollTo} active={active} />
 
-      <div className="mx-auto w-full max-w-3xl px-6 pb-40">
+      <div className="lg:pl-64">
+        <div className="mx-auto w-full max-w-3xl px-6 pb-40">
         {/* hero — the paper's title block at display scale */}
         <header id="overview" className="scroll-mt-24 pt-10 sm:pt-16">
           <Reveal>
@@ -573,61 +550,28 @@ export function PlaybookView() {
           </Reveal>
         </header>
 
-        {/* Read | Browse inline, for screens without the contents column */}
-        <Tabs value={tab} onValueChange={setTab} className="mt-12 xl:hidden">
-          <TabsList>
-            <TabsTrigger value="read">Read</TabsTrigger>
-            <TabsTrigger value="browse">Browse</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* the contents, in flow, for screens without the fixed column */}
+        <nav aria-label="Playbook contents" className="mt-12 lg:hidden">
+          <PlaybookContents
+            groups={navGroups}
+            scrollTo={scrollTo}
+            active={active}
+          />
+        </nav>
 
-        {tab === "browse" ? (
-          <nav aria-label="Contents" className="mt-6">
-            {chunks.map((c, i) =>
-              !c.heading ? null : c.heading.level === 1 ? (
-                <p
-                  key={c.id}
-                  className="text-muted-foreground mt-10 mb-2 font-mono text-xs tracking-widest uppercase first:mt-4"
-                >
-                  {c.heading.label}
-                </p>
-              ) : (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => scrollTo(c.id)}
-                  className="group border-border flex w-full items-baseline gap-4 border-t py-3.5 text-start"
-                >
-                  <span className="text-muted-foreground font-mono text-xs tabular-nums">
-                    {String(i).padStart(2, "0")}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="text-sm font-medium group-hover:underline">
-                      {c.heading.label}
-                    </span>
-                    <span className="text-muted-foreground mt-0.5 line-clamp-1 block text-sm">
-                      {c.heading.firstLine}
-                    </span>
-                  </span>
-                </button>
-              )
-            )}
-          </nav>
-        ) : (
-          <article className="mt-2">
-            {chunks.map((chunk) => {
-              const demo = DEMOS.find((d) => d.match.test(chunk.md))
-              return (
-                <React.Fragment key={chunk.id}>
-                  <Reveal id={chunk.id} className="scroll-mt-24">
-                    <Markdown source={chunk.md} />
-                  </Reveal>
-                  {demo && <Reveal>{demo.node}</Reveal>}
-                </React.Fragment>
-              )
-            })}
-          </article>
-        )}
+        <article className="mt-2">
+          {chunks.map((chunk) => {
+            const demo = DEMOS.find((d) => d.match.test(chunk.md))
+            return (
+              <React.Fragment key={chunk.id}>
+                <Reveal id={chunk.id} className="scroll-mt-24">
+                  <Markdown source={chunk.md} />
+                </Reveal>
+                {demo && <Reveal>{demo.node}</Reveal>}
+              </React.Fragment>
+            )
+          })}
+        </article>
 
         {/* the porting kit */}
         <section id="kit" className="mt-24 scroll-mt-24">
@@ -683,6 +627,7 @@ export function PlaybookView() {
             </WireframeShell>
           </Reveal>
         </section>
+        </div>
       </div>
     </div>
   )
