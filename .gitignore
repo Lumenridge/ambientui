@@ -42,3 +42,4 @@ apps/web/public/r/
 # personal agent tooling (a contributor's own aids, not project governance)
 .agents/
 .claude/skills/humanizer
+skills-lock.json
