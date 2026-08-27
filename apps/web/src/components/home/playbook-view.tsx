@@ -628,8 +628,8 @@ const NAV_PARTS: {
     part: "Part I",
     title: "Ambient UI",
     groups: [
-      { label: "The layer", nums: [1, 2, 3] },
-      { label: "The answer", nums: [4, 5, 6] },
+      { label: "A presence above the product", nums: [1, 2, 3] },
+      { label: "Answers made of your UI", nums: [4, 5, 6] },
     ],
   },
   {
@@ -637,20 +637,20 @@ const NAV_PARTS: {
     part: "Part II",
     title: "Design Architecture",
     groups: [
-      { label: "The problem", nums: [7, 8] },
-      { label: "The architecture", nums: [9, 10, 11] },
-      { label: "The data layer", nums: [12, 13] },
-      { label: "Take it", nums: [14, 15, 16] },
+      { label: "Name the enemy: drift", nums: [7, 8] },
+      { label: "Bound the design space", nums: [9, 10, 11] },
+      { label: "One source of truth", nums: [12, 13] },
+      { label: "Make it yours", nums: [14, 15, 16] },
     ],
   },
 ]
 
-/** What each part is doing — the one-line frame under its divider. */
+/** What each part gets you — the one-line frame under its divider. */
 const PART_INTRO: Record<string, string> = {
   "part-1":
-    "The philosophy: the AI is not a feature inside the product — it is a presence above it.",
+    "What you ship: an assistant that lives above your product, wears your design system, and answers with real components.",
   "part-2":
-    "The structure: what a design system must become before a generator can build inside it without drift.",
+    "How you get there: four steps that turn a design system into something a generator can build inside without drifting.",
 }
 
 /** Which section heading is currently at the top of the reading line. */
@@ -941,6 +941,29 @@ export function PlaybookView() {
                       <p className="text-muted-foreground mt-4 max-w-xl text-base leading-relaxed">
                         {PART_INTRO[chunk.id]}
                       </p>
+                    )}
+                    {/* Part II is the framework — show its steps up front */}
+                    {chunk.id === "part-2" && (
+                      <ol className="mt-6 flex flex-col gap-1.5">
+                        {navParts
+                          .find((p) => p.id === "part-2")
+                          ?.groups.map((g, i) => (
+                            <li key={g.label}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  g.entries[0] && scrollTo(g.entries[0].id)
+                                }
+                                className="text-muted-foreground hover:text-foreground flex items-baseline gap-2.5 text-sm"
+                              >
+                                <span className="text-primary font-mono text-xs tabular-nums">
+                                  {String(i + 1).padStart(2, "0")}
+                                </span>
+                                {g.label}
+                              </button>
+                            </li>
+                          ))}
+                      </ol>
                     )}
                   </div>
                 </Reveal>

@@ -2,18 +2,29 @@
 
 **What a design system has to become before an AI can build inside it.**
 
-AI can produce interfaces faster than anyone can audit them, and what it
-produces is unattached: values invented at the moment of generation,
-connected to nothing. Rules on a docs page do not stop this, because a
-generator cannot be advised, only constrained. This paper is about the
-structure that constrains one, and about the assistant that structure
-makes possible.
+This is a framework for one outcome: AI building interfaces for your
+product at full speed, without the quality of your design falling apart.
 
-Part I is Ambient UI: an AI assistant that lives above a product instead
-of inside it. It is the demand, because an assistant touches every corner
-of a product and exposes every weakness in how design decisions are
-stored. Part II is design architecture: the supply, a way of storing those
-decisions so a generator, human or machine, cannot detach from them.
+The problem it solves is drift. AI can produce interfaces faster than
+anyone can audit them, and what it produces is unattached: values invented
+at the moment of generation, connected to nothing. Rules on a docs page do
+not stop this, because a generator cannot be advised, only constrained.
+
+Adopt the framework and three things become true of your product. It gains
+an assistant that lives above the interface, wears your design system, and
+answers with real components instead of walls of text. Your design system
+becomes a bounded space a generator cannot drift out of, so every AI-built
+screen looks like your product and keeps looking like it. And your code
+and your Figma file read from one token master, so design, engineering,
+and product work from the same truth instead of reconciling copies. The
+business case is speed with consistency: experiments become configuration
+changes, restyles become one save, and design review stops being
+archaeology.
+
+Part I is Ambient UI, the outcome you ship: what an assistant above the
+product is, and why it has to live there. Part II is Design Architecture,
+the framework itself: what you need to have in place, step by step, before
+a generator can build inside your product safely.
 
 Everything here was built. The repository this file lives in is the
 working proof, and the failures recorded below happened in it.
