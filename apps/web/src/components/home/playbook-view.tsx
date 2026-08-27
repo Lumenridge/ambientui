@@ -3,8 +3,12 @@ import * as React from "react"
 import { motion } from "framer-motion"
 
 import { Button } from "@ambientui/ui/components/button"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@ambientui/ui/components/collapsible"
 import { Icon } from "@ambientui/ui/components/icon"
-import { SectionRail } from "@ambientui/ui/components/section-rail"
 import { Tabs, TabsList, TabsTrigger } from "@ambientui/ui/components/tabs"
 import { cn } from "@ambientui/ui/lib/utils"
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
@@ -41,10 +45,15 @@ import { withBase } from "@/base"
  * ReasoningPanel, ToolCall, CodeDiff, ReferenceChips — rendered settled
  * inside a wireframe shell, so the article shows the thing it just argued.
  *
+ * THE CONTENTS COLUMN (wide screens): the paper's sixteen sections divided
+ * into six labeled groups, each a Collapsible — the group being read opens
+ * itself as the reader scrolls. Same anchors as Browse; on narrower screens
+ * the inline Read · Browse toggle is the nav.
+ *
  * Kept-local compositions (watchlist, DESIGN.md §13): `Reveal`,
- * `DocDownload`, and `WireframeShell` (a dashed, corner-ticked frame with a
+ * `DocDownload`, `WireframeShell` (a dashed, corner-ticked frame with a
  * mono tag — the page's blueprint device, drawn entirely from the border
- * role and the type scale).
+ * role and the type scale), and `PlaybookNav`.
  */
 
 const KIT: { docId: string; blurb: string }[] = [
@@ -313,6 +322,168 @@ const DEMOS: { match: RegExp; node: React.ReactNode }[] = [
   { match: /^## 4\. /, node: <AnswerDemo /> },
 ]
 
+/* ---------------------------- the contents nav ---------------------------- */
+
+/**
+ * The paper's sixteen sections, divided by what each stretch is doing.
+ * Groups name section NUMBERS, and the nav resolves them against the live
+ * chunk split — so a renumbered paper drops a section from the nav loudly
+ * instead of pointing it at the wrong prose.
+ */
+const NAV_GROUPS: { label: string; nums: number[] }[] = [
+  { label: "The layer", nums: [1, 2, 3] },
+  { label: "The answer", nums: [4, 5, 6] },
+  { label: "The problem", nums: [7, 8] },
+  { label: "The architecture", nums: [9, 10, 11] },
+  { label: "The data layer", nums: [12, 13] },
+  { label: "Take it", nums: [14, 15, 16] },
+]
+
+/** Which section heading is currently at the top of the reading line. */
+function useActiveSection(ids: string[]) {
+  const [active, setActive] = React.useState<string | undefined>()
+  React.useEffect(() => {
+    let raf = 0
+    const measure = () => {
+      raf = 0
+      let current: string | undefined
+      for (const id of ids) {
+        const el = document.getElementById(id)
+        if (el && el.getBoundingClientRect().top <= 140) current = id
+      }
+      setActive(current)
+    }
+    // the page scrolls inside a container, and scroll does not bubble —
+    // capture catches it wherever it happens
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(measure)
+    }
+    document.addEventListener("scroll", onScroll, true)
+    measure()
+    return () => {
+      document.removeEventListener("scroll", onScroll, true)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [ids])
+  return active
+}
+
+/**
+ * The fixed contents column (wide screens): home line, the Read · Browse
+ * toggle, and the six groups as collapsibles. The group being read opens
+ * itself; everything else stays folded, the way the reference's contents
+ * rail works.
+ */
+function PlaybookNav({
+  groups,
+  tab,
+  setTab,
+  scrollTo,
+  active,
+}: {
+  groups: {
+    label: string
+    entries: { id: string; num: number; title: string }[]
+  }[]
+  tab: string
+  setTab: (t: string) => void
+  scrollTo: (id: string) => void
+  active?: string
+}) {
+  // open = the group being read, unless the reader has toggled it herself —
+  // derived, so the accordion follows the scroll without any state syncing
+  const [overrides, setOverrides] = React.useState<Record<string, boolean>>({})
+  const activeGroup =
+    groups.find((g) => g.entries.some((e) => e.id === active))?.label ??
+    groups[0]?.label
+  const isOpen = (label: string) => overrides[label] ?? label === activeGroup
+
+  return (
+    <nav
+      aria-label="Playbook contents"
+      className="fixed top-0 bottom-0 left-0 hidden w-64 overflow-y-auto px-6 pt-24 pb-10 xl:block"
+    >
+      <button
+        type="button"
+        onClick={() => scrollTo("overview")}
+        className="text-muted-foreground hover:text-foreground font-mono text-xs tracking-widest uppercase"
+      >
+        The playbook
+      </button>
+
+      <Tabs value={tab} onValueChange={setTab} className="mt-4">
+        <TabsList className="w-full">
+          <TabsTrigger value="read" className="flex-1">
+            Read
+          </TabsTrigger>
+          <TabsTrigger value="browse" className="flex-1">
+            Browse
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div className="mt-6">
+        {groups.map((g) => (
+          <Collapsible
+            key={g.label}
+            open={isOpen(g.label)}
+            onOpenChange={(v) => setOverrides((o) => ({ ...o, [g.label]: v }))}
+          >
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between py-2.5 font-mono text-xs tracking-widest uppercase"
+              >
+                {g.label}
+                <span
+                  className={cn(
+                    "transition-transform",
+                    isOpen(g.label) && "rotate-180"
+                  )}
+                >
+                  <Icon name="chevron-down" size={12} />
+                </span>
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <ul className="mb-2">
+                {g.entries.map((e) => (
+                  <li key={e.id}>
+                    <button
+                      type="button"
+                      onClick={() => scrollTo(e.id)}
+                      aria-current={active === e.id ? "true" : undefined}
+                      className={cn(
+                        "flex w-full items-baseline gap-2.5 py-1.5 text-start text-sm",
+                        active === e.id
+                          ? "text-foreground font-medium"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <span className="font-mono text-xs tabular-nums">
+                        {String(e.num).padStart(2, "0")}
+                      </span>
+                      <span className="min-w-0 flex-1">{e.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </CollapsibleContent>
+          </Collapsible>
+        ))}
+        <button
+          type="button"
+          onClick={() => scrollTo("kit")}
+          className="text-muted-foreground hover:text-foreground mt-2 flex w-full items-center justify-between py-2.5 font-mono text-xs tracking-widest uppercase"
+        >
+          The kit
+          <Icon name="chevron-right" size={12} />
+        </button>
+      </div>
+    </nav>
+  )
+}
+
 /* ---------------------------------------------------------------- */
 
 export function PlaybookView() {
@@ -340,18 +511,37 @@ export function PlaybookView() {
     )
   }
 
+  // resolve the nav's section numbers against the live chunk split
+  const navGroups = React.useMemo(
+    () =>
+      NAV_GROUPS.map((g) => ({
+        label: g.label,
+        entries: g.nums.flatMap((num) => {
+          const chunk = chunks.find((c) =>
+            c.heading?.level === 2 ? c.heading.label.startsWith(`${num}. `) : false
+          )
+          return chunk
+            ? [{ id: chunk.id, num, title: chunk.heading!.label.slice(`${num}. `.length) }]
+            : []
+        }),
+      })),
+    [chunks]
+  )
+  const sectionIds = React.useMemo(
+    () => navGroups.flatMap((g) => g.entries.map((e) => e.id)),
+    [navGroups]
+  )
+  const active = useActiveSection(sectionIds)
+
   return (
     <div className="ambient-grid relative min-h-full">
-      {tab === "read" && (
-        <SectionRail
-          sections={[
-            { id: "overview", label: "Overview" },
-            { id: "part-1", label: "The layer" },
-            { id: "part-2", label: "Architecture" },
-            { id: "kit", label: "The kit" },
-          ]}
-        />
-      )}
+      <PlaybookNav
+        groups={navGroups}
+        tab={tab}
+        setTab={setTab}
+        scrollTo={scrollTo}
+        active={active}
+      />
 
       <div className="mx-auto w-full max-w-3xl px-6 pb-40">
         {/* hero — the paper's title block at display scale */}
@@ -383,8 +573,8 @@ export function PlaybookView() {
           </Reveal>
         </header>
 
-        {/* Read | Browse — the whole article, or its derived index */}
-        <Tabs value={tab} onValueChange={setTab} className="mt-12">
+        {/* Read | Browse inline, for screens without the contents column */}
+        <Tabs value={tab} onValueChange={setTab} className="mt-12 xl:hidden">
           <TabsList>
             <TabsTrigger value="read">Read</TabsTrigger>
             <TabsTrigger value="browse">Browse</TabsTrigger>
