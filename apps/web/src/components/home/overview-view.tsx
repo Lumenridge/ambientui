@@ -6,7 +6,7 @@ import { Button } from "@ambientui/ui/components/button"
 import { Icon } from "@ambientui/ui/components/icon"
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 import { useAssistant } from "ambientui/assistant-context"
-import { OrbHeat } from "ambientui/orb-character"
+import { OrbField, OrbHeat } from "ambientui/orb-character"
 
 /**
  * OVERVIEW — the front door as a single held breath: the wordmark, the
@@ -54,12 +54,21 @@ export function OverviewView({
   }, [setPageIntel])
 
   return (
-    <div className="from-muted to-background relative flex min-h-full items-center justify-center bg-gradient-to-b">
+    <div className="bg-background relative flex min-h-full items-center justify-center overflow-hidden">
+      {/* the ground is the identity's own field under a DARK tint — a veil
+          per §8 (never a raw shader), but this hero commits to the dark
+          look in both modes: the tint is the foreground role in light and
+          the background role in dark, both of which resolve dark */}
+      <OrbField state={orbState} strength="stage" />
+      <div
+        aria-hidden
+        className="bg-foreground/80 dark:bg-background/75 pointer-events-none absolute inset-0"
+      />
       <motion.h1
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...spring, opacity: micro }}
-        className="w-full px-6"
+        className="relative w-full px-6"
       >
         <span className="sr-only">Ambient UI</span>
         <svg
