@@ -86,13 +86,14 @@ export function OverviewView({
               while the shader warms up (or where WebGL is missing) */}
           <g clipPath="url(#wordmark-clip)">
             <rect width="640" height="150" fill="var(--muted-foreground)" opacity="0.3" />
-            {/* the heat shaped to the wordmark's own band, full fidelity —
-                the rim hugs the rectangle, so every glyph is filled */}
-            <foreignObject x="0" y="0" width="640" height="150">
+            {/* the heat shaped to the wordmark's band, its frame OVERSIZED
+                past the clip: the warm span covers the whole name and the
+                cool margins fall outside the glyphs */}
+            <foreignObject x="-96" y="-22" width="832" height="195">
               <OrbHeat
                 state={orbState}
-                width={640}
-                height={150}
+                width={832}
+                height={195}
                 image="/orb-rect-banner.svg?v=1"
                 scale={1.7}
                 className="h-full w-full"
