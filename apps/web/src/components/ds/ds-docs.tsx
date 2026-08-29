@@ -783,7 +783,7 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
       "The app's destinations as a segmented pill — every view visible as an icon, the current one expanded to wear its name (an ambientui extension to the product vocabulary).",
     behavior: [
       "One pill of segments, one per destination. The segment you are ON is expanded: icon plus label. Every other collapses to its icon in a circle, so the whole set of places stays one glance and one click away without spending label-width on views you are not in.",
-      "SELECTING IS EXPANDING: the label grows in on the surface spring with a micro fade — the standard enter pair — so the state change is the motion, not a highlight painted on afterward.",
+      "SELECTING IS EXPANDING, as one continuous move: the old label folds out, the new one grows in, and every neighbor slides to make room — pill and segments all carry layout animation on the surface spring (opacity on micro, the standard pair), so a state switch reads as the pill changing shape, never as a cut.",
       "This replaced the disclosure form (pill + drop-down list). The disclosure hid the destinations behind a burger to save room, but with a handful of views the icons cost almost nothing, and a menu that must be opened to be seen makes every switch two clicks.",
       "Collapsed segments carry a real Tooltip, not a native `title` — the name of an icon-only control is not optional. The expanded segment carries none, because it is wearing its name.",
       "The current view is marked aria-current=\"page\"; collapsed segments carry their label as aria-label, so the control reads the same to a screen reader in both states.",

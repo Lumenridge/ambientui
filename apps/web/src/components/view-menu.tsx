@@ -80,7 +80,12 @@ export function ViewMenu({
   const micro = useMotionTransition("micro")
 
   return (
-    <div
+    // layout on the pill and every segment: switching states is ONE
+    // continuous move — the old label folds, the new one grows, and the
+    // neighbors slide — all on the surface spring, never a cut
+    <motion.div
+      layout
+      transition={spring}
       className={cn(
         // popover ground, not glass: this is product chrome, and only the
         // assistant's surfaces wear the ambient material (DESIGN.md §8)
@@ -89,6 +94,7 @@ export function ViewMenu({
       )}
     >
       {home && (
+        <motion.div layout transition={spring}>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -104,13 +110,13 @@ export function ViewMenu({
           </TooltipTrigger>
           <TooltipContent>{home.label ?? "Home"}</TooltipContent>
         </Tooltip>
+        </motion.div>
       )}
 
       {items.map((item) => {
         const active = item.id === value
         const segment = (
           <Button
-            key={item.id}
             type="button"
             size={active ? "sm" : "icon-sm"}
             variant="secondary"
@@ -139,16 +145,21 @@ export function ViewMenu({
         )
         // only the collapsed segments need a tooltip — the expanded one
         // is wearing its name
-        return active ? (
-          segment
-        ) : (
-          <Tooltip key={item.id}>
-            <TooltipTrigger asChild>{segment}</TooltipTrigger>
-            <TooltipContent>{item.label}</TooltipContent>
-          </Tooltip>
+        return (
+          <motion.div key={item.id} layout transition={spring}>
+            {active ? (
+              segment
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>{segment}</TooltipTrigger>
+                <TooltipContent>{item.label}</TooltipContent>
+              </Tooltip>
+            )}
+          </motion.div>
         )
       })}
 
+      <motion.div layout transition={spring}>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -167,6 +178,7 @@ export function ViewMenu({
           {isDark ? "Switch to light" : "Switch to dark"}
         </TooltipContent>
       </Tooltip>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
