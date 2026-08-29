@@ -379,7 +379,11 @@ export function OverviewView() {
           pads past the edges so the glow runs end to end; the fixed layer
           unmounts with the view. */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute inset-y-0 -inset-x-1/4">
+        {/* the field anchors at the screen top and stretches one viewport
+            past the bottom (-bottom-full): its top rim reads as the
+            horizon and its glow gradient spans the whole visible screen,
+            instead of pinching into a thin stripe at each edge */}
+        <div className="absolute -inset-x-1/4 top-0 -bottom-full">
           <OrbField state={orbState} strength="stage" />
         </div>
         <div className="bg-background/75 absolute inset-0" />
