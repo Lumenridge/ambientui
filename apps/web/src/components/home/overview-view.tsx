@@ -46,24 +46,24 @@ const VERSIONS = [
 ]
 
 /** what the embedded layer offers on this page — grounded in the data below */
-/** the statement section: the philosophy's four shifts as principles */
+/** the statement section: the philosophy, in the enterprise frame */
 const PRINCIPLES: { word: string; body: string; link?: boolean }[] = [
   {
     word: "Ambient",
-    body: "The AI is not a feature of your product — it is a presence above it. Available everywhere, aware of where you are, taking whatever shape the moment deserves.",
+    body: "Enterprise screens are crowded enough. The AI takes no tab, no panel, no corner of the record — it is a presence above the interface, arriving at whatever size the moment deserves and leaving when it is done.",
     link: true,
   },
   {
     word: "Grounded",
-    body: "Every page declares what the layer may know, through one narrow contract. Context becomes something a page provides, like a title — you never re-explain where you are.",
+    body: "It works on top of the system of record. Each page declares its records to the layer through one narrow contract, so the AI acts on the row you are looking at — never on a paste of it.",
   },
   {
     word: "Composed",
-    body: "Answers are built from your product's own components: a diff you can apply, a terminal with its exit code, references you can check. Chat is the fallback, not the default.",
+    body: "Answers arrive as working UI, not chat: a diff against the record, a run with its exit code, references into your own data — built from your product's components, in place.",
   },
   {
     word: "Inherited",
-    body: "The layer ships with no palette, no type scale, and no motion of its own. It wears your design system — change your accent and the assistant changes with it.",
+    body: "Infrastructure-first: the layer ships with no look of its own. It inherits your design system and your governance, so it deploys into an enterprise product without adding a brand — or a drift surface.",
   },
 ]
 
@@ -449,8 +449,9 @@ export function OverviewView() {
       <section className="relative mx-auto w-full max-w-5xl px-6 pt-32 pb-24">
         <Reveal>
           <p className="text-muted-foreground mx-auto max-w-4xl text-center text-3xl leading-snug font-medium text-balance sm:text-4xl">
-            Ambient UI is a reimagining of AI in the interface — one presence
-            above your product, driven by your design system.
+            Ambient UI is a decluttering of enterprise software — the system
+            of record keeps every pixel of its screen, and the AI works
+            above the data, alongside your SaaS, not inside it.
           </p>
         </Reveal>
         <div className="mt-28 grid gap-x-16 gap-y-16 sm:grid-cols-2">
