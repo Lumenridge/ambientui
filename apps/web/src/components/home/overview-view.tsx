@@ -370,7 +370,13 @@ export function OverviewView() {
           §8 (never a raw shader). The tint is the BACKGROUND role, so it
           follows the theme: a light veil in light mode, a dark one in
           dark, and the field glows through both */}
-      <OrbField state={orbState} strength="stage" />
+      {/* the field mounts OVERSIZED (-inset-1/4): the heat shape pads
+          inside its frame, and at exact size that pad reads as seams just
+          shy of the viewport edge — pushed out, the glow runs end to end
+          and the root's overflow clip takes the excess */}
+      <div aria-hidden className="absolute -inset-1/4">
+        <OrbField state={orbState} strength="stage" />
+      </div>
       <div
         aria-hidden
         className="bg-background/75 pointer-events-none absolute inset-0"
