@@ -11,7 +11,7 @@ import { DsPage } from "@/components/ds/ds-page"
 import { HomePage } from "@/components/home/home-page"
 import { FoundationProvider } from "@ambientui/foundation"
 import { sections, type SectionId } from "@/nav"
-import { stripBase, withBase } from "@/base"
+import { BASE, stripBase, withBase } from "@/base"
 
 import "ambientui/ambient.css"
 import "@/theme.css"
@@ -61,7 +61,9 @@ export function App() {
 
   return (
     <TooltipProvider>
-      <FoundationProvider>
+      {/* this site is served from /ambientui/ on Pages — the layer's shader
+          assets have to be told, or they resolve against the domain root */}
+      <FoundationProvider assetBase={BASE}>
       {/* the APP names its destinations; the layer only offers them, so the
           assistant no longer imports this product's route table */}
       <AssistantProvider

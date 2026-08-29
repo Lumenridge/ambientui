@@ -51,6 +51,18 @@ export type AmbientSpring = {
 }
 
 export interface AmbientRuntime {
+  /**
+   * Where the layer's own static assets are served from — the orb's shader
+   * shapes (orb-circle.svg and the rect family), which the registry installs
+   * into the host's `public/`.
+   *
+   * It is a value rather than a hardcoded "/" because a site served from a
+   * subpath (GitHub Pages project sites, any app mounted under a prefix)
+   * resolves a root-absolute URL against the DOMAIN, not the app — so the
+   * shader silently loads nothing and the orb goes cold. Default "/" is
+   * correct for an app at the root, which is most of them.
+   */
+  assetBase: string
   /** How a message is presented — see MessagePair. */
   messageVariant: "bubble" | "flat"
   /** The pace StreamingText types at. */
@@ -77,6 +89,7 @@ const DEFAULT_DURATIONS_MS: Record<MotionRole, number> = {
 const DEFAULT_EASE: AmbientEase = [0.2, 0, 0, 1]
 
 export const DEFAULT_AMBIENT_RUNTIME: AmbientRuntime = {
+  assetBase: "/",
   messageVariant: "bubble",
   streamCharsPerSecond: 60,
   orb: {
@@ -130,4 +143,14 @@ export function useMotionTransition(role: MotionRole) {
 /** The configured character's spring. */
 export function useMotionSpring() {
   return useAmbientRuntime().motionSpring()
+}
+
+/**
+ * Resolve one of the layer's own assets against the host's base. Tolerates a
+ * base with or without its trailing slash, because both spellings are common
+ * and the failure (a doubled or missing slash) is silent.
+ */
+export function useAmbientAsset(file: string) {
+  const base = useAmbientRuntime().assetBase
+  return `${base.replace(/\/$/, "")}/${file.replace(/^\//, "")}`
 }

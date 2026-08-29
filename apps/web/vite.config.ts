@@ -1,7 +1,27 @@
+import { cpSync } from "node:fs"
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig, type Plugin } from "vite"
+
+/**
+ * THE ORB'S SHAPES BELONG TO THE LAYER, NOT TO THIS SITE. They live in
+ * packages/ambient/assets so the registry can ship them to a consumer's
+ * public/ — without them an installed layer renders a cold, empty canvas
+ * and reports nothing. This copies them into the site's public dir at
+ * startup and build, so there is exactly ONE copy under version control
+ * and the site cannot drift from what it publishes.
+ */
+function orbShapes(): Plugin {
+  const from = path.resolve(__dirname, "../../packages/ambient/assets")
+  const to = path.resolve(__dirname, "public")
+  const copy = () => cpSync(from, to, { recursive: true })
+  return {
+    name: "ambientui:orb-shapes",
+    buildStart: copy,
+    configureServer: copy,
+  }
+}
 
 /**
  * BASE PATH IS A VARIABLE. GitHub Pages serves a project site from
@@ -16,7 +36,7 @@ export default defineConfig({
   server: {
     port: Number(process.env.PORT) || 5173,
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [orbShapes(), react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

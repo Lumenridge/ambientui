@@ -698,8 +698,16 @@ function readSaved(): FoundationConfig {
 
 export function FoundationProvider({
   children,
+  assetBase = "/",
 }: {
   children: React.ReactNode
+  /**
+   * Where the ambient layer's own shader assets are served from. Passed
+   * through to the runtime because only the HOST knows its base path — an
+   * app under a subpath (project Pages, any prefixed mount) resolves a
+   * root-absolute asset URL against the domain, not the app.
+   */
+  assetBase?: string
 }) {
   const [config, setConfigState] = React.useState<FoundationConfig>(readSaved)
   // The last saved theme. Edits apply live but only persist on save();
@@ -781,13 +789,14 @@ export function FoundationProvider({
   const ambientRuntime = React.useMemo(
     () =>
       ({
+        assetBase,
         messageVariant: config.components.messageVariant,
         streamCharsPerSecond: config.components.streamCharsPerSecond,
         orb: config.orb,
         motionTransition: (role: MotionRole) => motionTransition(config, role),
         motionSpring: () => motionSpring(config),
       }) satisfies AmbientRuntime,
-    [config]
+    [config, assetBase]
   )
 
   return (

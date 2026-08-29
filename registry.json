@@ -4,6 +4,40 @@
   "homepage": "https://lumenridge.github.io/ambientui",
   "items": [
     {
+      "name": "ambient-assets",
+      "type": "registry:file",
+      "title": "The orb's shapes",
+      "description": "The five SVG shapes the heat shader wraps — the circle the orb wears and the rects a surface field fills. Static files, served from your public root.",
+      "files": [
+        {
+          "path": "packages/ambient/assets/orb-circle.svg",
+          "type": "registry:file",
+          "target": "public/orb-circle.svg"
+        },
+        {
+          "path": "packages/ambient/assets/orb-rect.svg",
+          "type": "registry:file",
+          "target": "public/orb-rect.svg"
+        },
+        {
+          "path": "packages/ambient/assets/orb-rect-wide.svg",
+          "type": "registry:file",
+          "target": "public/orb-rect-wide.svg"
+        },
+        {
+          "path": "packages/ambient/assets/orb-rect-tall.svg",
+          "type": "registry:file",
+          "target": "public/orb-rect-tall.svg"
+        },
+        {
+          "path": "packages/ambient/assets/orb-rect-banner.svg",
+          "type": "registry:file",
+          "target": "public/orb-rect-banner.svg"
+        }
+      ],
+      "docs": "These land in public/ and are loaded by URL at runtime. If your app is served from a subpath, pass that base to the layer (assetBase on the runtime, or FoundationProvider's assetBase prop) — a root-absolute URL resolves against the domain, not your app."
+    },
+    {
       "name": "ambient-styles",
       "type": "registry:file",
       "title": "Ambient material",
@@ -41,6 +75,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "button",
         "input",
@@ -217,9 +252,15 @@
         "framer-motion"
       ],
       "registryDependencies": [
-        "https://lumenridge.github.io/ambientui/r/ambient-styles.json"
+        "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json"
       ],
       "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
         {
           "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
           "type": "registry:lib",
@@ -284,6 +325,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -380,6 +422,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -476,6 +519,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -572,6 +616,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "https://lumenridge.github.io/ambientui/r/icon.json"
       ],
       "files": [
@@ -620,6 +665,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "https://lumenridge.github.io/ambientui/r/icon.json"
       ],
       "files": [
@@ -668,6 +714,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -749,6 +796,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -828,9 +876,15 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "https://lumenridge.github.io/ambientui/r/icon.json"
       ],
       "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
         {
           "path": ".registry/packages/ambient/src/assistant-context.tsx",
           "type": "registry:component",
@@ -871,6 +925,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -952,6 +1007,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1033,6 +1089,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1114,6 +1171,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1195,6 +1253,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1276,6 +1335,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1357,6 +1417,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1438,6 +1499,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1519,6 +1581,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1600,6 +1663,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1681,6 +1745,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1767,6 +1832,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1853,6 +1919,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -1939,6 +2006,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -2025,6 +2093,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -2111,6 +2180,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -2197,6 +2267,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",
@@ -2283,6 +2354,7 @@
       ],
       "registryDependencies": [
         "https://lumenridge.github.io/ambientui/r/ambient-styles.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-assets.json",
         "button",
         "https://lumenridge.github.io/ambientui/r/icon.json",
         "input",

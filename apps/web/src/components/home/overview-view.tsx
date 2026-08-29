@@ -13,6 +13,8 @@ import {
 } from "ambientui/assistant-context"
 import { OrbField, OrbHeat } from "ambientui/orb-character"
 
+import { withBase } from "@/base"
+import { InstallSection } from "@/components/home/install-section"
 import { Reveal } from "@/components/reveal"
 
 /**
@@ -1443,7 +1445,9 @@ export function OverviewView() {
                   state={orbState}
                   width={832}
                   height={195}
-                  image="/orb-rect-banner.svg?v=1"
+                  // a NAME, not a path: OrbHeat resolves it against the
+                  // layer's assetBase, so it must not be prefixed twice
+                  image="orb-rect-banner.svg?v=1"
                   scale={1.7}
                   className="h-full w-full"
                 />
@@ -1522,7 +1526,54 @@ export function OverviewView() {
       {FORMS.map((f) => (
         <FormSection key={f.name} form={f} widthPct={glyphPct} />
       ))}
-      <div className="pb-8" />
+
+      {/* THE PAGE ENDS ON A COMMAND. Everything above argues; this is where
+          a visitor stops reading and starts typing. It used to end on two
+          spacer divs — the argument reached its conclusion and then offered
+          the reader nothing to do with it. */}
+      <section className="relative mx-auto w-full max-w-5xl px-6 pt-32">
+        <Reveal>
+          <InstallSection
+            onDocs={() => {
+              window.history.pushState(null, "", withBase("/ds"))
+              window.dispatchEvent(new PopStateEvent("popstate"))
+            }}
+          />
+        </Reveal>
+      </section>
+
+      <footer className="relative mx-auto w-full max-w-5xl px-6 pt-20 pb-32">
+        <div className="border-border text-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-8 text-sm">
+          <span className="text-foreground font-medium">ambientui</span>
+          <button
+            type="button"
+            className="hover:text-foreground"
+            onClick={() => {
+              window.history.pushState(null, "", withBase("/?view=architecture"))
+              window.dispatchEvent(new PopStateEvent("popstate"))
+            }}
+          >
+            The architecture
+          </button>
+          <button
+            type="button"
+            className="hover:text-foreground"
+            onClick={() => {
+              window.history.pushState(null, "", withBase("/ds"))
+              window.dispatchEvent(new PopStateEvent("popstate"))
+            }}
+          >
+            Design system
+          </button>
+          <a
+            href="https://github.com/Lumenridge/ambientui"
+            className="hover:text-foreground"
+          >
+            GitHub
+          </a>
+          <span className="ms-auto">MIT licensed</span>
+        </div>
+      </footer>
 
       {/* the resting orb owns the viewport's bottom-center */}
       <div className="pb-24" />

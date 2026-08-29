@@ -11,6 +11,8 @@ import { animate, useAnimationFrame, useMotionValue } from "framer-motion"
 
 import { cn } from "@ambientui/ui/lib/utils"
 
+import { useAmbientAsset, useAmbientRuntime } from "./ambient-runtime"
+
 /**
  * The orb character — the assistant's animated identity: the Paper Design
  * heatmap shader wrapped around a circle, so heat flows around the orb's
@@ -73,8 +75,10 @@ const WAKE_PARAMS = {
 }
 
 /** The shape the heat wraps: a filled circle with room for the outer
-    glow. Served as a real file — the shader's loader rejects data URIs. */
-const CIRCLE_IMAGE_SRC = "/orb-circle.svg?v=2"
+    glow. Served as a real file — the shader's loader rejects data URIs.
+    The NAME only: the host's assetBase resolves it (useAmbientAsset), so a
+    site under a subpath does not silently load nothing. */
+const CIRCLE_IMAGE = "orb-circle.svg?v=2"
 
 /**
  * Resolve any CSS color string to hex — including oklch(), which is what
@@ -357,6 +361,7 @@ export function OrbCharacter({
   const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
   const hostRef = React.useRef<HTMLDivElement>(null)
   const epoch = useShaderEpoch(hostRef, palette.length > 0)
+  const circle = useAmbientAsset(CIRCLE_IMAGE)
   const coreColor =
     colors && colors.length > 0
       ? colors[Math.min(1, colors.length - 1)]!
@@ -394,7 +399,7 @@ export function OrbCharacter({
           key={epoch}
           width={size}
           height={size}
-          image={CIRCLE_IMAGE_SRC}
+          image={circle}
           colors={palette}
           colorBack="#00000000"
           contour={params.contour}
@@ -428,12 +433,13 @@ export function OrbHeat({
   speeds,
   width,
   height,
-  image = CIRCLE_IMAGE_SRC,
+  image,
   scale = 1,
   className,
 }: OrbCharacterProps & {
   width: number
   height: number
+  /** Asset FILE NAME (not a path) — resolved against the host's assetBase. */
   image?: string
   /** Shape scale within the frame — >1 pushes the rim toward the edges. */
   scale?: number
@@ -441,6 +447,7 @@ export function OrbHeat({
   const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
   const hostRef = React.useRef<HTMLDivElement>(null)
   const epoch = useShaderEpoch(hostRef, palette.length > 0)
+  const src = useAmbientAsset(image ?? CIRCLE_IMAGE)
   if (palette.length === 0) return null
   return (
     <div ref={hostRef} aria-hidden className={className}>
@@ -448,7 +455,7 @@ export function OrbHeat({
         key={epoch}
         width={width}
         height={height}
-        image={image}
+        image={src}
         colors={palette}
         colorBack="#00000000"
         contour={params.contour}
@@ -469,9 +476,9 @@ export function OrbHeat({
     surfaces (the loader rejects data URIs, so aspects are bucketed). */
 function rectImageFor(w: number, h: number) {
   const ratio = w / h
-  if (ratio > 1.4) return "/orb-rect-wide.svg?v=3"
-  if (ratio < 0.72) return "/orb-rect-tall.svg?v=3"
-  return "/orb-rect.svg?v=4"
+  if (ratio > 1.4) return "orb-rect-wide.svg?v=3"
+  if (ratio < 0.72) return "orb-rect-tall.svg?v=3"
+  return "orb-rect.svg?v=4"
 }
 
 /**
@@ -499,6 +506,7 @@ export function OrbField({
   const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
   const hostRef = React.useRef<HTMLDivElement>(null)
   const epoch = useShaderEpoch(hostRef, palette.length > 0)
+  const assetBase = useAmbientRuntime().assetBase
   const [box, setBox] = React.useState<{
     w: number
     h: number
@@ -578,7 +586,7 @@ export function OrbField({
           key={epoch}
           width={box.w}
           height={box.h}
-          image={rectImageFor(box.w, box.h)}
+          image={`${assetBase.replace(/\/$/, "")}/${rectImageFor(box.w, box.h)}`}
           colors={palette}
           colorBack="#00000000"
           contour={params.contour}
