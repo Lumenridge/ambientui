@@ -73,7 +73,7 @@ function DemoDashboard() {
     { icon: "settings", label: "Settings" },
   ]
   return (
-    <div className="border-border bg-card overflow-hidden rounded-xl border text-xs shadow-sm">
+    <div className="border-border bg-card flex h-full flex-col overflow-hidden border-y text-xs">
       {/* header: brand · breadcrumb */}
       <div className="border-border flex h-11 items-center gap-3 border-b px-4">
         <span className="bg-primary size-3 rounded-sm" />
@@ -85,7 +85,7 @@ function DemoDashboard() {
           Support
         </span>
       </div>
-      <div className="flex">
+      <div className="flex min-h-0 flex-1">
         {/* sidebar */}
         <div className="border-border hidden w-44 flex-col gap-0.5 border-e p-2 sm:flex">
           {nav.map((n) => (
@@ -103,8 +103,8 @@ function DemoDashboard() {
             </span>
           ))}
         </div>
-        {/* main: tabs + versions */}
-        <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
+        {/* main: tabs + a dense two-column body that fills the height */}
+        <div className="flex min-w-0 flex-1 flex-col gap-4 p-4 sm:p-6">
           <div className="flex items-center gap-1">
             {["Overview", "Metrics", "Deployments", "Domains", "Settings"].map(
               (t, i) => (
@@ -125,7 +125,8 @@ function DemoDashboard() {
               New deployment
             </span>
           </div>
-          <div className="border-border rounded-lg border">
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="border-border flex min-h-0 flex-col overflow-hidden rounded-lg border lg:col-span-2">
             <p className="border-border border-b px-3 py-2 font-medium">
               Versions
             </p>
@@ -148,7 +149,8 @@ function DemoDashboard() {
               </div>
             ))}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          {/* the right rail — fills the column so nothing reads empty */}
+          <div className="flex min-h-0 flex-col gap-4">
             <div className="border-border rounded-lg border">
               <p className="border-border border-b px-3 py-2 font-medium">
                 Domains &amp; routes
@@ -161,7 +163,10 @@ function DemoDashboard() {
             </div>
             <div className="border-border rounded-lg border">
               <p className="border-border border-b px-3 py-2 font-medium">
-                Metrics <span className="text-muted-foreground ms-1 font-normal">Last 24 hours</span>
+                Metrics{" "}
+                <span className="text-muted-foreground ms-1 font-normal">
+                  Last 24 hours
+                </span>
               </p>
               <div className="text-muted-foreground flex flex-col gap-2 p-3">
                 <span>Requests · 412k</span>
@@ -169,6 +174,17 @@ function DemoDashboard() {
                 <span>Errors · 0.02%</span>
               </div>
             </div>
+            <div className="border-border flex-1 rounded-lg border">
+              <p className="border-border border-b px-3 py-2 font-medium">
+                Next steps
+              </p>
+              <div className="text-muted-foreground flex flex-col gap-2 p-3">
+                <span>Connect a custom domain</span>
+                <span>Bind a queue to retries</span>
+                <span>Enable trace sampling</span>
+              </div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
