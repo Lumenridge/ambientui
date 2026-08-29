@@ -365,6 +365,47 @@ export function OrbCharacter({
   )
 }
 
+/**
+ * OrbHeat — the character's heat, unwrapped: the exact shader the orb
+ * renders (same engine, same springs, same circle image, same palette),
+ * with none of the character's glass shell. FOR SANCTIONED IDENTITY
+ * SURFACES ONLY — the shader-surface rule applies to this export exactly
+ * as it does to the character; a product surface wanting it is a
+ * governance event. Width/height size the render; the box shows the
+ * circle's heat at whatever slice the host clips.
+ */
+export function OrbHeat({
+  state = "still",
+  speed = 1,
+  colors,
+  speeds,
+  width,
+  height,
+  className,
+}: OrbCharacterProps & { width: number; height: number }) {
+  const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
+  if (palette.length === 0) return null
+  return (
+    <div aria-hidden className={className}>
+      <Heatmap
+        width={width}
+        height={height}
+        image={CIRCLE_IMAGE_SRC}
+        colors={palette}
+        colorBack="#00000000"
+        contour={params.contour}
+        angle={params.angle}
+        noise={0}
+        innerGlow={params.innerGlow}
+        outerGlow={params.outerGlow}
+        speed={params.speed}
+        scale={1}
+        fit="contain"
+      />
+    </div>
+  )
+}
+
 /** The field's shapes — near-full-bleed rounded rects in three aspect
     buckets, so the heat hugs every edge of wide, square, and tall
     surfaces (the loader rejects data URIs, so aspects are bucketed). */
