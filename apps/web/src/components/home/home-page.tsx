@@ -126,9 +126,10 @@ export function HomePage() {
         </div>
       </TabsContent>
 
+      {/* no top padding: the menu floats over the gradient, full-bleed */}
       <TabsContent
         value="overview"
-        className="m-0 min-h-0 flex-1 overflow-y-auto pt-16"
+        className="m-0 min-h-0 flex-1 overflow-y-auto"
       >
         <OverviewView onNavigate={select} />
       </TabsContent>
