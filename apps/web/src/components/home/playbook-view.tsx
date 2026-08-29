@@ -824,12 +824,15 @@ const NAV_PARTS: {
   id: string
   part: string
   title: string
+  /** A named opening that precedes the numbered sections — entry 00. */
+  lead?: string
   groups: { label: string; nums: number[] }[]
 }[] = [
   {
     id: "part-1",
     part: "Part I",
     title: "Ambient UI",
+    lead: "The philosophy",
     groups: [
       { label: "A presence above the product", nums: [1, 2, 3] },
       { label: "Answers made of your UI", nums: [4, 5, 6] },
@@ -889,6 +892,7 @@ type NavPart = {
   id: string
   part: string
   title: string
+  lead?: string
   groups: { label: string; entries: { id: string; num: number; title: string }[] }[]
 }
 
@@ -939,6 +943,18 @@ function PlaybookContents({
             <span className="mt-0.5 block text-sm font-semibold">{p.title}</span>
           </button>
           <div className="border-border mt-1 border-s ps-3">
+            {/* the part's opening, called out ahead of the numbered
+                sections — 00, because it comes before everything */}
+            {p.lead && (
+              <button
+                type="button"
+                onClick={() => scrollTo(p.id)}
+                className="text-muted-foreground hover:text-foreground flex w-full items-baseline gap-2.5 py-2 text-start text-sm font-medium"
+              >
+                <span className="font-mono text-xs tabular-nums">00</span>
+                <span className="min-w-0 flex-1">{p.lead}</span>
+              </button>
+            )}
         {p.groups.map((g) => (
           <Collapsible
             key={g.label}
