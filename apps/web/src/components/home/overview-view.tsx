@@ -914,9 +914,9 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
 const STAGE_GESTURE_DUR: Record<AssistantMode, number> = {
   line: 3400,
   spotlight: 1400,
-  panel: 2600,
-  dock: 6200,
-  history: 2600,
+  panel: 3200,
+  dock: 4800,
+  history: 3200,
 }
 const stageBeatsFor = (form: (typeof FORMS)[number]) =>
   // the Orb IS the resting state — its demo has nothing to ask, so its
@@ -924,17 +924,15 @@ const stageBeatsFor = (form: (typeof FORMS)[number]) =>
   // The Spotlight tells the whole ask (⌘K · type · ↩), so its first
   // chapter is "Ask"; every later form INHERITS the answered palette,
   // so theirs is named "Spotlight" — the state it picks up from
-  form.mode === "line"
-    ? ([{ id: "form", label: form.name }] as const)
-    : form.mode === "spotlight"
-      ? ([
-          { id: "ask", label: "Ask" },
-          { id: "form", label: form.name },
-        ] as const)
-      : ([
-          { id: "spotlight", label: "Spotlight" },
-          { id: "form", label: form.name },
-        ] as const)
+  // only the Spotlight shows two chapters (the ask, then the hold) — the
+  // later forms PRE-LOAD their starting state off-screen, so their whole
+  // visible show is the one gesture, one chapter
+  form.mode === "spotlight"
+    ? ([
+        { id: "ask", label: "Ask" },
+        { id: "form", label: form.name },
+      ] as const)
+    : ([{ id: "form", label: form.name }] as const)
 
 function FormsDriver({
   active,
@@ -984,10 +982,48 @@ function FormsDriver({
     }
   }, [setPageChip, setPageIntel])
 
-  const seeded = React.useRef(false)
+  // PREP RUNS OFF-SCREEN, THE GESTURE RUNS ON ARRIVAL. The section is
+  // mounted 300px early; that head start now does the loading: the
+  // exchange seeds and settles (and the Dock's starting panel opens)
+  // while nobody is watching, so the moment the window enters view the
+  // FIRST thing shown is the gesture itself — Panel's click carrying the
+  // loaded palette over, Dock's drag starting from the loaded panel.
+  // rest and the spotlight tell their whole story on screen — born ready
+  const [prepped, setPrepped] = React.useState(
+    () => mode === "line" || mode === "spotlight"
+  )
+  React.useEffect(() => {
+    if (mode === "line" || mode === "spotlight") return
+    let alive = true
+    const timers: number[] = []
+    const sleep = (ms: number) =>
+      new Promise<void>((r) => timers.push(window.setTimeout(r, ms)))
+    const run = async () => {
+      setMode("spotlight")
+      seedPrompt(DEMO_SUGGESTIONS[0]!, true, true)
+      await sleep(1200)
+      const start = Date.now()
+      while (alive && orbStateRef.current !== "still" && Date.now() - start < 20000)
+        await sleep(150)
+      if (!alive) return
+      if (mode === "dock") {
+        // the Dock's story STARTS at the panel: its drag begins there
+        setMode("panel")
+        await sleep(600)
+        if (!alive) return
+      }
+      setPrepped(true)
+    }
+    void run()
+    return () => {
+      alive = false
+      timers.forEach(clearTimeout)
+    }
+  }, [mode, setMode, seedPrompt])
+
   const staged = React.useRef(false)
   React.useEffect(() => {
-    if (!active || interacted) return
+    if (!active || interacted || !prepped) return
     let alive = true
     const timers: number[] = []
     // pause-aware, same as the film: while the transport holds the
@@ -1078,45 +1114,26 @@ function FormsDriver({
         onBeat(1, STAGE_GESTURE_DUR.spotlight)
         await sleep(STAGE_GESTURE_DUR.spotlight)
         if (alive) {
-          seeded.current = true
           staged.current = true
           onDone()
         }
         return
       }
-      if (!seeded.current) {
-        // the section STARTS WHERE THE SPOTLIGHT DEMO ENDED: the answered
-        // command palette. The exchange seeds immediately — no typing,
-        // that story was told one section up — and SETTLES before the
-        // hand carries it into this form, so the state being carried is
-        // the finished one, not a mid-stream flicker.
-        onBeat(0, 5200)
-        setMode("spotlight")
-        seedPrompt(DEMO_SUGGESTIONS[0]!, true, true)
-        await sleep(1200)
-        await waitUntil(() => orbStateRef.current === "still", 20000)
-        if (!alive) return
-        await sleep(700)
-        if (!alive) return
-        seeded.current = true
-      }
-      onBeat(1, STAGE_GESTURE_DUR[mode])
+      // THE GESTURE OPENS THE SHOW: prep already loaded the answered
+      // palette (Dock: the panel) off-screen, so on arrival the hand
+      // performs the transition immediately — the click that carries the
+      // palette into the panel, the drag that docks the panel, the press
+      // that opens history. One chapter each: the loading was not a scene.
+      onBeat(0, STAGE_GESTURE_DUR[mode])
       const gestureStart = Date.now()
-      // SAME BEHAVIOUR AS THE TOP FILM: the hand draws the real gesture
-      // that produces this section's form — the spotlight header's own
-      // buttons, and for the dock the actual drag with the zones live.
-      // Orb and Spotlight need no gesture: one IS rest, the other is the
-      // surface the seed already opened.
+      await sleep(500)
+      if (!alive) return
       if (mode === "panel") {
         await cursor.current?.clickOn('[aria-label="Open in chat window"]')
         if (!alive) return
         setMode("panel")
       } else if (mode === "dock") {
-        await cursor.current?.clickOn('[aria-label="Open in chat window"]')
-        if (!alive) return
-        setMode("panel")
-        await sleep(900)
-        if (!alive) return
+        // starting FROM the panel: the drag is the whole story
         const dragged = await cursor.current?.dragTo(".group\\/header", 0.94, 0.4)
         if (!alive) return
         if (!dragged) setMode("dock")
@@ -1141,7 +1158,7 @@ function FormsDriver({
       alive = false
       timers.forEach(clearTimeout)
     }
-  }, [active, interacted, mode, setMode, seedPrompt, cursor, pausedRef, onBeat, onDone])
+  }, [active, interacted, prepped, mode, setMode, seedPrompt, cursor, pausedRef, onBeat, onDone])
 
   return <Assistant hotkeys={false} />
 }
