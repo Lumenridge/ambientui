@@ -319,7 +319,7 @@ One glass recipe for every AI surface — never a one-off blur:
 | `--glass-border` | border 70% | hairlines on glass |
 | `--glass-wash` | foreground 9% | neutral fills ON glass: selection, keycaps, the composer field |
 | `--wash` / `--wash-strong` | accent 40% / 60% | quiet fills at rest / hover-active |
-| `--scrim` | background 50% | drag-zone covers |
+| `--scrim` | background 50% | drag-zone covers, the spotlight backdrop |
 | `--glass-scrim` | popover 82%, blur ×1.6 | History's full-screen cover |
 | `--glass-veil` family | popover 62/48/92% | frost between a heat field and content, at panel / stage / full-screen strength |
 | `--positive-wash` / `--destructive-wash` | positive/destructive 12% | diff rows, run results |

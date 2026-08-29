@@ -2474,7 +2474,7 @@ export const AMBIENT_COMPONENTS: ComponentEntry[] = [
       "The page's own context rides along as a chip in the header band; right-clicking anything on the page attaches it as another chip.",
       "A chip may carry its own `icon`: every page is kind \"page\", which is too coarse to tell an editor from a colour map, and the page is the only thing that knows which. Omitted, the kind's icon stands in. Sparkles is never one of them — in this system that mark means the assistant, and a chip is what the assistant can SEE, not the assistant itself.",
       "Asking transitions the surface in place into the AI Overview — the answer arrives where the question was asked, with a follow-up form replacing the search input.",
-      "No backdrop: the palette floats on the page at full brightness, with the glass, its shadow, and the live border carrying the separation.",
+      "A glass-tinted scrim dims the product behind it — the scrim token with a whisper of backdrop blur — so the palette reads as the hero of the moment while the page stays legible through the veil.",
       "Ambient state is live: typing a question turns the layer to listening before send; the border and background field follow.",
       "Selection and keycaps use the neutral glass wash, not the accent — on glass, accent marks actions, not focus position.",
       "Dragging the floating panel to the top-center zone becomes this mode; dragging out of it returns to a panel.",

@@ -982,9 +982,10 @@ export function Assistant({
     surfaceEl = (
       <motion.div
         key="spotlight"
-        // no backdrop — the palette floats on the page (glass carries the
-        // separation); the full-viewport layer still catches outside clicks
-        className="fixed inset-0 z-50"
+        // a glass-tinted scrim: the product dims behind a translucent veil
+        // (the scrim token, a background-derived wash) so the palette reads
+        // as the hero of the moment; the layer still catches outside clicks
+        className="bg-(--scrim) fixed inset-0 z-50 backdrop-blur-xs"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: microT }}

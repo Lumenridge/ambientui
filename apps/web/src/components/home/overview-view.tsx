@@ -249,7 +249,7 @@ function EmbeddedLayer({ active }: { active: boolean }) {
   return <Assistant hotkeys={false} />
 }
 
-function ShellDemo() {
+function ShellDemo({ widthPct }: { widthPct: number | null }) {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
 
@@ -265,7 +265,14 @@ function ShellDemo() {
   }, [])
 
   return (
-    <div ref={ref} className="mx-auto flex w-full flex-col">
+    <div
+      ref={ref}
+      className="mx-auto flex w-full flex-col"
+      // measured from the wordmark's own glyphs, never guessed — the
+      // window's edges line up with the A and the I in whatever font the
+      // Foundation has configured
+      style={widthPct ? { width: `${widthPct}%` } : undefined}
+    >
       {/* the presentation shell: a desktop window floating on the ambient
           ground. transform-gpu makes it the containing block for the
           layer's fixed surfaces, and the rounded overflow clip keeps
@@ -305,6 +312,22 @@ export function OverviewView() {
   const { setPageIntel, orbState } = useAssistant()
   const spring = useMotionSpring()
   const micro = useMotionTransition("micro")
+
+  // THE WORDMARK SETS THE PAGE'S MEASURE. The glyphs' real extent inside
+  // the 640-unit viewBox depends on the Foundation's configured font, so
+  // it is measured from the drawn text (getBBox, re-run once fonts load)
+  // rather than hardcoded — the demo window below aligns its edges to
+  // the A and the I, whatever face they are set in.
+  const wordmarkRef = React.useRef<SVGTextElement | null>(null)
+  const [glyphPct, setGlyphPct] = React.useState<number | null>(null)
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      const b = wordmarkRef.current?.getBBox()
+      if (b && b.width > 0) setGlyphPct((b.width / 640) * 100)
+    }
+    measure()
+    document.fonts?.ready.then(measure)
+  }, [])
 
   React.useEffect(() => {
     setPageIntel({
@@ -347,6 +370,7 @@ export function OverviewView() {
             <defs>
               <clipPath id="wordmark-clip">
                 <text
+                  ref={wordmarkRef}
                   x="320"
                   y="114"
                   textAnchor="middle"
@@ -392,7 +416,7 @@ export function OverviewView() {
           presentation ground, Ambient UI in action inside it */}
       {/* px-6 matches the wordmark's own gutters — one width, one family */}
       <section className="relative px-6 pt-4 pb-10">
-        <ShellDemo />
+        <ShellDemo widthPct={glyphPct} />
       </section>
 
       {/* the resting orb owns the viewport's bottom-center */}

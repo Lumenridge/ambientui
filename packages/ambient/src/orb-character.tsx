@@ -57,6 +57,21 @@ const STATE_PARAMS: Record<
   answer: { speed: 0.45, contour: 0.68, innerGlow: 0.45, outerGlow: 0.42, noise: 0, angle: 0 },
 }
 
+/**
+ * Where every heat surface WAKES from: hotter than any resting state, so
+ * the first seconds after mount are visibly alive — the springs then
+ * settle into the actual state. Without this, a page that loads into
+ * `still` reads as a frozen image until the first state change.
+ */
+const WAKE_PARAMS = {
+  speed: 2.4,
+  contour: 0.9,
+  innerGlow: 0.6,
+  outerGlow: 0.6,
+  noise: 0,
+  angle: 120,
+}
+
 /** The shape the heat wraps: a filled circle with room for the outer
     glow. Served as a real file — the shader's loader rejects data URIs. */
 const CIRCLE_IMAGE_SRC = "/orb-circle.svg?v=2"
@@ -187,7 +202,7 @@ function useHeatEngine({
   speeds?: Partial<Record<OrbState, number>>
   colors?: string[]
 }) {
-  const [params, setParams] = React.useState(() => ({ ...STATE_PARAMS.still }))
+  const [params, setParams] = React.useState(() => ({ ...WAKE_PARAMS }))
   const [palette, setPalette] = React.useState<string[]>([])
 
   // Each shader parameter is a spring-driven motion value. Springs carry
@@ -196,11 +211,11 @@ function useHeatEngine({
   // needs, for free. Per-parameter spring characters: the flow speed
   // glides, the glows breathe, the wave direction swings deliberately.
   const mv = {
-    speed: useMotionValue(STATE_PARAMS.still.speed),
-    contour: useMotionValue(STATE_PARAMS.still.contour),
-    innerGlow: useMotionValue(STATE_PARAMS.still.innerGlow),
-    outerGlow: useMotionValue(STATE_PARAMS.still.outerGlow),
-    angle: useMotionValue(STATE_PARAMS.still.angle),
+    speed: useMotionValue(WAKE_PARAMS.speed),
+    contour: useMotionValue(WAKE_PARAMS.contour),
+    innerGlow: useMotionValue(WAKE_PARAMS.innerGlow),
+    outerGlow: useMotionValue(WAKE_PARAMS.outerGlow),
+    angle: useMotionValue(WAKE_PARAMS.angle),
   }
   const mvRef = React.useRef(mv)
   // the frame loop reads the latest values, so the ref is refreshed after
