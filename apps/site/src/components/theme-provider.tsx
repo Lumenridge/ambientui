@@ -2,6 +2,11 @@
 
 import * as React from "react"
 
+import {
+  THEME_DEFAULT,
+  THEME_STORAGE_KEY,
+} from "@/lib/theme-constants"
+
 type Theme = "dark" | "light" | "system"
 type ResolvedTheme = "dark" | "light"
 
@@ -26,8 +31,7 @@ const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
  * named failure mode, and a checker (scripts/check-theme-boot.mjs) fails the
  * gate if the HTML and this file disagree.
  */
-export const THEME_STORAGE_KEY = "ambientui-theme"
-export const THEME_DEFAULT: Theme = "dark"
+export { THEME_DEFAULT, THEME_STORAGE_KEY } from "@/lib/theme-constants"
 const THEME_VALUES: Theme[] = ["dark", "light", "system"]
 
 const ThemeProviderContext = React.createContext<

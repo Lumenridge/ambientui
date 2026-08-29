@@ -54,7 +54,14 @@ export default function RootLayout({
     // first read legitimately differ by exactly that class.
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* before first paint — see lib/theme-boot.ts */}
+        {/* BEFORE FIRST PAINT — see lib/theme-boot.ts.
+            A PLAIN <script>, deliberately. next/script with
+            `beforeInteractive` looked like the tidier answer and silently
+            dropped it from the static export altogether — the flash came
+            back and nothing said so, which is worse than the dev-mode
+            warning React emits about script tags in components. The
+            emitted HTML is what matters, and check-static-html.mjs now
+            asserts this script is in it. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
       <body>

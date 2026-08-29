@@ -21,6 +21,12 @@ import type { NextConfig } from "next"
 const basePath = process.env.AMBIENTUI_BASE_PATH ?? ""
 
 const nextConfig: NextConfig = {
+  // Next writes its own CLAUDE.md/AGENTS.md into the app by default. This
+  // repo's agent rules are a GOVERNED document at the root (CLAUDE.md, the
+  // constitution's companion) — a second, generated one inside the app is
+  // exactly the competing source of truth the project exists to argue
+  // against, and it would be read by an agent working here.
+  agentRules: false,
   output: "export",
   basePath,
   env: { NEXT_PUBLIC_BASE_PATH: basePath },

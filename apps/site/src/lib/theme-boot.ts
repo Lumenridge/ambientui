@@ -1,7 +1,4 @@
-import {
-  THEME_DEFAULT,
-  THEME_STORAGE_KEY,
-} from "@/components/theme-provider"
+import { THEME_DEFAULT, THEME_STORAGE_KEY } from "@/lib/theme-constants"
 
 /**
  * THE PRE-PAINT THEME SCRIPT.
@@ -14,9 +11,11 @@ import {
  *
  * THE COPY IS GONE. In the SPA this script lived in index.html, which
  * cannot import — so the key and the default were restated there and kept
- * honest by a checker. As a TypeScript module it simply IMPORTS them, and
- * the two can no longer disagree. Removing the possibility beats checking
- * for it, which is what the checker now asserts.
+ * honest by a checker. As a TypeScript module it simply IMPORTS them.
+ *
+ * From theme-constants.ts, NOT from the provider: this string is built by
+ * the SERVER layout, and importing it through a "use client" module made it
+ * resolve across a client boundary and emit nothing at all.
  */
 export const THEME_BOOT = `(function(){try{
 var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)})||${JSON.stringify(THEME_DEFAULT)};

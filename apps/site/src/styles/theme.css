@@ -6,11 +6,14 @@
   --radius: 0.25rem;
 }
 
-/* Desktop-app behavior: the document never scrolls; panes scroll internally. */
-html,
-body {
-  overflow: hidden;
-}
+/* THE DOCUMENT SCROLLS. This used to be `html, body { overflow: hidden }` —
+   correct for a desktop-app shell whose panes scroll internally, and fatal
+   for a site of documents: it silently froze every page at one viewport,
+   including a 40,000-word article.
+
+   The surfaces that genuinely want a locked viewport (the canvas and dev
+   tool demos) lock a WRAPPER instead, in app/demo/layout.tsx. A global rule
+   cannot know which kind of page it is on; a layout can. */
 
 /* The app's own accents. --app-blue is now an ALIAS: the token it named is
    public API of the ambient layer (it drives the live border, the stream's

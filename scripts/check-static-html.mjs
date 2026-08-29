@@ -109,6 +109,24 @@ for (const file of pages) {
     )
 }
 
+/**
+ * THE PRE-PAINT THEME SCRIPT MUST BE IN THE EMITTED HEAD.
+ *
+ * It vanished twice while every page still looked perfect: once when
+ * next/script's `beforeInteractive` quietly declined to emit it into a
+ * static export, and once when it was built from a constant imported
+ * through a "use client" module, so the server rendered an empty string.
+ * Both times the only symptom was a theme flash nobody would attribute to
+ * a build change.
+ */
+const home = readFileSync(resolve(OUT, "index.html"), "utf8")
+const head = home.slice(0, home.indexOf("</head>"))
+if (!head.includes("ambientui-theme")) {
+  problems.push(
+    "index.html: the pre-paint theme script is not in the emitted <head> — every load will flash"
+  )
+}
+
 // the sitemap must list exactly the pages that were built and indexed
 const sitemapPath = resolve(OUT, "sitemap.xml")
 if (!existsSync(sitemapPath)) {

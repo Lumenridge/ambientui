@@ -19,16 +19,26 @@ import { fileURLToPath } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const boot = readFileSync(resolve(ROOT, "apps/site/src/lib/theme-boot.ts"), "utf8")
-const provider = readFileSync(
-  resolve(ROOT, "apps/site/src/components/theme-provider.tsx"),
+// the constants live in a module with NO "use client": the boot string is
+// built by the SERVER layout, and importing them through a client module
+// made it emit nothing at all
+const constants = readFileSync(
+  resolve(ROOT, "apps/site/src/lib/theme-constants.ts"),
   "utf8"
 )
 
 const problems = []
-if (!/THEME_STORAGE_KEY\s*=\s*"/.test(provider))
-  problems.push("theme-provider.tsx no longer declares THEME_STORAGE_KEY")
-if (!/import\s*\{[^}]*THEME_STORAGE_KEY[^}]*\}\s*from/.test(boot))
-  problems.push("theme-boot.ts does not import THEME_STORAGE_KEY — it is restating it")
+if (!/THEME_STORAGE_KEY\s*=\s*"/.test(constants))
+  problems.push("theme-constants.ts no longer declares THEME_STORAGE_KEY")
+// the DIRECTIVE, not the phrase — it only counts at the top of the file
+if (/^\s*["']use client["']/.test(constants))
+  problems.push(
+    'theme-constants.ts is a client module — the server layout builds the boot script from it and would emit nothing'
+  )
+if (!/import\s*\{[^}]*THEME_STORAGE_KEY[^}]*\}\s*from\s*"@\/lib\/theme-constants"/.test(boot))
+  problems.push(
+    "theme-boot.ts must import THEME_STORAGE_KEY from @/lib/theme-constants"
+  )
 if (/getItem\(\s*"/.test(boot))
   problems.push("theme-boot.ts hardcodes a storage key string")
 

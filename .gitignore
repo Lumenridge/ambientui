@@ -54,3 +54,7 @@ apps/site/out/
 apps/site/next-env.d.ts
 
 apps/site/public/orb-*.svg
+
+# Next writes these; this repo governs its own at the root
+apps/site/CLAUDE.md
+apps/site/AGENTS.md

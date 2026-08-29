@@ -10,10 +10,18 @@ import { REPO_URL, SITE_NAME, SITE_URL } from "@/lib/site"
  * exists. Structured data is a place it is unusually easy to lie, and
  * unusually hard to notice.
  */
+/**
+ * A <script type="application/ld+json"> is DATA, not code — crawlers read
+ * it out of the markup and no browser executes it. React 19 warns about
+ * script tags in components anyway (it will not run them on the client),
+ * so `suppressHydrationWarning` states that this one is meant to be inert
+ * markup rather than a script anyone expects to run.
+ */
 function Script({ data }: { data: object }) {
   return (
     <script
       type="application/ld+json"
+      suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
   )
