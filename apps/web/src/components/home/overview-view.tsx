@@ -46,24 +46,25 @@ const VERSIONS = [
 ]
 
 /** what the embedded layer offers on this page — grounded in the data below */
-/** the statement section: the philosophy, in the enterprise frame */
+/** the statement section: the philosophy in plain words — direct heads,
+    simply explainable lines, no abstractions to decode */
 const PRINCIPLES: { word: string; body: string; link?: boolean }[] = [
   {
-    word: "Ambient",
-    body: "Enterprise screens are crowded enough. The AI takes no tab, no panel, no corner of the record — it is a presence above the interface, arriving at whatever size the moment deserves and leaving when it is done.",
+    word: "Takes no space",
+    body: "Enterprise screens are full. The AI is a layer above the app — no chat tab, no side panel, nothing carved out of the record. It opens when you call it and leaves when it is done.",
     link: true,
   },
   {
-    word: "Grounded",
-    body: "It works on top of the system of record. Each page declares its records to the layer through one narrow contract, so the AI acts on the row you are looking at — never on a paste of it.",
+    word: "Knows your context",
+    body: "Every page tells the layer what you are looking at. Ask about \u201cthis invoice\u201d and it knows which one — you never paste, describe, or re-explain your screen.",
   },
   {
-    word: "Composed",
-    body: "Answers arrive as working UI, not chat: a diff against the record, a run with its exit code, references into your own data — built from your product's components, in place.",
+    word: "Answers with real UI",
+    body: "Not a wall of chat. A diff you can apply, a command with its result, references into your own data — real components from your product, shown in place.",
   },
   {
-    word: "Inherited",
-    body: "Infrastructure-first: the layer ships with no look of its own. It inherits your design system and your governance, so it deploys into an enterprise product without adding a brand — or a drift surface.",
+    word: "Wears your design system",
+    body: "The layer has no colors, fonts, or motion of its own. It uses yours. Change your theme once and the AI changes with it.",
   },
 ]
 
