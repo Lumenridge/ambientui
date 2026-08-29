@@ -920,13 +920,21 @@ const STAGE_GESTURE_DUR: Record<AssistantMode, number> = {
 }
 const stageBeatsFor = (form: (typeof FORMS)[number]) =>
   // the Orb IS the resting state — its demo has nothing to ask, so its
-  // transport is one chapter and its window opens on the orb directly
+  // transport is one chapter and its window opens on the orb directly.
+  // The Spotlight tells the whole ask (⌘K · type · ↩), so its first
+  // chapter is "Ask"; every later form INHERITS the answered palette,
+  // so theirs is named "Spotlight" — the state it picks up from
   form.mode === "line"
     ? ([{ id: "form", label: form.name }] as const)
-    : ([
-        { id: "ask", label: "Ask" },
-        { id: "form", label: form.name },
-      ] as const)
+    : form.mode === "spotlight"
+      ? ([
+          { id: "ask", label: "Ask" },
+          { id: "form", label: form.name },
+        ] as const)
+      : ([
+          { id: "spotlight", label: "Spotlight" },
+          { id: "form", label: form.name },
+        ] as const)
 
 function FormsDriver({
   active,
@@ -1077,13 +1085,18 @@ function FormsDriver({
         return
       }
       if (!seeded.current) {
-        // one real exchange, so every form has a transcript to show. The
-        // seed drains when an ASKING surface opens, so it runs through
-        // the spotlight first and the section's own form takes over.
-        onBeat(0, 2600)
+        // the section STARTS WHERE THE SPOTLIGHT DEMO ENDED: the answered
+        // command palette. The exchange seeds immediately — no typing,
+        // that story was told one section up — and SETTLES before the
+        // hand carries it into this form, so the state being carried is
+        // the finished one, not a mid-stream flicker.
+        onBeat(0, 5200)
         setMode("spotlight")
         seedPrompt(DEMO_SUGGESTIONS[0]!, true, true)
-        await sleep(2600)
+        await sleep(1200)
+        await waitUntil(() => orbStateRef.current === "still", 20000)
+        if (!alive) return
+        await sleep(700)
         if (!alive) return
         seeded.current = true
       }
