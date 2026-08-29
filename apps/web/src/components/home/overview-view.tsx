@@ -55,14 +55,14 @@ export function OverviewView({
 
   return (
     <div className="bg-background relative flex min-h-full items-center justify-center overflow-hidden">
-      {/* the ground is the identity's own field under a DARK tint — a veil
-          per §8 (never a raw shader), but this hero commits to the dark
-          look in both modes: the tint is the foreground role in light and
-          the background role in dark, both of which resolve dark */}
+      {/* the ground is the identity's own field under a tint — a veil per
+          §8 (never a raw shader). The tint is the BACKGROUND role, so it
+          follows the theme: a light veil in light mode, a dark one in
+          dark, and the field glows through both */}
       <OrbField state={orbState} strength="stage" />
       <div
         aria-hidden
-        className="bg-foreground/80 dark:bg-background/75 pointer-events-none absolute inset-0"
+        className="bg-background/75 pointer-events-none absolute inset-0"
       />
       <motion.h1
         initial={{ opacity: 0, y: 24 }}
@@ -91,15 +91,15 @@ export function OverviewView({
               </text>
             </clipPath>
           </defs>
-          {/* the glyph base — LIGHT in both modes (the tint trick in
-              reverse: background role in light, foreground role in dark),
-              so the name pops off the dark veil and the heat rides it as
-              color. Also the fallback while the shader warms up. */}
+          {/* the glyph base — the FOREGROUND role, the tint's opposite:
+              dark glyphs on the light veil, bright ones on the dark, so
+              the name pops in both modes and the heat rides it as color.
+              Also the fallback while the shader warms up. */}
           <g clipPath="url(#wordmark-clip)">
             <rect
               width="640"
               height="150"
-              className="fill-background dark:fill-foreground"
+              className="fill-foreground"
               opacity="0.75"
             />
             {/* the heat shaped to the wordmark's band, its frame OVERSIZED
