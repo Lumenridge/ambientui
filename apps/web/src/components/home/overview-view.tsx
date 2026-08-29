@@ -2,7 +2,6 @@ import * as React from "react"
 
 import { motion } from "framer-motion"
 
-import { Button } from "@ambientui/ui/components/button"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
@@ -223,8 +222,11 @@ function EmbeddedLayer({ active }: { active: boolean }) {
   // the frame is watched, the question writes itself through seedPrompt
   // (each seed lands in the real input), and the final seed autoSends —
   // the real pipeline takes it from there: thinking beat, composed
-  // answer, the surface flipping to the AI overview in place. Cadences
-  // are demo choreography; every behavior underneath is the component's.
+  // answer, the surface flipping to the AI overview in place. After the
+  // answer has been read, the layer goes back to rest and the film
+  // replays. Cadences are demo choreography; every behavior underneath
+  // is the component's.
+  const [cycle, setCycle] = React.useState(0)
   React.useEffect(() => {
     if (!active) return
     const timers: number[] = []
@@ -235,9 +237,14 @@ function EmbeddedLayer({ active }: { active: boolean }) {
     q.split("").forEach((_, i) =>
       at(2200 + i * 38, () => seedPrompt(q.slice(0, i + 1)))
     )
-    at(2200 + q.length * 38 + 800, () => seedPrompt(q, true))
+    const sent = 2200 + q.length * 38 + 800
+    at(sent, () => seedPrompt(q, true))
+    // the pipeline needs its thinking beat plus the staged answer; hold
+    // the settled overview long enough to read, then rest and replay
+    at(sent + 16000, () => setMode("line"))
+    at(sent + 17500, () => setCycle((c) => c + 1))
     return () => timers.forEach(clearTimeout)
-  }, [active, setMode, seedPrompt])
+  }, [active, cycle, setMode, seedPrompt])
 
   return <Assistant hotkeys={false} />
 }
@@ -258,7 +265,7 @@ function ShellDemo() {
   }, [])
 
   return (
-    <div ref={ref} className="mx-auto flex w-full max-w-6xl flex-col">
+    <div ref={ref} className="mx-auto flex w-full flex-col">
       {/* the presentation shell: a desktop window floating on the ambient
           ground. transform-gpu makes it the containing block for the
           layer's fixed surfaces, and the rounded overflow clip keeps
@@ -279,26 +286,26 @@ function ShellDemo() {
         </div>
         <div className="relative min-h-0 flex-1">
           <DemoDashboard />
-          <AssistantProvider navItems={DEMO_NAV}>
-            <EmbeddedLayer active={inView} />
-          </AssistantProvider>
+          {/* zoom, not transform: it scales the embedded layer's layout
+              (fixed surfaces included) without becoming a containing
+              block, so the surfaces still position against the window.
+              0.8 is presentation choreography, like the film's cadences:
+              it sets the layer at the demo app's own density so the two
+              read as one product. */}
+          <div style={{ zoom: 0.8 }}>
+            <AssistantProvider navItems={DEMO_NAV}>
+              <EmbeddedLayer active={inView} />
+            </AssistantProvider>
+          </div>
         </div>
       </div>
-      <p className="text-muted-foreground mt-4 shrink-0 text-center text-xs">
-        This is the real component — the same ⌘K surface this page runs,
-        mounted inside a product that never heard of it. Type into it.
-      </p>
     </div>
   )
 }
 
 /* ------------------------------- the page ------------------------------- */
 
-export function OverviewView({
-  onNavigate,
-}: {
-  onNavigate: (view: string) => void
-}) {
+export function OverviewView() {
   const { setPageIntel, orbState } = useAssistant()
   const spring = useMotionSpring()
   const micro = useMotionTransition("micro")
@@ -387,17 +394,13 @@ export function OverviewView({
 
       {/* the demo, starting under the word — a desktop window on the
           presentation ground, Ambient UI in action inside it */}
-      <section className="relative px-4 pt-4 pb-10 sm:px-10">
+      {/* px-6 matches the wordmark's own gutters — one width, one family */}
+      <section className="relative px-6 pt-4 pb-10">
         <ShellDemo />
       </section>
 
-      {/* pb-40: the resting orb owns the viewport's bottom-center */}
-      <div className="relative flex justify-center pb-40">
-        <Button variant="outline" onClick={() => onNavigate("architecture")}>
-          Read: Stop AI drift
-          <Icon name="chevron-right" size={14} />
-        </Button>
-      </div>
+      {/* the resting orb owns the viewport's bottom-center */}
+      <div className="pb-24" />
     </div>
   )
 }

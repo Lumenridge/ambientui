@@ -131,7 +131,7 @@ export function HomePage() {
         value="overview"
         className="m-0 min-h-0 flex-1 overflow-y-auto"
       >
-        <OverviewView onNavigate={select} />
+        <OverviewView />
       </TabsContent>
 
       <TabsContent
