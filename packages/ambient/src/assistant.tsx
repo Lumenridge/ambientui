@@ -237,21 +237,39 @@ export function Assistant({
     null
   )
 
+  // THE SURFACES MEASURE THEIR CONTAINING BLOCK (same lesson as orb.tsx):
+  // fixed coordinates resolve against the nearest transformed ancestor, so
+  // an embedded layer must convert pointer (viewport) coordinates into
+  // frame space and clamp against the FRAME — otherwise a drag inside a
+  // product-demo window computes positions off the whole screen and the
+  // panel walks out of the shell.
+  const frameProbeRef = React.useRef<HTMLDivElement | null>(null)
+  const getFrame = () => {
+    const parent = frameProbeRef.current?.offsetParent as HTMLElement | null
+    if (!parent)
+      return { left: 0, top: 0, w: window.innerWidth, h: window.innerHeight }
+    const r = parent.getBoundingClientRect()
+    return { left: r.left, top: r.top, w: r.width, h: r.height }
+  }
+
   const startPanelDrag = (e: React.PointerEvent) => {
     if (mode !== "panel" && mode !== "dock") return
     if ((e.target as HTMLElement).closest("button,input")) return
+    const f = getFrame()
     if (mode === "dock") {
       // detach the dock into a floating panel under the pointer, keep dragging
-      const x = Math.min(Math.max(8, e.clientX - 220), window.innerWidth - 200)
-      const y = Math.max(8, e.clientY - 16)
+      const px = e.clientX - f.left
+      const py = e.clientY - f.top
+      const x = Math.min(Math.max(8, px - 220), f.w - 200)
+      const y = Math.max(8, py - 16)
       setPanelPos({ x, y })
-      setPanelDrag({ dx: e.clientX - x, dy: e.clientY - y })
+      setPanelDrag({ dx: px - x, dy: py - y })
       setMode("panel")
       return
     }
     const rect = panelRef.current?.getBoundingClientRect()
     if (!rect) return
-    setPanelPos({ x: rect.left, y: rect.top })
+    setPanelPos({ x: rect.left - f.left, y: rect.top - f.top })
     setPanelDrag({ dx: e.clientX - rect.left, dy: e.clientY - rect.top })
   }
 
@@ -263,20 +281,17 @@ export function Assistant({
   React.useEffect(() => {
     if (!panelDrag) return
     const move = (e: PointerEvent) => {
+      const f = getFrame()
+      const px = e.clientX - f.left
+      const py = e.clientY - f.top
       setPanelPos({
-        x: Math.min(
-          Math.max(8, e.clientX - panelDrag.dx),
-          window.innerWidth - 200
-        ),
-        y: Math.min(
-          Math.max(8, e.clientY - panelDrag.dy),
-          window.innerHeight - 80
-        ),
+        x: Math.min(Math.max(8, px - panelDrag.dx), f.w - 200),
+        y: Math.min(Math.max(8, py - panelDrag.dy), f.h - 80),
       })
       const zone =
-        e.clientX > window.innerWidth - 140
+        px > f.w - 140
           ? ("dock" as const)
-          : e.clientY < 180 && Math.abs(e.clientX - window.innerWidth / 2) < 320
+          : py < 180 && Math.abs(px - f.w / 2) < 320
             ? ("spotlight" as const)
             : null
       hotZoneRef.current = zone
@@ -1434,6 +1449,9 @@ export function Assistant({
 
   return (
     <>
+      {/* zero-size fixed probe: its offsetParent IS the containing block
+          (the frame when embedded, the viewport otherwise) */}
+      <div ref={frameProbeRef} aria-hidden className="fixed" />
       {/* Only render the orb in its own mode: kept mounted-but-hidden it
           held a WebGL context and a 60fps loop behind every open surface. */}
       {mode === "line" && <AssistantOrb />}

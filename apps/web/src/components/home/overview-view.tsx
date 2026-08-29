@@ -310,7 +310,7 @@ function EmbeddedLayer({
   return <Assistant hotkeys={false} />
 }
 
-function ShellDemo({ widthPct }: { widthPct: number | null }) {
+function ShellDemo() {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
   const [interacted, setInteracted] = React.useState(false)
@@ -327,14 +327,7 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
   }, [])
 
   return (
-    <div
-      ref={ref}
-      className="mx-auto flex w-full flex-col"
-      // measured from the wordmark's own glyphs, never guessed — the
-      // window's edges line up with the A and the I in whatever font the
-      // Foundation has configured
-      style={widthPct ? { width: `${widthPct}%` } : undefined}
-    >
+    <div ref={ref} className="mx-auto flex w-full max-w-5xl flex-col">
       {/* the shell REVEALS as the reader scrolls to it; the film starts
           once it is properly in view, so the entrance leads and the demo
           follows. The layer inside renders at the Foundation's own
@@ -416,13 +409,7 @@ function FormsDriver({ active, mode }: { active: boolean; mode: AssistantMode })
  * so the conversational forms have a transcript; from there the layer is
  * the visitor's to use.
  */
-function FormSection({
-  form,
-  widthPct,
-}: {
-  form: (typeof FORMS)[number]
-  widthPct: number | null
-}) {
+function FormSection({ form }: { form: (typeof FORMS)[number] }) {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
 
@@ -439,11 +426,7 @@ function FormSection({
 
   return (
     <section className="relative px-6 pt-24">
-      <div
-        ref={ref}
-        className="mx-auto w-full"
-        style={widthPct ? { width: `${widthPct}%` } : undefined}
-      >
+      <div ref={ref} className="mx-auto w-full max-w-5xl">
         <Reveal>
           <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {form.name}
@@ -474,21 +457,6 @@ function FormSection({
 export function OverviewView() {
   const { setPageIntel, orbState } = useAssistant()
 
-  // THE WORDMARK SETS THE PAGE'S MEASURE. The glyphs' real extent inside
-  // the 640-unit viewBox depends on the Foundation's configured font, so
-  // it is measured from the drawn text (getBBox, re-run once fonts load)
-  // rather than hardcoded — the demo window below aligns its edges to
-  // the A and the I, whatever face they are set in.
-  const wordmarkRef = React.useRef<SVGTextElement | null>(null)
-  const [glyphPct, setGlyphPct] = React.useState<number | null>(null)
-  React.useLayoutEffect(() => {
-    const measure = () => {
-      const b = wordmarkRef.current?.getBBox()
-      if (b && b.width > 0) setGlyphPct((b.width / 640) * 100)
-    }
-    measure()
-    document.fonts?.ready.then(measure)
-  }, [])
 
   React.useEffect(() => {
     setPageIntel({
@@ -539,7 +507,6 @@ export function OverviewView() {
             <defs>
               <clipPath id="wordmark-clip">
                 <text
-                  ref={wordmarkRef}
                   x="320"
                   y="114"
                   textAnchor="middle"
@@ -586,7 +553,7 @@ export function OverviewView() {
           presentation ground, Ambient UI in action inside it */}
       {/* px-6 matches the wordmark's own gutters — one width, one family */}
       <section className="relative px-6 pt-4 pb-10">
-        <ShellDemo widthPct={glyphPct} />
+        <ShellDemo />
       </section>
 
       {/* the statement: what Ambient UI is, and the four principles */}
@@ -630,10 +597,7 @@ export function OverviewView() {
       {/* the forms: one presence, many shapes — one section per form,
           each window at the wordmark's width, each layer real */}
       <section className="relative px-6 pt-8">
-        <div
-          className="mx-auto w-full"
-          style={glyphPct ? { width: `${glyphPct}%` } : undefined}
-        >
+        <div className="mx-auto w-full max-w-5xl">
           <Reveal>
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               One presence, many forms
@@ -648,7 +612,7 @@ export function OverviewView() {
         </div>
       </section>
       {FORMS.map((f) => (
-        <FormSection key={f.name} form={f} widthPct={glyphPct} />
+        <FormSection key={f.name} form={f} />
       ))}
       <div className="pb-8" />
 
