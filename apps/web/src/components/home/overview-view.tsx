@@ -1,11 +1,13 @@
 import * as React from "react"
 
+import { Button } from "@ambientui/ui/components/button"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
 import { Assistant } from "ambientui/assistant"
 import {
   AssistantProvider,
   useAssistant,
+  type AssistantMode,
 } from "ambientui/assistant-context"
 import { OrbField, OrbHeat } from "ambientui/orb-character"
 
@@ -66,6 +68,15 @@ const PRINCIPLES: { word: string; body: string; link?: boolean }[] = [
     word: "Wears your design system",
     body: "The layer has no colors, fonts, or motion of its own. It uses yours. Change your theme once and the AI changes with it.",
   },
+]
+
+/** the layer's forms, described in the paper's own words (§2) */
+const FORMS: { mode: AssistantMode; name: string; desc: string }[] = [
+  { mode: "line", name: "Orb", desc: "The resting state. Present, watching nothing, costing nothing — a small character docked to the edge of the page." },
+  { mode: "spotlight", name: "Spotlight", desc: "One input that searches the product and asks the model — the command palette, rebuilt for an AI-native product." },
+  { mode: "panel", name: "Panel", desc: "A floating conversation that persists while you work. Answers accumulate; the transcript is the point." },
+  { mode: "dock", name: "Dock", desc: "The panel anchored full-height to an edge. The page reflows around it instead of being covered." },
+  { mode: "history", name: "History", desc: "The record of everything asked here — full screen but translucent, because the work underneath is the reason you opened it." },
 ]
 
 const DEMO_SUGGESTIONS = [
@@ -212,6 +223,26 @@ function DemoDashboard() {
   )
 }
 
+/** The presentation shell both demos share: a desktop window, 16:9,
+    transform-contained so an embedded layer's surfaces live inside it. */
+function DemoWindow({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="border-border bg-card relative z-10 flex aspect-video w-full transform-gpu flex-col overflow-hidden rounded-2xl border shadow-2xl">
+      <div className="border-border bg-muted/50 relative flex h-9 shrink-0 items-center justify-center border-b">
+        <span className="absolute start-4 flex gap-1.5">
+          <span className="bg-muted-foreground/30 size-3 rounded-full" />
+          <span className="bg-muted-foreground/30 size-3 rounded-full" />
+          <span className="bg-muted-foreground/30 size-3 rounded-full" />
+        </span>
+        <span className="text-muted-foreground text-xs">
+          {APP.org} — {APP.service}
+        </span>
+      </div>
+      <div className="relative min-h-0 flex-1">{children}</div>
+    </div>
+  )
+}
+
 /* --------------------------- the embedded layer --------------------------- */
 
 /**
@@ -294,40 +325,118 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
       // Foundation has configured
       style={widthPct ? { width: `${widthPct}%` } : undefined}
     >
-      {/* the presentation shell: a desktop window floating on the ambient
-          ground. transform-gpu makes it the containing block for the
-          layer's fixed surfaces, and the rounded overflow clip keeps
-          every surface — spotlight, panel, resting orb — inside the
-          window, exactly where a product's own layer lives. */}
-      {/* aspect-video: the window keeps its width and sizes itself 16:9,
-          the way a presentation frame is cut. The shell REVEALS as the
-          reader scrolls to it; the film starts once it is properly in
-          view (the observer's 40%), so the entrance leads and the demo
-          follows */}
+      {/* the shell REVEALS as the reader scrolls to it; the film starts
+          once it is properly in view, so the entrance leads and the demo
+          follows. The layer inside renders at the Foundation's own
+          scaling — its size is a THEME decision, not a demo knob. */}
       <Reveal>
-      <div className="border-border bg-card relative z-10 flex aspect-video w-full transform-gpu flex-col overflow-hidden rounded-2xl border shadow-2xl">
-        <div className="border-border bg-muted/50 relative flex h-9 shrink-0 items-center justify-center border-b">
-          <span className="absolute start-4 flex gap-1.5">
-            <span className="bg-muted-foreground/30 size-3 rounded-full" />
-            <span className="bg-muted-foreground/30 size-3 rounded-full" />
-            <span className="bg-muted-foreground/30 size-3 rounded-full" />
-          </span>
-          <span className="text-muted-foreground text-xs">
-            {APP.org} — {APP.service}
-          </span>
-        </div>
-        <div className="relative min-h-0 flex-1">
+        <DemoWindow>
           <DemoDashboard />
-          {/* the layer renders at the Foundation's own scaling — the same
-              rem base as everything else — because its size is a THEME
-              decision, not a demo knob. Only the shell outside carries
-              the presentation sizing. */}
           <AssistantProvider navItems={DEMO_NAV}>
             <EmbeddedLayer active={inView} />
           </AssistantProvider>
-        </div>
-      </div>
+        </DemoWindow>
       </Reveal>
+    </div>
+  )
+}
+
+/* ------------------------------ the forms ------------------------------ */
+
+/**
+ * Inside its own nested provider: declare the product, seed one real
+ * exchange so every form has a transcript to show, and hold the layer in
+ * whatever form the section currently presents. All public seam — the
+ * same setMode/seedPrompt the product itself uses.
+ */
+function FormsDriver({ active, mode }: { active: boolean; mode: AssistantMode }) {
+  const { setMode, setPageChip, setPageIntel, seedPrompt } = useAssistant()
+
+  React.useEffect(() => {
+    setPageChip({
+      id: "nb-overview",
+      kind: "page",
+      label: `${APP.service} · Overview`,
+      icon: "code",
+    })
+    setPageIntel({
+      suggestions: DEMO_SUGGESTIONS,
+      askPlaceholder: `Search ${APP.service}, or ask anything…`,
+    })
+    return () => {
+      setPageChip(null)
+      setPageIntel(null)
+    }
+  }, [setPageChip, setPageIntel])
+
+  const seeded = React.useRef(false)
+  React.useEffect(() => {
+    if (!active) return
+    if (!seeded.current) {
+      // one real exchange, so panel / dock / history have a transcript
+      seeded.current = true
+      seedPrompt(DEMO_SUGGESTIONS[0]!, true)
+    }
+    setMode(mode)
+  }, [active, mode, setMode, seedPrompt])
+
+  return <Assistant hotkeys={false} />
+}
+
+/** The forms section's demo: the same window, cycling the layer's shapes. */
+function FormsDemo() {
+  const ref = React.useRef<HTMLDivElement | null>(null)
+  const [inView, setInView] = React.useState(false)
+  const [idx, setIdx] = React.useState(0)
+
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([e]) => setInView(e!.isIntersecting),
+      { threshold: 0.35 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  // auto-advance while watched; clicking a form restarts the clock
+  React.useEffect(() => {
+    if (!inView) return
+    const t = window.setInterval(
+      () => setIdx((i) => (i + 1) % FORMS.length),
+      6500
+    )
+    return () => window.clearInterval(t)
+  }, [inView, idx])
+
+  const form = FORMS[idx]!
+  return (
+    <div ref={ref} className="w-full">
+      <Reveal>
+        <DemoWindow>
+          <DemoDashboard />
+          <AssistantProvider navItems={DEMO_NAV}>
+            <FormsDriver active={inView} mode={form.mode} />
+          </AssistantProvider>
+        </DemoWindow>
+      </Reveal>
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        {FORMS.map((f, i) => (
+          <Button
+            key={f.name}
+            size="sm"
+            variant={i === idx ? "default" : "secondary"}
+            className="rounded-full"
+            onClick={() => setIdx(i)}
+          >
+            {f.name}
+          </Button>
+        ))}
+      </div>
+      <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
+        {form.desc}
+      </p>
     </div>
   )
 }
@@ -487,6 +596,24 @@ export function OverviewView() {
               </div>
             </Reveal>
           ))}
+        </div>
+      </section>
+
+      {/* the forms: one presence, many shapes — same window, real modes */}
+      <section className="relative mx-auto w-full max-w-5xl px-6 pt-8 pb-24">
+        <Reveal>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            One presence, many forms
+          </h2>
+          <p className="text-muted-foreground mt-6 max-w-2xl leading-relaxed">
+            A presence that is always available cannot have one fixed size.
+            The layer changes shape instead of changing identity — the same
+            assistant, the same context, a different geometry for how much
+            of your attention the moment deserves.
+          </p>
+        </Reveal>
+        <div className="mt-10">
+          <FormsDemo />
         </div>
       </section>
 

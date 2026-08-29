@@ -80,12 +80,12 @@ export function ViewMenu({
   const micro = useMotionTransition("micro")
 
   return (
-    // layout on the pill and every segment: switching states is ONE
-    // continuous move — the old label folds, the new one grows, and the
-    // neighbors slide — all on the surface spring, never a cut
-    <motion.div
-      layout
-      transition={spring}
+    // POSITION-ONLY layout on the segments: the real width change is the
+    // label span animating width, so wrappers only slide to make room —
+    // full layout would FLIP-scale the buttons and visibly distort them
+    // mid-move. The pill needs no layout of its own: it auto-sizes from
+    // children that already animate continuously.
+    <div
       className={cn(
         // popover ground, not glass: this is product chrome, and only the
         // assistant's surfaces wear the ambient material (DESIGN.md §8)
@@ -94,7 +94,7 @@ export function ViewMenu({
       )}
     >
       {home && (
-        <motion.div layout transition={spring}>
+        <motion.div layout="position" transition={spring}>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -146,7 +146,7 @@ export function ViewMenu({
         // only the collapsed segments need a tooltip — the expanded one
         // is wearing its name
         return (
-          <motion.div key={item.id} layout transition={spring}>
+          <motion.div key={item.id} layout="position" transition={spring}>
             {active ? (
               segment
             ) : (
@@ -159,7 +159,7 @@ export function ViewMenu({
         )
       })}
 
-      <motion.div layout transition={spring}>
+      <motion.div layout="position" transition={spring}>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -179,6 +179,6 @@ export function ViewMenu({
         </TooltipContent>
       </Tooltip>
       </motion.div>
-    </motion.div>
+    </div>
   )
 }
