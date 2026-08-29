@@ -46,6 +46,27 @@ const VERSIONS = [
 ]
 
 /** what the embedded layer offers on this page — grounded in the data below */
+/** the statement section: the philosophy's four shifts as principles */
+const PRINCIPLES: { word: string; body: string; link?: boolean }[] = [
+  {
+    word: "Ambient",
+    body: "The AI is not a feature of your product — it is a presence above it. Available everywhere, aware of where you are, taking whatever shape the moment deserves.",
+    link: true,
+  },
+  {
+    word: "Grounded",
+    body: "Every page declares what the layer may know, through one narrow contract. Context becomes something a page provides, like a title — you never re-explain where you are.",
+  },
+  {
+    word: "Composed",
+    body: "Answers are built from your product's own components: a diff you can apply, a terminal with its exit code, references you can check. Chat is the fallback, not the default.",
+  },
+  {
+    word: "Inherited",
+    body: "The layer ships with no palette, no type scale, and no motion of its own. It wears your design system — change your accent and the assistant changes with it.",
+  },
+]
+
 const DEMO_SUGGESTIONS = [
   `Why did the deploy to ${APP.service} fail?`,
   "Roll back to the last clean version",
@@ -416,6 +437,43 @@ export function OverviewView() {
       {/* px-6 matches the wordmark's own gutters — one width, one family */}
       <section className="relative px-6 pt-4 pb-10">
         <ShellDemo widthPct={glyphPct} />
+      </section>
+
+      {/* the statement: what Ambient UI is, and the four principles */}
+      <section className="relative mx-auto w-full max-w-5xl px-6 pt-32 pb-24">
+        <Reveal>
+          <p className="text-muted-foreground mx-auto max-w-4xl text-center text-3xl leading-snug font-medium text-balance sm:text-4xl">
+            Ambient UI is a reimagining of AI in the interface — one presence
+            above your product, driven by your design system.
+          </p>
+        </Reveal>
+        <div className="mt-28 grid gap-x-16 gap-y-16 sm:grid-cols-2">
+          {PRINCIPLES.map((pr) => (
+            <Reveal key={pr.word}>
+              <div className="border-border border-t pt-8">
+                <h3 className="text-2xl font-semibold tracking-tight">
+                  {pr.word}.
+                </h3>
+                <p className="text-muted-foreground mt-6 leading-relaxed">
+                  {pr.body}
+                </p>
+                {pr.link && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.history.pushState(null, "", "/?view=architecture")
+                      window.dispatchEvent(new PopStateEvent("popstate"))
+                    }}
+                    className="hover:text-muted-foreground mt-6 flex items-center gap-1.5 font-medium"
+                  >
+                    Read the architecture
+                    <Icon name="chevron-right" size={15} />
+                  </button>
+                )}
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </section>
 
       {/* the resting orb owns the viewport's bottom-center */}
