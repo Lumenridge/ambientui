@@ -5,6 +5,7 @@ import * as React from "react"
 import { AnimatePresence, animate, motion, useMotionValue } from "framer-motion"
 
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
+import { Button } from "@ambientui/ui/components/button"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
 import { Assistant } from "ambientui/assistant"
@@ -17,6 +18,7 @@ import { OrbField, OrbHeat } from "ambientui/orb-character"
 
 import { useRouter } from "next/navigation"
 
+import { ContextSection } from "@/components/home/context-section"
 import { DesignArchitectureSection } from "@/components/home/design-architecture-section"
 import { InstallSection } from "@/components/home/install-section"
 import { Reveal } from "@/components/reveal"
@@ -1492,21 +1494,28 @@ export function OverviewView() {
                   {pr.body}
                 </p>
                 {pr.link && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    className="-ms-3 mt-4"
                     onClick={() => {
                       router.push("/architecture")
                     }}
-                    className="hover:text-muted-foreground mt-6 flex items-center gap-1.5 font-medium"
                   >
                     Read the architecture
                     <Icon name="chevron-right" size={15} />
-                  </button>
+                  </Button>
                 )}
               </div>
             </Reveal>
           ))}
         </div>
+      </section>
+
+      {/* THE CONTRACT BEFORE THE SHAPES. What makes the six forms worth
+          having is that any of them already knows where you are; showing
+          the shapes first makes them look like six ways to open a chat. */}
+      <section className="relative mx-auto w-full max-w-5xl px-6 pt-32">
+        <ContextSection />
       </section>
 
       {/* the forms: one presence, many shapes — one section per form,

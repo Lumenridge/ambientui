@@ -729,35 +729,46 @@ function AnatomySection({ md }: { md: string }) {
   return (
     <>
       <Markdown source={before} />
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+      {/* A LIST, NOT A CARD GRID. This is an inventory of twelve files read
+          in order, and two columns of equal-weight cards made it a gallery:
+          the eye picks a card instead of reading down. Rows on a rule keep
+          the reading order the table had, and the card's height padding
+          stops competing with the prose it sits inside. */}
+      <ul className="border-border mt-6 border-t">
         {rows.map((r) => (
-          <div
+          <li
             key={r.path}
-            className="border-border bg-card flex flex-col gap-1.5 rounded-xl border p-4"
+            className="border-border flex flex-col gap-2 border-b py-4 sm:flex-row sm:items-baseline sm:gap-6"
           >
-            <p className="text-sm font-medium">{r.title}</p>
-            <p className="text-muted-foreground truncate font-mono text-xs">
-              {r.path}
-            </p>
-            {r.desc && (
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {r.desc}
-              </p>
-            )}
+            <div className="min-w-0 sm:flex-1">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="text-sm font-medium">{r.title}</span>
+                <span className="text-muted-foreground font-mono text-xs">
+                  {r.path}
+                </span>
+              </div>
+              {r.desc && (
+                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                  {r.desc}
+                </p>
+              )}
+            </div>
             {r.href && (
-              <a
-                href={r.href}
-                target="_blank"
-                rel="noreferrer"
-                className="text-muted-foreground hover:text-foreground mt-auto flex items-center gap-1 pt-2 text-xs font-medium"
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="shrink-0 self-start"
               >
-                View on GitHub
-                <Icon name="arrow-up-right" size={12} />
-              </a>
+                <a href={r.href} target="_blank" rel="noreferrer">
+                  View
+                  <Icon name="arrow-up-right" size={13} />
+                </a>
+              </Button>
             )}
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
       {after && <Markdown source={after} className="mt-8" />}
     </>
   )

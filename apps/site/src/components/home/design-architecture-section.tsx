@@ -1,5 +1,6 @@
 import * as React from "react"
 
+import { Button } from "@ambientui/ui/components/button"
 import { Icon } from "@ambientui/ui/components/icon"
 import {
   ACCENTS,
@@ -131,14 +132,10 @@ export function DesignArchitectureSection({
         below is downstream of it.
       </p>
 
-      <button
-        type="button"
-        onClick={onRead}
-        className="text-primary mt-5 flex items-center gap-1.5 text-sm font-medium hover:underline"
-      >
+      <Button variant="outline" className="mt-6" onClick={onRead}>
         Read the argument in full
         <Icon name="chevron-right" size={15} />
-      </button>
+      </Button>
 
       <div className="mt-14 grid gap-10 md:grid-cols-2">
         <Point
