@@ -5,7 +5,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "gate": "npm run catalog:check && npm run docs:sync:check && npm run prerender:check && npm run theme:check && npm run registry:check && npm run vendor:check && npm run docs:check && turbo typecheck lint build && npm run roots:check && npm run css:check && npm run html:check",
+    "gate": "npm run catalog:check && npm run docs:sync:check && npm run prerender:check && npm run theme:check && npm run registry:check && npm run vendor:check && npm run docs:check && turbo typecheck lint build && npm run roots:check && npm run tokens:check && npm run css:check && npm run html:check",
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
@@ -19,6 +19,7 @@
     "registry:check": "node scripts/build-registry.mjs --check",
     "vendor:check": "node scripts/check-vendored-css.mjs",
     "roots:check": "node scripts/check-package-roots.mjs",
+    "tokens:check": "node scripts/check-tokens-json.mjs",
     "verify:install": "node scripts/verify-install.mjs",
     "verify:install:quick": "node scripts/verify-install.mjs --quick",
     "release": "turbo build && changeset publish",
