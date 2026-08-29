@@ -1,7 +1,10 @@
 "use client"
 
 import { TooltipProvider } from "@ambientui/ui/components/tooltip"
-import { FoundationProvider } from "@ambientui/foundation"
+import {
+  FoundationAmbientBridge,
+  FoundationProvider,
+} from "@ambientui/foundation"
 
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -27,7 +30,14 @@ export function SiteProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <TooltipProvider>
-        <FoundationProvider assetBase={base}>{children}</FoundationProvider>
+        <FoundationProvider>
+          {/* this site took BOTH doors, so it mounts the bridge that binds
+              them; a host that took only the configuration space would
+              not, and would owe the ambient layer nothing */}
+          <FoundationAmbientBridge assetBase={base}>
+            {children}
+          </FoundationAmbientBridge>
+        </FoundationProvider>
       </TooltipProvider>
     </ThemeProvider>
   )

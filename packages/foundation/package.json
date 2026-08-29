@@ -6,8 +6,16 @@
   "description": "The Foundation engine \u2014 the design system's configuration space, compiled to CSS variables at runtime.",
   "exports": {
     ".": {
-      "types": "./dist/foundation-context.d.ts",
-      "import": "./dist/foundation-context.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tokens": {
+      "types": "./dist/tokens.d.ts",
+      "import": "./dist/tokens.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
     },
     "./package.json": "./package.json"
   },
@@ -16,10 +24,6 @@
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "build": "tsup"
-  },
-  "dependencies": {
-    "ambientui": "^0.1.0",
-    "@ambientui/ui": "^0.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10",
@@ -53,6 +57,17 @@
   ],
   "peerDependencies": {
     "react": "^19",
-    "react-dom": "^19"
-  }
+    "react-dom": "^19",
+    "ambientui": "^0.1.0",
+    "@ambientui/ui": "^0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "ambientui": {
+      "optional": true
+    },
+    "@ambientui/ui": {
+      "optional": true
+    }
+  },
+  "sideEffects": false
 }

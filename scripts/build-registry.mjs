@@ -48,6 +48,17 @@ const IMPORT_REWRITES = [
   [/@ambientui\/ui\/components\//g, "@/components/ui/"],
   [/@ambientui\/ui\/lib\//g, "@/lib/"],
   [/@ambientui\/ui\/hooks\//g, "@/hooks/"],
+  // `ambientui/...` — the layer's own specifier. Anchored on the quote so
+  // it can never chew into the `@ambientui/` rules above, and placed after
+  // them so those match first. Without this, the Foundation's ambient
+  // bridge would install carrying an import nothing can resolve.
+  [/(from\s+")ambientui\/([a-z-]+)"/g, '$1@/components/ambient/$2"'],
+  // The Foundation's three files sit beside each other HERE and land in
+  // three different directories THERE (lib/, components/), so a relative
+  // import that is correct in this repo resolves to nothing in a consumer's.
+  // These follow the targets declared on the items below.
+  [/from\s+"\.\/tokens"/g, 'from "@/lib/foundation/tokens"'],
+  [/from\s+"\.\/foundation-context"/g, 'from "@/components/foundation-provider"'],
 ]
 
 const STAGE = ".registry"
@@ -56,10 +67,73 @@ function stage(relPath) {
   const src = resolve(ROOT, relPath)
   let text = readFileSync(src, "utf8")
   for (const [from, to] of IMPORT_REWRITES) text = text.replace(from, to)
+
+  // NO WORKSPACE SPECIFIER MAY SURVIVE STAGING. A rewrite rule that does
+  // not exist fails silently: the file publishes, installs, and then does
+  // not resolve in someone else's project — the one failure this build
+  // cannot see, because it happens in a repo that is not this one. A byte
+  // scan on ~40 files makes the whole class impossible rather than fixing
+  // instances of it.
+  const leaked = text.match(/from\s+"(@ambientui\/[^"]+|ambientui\/[^"]+)"/)
+  if (leaked) {
+    console.error(
+      `✗ ${relPath} would publish an unresolvable import: ${leaked[1]}\n` +
+        `  Add a rule to IMPORT_REWRITES — the consumer has no such package.`
+    )
+    process.exit(1)
+  }
+
   const out = resolve(ROOT, STAGE, relPath)
   mkdirSync(dirname(out), { recursive: true })
   writeFileSync(out, text)
   return `${STAGE}/${relPath}`
+}
+
+
+/**
+ * CSS is staged differently from code. `globals.css` is written for THIS
+ * repo: its `@source` globs point at our directories (meaningless to a
+ * consumer, and they would silently scan nothing), and it imports a
+ * vendored copy of shadcn's base — 642 lines that would double-declare
+ * `:root` against the token block the consumer already has from their own
+ * `shadcn init`, and fight it. What ships is the part that is ABOUT this
+ * system: the runtime variables and the bridge that routes Tailwind's
+ * utilities through them.
+ */
+const CSS_STRIPS = [
+  /^@source\s+.*$/gm,
+  /^@import\s+"\.\/shadcn-base\.css";$/gm,
+  /^@import\s+"tailwindcss".*$/gm,
+  /^@import\s+"tw-animate-css";$/gm,
+  /^@import\s+"@fontsource-variable\/geist";$/gm,
+  /^@custom-variant\s+.*$/gm,
+  // the comment block explaining the repo's own glob depth travels with it
+  /\/\* @source resolves relative to THIS FILE[\s\S]*?\*\//g,
+]
+
+function stageCss(relPath, target) {
+  let text = readFileSync(resolve(ROOT, relPath), "utf8")
+  for (const re of CSS_STRIPS) text = text.replace(re, "")
+  text = text.replace(/\n{3,}/g, "\n\n").trimStart()
+  const banner =
+    "/* ambientui — the Foundation's token bridge.\n" +
+    "   Import AFTER `@import \"tailwindcss\"` and after your own shadcn\n" +
+    "   token block: it maps Tailwind's utilities onto variables the\n" +
+    "   Foundation writes at runtime. */\n\n"
+  const out = resolve(ROOT, STAGE, target)
+  mkdirSync(dirname(out), { recursive: true })
+  writeFileSync(out, banner + text)
+  // DIRECTIVES, not mentions: a comment explaining why @source is absent
+  // is not an @source. Checking the text for the word failed on this file's
+  // own documentation, which is its own small lesson about assertions.
+  const leaked = text.match(/^\s*(@source\b|@import\s+"\.\/shadcn-base)/m)
+  if (leaked) {
+    console.error(
+      `✗ ${target}: repo-shaped CSS survived staging — ${leaked[1].trim()}`
+    )
+    process.exit(1)
+  }
+  return `${STAGE}/${target}`
 }
 
 const SRC = "packages/ambient/src"
@@ -229,6 +303,100 @@ const ORB_SHAPES = [
 ]
 
 const items = [
+  {
+    name: "foundation-tokens",
+    type: "registry:lib",
+    title: "The configuration space",
+    description:
+      "Every dimension the design system can vary — accents, grays, the radius window, the spacing grid, scaling, the role map, motion characters, fonts, icon libraries — and the compiler that turns a config into CSS. Data and one pure function; no React.",
+    dependencies: [],
+    registryDependencies: [],
+    files: [
+      {
+        path: stage("packages/foundation/src/tokens.ts"),
+        type: "registry:lib",
+        target: "lib/foundation/tokens.ts",
+      },
+    ],
+    docs: "compileFoundationCss(config) returns the whole theme as text. Inject it into a <style> tag at runtime, or render it into your globals at build time — the provider is one way to use this, not the only one.\n\n  import { compileFoundationCss, DEFAULT_FOUNDATION } from \"@/lib/foundation/tokens\"",
+    meta: { door: "foundation", layer: "data" },
+  },
+  {
+    name: "foundation-theme",
+    type: "registry:file",
+    title: "The token bridge",
+    description:
+      "The runtime variables the Foundation drives — the radius window and the motion roles — and the @theme block that routes Tailwind's utilities through them.",
+    files: [
+      {
+        path: stageCss(
+          "packages/ui/src/styles/globals.css",
+          "styles/foundation.css"
+        ),
+        type: "registry:file",
+        target: "styles/foundation.css",
+      },
+    ],
+    cssVars: {
+      light: {
+        "radius-window-xs": "0.125rem",
+        "radius-window-sm": "0.25rem",
+        "radius-window-md": "0.375rem",
+        "radius-window-lg": "0.5rem",
+        "radius-window-xl": "0.75rem",
+        "radius-window-2xl": "1rem",
+        "radius-window-3xl": "1.5rem",
+        "radius-window-4xl": "2rem",
+        "motion-micro": "120ms",
+        "motion-control": "180ms",
+        "motion-surface": "240ms",
+        "motion-page": "320ms",
+        "motion-ease": "cubic-bezier(0.2, 0, 0, 1)",
+      },
+    },
+    docs: 'Add `@import "./styles/foundation.css";` to your globals.css, AFTER `@import "tailwindcss"` and after your own shadcn token block. It does not ship shadcn\'s base — run `npx shadcn init` first and keep yours.',
+    meta: { door: "foundation", layer: "css" },
+  },
+  {
+    name: "foundation",
+    type: "registry:block",
+    title: "The Foundation",
+    description:
+      "The design system as a bounded configuration space: pick the accent, the gray, the radius step, the spacing unit, the motion character, and every surface follows. Saving is the commit point.",
+    dependencies: [],
+    registryDependencies: [
+      url("foundation-tokens"),
+      url("foundation-theme"),
+      url("icon"),
+    ],
+    files: [
+      {
+        path: stage("packages/foundation/src/foundation-context.tsx"),
+        type: "registry:component",
+        target: "components/foundation-provider.tsx",
+      },
+    ],
+    docs: "Wrap your app:\n\n  <FoundationProvider>{children}</FoundationProvider>\n\nIt compiles the config into a <style id=\"ambientui-foundation\"> tag and persists it under \"ambientui-foundation\". It does NOT mount an assistant — if you took the ambient layer too, add foundation-ambient-bridge.",
+    meta: { door: "foundation", layer: "runtime" },
+  },
+  {
+    name: "foundation-ambient-bridge",
+    type: "registry:component",
+    title: "Foundation → ambient layer",
+    description:
+      "Binds the ambient layer's motion, palette and stream pace to your Foundation config, so the assistant has no values of its own.",
+    dependencies: [],
+    registryDependencies: [url("foundation"), url("ambient-layer")],
+    files: [
+      {
+        path: stage("packages/foundation/src/ambient-bridge.tsx"),
+        type: "registry:component",
+        target: "components/foundation-ambient-bridge.tsx",
+      },
+    ],
+    docs: "Only needed if you took BOTH doors. Mount it inside FoundationProvider:\n\n  <FoundationProvider>\n    <FoundationAmbientBridge>{children}</FoundationAmbientBridge>\n  </FoundationProvider>",
+    meta: { door: "foundation", layer: "bridge" },
+  },
   {
     name: "ambient-assets",
     type: "registry:file",

@@ -4,6 +4,108 @@
   "homepage": "https://lumenridge.github.io/ambientui",
   "items": [
     {
+      "name": "foundation-tokens",
+      "type": "registry:lib",
+      "title": "The configuration space",
+      "description": "Every dimension the design system can vary — accents, grays, the radius window, the spacing grid, scaling, the role map, motion characters, fonts, icon libraries — and the compiler that turns a config into CSS. Data and one pure function; no React.",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": ".registry/packages/foundation/src/tokens.ts",
+          "type": "registry:lib",
+          "target": "lib/foundation/tokens.ts"
+        }
+      ],
+      "docs": "compileFoundationCss(config) returns the whole theme as text. Inject it into a <style> tag at runtime, or render it into your globals at build time — the provider is one way to use this, not the only one.\n\n  import { compileFoundationCss, DEFAULT_FOUNDATION } from \"@/lib/foundation/tokens\"",
+      "meta": {
+        "door": "foundation",
+        "layer": "data"
+      }
+    },
+    {
+      "name": "foundation-theme",
+      "type": "registry:file",
+      "title": "The token bridge",
+      "description": "The runtime variables the Foundation drives — the radius window and the motion roles — and the @theme block that routes Tailwind's utilities through them.",
+      "files": [
+        {
+          "path": ".registry/styles/foundation.css",
+          "type": "registry:file",
+          "target": "styles/foundation.css"
+        }
+      ],
+      "cssVars": {
+        "light": {
+          "radius-window-xs": "0.125rem",
+          "radius-window-sm": "0.25rem",
+          "radius-window-md": "0.375rem",
+          "radius-window-lg": "0.5rem",
+          "radius-window-xl": "0.75rem",
+          "radius-window-2xl": "1rem",
+          "radius-window-3xl": "1.5rem",
+          "radius-window-4xl": "2rem",
+          "motion-micro": "120ms",
+          "motion-control": "180ms",
+          "motion-surface": "240ms",
+          "motion-page": "320ms",
+          "motion-ease": "cubic-bezier(0.2, 0, 0, 1)"
+        }
+      },
+      "docs": "Add `@import \"./styles/foundation.css\";` to your globals.css, AFTER `@import \"tailwindcss\"` and after your own shadcn token block. It does not ship shadcn's base — run `npx shadcn init` first and keep yours.",
+      "meta": {
+        "door": "foundation",
+        "layer": "css"
+      }
+    },
+    {
+      "name": "foundation",
+      "type": "registry:block",
+      "title": "The Foundation",
+      "description": "The design system as a bounded configuration space: pick the accent, the gray, the radius step, the spacing unit, the motion character, and every surface follows. Saving is the commit point.",
+      "dependencies": [],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/foundation-tokens.json",
+        "https://lumenridge.github.io/ambientui/r/foundation-theme.json",
+        "https://lumenridge.github.io/ambientui/r/icon.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/foundation/src/foundation-context.tsx",
+          "type": "registry:component",
+          "target": "components/foundation-provider.tsx"
+        }
+      ],
+      "docs": "Wrap your app:\n\n  <FoundationProvider>{children}</FoundationProvider>\n\nIt compiles the config into a <style id=\"ambientui-foundation\"> tag and persists it under \"ambientui-foundation\". It does NOT mount an assistant — if you took the ambient layer too, add foundation-ambient-bridge.",
+      "meta": {
+        "door": "foundation",
+        "layer": "runtime"
+      }
+    },
+    {
+      "name": "foundation-ambient-bridge",
+      "type": "registry:component",
+      "title": "Foundation → ambient layer",
+      "description": "Binds the ambient layer's motion, palette and stream pace to your Foundation config, so the assistant has no values of its own.",
+      "dependencies": [],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/foundation.json",
+        "https://lumenridge.github.io/ambientui/r/ambient-layer.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/foundation/src/ambient-bridge.tsx",
+          "type": "registry:component",
+          "target": "components/foundation-ambient-bridge.tsx"
+        }
+      ],
+      "docs": "Only needed if you took BOTH doors. Mount it inside FoundationProvider:\n\n  <FoundationProvider>\n    <FoundationAmbientBridge>{children}</FoundationAmbientBridge>\n  </FoundationProvider>",
+      "meta": {
+        "door": "foundation",
+        "layer": "bridge"
+      }
+    },
+    {
       "name": "ambient-assets",
       "type": "registry:file",
       "title": "The orb's shapes",
