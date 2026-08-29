@@ -937,6 +937,7 @@ const stageBeatsFor = (form: (typeof FORMS)[number]) =>
 function FormsDriver({
   active,
   mode,
+  nonce,
   interacted,
   cursor,
   pausedRef,
@@ -945,6 +946,9 @@ function FormsDriver({
 }: {
   active: boolean
   mode: AssistantMode
+  /** bumps when the transport's replay asks the GESTURE to run again on
+      the living layer (pre-loaded forms only — no re-prep, no dead bar) */
+  nonce: number
   /** a trusted press ended the script — the layer is the visitor's */
   interacted: boolean
   /** the section's hand, drawing the real gesture into its form */
@@ -1006,8 +1010,9 @@ function FormsDriver({
       while (alive && orbStateRef.current !== "still" && Date.now() - start < 20000)
         await sleep(150)
       if (!alive) return
-      if (mode === "dock") {
-        // the Dock's story STARTS at the panel: its drag begins there
+      if (mode === "dock" || mode === "history") {
+        // these stories START at the panel: the Dock's drag begins there,
+        // and History is opened from the panel's own header button
         setMode("panel")
         await sleep(600)
         if (!alive) return
@@ -1022,6 +1027,7 @@ function FormsDriver({
   }, [mode, setMode, seedPrompt])
 
   const staged = React.useRef(false)
+  const lastNonce = React.useRef(nonce)
   React.useEffect(() => {
     if (!active || interacted || !prepped) return
     let alive = true
@@ -1049,6 +1055,16 @@ function FormsDriver({
         tick()
       })
     const run = async () => {
+      if (lastNonce.current !== nonce) {
+        // REPLAY, for a pre-loaded form: rewind the LIVING layer to the
+        // gesture's starting state — the transcript survives, the bar
+        // starts immediately, and the gesture performs again
+        lastNonce.current = nonce
+        staged.current = false
+        setMode(mode === "panel" ? "spotlight" : "panel")
+        await sleep(800)
+        if (!alive) return
+      }
       if (staged.current) {
         // returning to a section already staged: just hold its form
         setMode(mode)
@@ -1158,7 +1174,7 @@ function FormsDriver({
       alive = false
       timers.forEach(clearTimeout)
     }
-  }, [active, interacted, prepped, mode, setMode, seedPrompt, cursor, pausedRef, onBeat, onDone])
+  }, [active, interacted, prepped, nonce, mode, setMode, seedPrompt, cursor, pausedRef, onBeat, onDone])
 
   return <Assistant hotkeys={false} />
 }
@@ -1201,15 +1217,19 @@ function FormSection({
     pausedRef.current = !pausedRef.current
     setPaused(pausedRef.current)
   }
-  // replay remounts the section's layer (key) — fresh transcript, fresh
-  // refs, the staging plays again from the top
+  // replay: the pre-loaded forms re-run their GESTURE on the living
+  // layer (a nonce — no remount, no silent re-prep, the bar starts at
+  // once); Orb and Spotlight tell their whole story on screen, so they
+  // rebuild from scratch (a remount key)
+  const [nonce, setNonce] = React.useState(0)
   const replay = () => {
     setDone(false)
     setBeat(null)
     setInteracted(false)
     pausedRef.current = false
     setPaused(false)
-    setTake((t) => t + 1)
+    if (form.mode === "line" || form.mode === "spotlight") setTake((t) => t + 1)
+    else setNonce((n) => n + 1)
   }
 
   React.useEffect(() => {
@@ -1287,6 +1307,7 @@ function FormSection({
                   <FormsDriver
                     active={inView}
                     mode={form.mode}
+                    nonce={nonce}
                     interacted={interacted}
                     cursor={cursorRef}
                     pausedRef={pausedRef}
