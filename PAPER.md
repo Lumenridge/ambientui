@@ -35,20 +35,52 @@ working proof, and the failures recorded below happened in it.
 
 # Part I: Ambient UI
 
-The philosophy of Ambient UI is one inversion: the AI is not a feature of
-your product, it is a presence above it. A feature lives somewhere. It has
-a button, a page, a corner of the screen, and it competes with every other
-feature for attention. A presence is available everywhere, already knows
-where you are, and takes whatever shape the moment deserves, from a
-three-word question to a full working session.
+Start with why this layer exists at all.
 
-Everything in this part follows from that inversion, and the sections walk
-it piece by piece: why embedding fails and the layer has to sit above the
-interface, the shapes the presence takes and how they escalate, the
-context contract that means you never re-explain where you are, why
-answers are built from real components instead of prose, and why the layer
-has no look of its own, so it can wear your design system instead of
-fighting it.
+Every product is adding AI right now, and almost all of them are doing it
+the same way: find a spot in the interface and put the AI there. A chat
+tab. A sparkle button. A panel. It feels reasonable, because that is how
+every feature has ever shipped. And it quietly fails, because AI is not a
+feature. A feature does one job in one place. An AI can act on anything
+you are looking at, anywhere in the product. Pinning it to a spot throws
+most of that away and fragments the rest: five entry points that share no
+memory, no context, and no identity.
+
+Ambient UI exists because the placement is the mistake, not the model. Its
+philosophy is one inversion: **the AI is not a feature of your product, it
+is a presence above it.** A feature lives somewhere. It has a button, a
+page, a corner of the screen, and it competes with every other feature for
+attention. A presence is available everywhere, already knows where you
+are, and takes whatever shape the moment deserves, from a three-word
+question to a full working session.
+
+Holding that inversion changes how you design. Four shifts in thinking do
+most of the work:
+
+**Think in attention, not in screens.** Do not ask "where does the AI
+page go." Ask how much of the user's attention this moment deserves, and
+give the presence a shape for each answer. A glance, a corner, a column,
+a full session are different costs, and the user chooses which to pay.
+
+**Think in contracts, not integrations.** The layer never reaches into
+your product to guess what is happening. Each page declares what the
+layer may know, through one narrow interface, and the layer works with
+exactly that. Context becomes something a page provides, like a title.
+
+**Think in components, not chat.** An answer inside a product should be
+made of the product: a diff you can apply, a terminal with an exit code,
+references you can check. Chat is the fallback for when the answer has no
+better shape, not the default.
+
+**Think in inheritance, not branding.** The assistant carries no look of
+its own. It wears your design system: your roles, your radius, your
+motion. The moment the AI has its own brand inside your product, it is a
+foreign object, and every answer it gives feels pasted in.
+
+The six sections of this part walk those shifts in order: why embedding
+fails, the shapes and how they escalate, the context contract, composed
+answers, the borrowed look, and why none of it survives being built the
+normal way.
 
 ## 1. AI does not belong inside your interface
 
