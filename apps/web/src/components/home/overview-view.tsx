@@ -228,19 +228,18 @@ function ShellDemo() {
   }, [])
 
   return (
-    <div ref={ref} className="relative w-full max-w-3xl">
-      {/* transform-gpu: a transformed ancestor is the containing block for
-          fixed-position descendants, so the embedded layer's surfaces —
-          spotlight, panel, resting orb — all live INSIDE this frame */}
-      {/* no overflow-hidden: the dashboard clips itself, and the layer's
-          surfaces may float past the frame's edge the way real overlays do */}
-      <div className="relative z-10 transform-gpu">
+    <div ref={ref} className="relative w-full">
+      {/* full-bleed and viewport-tall: the product is the ground, and the
+          layer lives inside it at real scale. transform-gpu makes this the
+          containing block for the layer's fixed surfaces — spotlight,
+          panel, resting orb all live INSIDE the app. */}
+      <div className="relative z-10 h-svh transform-gpu">
         <DemoDashboard />
         <AssistantProvider navItems={DEMO_NAV}>
           <EmbeddedLayer active={inView} />
         </AssistantProvider>
       </div>
-      <p className="text-muted-foreground mt-4 text-center text-xs">
+      <p className="text-muted-foreground mt-4 px-6 text-center text-xs">
         This is the real component — the same ⌘K surface this page runs,
         mounted inside a product that never heard of it. Type into it.
       </p>
