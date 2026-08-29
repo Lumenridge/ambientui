@@ -78,7 +78,7 @@ export function AssistantOrb() {
     setZone(measureZone())
     setQuick(true)
     setOrbState("listening")
-    window.setTimeout(() => quickRef.current?.focus(), 60)
+    window.setTimeout(() => quickRef.current?.focus({ preventScroll: true }), 60)
   }
   const closeQuick = () => {
     if (closeTimer.current) window.clearTimeout(closeTimer.current)

@@ -357,10 +357,12 @@ export function Assistant({
   const asking = messages.length > 0
 
   // In the palette, entering answer mode swaps the top search bar for a bottom
-  // follow-up bar — move focus there.
+  // follow-up bar — move focus there. preventScroll everywhere the layer
+  // focuses: its surfaces are already in view by construction, and an
+  // embedded layer must never scroll the page that hosts it.
   React.useEffect(() => {
     if (mode === "spotlight") {
-      requestAnimationFrame(() => inputRef.current?.focus())
+      requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }))
     }
   }, [asking, mode])
 
@@ -535,7 +537,7 @@ export function Assistant({
         else setInput(seeded)
       }
       /* eslint-enable react-hooks/set-state-in-effect */
-      requestAnimationFrame(() => inputRef.current?.focus())
+      requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, seedVersion, consumeSeededPrompt])
@@ -1541,10 +1543,23 @@ function PaletteList({
   onHover: (i: number) => void
   footer?: React.ReactNode
 }) {
+  // SCOPED TO THIS LIST, not the document: several layers can be mounted
+  // at once (embedded demos), and a document-wide id lookup can land on a
+  // sibling instance's row — scrollIntoView then walks every scrollable
+  // ancestor and drags the HOST PAGE to the other window. The list only
+  // ever needs to scroll itself.
+  const listRef = React.useRef<HTMLDivElement | null>(null)
   React.useEffect(() => {
-    document
-      .getElementById(`palette-item-${selected}`)
-      ?.scrollIntoView({ block: "nearest" })
+    const list = listRef.current
+    const row = list?.querySelector<HTMLElement>(
+      `[data-palette-item="${selected}"]`
+    )
+    if (!list || !row) return
+    const top = row.offsetTop - list.offsetTop
+    const bottom = top + row.offsetHeight
+    if (top < list.scrollTop) list.scrollTop = top
+    else if (bottom > list.scrollTop + list.clientHeight)
+      list.scrollTop = bottom - list.clientHeight
   }, [selected])
   // headers derived up front: a `let` reassigned inside map() is render-phase
   // mutation, and it silently breaks if React ever renders the list twice
@@ -1552,14 +1567,14 @@ function PaletteList({
     item.section && item.section !== items[i - 1]?.section ? item.section : null
   )
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto p-2">
+    <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto p-2">
       {items.map((item, i) => {
         const header = headers[i]
         return (
           <React.Fragment key={item.id}>
             {header && <SectionLabel>{header}</SectionLabel>}
             <button
-              id={`palette-item-${i}`}
+              data-palette-item={i}
               type="button"
               onClick={item.run}
               onMouseEnter={() => onHover(i)}

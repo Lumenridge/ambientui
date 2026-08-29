@@ -172,6 +172,33 @@ export function OrbGlyph({
   )
 }
 
+/**
+ * A LOST WebGL CONTEXT FREEZES A HEAT SURFACE ON ITS LAST FRAME — the
+ * browser caps live contexts per page and evicts the oldest when a new
+ * one is created, which is exactly the long-lived surfaces (the wordmark,
+ * the page ground). The canvas announces the loss; remounting the shader
+ * builds a fresh context, so the identity never quietly dies. Every heat
+ * surface wears this listener.
+ */
+function useShaderEpoch(
+  hostRef: React.RefObject<HTMLElement | null>,
+  ready: boolean
+) {
+  const [epoch, setEpoch] = React.useState(0)
+  React.useEffect(() => {
+    if (!ready) return
+    const canvas = hostRef.current?.querySelector("canvas")
+    if (!canvas) return
+    const onLost = (e: Event) => {
+      e.preventDefault()
+      setEpoch((n) => n + 1)
+    }
+    canvas.addEventListener("webglcontextlost", onLost)
+    return () => canvas.removeEventListener("webglcontextlost", onLost)
+  }, [hostRef, ready, epoch])
+  return epoch
+}
+
 export interface OrbCharacterProps {
   state?: OrbState
   /** Diameter in px. */
@@ -328,6 +355,8 @@ export function OrbCharacter({
   className,
 }: OrbCharacterProps) {
   const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
+  const hostRef = React.useRef<HTMLDivElement>(null)
+  const epoch = useShaderEpoch(hostRef, palette.length > 0)
   const coreColor =
     colors && colors.length > 0
       ? colors[Math.min(1, colors.length - 1)]!
@@ -335,6 +364,7 @@ export function OrbCharacter({
 
   return (
     <div
+      ref={hostRef}
       aria-hidden
       className={cn("relative overflow-hidden rounded-full", className)}
       style={{
@@ -361,6 +391,7 @@ export function OrbCharacter({
       />
       {palette.length > 0 && (
         <Heatmap
+          key={epoch}
           width={size}
           height={size}
           image={CIRCLE_IMAGE_SRC}
@@ -408,10 +439,13 @@ export function OrbHeat({
   scale?: number
 }) {
   const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
+  const hostRef = React.useRef<HTMLDivElement>(null)
+  const epoch = useShaderEpoch(hostRef, palette.length > 0)
   if (palette.length === 0) return null
   return (
-    <div aria-hidden className={className}>
+    <div ref={hostRef} aria-hidden className={className}>
       <Heatmap
+        key={epoch}
         width={width}
         height={height}
         image={image}
@@ -464,6 +498,7 @@ export function OrbField({
 }) {
   const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
   const hostRef = React.useRef<HTMLDivElement>(null)
+  const epoch = useShaderEpoch(hostRef, palette.length > 0)
   const [box, setBox] = React.useState<{
     w: number
     h: number
@@ -540,6 +575,7 @@ export function OrbField({
           }}
         >
         <Heatmap
+          key={epoch}
           width={box.w}
           height={box.h}
           image={rectImageFor(box.w, box.h)}

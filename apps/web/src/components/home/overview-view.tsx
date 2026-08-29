@@ -1,5 +1,8 @@
 import * as React from "react"
 
+import { animate, motion, useMotionValue } from "framer-motion"
+
+import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
 import { Assistant } from "ambientui/assistant"
@@ -242,6 +245,148 @@ function DemoWindow({ children }: { children: React.ReactNode }) {
   )
 }
 
+/* ----------------------------- the demo cursor ---------------------------- */
+
+/**
+ * THE FILM'S HAND (Figma: Cursor, 163:230) — a glass puck that glides to
+ * the layer's REAL controls and presses them, so every form change in the
+ * film reads as "this is the click that gets you this". Presentation
+ * choreography only: it draws the gesture, and the film fires the same
+ * public API the control itself would. It never intercepts input
+ * (pointer-events-none throughout) — the moment the visitor's own cursor
+ * arrives, the film and this hand both stand down.
+ *
+ * Sizing per the token rule: the design's 22px disc rides size-5 (20px,
+ * nearest legal step); the 14px core is size-3.5 exactly.
+ */
+type DemoCursorHandle = {
+  /** glide to the element and press it; false if the control isn't there.
+      `fire` also dispatches the real click — for controls whose action
+      has no public-context equivalent (Back to search). A dispatched
+      click never counts as visitor interaction: the stop listens for
+      pointerdown, which only a real pointer produces. */
+  clickOn: (selector: string, fire?: boolean) => Promise<boolean>
+  /** press the element and pull it to a point (fractions of the frame) —
+      the drag-as-mode-switch gesture, drawn */
+  dragTo: (selector: string, fx: number, fy: number) => Promise<boolean>
+  /** drift aside and wait — the "user" is typing, not pointing */
+  rest: () => Promise<void>
+  hide: () => void
+}
+
+function DemoCursorLayer({
+  handleRef,
+}: {
+  handleRef: React.MutableRefObject<DemoCursorHandle | null>
+}) {
+  const spring = useMotionSpring()
+  const micro = useMotionTransition("micro")
+  const hostRef = React.useRef<HTMLDivElement | null>(null)
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const [visible, setVisible] = React.useState(false)
+  const [pressed, setPressed] = React.useState(false)
+  const [pulse, setPulse] = React.useState(0)
+  const visibleRef = React.useRef(false)
+
+  React.useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+    const sleep = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms))
+    const glide = async (px: number, py: number) => {
+      await Promise.all([animate(x, px, spring), animate(y, py, spring)])
+    }
+    const centerOf = (el: Element) => {
+      const hr = host.getBoundingClientRect()
+      const r = el.getBoundingClientRect()
+      return { x: r.left - hr.left + r.width / 2, y: r.top - hr.top + r.height / 2 }
+    }
+    const appearNear = (px: number, py: number) => {
+      // a hand that fades in beside its first target, not one that flies
+      // across the whole frame from a stale corner
+      if (!visibleRef.current) {
+        x.jump(px + 60)
+        y.jump(py + 40)
+      }
+      setVisible(true)
+      visibleRef.current = true
+    }
+    const press = async () => {
+      setPressed(true)
+      setPulse((p) => p + 1)
+      await sleep(180)
+      setPressed(false)
+    }
+    handleRef.current = {
+      async clickOn(selector, fire = false) {
+        const el = host.parentElement?.querySelector(selector)
+        if (!el) return false
+        const c = centerOf(el)
+        appearNear(c.x, c.y)
+        await glide(c.x, c.y)
+        await press()
+        if (fire) (el as HTMLElement).click()
+        await sleep(220)
+        return true
+      },
+      async dragTo(selector, fx, fy) {
+        const el = host.parentElement?.querySelector(selector)
+        if (!el) return false
+        const c = centerOf(el)
+        appearNear(c.x, c.y)
+        await glide(c.x, c.y)
+        setPressed(true)
+        await sleep(160)
+        const hr = host.getBoundingClientRect()
+        await glide(hr.width * fx, hr.height * fy)
+        setPressed(false)
+        setPulse((p) => p + 1)
+        await sleep(220)
+        return true
+      },
+      async rest() {
+        const hr = host.getBoundingClientRect()
+        await glide(hr.width * 0.82, hr.height * 0.72)
+      },
+      hide() {
+        setVisible(false)
+        visibleRef.current = false
+      },
+    }
+    return () => {
+      handleRef.current = null
+    }
+    // spring/micro are stable per Foundation config; x/y are motion values
+  }, [handleRef, spring, x, y])
+
+  return (
+    <div
+      ref={hostRef}
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-50 overflow-hidden"
+    >
+      <motion.div style={{ x, y }} className="absolute top-0 left-0">
+        {pulse > 0 && (
+          <motion.span
+            key={pulse}
+            initial={{ scale: 0.5, opacity: 0.45 }}
+            animate={{ scale: 2.4, opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="border-foreground/50 absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+          />
+        )}
+        <motion.div
+          animate={{ scale: pressed ? 0.78 : 1, opacity: visible ? 1 : 0 }}
+          transition={{ ...spring, opacity: micro }}
+          className="border-border/60 bg-background/60 flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-md backdrop-blur-md"
+        >
+          <span className="bg-foreground/70 size-3.5 rounded-full shadow-sm" />
+        </motion.div>
+      </motion.div>
+    </div>
+  )
+}
+
 /* --------------------------- the embedded layer --------------------------- */
 
 /**
@@ -252,10 +397,13 @@ function DemoWindow({ children }: { children: React.ReactNode }) {
 function EmbeddedLayer({
   active,
   interacted,
+  cursor,
 }: {
   active: boolean
   /** the visitor touched the window — the film stops, the layer is theirs */
   interacted: boolean
+  /** the film's hand — draws the click that causes each step */
+  cursor: React.MutableRefObject<DemoCursorHandle | null>
 }) {
   const { setMode, setPageChip, setPageIntel, seedPrompt } = useAssistant()
 
@@ -287,25 +435,73 @@ function EmbeddedLayer({
   const [cycle, setCycle] = React.useState(0)
   React.useEffect(() => {
     if (!active || interacted) return
+    let alive = true
     const timers: number[] = []
-    const at = (ms: number, fn: () => void) =>
-      timers.push(window.setTimeout(fn, ms))
-    at(900, () => setMode("spotlight"))
-    const q = DEMO_SUGGESTIONS[0]!
-    q.split("").forEach((_, i) =>
-      at(2200 + i * 38, () => seedPrompt(q.slice(0, i + 1)))
-    )
-    const sent = 2200 + q.length * 38 + 800
-    at(sent, () => seedPrompt(q, true))
-    // hold the settled answer, then tour the forms with the transcript
-    let t = sent + 11000
-    for (const m of ["panel", "dock", "history", "line"] as const) {
-      at(t, () => setMode(m))
-      t += 4500
+    const sleep = (ms: number) =>
+      new Promise<void>((r) => timers.push(window.setTimeout(r, ms)))
+    // EVERY STEP IS A DRAWN GESTURE ON A REAL CONTROL: the hand presses
+    // the orb to open the spotlight, the header buttons to change form,
+    // and pulls the panel's drag handle to dock it — then the film fires
+    // the exact API that control fires. The visitor sees WHICH click gets
+    // them each shape.
+    const run = async () => {
+      await sleep(900)
+      if (!alive) return
+      await cursor.current?.clickOn('[aria-label="Open ambientui"]')
+      if (!alive) return
+      setMode("spotlight")
+      await sleep(600)
+      if (cycle > 0) {
+        // a repeat cycle finds last round's transcript — press the real
+        // "Back to search" so the loop starts from the clean palette
+        await cursor.current?.clickOn('[aria-label="Back to search"]', true)
+        if (!alive) return
+        await sleep(500)
+      }
+      cursor.current?.rest()
+      const q = DEMO_SUGGESTIONS[0]!
+      for (let i = 0; i < q.length; i++) {
+        await sleep(38)
+        if (!alive) return
+        seedPrompt(q.slice(0, i + 1))
+      }
+      await sleep(800)
+      if (!alive) return
+      seedPrompt(q, true)
+      // hold the settled answer, then tour the forms with the transcript
+      await sleep(11000)
+      if (!alive) return
+      await cursor.current?.clickOn('[aria-label="Open in chat window"]')
+      if (!alive) return
+      setMode("panel")
+      await sleep(4200)
+      if (!alive) return
+      // dock is a DRAG, not a button — draw the gesture the layer teaches
+      await cursor.current?.dragTo(".group\\/header", 0.94, 0.4)
+      if (!alive) return
+      setMode("dock")
+      await sleep(4200)
+      if (!alive) return
+      await cursor.current?.clickOn('[aria-label="History"]')
+      if (!alive) return
+      setMode("history")
+      await sleep(4200)
+      if (!alive) return
+      await cursor.current?.clickOn('[aria-label="Close history"]')
+      if (!alive) return
+      setMode("line")
+      cursor.current?.hide()
+      await sleep(2600)
+      if (alive) setCycle((c) => c + 1)
     }
-    at(t, () => setCycle((c) => c + 1))
-    return () => timers.forEach(clearTimeout)
-  }, [active, interacted, cycle, setMode, seedPrompt])
+    void run()
+    // no hide on cleanup: the hand either glides on into the next cycle,
+    // or its whole layer unmounts (interaction, scroll-away)
+    return () => {
+      alive = false
+      timers.forEach(clearTimeout)
+    }
+  }, [active, interacted, cycle, setMode, seedPrompt, cursor])
 
   return <Assistant hotkeys={false} />
 }
@@ -313,7 +509,9 @@ function EmbeddedLayer({
 function ShellDemo({ widthPct }: { widthPct: number | null }) {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
+  const [near, setNear] = React.useState(false)
   const [interacted, setInteracted] = React.useState(false)
+  const cursorRef = React.useRef<DemoCursorHandle | null>(null)
 
   React.useEffect(() => {
     const el = ref.current
@@ -322,8 +520,26 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
       ([e]) => setInView(e!.isIntersecting),
       { threshold: 0.4 }
     )
+    // A MOUNT GATE, wider than the film's trigger: each embedded layer
+    // holds real WebGL contexts (its orb, its surface fields), and a page
+    // of demo windows all alive at once trips the browser's context cap —
+    // which evicts the oldest context, the wordmark. Off-screen windows
+    // give their layer back; leaving also resets `interacted`, so the
+    // film re-arms for the next visit.
+    const mount = new IntersectionObserver(
+      ([e]) => {
+        const v = e!.isIntersecting
+        setNear(v)
+        if (!v) setInteracted(false)
+      },
+      { rootMargin: "300px 0px" }
+    )
     io.observe(el)
-    return () => io.disconnect()
+    mount.observe(el)
+    return () => {
+      io.disconnect()
+      mount.disconnect()
+    }
   }, [])
 
   return (
@@ -349,9 +565,17 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
             <div className="h-full opacity-60">
               <DemoDashboard />
             </div>
-            <AssistantProvider navItems={DEMO_NAV}>
-              <EmbeddedLayer active={inView} interacted={interacted} />
-            </AssistantProvider>
+            {near && (
+              <AssistantProvider navItems={DEMO_NAV}>
+                <EmbeddedLayer
+                  active={inView}
+                  interacted={interacted}
+                  cursor={cursorRef}
+                />
+              </AssistantProvider>
+            )}
+            {/* the hand paints last, above every surface of the layer */}
+            {near && !interacted && <DemoCursorLayer handleRef={cursorRef} />}
           </DemoWindow>
         </div>
       </Reveal>
@@ -422,6 +646,7 @@ function FormSection({
 }) {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
+  const [near, setNear] = React.useState(false)
 
   React.useEffect(() => {
     const el = ref.current
@@ -430,8 +655,18 @@ function FormSection({
       ([e]) => setInView(e!.isIntersecting),
       { threshold: 0.3 }
     )
+    // same mount gate as the top demo: an off-screen window holds no
+    // WebGL contexts, so five form sections never crowd out the wordmark
+    const mount = new IntersectionObserver(
+      ([e]) => setNear(e!.isIntersecting),
+      { rootMargin: "300px 0px" }
+    )
     io.observe(el)
-    return () => io.disconnect()
+    mount.observe(el)
+    return () => {
+      io.disconnect()
+      mount.disconnect()
+    }
   }, [])
 
   return (
@@ -460,9 +695,11 @@ function FormSection({
             <div className="h-full opacity-60">
               <DemoDashboard />
             </div>
-            <AssistantProvider navItems={DEMO_NAV}>
-              <FormsDriver active={inView} mode={form.mode} />
-            </AssistantProvider>
+            {near && (
+              <AssistantProvider navItems={DEMO_NAV}>
+                <FormsDriver active={inView} mode={form.mode} />
+              </AssistantProvider>
+            )}
           </DemoWindow>
           </div>
         </Reveal>
@@ -633,11 +870,11 @@ export function OverviewView() {
           each window at the wordmark's width, each layer real */}
       <section className="relative px-6 pt-8">
         <div className="mx-auto w-full max-w-5xl">
-          <Reveal>
+          <Reveal className="text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               One presence, many forms
             </h2>
-            <p className="text-muted-foreground mt-6 max-w-2xl leading-relaxed">
+            <p className="text-muted-foreground mx-auto mt-6 max-w-2xl leading-relaxed">
               A presence that is always available cannot have one fixed
               size. The layer changes shape instead of changing identity —
               the same assistant, the same context, a different geometry
