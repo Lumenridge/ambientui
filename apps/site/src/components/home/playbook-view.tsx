@@ -141,7 +141,7 @@ const openDoc = (docId: string) => {
 
 /** /ds with no selection IS the Foundation — the setup this paper argues for. */
 const openFoundation = () => {
-  window.location.assign(asset("/ds/foundation"))
+  window.location.assign(asset("/ds"))
 }
 
 /* ------------------------- the article chunks ------------------------- */
@@ -1069,7 +1069,14 @@ export function PlaybookView({ source }: { source: string }) {
             same max-w-5xl the overview's written sections use */}
         <div className="mx-auto w-full max-w-5xl px-6 pb-40">
         {/* hero — the paper's title block at display scale */}
-        <header id="overview" className="scroll-mt-24 pt-10 sm:pt-16">
+        {/* THE TITLE STARTS LOW ON PURPOSE. A 32-minute essay that begins
+            an inch under the chrome reads as a page you are already late
+            for; opening near the middle of the first screen gives the
+            title room to be a title before the argument starts. */}
+        <header
+          id="overview"
+          className="scroll-mt-24 pt-24 sm:pt-56 lg:pt-96"
+        >
           <Reveal>
             <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
               ambientui / the architecture · {minutes} min read

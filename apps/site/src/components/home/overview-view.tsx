@@ -17,6 +17,7 @@ import { OrbField, OrbHeat } from "ambientui/orb-character"
 
 import { useRouter } from "next/navigation"
 
+import { DesignArchitectureSection } from "@/components/home/design-architecture-section"
 import { InstallSection } from "@/components/home/install-section"
 import { Reveal } from "@/components/reveal"
 import { SeekBar } from "@/components/seek-bar"
@@ -1528,6 +1529,20 @@ export function OverviewView() {
       {FORMS.map((f) => (
         <FormSection key={f.name} form={f} widthPct={glyphPct} />
       ))}
+
+      {/* WHAT IT IS BUILT ON, BEFORE WHAT TO TYPE. The forms above show the
+          layer; the commands below hand it over. Between them belongs the
+          thing that makes the layer possible, or a visitor installs an
+          assistant without ever learning why it matches their product. */}
+      <section className="relative mx-auto w-full max-w-5xl px-6 pt-32">
+        <Reveal>
+          <DesignArchitectureSection
+            onRead={() => {
+              router.push("/architecture")
+            }}
+          />
+        </Reveal>
+      </section>
 
       {/* THE PAGE ENDS ON A COMMAND. Everything above argues; this is where
           a visitor stops reading and starts typing. It used to end on two

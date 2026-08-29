@@ -11,7 +11,6 @@ import {
   type ContextChip,
 } from "ambientui/assistant-context"
 import { AskAI, AttachMenu } from "ambientui/attach-menu"
-import { ReviewComment } from "ambientui/message-kit"
 import { useAttachMenu } from "ambientui/use-attach-menu"
 
 /**
@@ -94,14 +93,6 @@ type OpenFile = {
    * review, so the editor reads as the diff it is rather than as flat text.
    */
   signs?: (" " | "+" | "-")[]
-  /** A teammate's note, anchored to the line it is about. */
-  review?: {
-    line: number
-    author: string
-    when: string
-    status: "comment" | "change-requested" | "resolved"
-    text: string
-  }
   stat?: string
   effect?: string
   fixedLines?: string[]
@@ -156,13 +147,6 @@ const FILES: OpenFile[] = [
     fixedMarks: [4, 9, 10],
     fixedStat: "+16 −4",
     signs: [" ", " ", " ", "-", " ", " ", " ", " ", "+", "+", " ", " ", " ", " "],
-    review: {
-      line: 4,
-      author: "mingjie",
-      when: "1h ago",
-      status: "change-requested",
-      text: "Should the draft live in the runtime store, or stay local and only persist on blur? Asking because the composer is the only consumer today.",
-    },
   },
   {
     path: "thread-list.tsx",
@@ -541,12 +525,6 @@ export function DevToolView() {
     return () => mq.removeEventListener("change", onChange)
   }, [])
   const [selection, setSelection] = React.useState("")
-  // A reply hands the thread to the assistant: the comment closes (it is now
-  // the panel's business) and the line it pointed at takes the working
-  // highlight, so the handover is visible in the code rather than only in
-  // the panel that just opened.
-  const [resolving, setResolving] = React.useState<string | null>(null)
-
   const openFile = React.useCallback((path: string) => {
     setActivePath(path)
     setOpenTabs((t) => (t.includes(path) ? t : [...t, path]))
@@ -647,9 +625,6 @@ export function DevToolView() {
   const task = TASKS.find((t) => t.id === activeTask) ?? TASKS[0]!
   const workingHere =
     aiBusy && baseFile.problem && !isFixed(baseFile) ? baseFile.problem.line : null
-  // the line under a review the assistant was just asked to resolve
-  const resolvingLine =
-    resolving === baseFile.path ? (baseFile.review?.line ?? null) : null
 
   return (
     <div
@@ -910,7 +885,6 @@ export function DevToolView() {
             // the pending change, per line — a workspace under review shows
             // what is changing, not just what is there
             const sign = (isFixed(baseFile) ? undefined : file.signs?.[i]) ?? " "
-            const thread = file.review?.line === n ? file.review : null
             return (
               <React.Fragment key={n}>
               <div
@@ -949,7 +923,7 @@ export function DevToolView() {
                       "decoration-destructive underline decoration-wavy underline-offset-4",
                     // the AI is editing HERE: the error line pulses on the
                     // quiet wash instead of accusing while being fixed
-                    (workingHere === n || resolvingLine === n) &&
+                    workingHere === n &&
                       "bg-(--wash) animate-pulse",
                     healed && "bg-(--positive-wash)",
                     // the journey's spotlight: where the scenario lives
@@ -972,30 +946,6 @@ export function DevToolView() {
                   }
                 />
               </div>
-              {/* the note lives under the line it is about, not in a panel
-                  that makes you hold a line number in your head */}
-              {thread && resolving !== file.path && (
-                <div className="px-4 py-2 ps-14">
-                  <ReviewComment
-                    author={thread.author}
-                    when={thread.when}
-                    status={isFixed(baseFile) ? "resolved" : thread.status}
-                    text={thread.text}
-                    onReply={(text) => {
-                      addChip({
-                        id: `review-${file.path}-${n}`,
-                        kind: "symbol",
-                        label: `${file.path}:${n}`,
-                      })
-                      seedPrompt(text, true)
-                      setMode("panel")
-                      setResolving(file.path)
-                    }}
-                    replyPlaceholder="Reply, or ask ambientui to resolve it…"
-                    className="max-w-xl"
-                  />
-                </div>
-              )}
               </React.Fragment>
             )
           })}

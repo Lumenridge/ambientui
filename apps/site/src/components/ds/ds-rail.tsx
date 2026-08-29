@@ -23,8 +23,9 @@ import { docUrl } from "@/lib/site"
  * Search filters the same catalog the pages are generated from, so it can
  * never offer a component that has no page.
  */
-const TOOLS: { id: string; label: string; icon: IconName }[] = [
-  { id: "foundation", label: "Foundation", icon: "sliders" },
+/** `foundation` has no segment of its own: /ds IS the Foundation. */
+const TOOLS: { id: string; label: string; icon: IconName; href?: string }[] = [
+  { id: "foundation", label: "Foundation", icon: "sliders", href: "/ds" },
   { id: "colors", label: "Colors", icon: "palette" },
   { id: "spacing", label: "Spacing", icon: "ruler" },
   { id: "shadows", label: "Shadows", icon: "layers" },
@@ -185,16 +186,14 @@ export function DsRail() {
         className="border-border bg-background focus-visible:ring-ring/30 mb-1 rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-3"
       />
 
-      <Row href="/ds" label="Overview" icon="home" active={here("/ds")} />
-
       <SectionLabel>Foundations</SectionLabel>
       {TOOLS.filter((t) => show(t.label)).map((t) => (
         <Row
           key={t.id}
-          href={`/ds/${t.id}`}
+          href={t.href ?? `/ds/${t.id}`}
           label={t.label}
           icon={t.icon}
-          active={here(`/ds/${t.id}`)}
+          active={here(t.href ?? `/ds/${t.id}`)}
         />
       ))}
 

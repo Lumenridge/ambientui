@@ -19,8 +19,10 @@ export const dynamic = "force-static"
  * page you have asked crawlers to ignore is a contradiction in the same
  * document.
  */
+// "foundation" is absent deliberately: /ds IS the Foundation, and it is
+// already listed above. A second URL for the same page is the duplicate
+// content this sitemap exists to avoid.
 const TOOLS = [
-  "foundation",
   "colors",
   "spacing",
   "shadows",
