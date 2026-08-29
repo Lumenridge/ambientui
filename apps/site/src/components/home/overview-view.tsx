@@ -18,7 +18,6 @@ import { OrbField, OrbHeat } from "ambientui/orb-character"
 
 import { useRouter } from "next/navigation"
 
-import { ContextSection } from "@/components/home/context-section"
 import { DesignArchitectureSection } from "@/components/home/design-architecture-section"
 import { InstallSection } from "@/components/home/install-section"
 import { Reveal } from "@/components/reveal"
@@ -1509,13 +1508,6 @@ export function OverviewView() {
             </Reveal>
           ))}
         </div>
-      </section>
-
-      {/* THE CONTRACT BEFORE THE SHAPES. What makes the six forms worth
-          having is that any of them already knows where you are; showing
-          the shapes first makes them look like six ways to open a chat. */}
-      <section className="relative mx-auto w-full max-w-5xl px-6 pt-32">
-        <ContextSection />
       </section>
 
       {/* the forms: one presence, many shapes — one section per form,
