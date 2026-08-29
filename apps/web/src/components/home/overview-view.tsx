@@ -91,10 +91,17 @@ export function OverviewView({
               </text>
             </clipPath>
           </defs>
-          {/* a quiet role-gradient underlay, so the name never goes blank
-              while the shader warms up (or where WebGL is missing) */}
+          {/* the glyph base — LIGHT in both modes (the tint trick in
+              reverse: background role in light, foreground role in dark),
+              so the name pops off the dark veil and the heat rides it as
+              color. Also the fallback while the shader warms up. */}
           <g clipPath="url(#wordmark-clip)">
-            <rect width="640" height="150" fill="var(--muted-foreground)" opacity="0.3" />
+            <rect
+              width="640"
+              height="150"
+              className="fill-background dark:fill-foreground"
+              opacity="0.75"
+            />
             {/* the heat shaped to the wordmark's band, its frame OVERSIZED
                 past the clip: the warm span covers the whole name and the
                 cool margins fall outside the glyphs */}
