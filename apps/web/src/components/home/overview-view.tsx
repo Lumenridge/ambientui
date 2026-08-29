@@ -447,7 +447,9 @@ function DemoCursorLayer({
  */
 /** the film's chapters, in tour order — one segment each on the playback pill */
 const FILM_BEATS = [
-  { id: "ask", label: "Ask", dur: 19500 },
+  // Ask's dur is the pill's ESTIMATE — the chapter itself ends on the
+  // answer's settling signal, so it never overstays a finished exchange
+  { id: "ask", label: "Ask", dur: 15500 },
   { id: "panel", label: "Panel", dur: 4500 },
   { id: "dock", label: "Dock", dur: 4500 },
   { id: "history", label: "History", dur: 4500 },
@@ -471,7 +473,16 @@ function EmbeddedLayer({
   /** each chapter announces itself so the playback pill can fill along */
   onBeat: (index: number, durMs: number) => void
 }) {
-  const { setMode, setPageChip, setPageIntel, seedPrompt } = useAssistant()
+  const { setMode, setPageChip, setPageIntel, seedPrompt, orbState } =
+    useAssistant()
+
+  // the film reads the layer's own settling signal (orbState returns to
+  // "still" once an answer has fully settled) through a ref, so watching
+  // it never restarts the choreography
+  const orbStateRef = React.useRef(orbState)
+  React.useEffect(() => {
+    orbStateRef.current = orbState
+  })
 
   React.useEffect(() => {
     setPageChip({
@@ -526,14 +537,27 @@ function EmbeddedLayer({
         tick()
       })
     // each chapter announces itself, runs its gestures, and sleeps out the
-    // rest of its budget — so the pill's fill and the film agree on time
-    const beat = async (index: number, act: () => Promise<void>) => {
+    // rest of its budget — so the pill's fill and the film agree on time.
+    // pad:false for a chapter that ends on its own signal (the answer
+    // settling) instead of a clock: it moves on the moment it is done.
+    const beat = async (
+      index: number,
+      act: () => Promise<void>,
+      { pad = true }: { pad?: boolean } = {}
+    ) => {
       const dur = FILM_BEATS[index]!.dur
       onBeat(index, dur)
       const start = Date.now()
       await act()
+      if (!pad) return
       const left = dur - (Date.now() - start)
       if (left > 0) await sleep(left)
+    }
+    // pause-aware condition wait, with a ceiling so a wedged pipeline
+    // can never wedge the film
+    const waitUntil = async (cond: () => boolean, maxMs: number) => {
+      const start = Date.now()
+      while (alive && !cond() && Date.now() - start < maxMs) await sleep(150)
     }
     // EVERY STEP IS A DRAWN GESTURE ON A REAL CONTROL: the hand presses
     // the orb (a real pointer tap, so the QUICK-ASK opens first — the
@@ -569,8 +593,13 @@ function EmbeddedLayer({
         await sleep(800)
         if (!alive) return
         seedPrompt(q, true)
-        // the rest of the budget holds the settled answer
-      })
+        // move on when the ANSWER says so, not when a clock runs out: wait
+        // for the exchange to start, then for the layer's settling signal,
+        // hold a reading beat, and hand over to the next chapter
+        await waitUntil(() => orbStateRef.current !== "still", 4000)
+        await waitUntil(() => orbStateRef.current === "still", 20000)
+        await sleep(2400)
+      }, { pad: false })
       if (!alive) return
       await beat(1, async () => {
         await cursor.current?.clickOn('[aria-label="Open in chat window"]')
@@ -707,6 +736,9 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
     pausedRef.current = !pausedRef.current
     setPaused(pausedRef.current)
   }
+  const handoverSpring = useMotionSpring()
+  const handoverMicro = useMotionTransition("micro")
+  const handoverT = { ...handoverSpring, opacity: handoverMicro }
 
   React.useEffect(() => {
     const el = ref.current
@@ -783,8 +815,20 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
           </DemoWindow>
         </div>
         {/* the transport pill: how long the film is, where it stands, and
-            that it loops — gone the moment the visitor takes over */}
-        {!interacted && (
+            that it loops. The moment the visitor takes over it becomes the
+            HANDOVER LINE — the film's last subtitle, telling them the
+            layer is now really theirs, here and on the page itself */}
+        {interacted ? (
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={handoverT}
+            className="ambient-shimmer text-muted-foreground mt-5 text-center text-sm"
+          >
+            All yours — ask a follow-up, drag the panel, dock it. And this
+            whole page runs the same layer: press ⌘K anywhere.
+          </motion.p>
+        ) : (
           <DemoPlayback beat={beat} paused={paused} onToggle={togglePaused} />
         )}
       </Reveal>
