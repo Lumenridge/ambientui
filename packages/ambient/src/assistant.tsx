@@ -985,15 +985,19 @@ export function Assistant({
         // a glass-tinted scrim: the product dims behind a translucent veil
         // (the scrim token, a background-derived wash) so the palette reads
         // as the hero of the moment; the layer still catches outside clicks
-        className="bg-(--scrim) fixed inset-0 z-50 backdrop-blur-xs"
+        className="bg-(--scrim) fixed inset-0 z-50 flex flex-col items-center backdrop-blur-xs"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: microT }}
         transition={microT}
         onClick={() => setMode(messages.length ? "panel" : "line")}
       >
+        {/* fraction spacers, not vh margins: the overlay is the containing
+            block, so the palette holds its 9% head-margin inside a framed
+            layer exactly as it does on the full page */}
+        <div aria-hidden className="h-1/12 shrink-0" />
         <motion.div
-          className="mx-auto mt-[9vh] w-[720px] max-w-[92vw]"
+          className="flex max-h-5/6 w-[720px] min-h-0 max-w-11/12 flex-col"
           initial={{ opacity: 0, y: -10, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -8, scale: 0.99, transition: microT }}
@@ -1001,7 +1005,7 @@ export function Assistant({
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className="ambient-glass ambient-live-border relative flex max-h-[72vh] flex-col overflow-hidden rounded-2xl border border-(--glass-border) shadow-[0_32px_100px_-16px_rgba(0,0,0,0.6),0_8px_32px_-12px_rgba(0,0,0,0.4)]"
+            className="ambient-glass ambient-live-border relative flex max-h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-(--glass-border) shadow-[0_32px_100px_-16px_rgba(0,0,0,0.6),0_8px_32px_-12px_rgba(0,0,0,0.4)]"
             data-orb-state={orbState}
           >
             {renderField()}
