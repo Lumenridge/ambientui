@@ -17,6 +17,9 @@
   "exclude": [
     "node_modules",
     "dist",
-    "tsup.config.ts"
+    "tsup.config.ts",
+    // the bare-mount harness: dev-only, never built, never published, and
+    // it imports dev tooling the package does not depend on
+    "dev"
   ]
 }

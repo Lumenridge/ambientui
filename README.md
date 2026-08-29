@@ -49,7 +49,7 @@ npx shadcn registry add @ambientui=https://lumenridge.github.io/ambientui/r/{nam
 ```
 
 The layer runs with **no providers at all** — it falls back to sane defaults and
-binds to a full design system when you give it one. `apps/web/bare.html` is the
+binds to a full design system when you give it one. `packages/ambient/dev/index.html` is the
 proof, and it is a test we keep.
 
 Prefer a versioned dependency to owned source? `npm i ambientui`. The docs say

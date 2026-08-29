@@ -27,7 +27,6 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
 /** Where a build puts its CSS. First one that exists wins. */
 const CSS_DIRS = [
-  "apps/web/dist/assets",
   // Next emits stylesheets into chunks/, not css/ — a wrong guess here
   // makes the check silently find nothing, which is the same failure it
   // exists to catch
@@ -70,15 +69,15 @@ function classesIn(css) {
  * everywhere.
  */
 const SENTINELS = [
-  // apps/web/src/components/home/playbook-view.tsx — the wireframe device
+  // apps/site/src/components/home/playbook-view.tsx — the wireframe device
   "rounded-tl",
   "border-l-2",
   "text-[11px]",
-  // apps/web/src/components/home/overview-view.tsx — the wordmark + demos
+  // apps/site/src/components/home/overview-view.tsx — the wordmark + demos
   "fill-foreground",
   "aspect-video",
   "max-w-5xl",
-  // apps/web/src/components/ds/* — the reference pages
+  // apps/site/src/components/ds/* — the reference pages
   "min-h-32",
   "tracking-widest",
   // packages/ambient/src — the layer's own surfaces

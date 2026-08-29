@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * THE THIRD BIJECTION: described ↔ loaded ↔ on disk.
+ * THE THIRD BIJECTION: described ↔ on disk.
  *
  * The governing documents are split in two — system-docs.meta.ts describes
  * them, system-docs.source.ts loads their bytes — so a page can list them
@@ -29,7 +29,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 // the metadata lives in the site app (its final home); the ?raw sources
 // remain with the SPA until it is retired
 const META = resolve(ROOT, "apps/site/src/lib/system-docs.meta.ts")
-const SOURCE = resolve(ROOT, "apps/web/src/components/ds/system-docs.source.ts")
+
 
 const parse = (file) =>
   ts.createSourceFile(
@@ -73,39 +73,12 @@ function readMeta() {
   })
 }
 
-/** the keys of the SYSTEM_DOC_SOURCE record */
-function readSourceKeys() {
-  const sf = parse(SOURCE)
-  let rec = null
-  ;(function visit(n) {
-    if (
-      ts.isVariableDeclaration(n) &&
-      n.name.getText() === "SYSTEM_DOC_SOURCE" &&
-      n.initializer &&
-      ts.isObjectLiteralExpression(n.initializer)
-    ) rec = n.initializer
-    ts.forEachChild(n, visit)
-  })(sf)
-  if (!rec) throw new Error("system-docs.source.ts: SYSTEM_DOC_SOURCE not found")
-  return rec.properties.map((p) => {
-    const name = p.name
-    if (ts.isStringLiteral(name) || ts.isIdentifier(name)) return name.text
-    throw new Error("system-docs.source.ts: a computed key")
-  })
-}
-
 const meta = readMeta()
-const keys = readSourceKeys()
-const ids = new Set(meta.map((m) => m.id))
 
 const problems = []
 for (const m of meta) {
-  if (!keys.includes(m.id)) problems.push(`described but not loaded: ${m.id}`)
   if (!existsSync(join(ROOT, m.path)))
     problems.push(`described but not on disk: ${m.id} → ${m.path}`)
-}
-for (const k of keys) {
-  if (!ids.has(k)) problems.push(`loaded but not described: ${k}`)
 }
 const slugs = new Map()
 for (const m of meta) {
@@ -119,4 +92,4 @@ if (problems.length) {
   for (const p of problems) console.error(`    ${p}`)
   process.exit(1)
 }
-console.log(`✔ governing documents: ${meta.length} described, loaded and present`)
+console.log(`✔ governing documents: ${meta.length} described and present on disk`)

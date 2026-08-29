@@ -45,8 +45,9 @@ governing document cites still exists. If you change anything under
    focus scroll) is a way to escape an embedding frame; the decision log
    records the family of bugs this caused.
 5. Every vocabulary component is documented in
-   `apps/web/src/components/ds/ds-docs.tsx`. Undocumented components do
-   not exist.
+   `apps/site/src/lib/catalog.ts` (the prose) and demonstrated in
+   `apps/site/src/components/ds/stories.tsx`. Undocumented components do
+   not exist, and documented ones without a demo fail the gate.
 
 ## Proposing a change to the system itself
 

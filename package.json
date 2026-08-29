@@ -9,7 +9,7 @@
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
-    "registry:build": "node scripts/build-registry.mjs && shadcn build --output apps/web/public/r",
+    "registry:build": "node scripts/build-registry.mjs && shadcn build --output apps/site/public/r",
     "catalog:check": "node scripts/check-catalog.mjs",
     "prerender:check": "node scripts/check-prerender.mjs",
     "theme:check": "node scripts/check-theme-boot.mjs",

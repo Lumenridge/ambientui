@@ -16,7 +16,8 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "build": "tsup"
+    "build": "tsup",
+    "bare": "vite --config dev/vite.config.ts"
   },
   "dependencies": {
     "@ambientui/ui": "^0.1.0",

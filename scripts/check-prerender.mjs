@@ -33,7 +33,6 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
  * body and took down the first export build of a demo route.
  */
 const ROOTS = [
-  "apps/web/src",
   "apps/site/src",
   "apps/site/app",
   "packages/ambient/src",
@@ -46,10 +45,7 @@ const ROOTS = [
  * prerendered route. Every entry needs a reason.
  */
 const EXEMPT = {
-  "apps/web/src/main.tsx": "the client entry — it exists to touch the DOM",
-  "apps/web/src/bare.tsx": "the no-provider dev harness, never a built route",
-  "apps/web/src/base.ts": "import.meta.env only; no browser global at runtime",
-}
+  }
 
 const GLOBALS = /^(window|document|localStorage|sessionStorage|navigator)$/
 

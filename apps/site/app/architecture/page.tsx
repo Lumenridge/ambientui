@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { Markdown } from "@/components/markdown"
+import { ArchitectureView } from "@/components/home/architecture-view"
 import { readDocById } from "@/lib/read-doc"
 
 /**
@@ -43,21 +43,7 @@ export function generateMetadata(): Metadata {
 }
 
 export default function ArchitecturePage() {
-  const { title, lede, body } = paperTitleAndLede()
-  return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-20">
-      <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-        ambientui / the architecture
-      </p>
-      {/* the hero renders the title block, so the body below has it sliced
-          off — showing both would be the page stuttering */}
-      <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-        {title}
-      </h1>
-      <p className="text-muted-foreground mt-6 max-w-2xl text-lg leading-relaxed">
-        {lede}
-      </p>
-      <Markdown source={body} className="mt-16 max-w-none" />
-    </main>
-  )
+  // read on the SERVER, rendered by a client tree that adds the diagrams
+  // and the live demos — the export still prerenders the prose to HTML
+  return <ArchitectureView source={readDocById("doc-paper")} />
 }

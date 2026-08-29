@@ -1,43 +1,40 @@
 #!/usr/bin/env node
 /**
- * The pre-paint theme script lives in index.html and cannot import anything;
- * theme-provider.tsx owns the same two values in TypeScript. That is a copy,
- * and this project's named failure mode is two copies of one value.
+ * The pre-paint theme script must not restate the storage key.
  *
- * The copy is unavoidable — a blocking script in the head is the only thing
- * that runs before first paint — so it is checked instead. If the key or the
- * default drift apart, the symptom is a theme flash on every load that
- * nobody notices in dev, because dev already has the right value stored.
+ * In the SPA it had to: the script lived in index.html, which cannot
+ * import, so the key and the default were a copy — and the copy went wrong
+ * exactly once, silently, producing a flash on every load while the page
+ * looked perfect. A checker compared the two.
+ *
+ * As a TypeScript module it imports them instead, so the disagreement is
+ * now IMPOSSIBLE rather than merely detected. This asserts that property
+ * holds: no quoted storage key in the boot module, and the import present.
+ * Removing a class of bug is better than checking for it, and this is the
+ * check that the removal stays removed.
  */
 import { readFileSync } from "node:fs"
 import { resolve, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-const ts = readFileSync(resolve(ROOT, "apps/web/src/components/theme-provider.tsx"), "utf8")
-const html = readFileSync(resolve(ROOT, "apps/web/index.html"), "utf8")
-
-const key = ts.match(/THEME_STORAGE_KEY = "([^"]+)"/)?.[1]
-const def = ts.match(/THEME_DEFAULT: Theme = "([^"]+)"/)?.[1]
-if (!key || !def) {
-  console.error("✗ theme-provider.tsx: THEME_STORAGE_KEY / THEME_DEFAULT not found")
-  process.exit(1)
-}
-
-const boot = html.match(/localStorage\.getItem\("([^"]+)"\)\s*\|\|\s*"([^"]+)"/)
-if (!boot) {
-  console.error("✗ index.html: the pre-paint theme script is missing or unrecognisable")
-  process.exit(1)
-}
-const [, bootKey, bootDefault] = boot
+const boot = readFileSync(resolve(ROOT, "apps/site/src/lib/theme-boot.ts"), "utf8")
+const provider = readFileSync(
+  resolve(ROOT, "apps/site/src/components/theme-provider.tsx"),
+  "utf8"
+)
 
 const problems = []
-if (bootKey !== key) problems.push(`storage key: html "${bootKey}" vs ts "${key}"`)
-if (bootDefault !== def) problems.push(`default: html "${bootDefault}" vs ts "${def}"`)
+if (!/THEME_STORAGE_KEY\s*=\s*"/.test(provider))
+  problems.push("theme-provider.tsx no longer declares THEME_STORAGE_KEY")
+if (!/import\s*\{[^}]*THEME_STORAGE_KEY[^}]*\}\s*from/.test(boot))
+  problems.push("theme-boot.ts does not import THEME_STORAGE_KEY — it is restating it")
+if (/getItem\(\s*"/.test(boot))
+  problems.push("theme-boot.ts hardcodes a storage key string")
 
 if (problems.length) {
-  console.error("✗ the pre-paint theme script disagrees with theme-provider.tsx:")
+  console.error("✗ the pre-paint theme script has drifted from its source:")
   for (const p of problems) console.error(`    ${p}`)
   process.exit(1)
 }
-console.log(`✔ theme boot agrees (key "${key}", default "${def}")`)
+console.log("✔ theme boot imports its key and default — no copy to drift")

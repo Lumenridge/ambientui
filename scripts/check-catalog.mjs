@@ -24,7 +24,7 @@ import { fileURLToPath } from "node:url"
 import { readCatalog } from "./extract-catalog.mjs"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-const STORIES_FILE = resolve(ROOT, "apps/web/src/components/ds/stories.tsx")
+const STORIES_FILE = resolve(ROOT, "apps/site/src/components/ds/stories.tsx")
 
 /**
  * Documented, deliberately WITHOUT a demo. Every entry needs a reason — the

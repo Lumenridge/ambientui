@@ -7,7 +7,8 @@ import {
   SHADCN_DEFAULT_COMPONENTS,
   type ComponentDoc,
 } from "@/lib/catalog"
-import { REGISTRY_HOST, installCommandFor } from "@/lib/registry-facts"
+import { ComponentDemos } from "@/components/ds/component-demos"
+import { installCommandFor } from "@/lib/registry-facts"
 
 const ALL: (ComponentDoc & { vocabulary: "ambient" | "product" })[] = [
   ...AMBIENT_COMPONENTS.map((c) => ({ ...c, vocabulary: "ambient" as const })),
@@ -107,16 +108,8 @@ export default async function ComponentPage({
       <DocList title="When to use" items={c.whenToUse} />
       <DocList title="When not to" items={c.whenNotToUse} />
 
-      <p className="text-muted-foreground mt-16 text-sm">
-        The live playground is on{" "}
-        <a
-          href={`${REGISTRY_HOST}`}
-          className="text-primary underline underline-offset-2"
-        >
-          the design system browser
-        </a>
-        .
-      </p>
+      {/* the demos mount below the prose, as their own island */}
+      <ComponentDemos id={c.id} />
     </main>
   )
 }
