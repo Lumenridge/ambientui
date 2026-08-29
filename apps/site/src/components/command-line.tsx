@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 
 import { toast } from "sonner"
@@ -5,7 +7,7 @@ import { toast } from "sonner"
 import { Button } from "@ambientui/ui/components/button"
 import { cn } from "@ambientui/ui/lib/utils"
 
-import { Icon } from "@/components/icon"
+import { Icon } from "@ambientui/ui/components/icon"
 
 /**
  * A COMMAND YOU COPY — not a command the assistant ran.

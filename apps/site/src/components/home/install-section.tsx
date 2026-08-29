@@ -1,13 +1,15 @@
+"use client"
+
 import * as React from "react"
 
 import { Button } from "@ambientui/ui/components/button"
 
 import { CommandLine } from "@/components/command-line"
-import { Icon } from "@/components/icon"
+import { Icon } from "@ambientui/ui/components/icon"
 import {
   INSTALLABLE_COMPONENTS,
   REGISTRY_HOST,
-} from "@/registry-facts"
+} from "@/lib/registry-facts"
 
 /**
  * HOW SOMEONE TAKES THIS — the section the whole site exists to reach.

@@ -8,7 +8,7 @@ import { Button } from "@ambientui/ui/components/button"
 import { Input } from "@ambientui/ui/components/input"
 import { cn } from "@ambientui/ui/lib/utils"
 
-import { Icon } from "@/components/icon"
+import { Icon } from "@site/components/icon"
 import { SectionRail } from "@ambientui/ui/components/section-rail"
 
 import { RoleEditor } from "@/components/ds/colors-page"
@@ -19,7 +19,7 @@ import {
   SettingsSection,
   SettingsTitle,
 } from "@/components/ds/settings-kit"
-import { ICON_NAMES } from "@/components/icon"
+import { ICON_NAMES } from "@site/components/icon"
 import { useTheme } from "@/components/theme-provider"
 import {
   ACCENTS,

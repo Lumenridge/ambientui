@@ -47,9 +47,7 @@ const MIN_PROSE = 400
  * promise with a date on it — the same contract as NOT_DISTRIBUTABLE and
  * NO_STORIES: an exemption must name its reason, and this list must empty.
  */
-const NOT_YET = {
-  "index.html": "the Phase 1 stub; the real landing page lands in Phase 5",
-}
+const NOT_YET = {}
 
 const pages = []
 ;(function walk(dir) {

@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 
 import { AnimatePresence, animate, motion, useMotionValue } from "framer-motion"
@@ -13,7 +15,8 @@ import {
 } from "ambientui/assistant-context"
 import { OrbField, OrbHeat } from "ambientui/orb-character"
 
-import { withBase } from "@/base"
+import { useRouter } from "next/navigation"
+
 import { InstallSection } from "@/components/home/install-section"
 import { Reveal } from "@/components/reveal"
 import { SeekBar } from "@/components/seek-bar"
@@ -1335,6 +1338,7 @@ function FormSection({
 /* ------------------------------- the page ------------------------------- *//* ------------------------------- the page ------------------------------- */
 
 export function OverviewView() {
+  const router = useRouter()
   const { setPageIntel, orbState } = useAssistant()
 
   // THE WINDOWS TAKE THE WORDMARK'S MEASURE; the written content reads at
@@ -1490,8 +1494,7 @@ export function OverviewView() {
                   <button
                     type="button"
                     onClick={() => {
-                      window.history.pushState(null, "", "/?view=architecture")
-                      window.dispatchEvent(new PopStateEvent("popstate"))
+                      router.push("/architecture")
                     }}
                     className="hover:text-muted-foreground mt-6 flex items-center gap-1.5 font-medium"
                   >
@@ -1534,8 +1537,7 @@ export function OverviewView() {
         <Reveal>
           <InstallSection
             onDocs={() => {
-              window.history.pushState(null, "", withBase("/ds"))
-              window.dispatchEvent(new PopStateEvent("popstate"))
+              router.push("/ds")
             }}
           />
         </Reveal>
@@ -1548,8 +1550,7 @@ export function OverviewView() {
             type="button"
             className="hover:text-foreground"
             onClick={() => {
-              window.history.pushState(null, "", withBase("/?view=architecture"))
-              window.dispatchEvent(new PopStateEvent("popstate"))
+              router.push("/architecture")
             }}
           >
             The architecture
@@ -1558,8 +1559,7 @@ export function OverviewView() {
             type="button"
             className="hover:text-foreground"
             onClick={() => {
-              window.history.pushState(null, "", withBase("/ds"))
-              window.dispatchEvent(new PopStateEvent("popstate"))
+              router.push("/ds")
             }}
           >
             Design system

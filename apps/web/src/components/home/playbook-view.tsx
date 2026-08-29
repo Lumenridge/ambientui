@@ -14,8 +14,8 @@ import { ReasoningPanel } from "ambientui/message-kit"
 import { ReferenceChips } from "ambientui/response-kit"
 import { CodeDiff, ToolCall } from "ambientui/tool-kit"
 
-import { CommandLine } from "@/components/command-line"
-import { Reveal } from "@/components/reveal"
+import { CommandLine } from "@site/components/command-line"
+import { Reveal } from "@site/components/reveal"
 import {
   SBar,
   SDot,

@@ -7,7 +7,6 @@ import { useAssistant } from "ambientui/assistant-context"
 import { withBase } from "@/base"
 import { CanvasBackdrop } from "@site/components/canvas-backdrop"
 import { DevToolView } from "@site/components/devtool-view"
-import { OverviewView } from "@/components/home/overview-view"
 import { PlaybookView } from "@/components/home/playbook-view"
 import { SiteMenu } from "@/components/site-menu"
 
@@ -122,12 +121,21 @@ export function HomePage() {
         </div>
       </TabsContent>
 
-      {/* no top padding: the menu floats over the gradient, full-bleed */}
+      {/* THE OVERVIEW HAS MOVED. It is a prerendered page in apps/site now
+          (real HTML, its own metadata, indexable) — the whole point of the
+          migration. This shell keeps the surfaces the static site has not
+          taken over yet, and this tab points at the real one rather than
+          maintaining a second copy of the landing page. */}
       <TabsContent
         value="overview"
-        className="m-0 min-h-0 flex-1 overflow-y-auto"
+        className="m-0 flex min-h-0 flex-1 items-center justify-center overflow-y-auto"
       >
-        <OverviewView />
+        <p className="text-muted-foreground text-sm">
+          The overview is now a static page — run{" "}
+          <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
+            npm run dev --workspace=@ambientui/site-next
+          </code>
+        </p>
       </TabsContent>
 
       <TabsContent

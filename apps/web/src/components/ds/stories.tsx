@@ -13,7 +13,7 @@ import { SectionRail } from "@ambientui/ui/components/section-rail"
 import { toast } from "sonner"
 
 import { SaveReminder } from "@/components/ds/settings-kit"
-import { SeekBar } from "@/components/seek-bar"
+import { SeekBar } from "@site/components/seek-bar"
 
 import { Badge } from "@ambientui/ui/components/badge"
 import { Button } from "@ambientui/ui/components/button"
