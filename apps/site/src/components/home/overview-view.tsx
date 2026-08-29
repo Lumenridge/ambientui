@@ -241,22 +241,49 @@ function DemoDashboard() {
 function DemoWindow({
   children,
   overlay,
+  chrome = true,
 }: {
   children: React.ReactNode
   overlay?: React.ReactNode
+  /**
+   * The browser dressing: title bar and traffic lights. On the film at the
+   * top it earns its place — the claim there is "this is your product, and
+   * the layer is living in it". In the form sections the claim is narrower
+   * (here is what a panel IS), and a window frame around a single surface
+   * makes the surface look like a screenshot of an app rather than the
+   * component it is.
+   *
+   * THE BOX ITSELF STAYS EITHER WAY, and is not decoration: the layer's
+   * surfaces are position:fixed, and a transformed ancestor is what makes
+   * them fixed to THIS frame instead of to the viewport. Remove the box
+   * and the dock docks to the browser.
+   */
+  chrome?: boolean
 }) {
   return (
-    <div className="border-border bg-card relative z-10 flex aspect-video w-full transform-gpu flex-col overflow-hidden rounded-2xl border shadow-2xl">
-      <div className="border-border bg-muted/50 relative flex h-9 shrink-0 items-center justify-center border-b">
-        <span className="absolute start-4 flex gap-1.5">
-          <span className="bg-muted-foreground/30 size-3 rounded-full" />
-          <span className="bg-muted-foreground/30 size-3 rounded-full" />
-          <span className="bg-muted-foreground/30 size-3 rounded-full" />
-        </span>
-        <span className="text-muted-foreground text-xs">
-          {APP.org} — {APP.service}
-        </span>
-      </div>
+    <div
+      className={cn(
+        "relative z-10 flex aspect-video w-full transform-gpu flex-col overflow-hidden rounded-2xl",
+        chrome
+          ? "border-border bg-card border shadow-2xl"
+          : // no ground of its own: the surfaces bring their own material,
+            // and a card behind them would be the product shell again in
+            // everything but name
+            "border-border/60 border border-dashed"
+      )}
+    >
+      {chrome && (
+        <div className="border-border bg-muted/50 relative flex h-9 shrink-0 items-center justify-center border-b">
+          <span className="absolute start-4 flex gap-1.5">
+            <span className="bg-muted-foreground/30 size-3 rounded-full" />
+            <span className="bg-muted-foreground/30 size-3 rounded-full" />
+            <span className="bg-muted-foreground/30 size-3 rounded-full" />
+          </span>
+          <span className="text-muted-foreground text-xs">
+            {APP.org} — {APP.service}
+          </span>
+        </div>
+      )}
       <div className="relative min-h-0 flex-1">{children}</div>
       {overlay}
     </div>
@@ -1288,17 +1315,18 @@ function FormSection({
             onKeyDownCapture={(e) => e.isTrusted && setInteracted(true)}
           >
             <DemoWindow
+              chrome={false}
               overlay={
                 near && !interacted ? (
                   <DemoCursorLayer handleRef={cursorRef} />
                 ) : null
               }
             >
-              {/* the product recedes (opacity), the layer does not — the
-                  Ambient UI component is the subject of every window */}
-              <div className="h-full opacity-60">
-                <DemoDashboard />
-              </div>
+              {/* NO PRODUCT BEHIND IT. The film at the top has already made
+                  the "living in your app" argument; these five sections are
+                  answering "what IS a dock", and a dashboard under the
+                  answer is the loudest thing on screen while being the one
+                  thing the section is not about. */}
               {near && (
                 <AssistantProvider key={take} navItems={DEMO_NAV}>
                   <FormsDriver

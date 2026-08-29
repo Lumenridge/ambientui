@@ -26,8 +26,18 @@ function subscribeToScheme(onChange: () => void) {
 }
 
 /** The seam between two kinds of control in one pill. */
-function Rule() {
-  return <span aria-hidden className="bg-border mx-0.5 h-5 w-px shrink-0" />
+function Rule({ desktopOnly = false }: { desktopOnly?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "bg-border mx-0.5 h-5 w-px shrink-0",
+        // a rule introducing a group that is entirely hidden would be a
+        // divider with nothing on the far side of it
+        desktopOnly && "hidden sm:block"
+      )}
+    />
+  )
 }
 
 /**
@@ -84,6 +94,13 @@ export function ViewMenu({
     label: string
     icon?: IconName
     group?: string
+    /**
+     * Hidden below the `sm` breakpoint — HIDDEN, not removed. The link
+     * stays in the emitted HTML so a mobile-first crawler still follows
+     * it; only the pill declines to offer it at a width where the
+     * destination is not worth arriving at.
+     */
+    desktopOnly?: boolean
   }[]
   value: string
   onSelect: (id: string) => void
@@ -157,6 +174,10 @@ export function ViewMenu({
         // lives in the data the app passes rather than in an index this
         // component would have to keep in step.
         const newGroup = i > 0 && item.group !== items[i - 1].group
+        // the rule belongs to the group it opens, so it disappears with it
+        const groupHidden = items
+          .filter((x) => x.group === item.group)
+          .every((x) => x.desktopOnly)
         const segment = (
           <Button
             type="button"
@@ -189,8 +210,12 @@ export function ViewMenu({
         // is wearing its name
         return (
           <React.Fragment key={item.id}>
-            {newGroup && <Rule />}
-            <motion.div layout="position" transition={spring}>
+            {newGroup && <Rule desktopOnly={groupHidden} />}
+            <motion.div
+              layout="position"
+              transition={spring}
+              className={cn(item.desktopOnly && "hidden sm:block")}
+            >
               {active ? (
                 segment
               ) : (
