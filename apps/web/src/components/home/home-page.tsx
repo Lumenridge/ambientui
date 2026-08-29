@@ -9,7 +9,7 @@ import { CanvasBackdrop } from "@/components/canvas-backdrop"
 import { DevToolView } from "@/components/home/devtool-view"
 import { OverviewView } from "@/components/home/overview-view"
 import { PlaybookView } from "@/components/home/playbook-view"
-import { ViewMenu } from "@/components/view-menu"
+import { SiteMenu } from "@/components/site-menu"
 
 /**
  * THE HOME SURFACE — four views of the same argument.
@@ -96,7 +96,8 @@ export function HomePage() {
       <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex items-start justify-center">
         {/* Home IS the overview, and the overview is the first segment —
             a separate home control would be the same destination twice. */}
-        <ViewMenu items={VIEWS} value={view} onSelect={select} />
+        {/* the shared SITE menu — same segments here and on /ds */}
+        <SiteMenu value={view} />
       </div>
 
       <TabsContent

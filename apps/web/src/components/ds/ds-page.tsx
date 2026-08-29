@@ -25,6 +25,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarFooter,
   SidebarInput,
   SidebarProvider,
@@ -35,6 +38,7 @@ import {
   CollapsibleTrigger,
 } from "@ambientui/ui/components/collapsible"
 
+import { SiteMenu } from "@/components/site-menu"
 import { SaveReminder } from "@/components/ds/settings-kit"
 import { MotionPage } from "@/components/ds/motion-page"
 import { FormFactorsPage } from "@/components/ds/form-factors-page"
@@ -66,6 +70,87 @@ function DocList({ title, items }: { title: string; items: string[] }) {
         ))}
       </ul>
     </section>
+  )
+}
+
+/**
+ * A FOLDING PARENT ROW (the reference anatomy: icon, name, count, a
+ * disclosure chevron) whose children indent onto the sidebar's own
+ * sub-menu — the vertical guide line says "inside", so the rail reads
+ * as a tree instead of a pile of labelled piles.
+ */
+function RailFold({
+  label,
+  icon,
+  count,
+  defaultOpen = false,
+  forceOpen,
+  children,
+}: {
+  label: string
+  icon: IconName
+  count: number
+  defaultOpen?: boolean
+  forceOpen?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <Collapsible
+      defaultOpen={defaultOpen}
+      open={forceOpen ? true : undefined}
+      className="group/collapsible"
+    >
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton size="default">
+            <Icon name={icon} size={15} />
+            <span>{label}</span>
+            <span className="text-muted-foreground ms-auto font-mono text-xs">
+              {count}
+            </span>
+            <Icon
+              name="chevron-right"
+              size={13}
+              className="group-data-[state=open]/collapsible:hidden"
+            />
+            <Icon
+              name="chevron-down"
+              size={13}
+              className="hidden group-data-[state=open]/collapsible:block"
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>{children}</SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  )
+}
+
+/** One indented child row on the sidebar's sub-menu. */
+function RailSubItem({
+  id,
+  label,
+  selectedId,
+  onSelect,
+}: {
+  id: string
+  label: string
+  selectedId: string
+  onSelect: (id: string) => void
+}) {
+  return (
+    <SidebarMenuSubItem>
+      <SidebarMenuSubButton
+        asChild
+        isActive={selectedId === id}
+      >
+        <button type="button" className="w-full" onClick={() => onSelect(id)}>
+          <span>{label}</span>
+        </button>
+      </SidebarMenuSubButton>
+    </SidebarMenuSubItem>
   )
 }
 
@@ -225,28 +310,21 @@ export function DsPage() {
   }, [selectedId, chipLabel, chipIcon, setPageChip])
 
   return (
-    <div className="flex min-h-0 flex-1">
+    <div className="relative flex min-h-0 flex-1">
+      {/* the one site switcher, in its one place — the same centred pill
+          every page wears (see SiteMenu) */}
+      <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex items-start justify-center">
+        <SiteMenu value="ds" />
+      </div>
       {/* component list */}
-      {/* THE RAIL IS THE SANCTIONED SIDEBAR, full anatomy: brand header,
-          search that filters the vocabulary, iconed groups, collapsible kit
-          sections with counts, and the assistant in the footer. The /ds page
-          eats its own cooking. */}
+      {/* THE RAIL IS THE SANCTIONED SIDEBAR: search that filters the
+          vocabulary, iconed groups, collapsible kit sections with counts,
+          and the assistant in the footer. The /ds page eats its own
+          cooking. (The brand header row was removed — the site menu names
+          where you are, and the rail spends its top on the search.) */}
       <SidebarProvider className="min-h-0! w-auto! flex-none">
         <Sidebar collapsible="none" className="w-64 shrink-0">
           <SidebarHeader>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton size="lg" className="pointer-events-none">
-                  <OrbGlyph size={28} />
-                  <span className="flex flex-col leading-tight">
-                    <span className="text-sm font-semibold">ambientui</span>
-                    <span className="text-muted-foreground text-xs">
-                      Design system
-                    </span>
-                  </span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
             <SidebarInput
               value={railQuery}
               onChange={(e) => setRailQuery(e.target.value)}
@@ -288,135 +366,74 @@ export function DsPage() {
                     {ambientCore.map((c) => (
                       <RailItem key={c.id} icon="sparkles" id={c.id} label={c.name} selectedId={selectedId} onSelect={setSelectedId} />
                     ))}
+                    {/* the kits fold INSIDE the vocabulary, reference-style:
+                        parent rows with a chevron, children indented on the
+                        sub-menu's guide line. Searching holds them open. */}
+                    {kitGroups.map(({ group, items }) =>
+                      items.length === 0 ? null : (
+                        <RailFold
+                          key={group}
+                          label={group}
+                          icon="sparkles"
+                          count={items.length}
+                          defaultOpen={group === "Messages"}
+                          forceOpen={!!railQuery}
+                        >
+                          {items.map((c) => (
+                            <RailSubItem key={c.id} id={c.id} label={c.name} selectedId={selectedId} onSelect={setSelectedId} />
+                          ))}
+                        </RailFold>
+                      )
+                    )}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
             )}
 
-            {/* the kits collapse — 46 rows is an index, and an index you can
-                fold is one you can navigate. Searching holds them open. */}
-            {kitGroups.map(({ group, items }) =>
-              items.length === 0 ? null : (
-                <Collapsible
-                  key={group}
-                  defaultOpen={group === "Messages"}
-                  open={railQuery ? true : undefined}
-                  className="group/collapsible"
-                >
-                  <SidebarGroup>
-                    <SidebarGroupLabel asChild>
-                      <CollapsibleTrigger>
-                        <span>{group}</span>
-                        <span className="text-muted-foreground ms-auto me-1 font-mono text-xs">
-                          {items.length}
-                        </span>
-                        {/* the same disclosure chevron every fold in the app
-                            wears: right closed, down open */}
-                        <Icon
-                          name="chevron-right"
-                          size={13}
-                          className="group-data-[state=open]/collapsible:hidden"
-                        />
-                        <Icon
-                          name="chevron-down"
-                          size={13}
-                          className="hidden group-data-[state=open]/collapsible:block"
-                        />
-                      </CollapsibleTrigger>
-                    </SidebarGroupLabel>
-                    <CollapsibleContent>
-                      <SidebarGroupContent>
-                        <SidebarMenu>
-                          {items.map((c) => (
-                            <RailItem key={c.id} id={c.id} label={c.name} selectedId={selectedId} onSelect={setSelectedId} />
+            {docGroups.some((g) => g.items.length > 0) && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Documents</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {docGroups.map(({ group, items }) =>
+                      items.length === 0 ? null : (
+                        <RailFold
+                          key={group}
+                          label={group}
+                          icon="document"
+                          count={items.length}
+                          forceOpen={!!railQuery}
+                        >
+                          {items.map((d) => (
+                            <RailSubItem key={d.id} id={d.id} label={d.name} selectedId={selectedId} onSelect={setSelectedId} />
                           ))}
-                        </SidebarMenu>
-                      </SidebarGroupContent>
-                    </CollapsibleContent>
-                  </SidebarGroup>
-                </Collapsible>
-              )
+                        </RailFold>
+                      )
+                    )}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
             )}
 
-            {docGroups.map(({ group, items }) =>
-              items.length === 0 ? null : (
-                <Collapsible
-                  key={group}
-                  defaultOpen={false}
-                  open={railQuery ? true : undefined}
-                  className="group/collapsible"
-                >
-                  <SidebarGroup>
-                    <SidebarGroupLabel asChild>
-                      <CollapsibleTrigger>
-                        <span>{group}</span>
-                        <span className="text-muted-foreground ms-auto me-1 font-mono text-xs">
-                          {items.length}
-                        </span>
-                        <Icon
-                          name="chevron-right"
-                          size={13}
-                          className="group-data-[state=open]/collapsible:hidden"
-                        />
-                        <Icon
-                          name="chevron-down"
-                          size={13}
-                          className="hidden group-data-[state=open]/collapsible:block"
-                        />
-                      </CollapsibleTrigger>
-                    </SidebarGroupLabel>
-                    <CollapsibleContent>
-                      <SidebarGroupContent>
-                        <SidebarMenu>
-                          {items.map((d) => (
-                            <RailItem
-                              key={d.id}
-                              id={d.id}
-                              label={d.name}
-                              icon="document"
-                              selectedId={selectedId}
-                              onSelect={setSelectedId}
-                            />
-                          ))}
-                        </SidebarMenu>
-                      </SidebarGroupContent>
-                    </CollapsibleContent>
-                  </SidebarGroup>
-                </Collapsible>
-              )
-            )}
             {shadcnList.length > 0 && (
-              <Collapsible defaultOpen open={railQuery ? true : undefined} className="group/collapsible">
-                <SidebarGroup>
-                  <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger>
-                      <span>Shadcn components</span>
-                      <span className="text-muted-foreground ms-auto me-1 font-mono text-xs">
-                        {shadcnList.length}
-                      </span>
-                      <Icon
-                        name="chevron-right"
-                        size={13}
-                        className="group-data-[state=open]/collapsible:hidden"
-                      />
-                      <Icon
-                        name="chevron-down"
-                        size={13}
-                        className="hidden group-data-[state=open]/collapsible:block"
-                      />
-                    </CollapsibleTrigger>
-                  </SidebarGroupLabel>
-                  <CollapsibleContent>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {shadcnList.map((c) => (
-                          <RailItem key={c.id} id={c.id} label={c.name} selectedId={selectedId} onSelect={setSelectedId} />
-                        ))}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </CollapsibleContent>
-                </SidebarGroup>
-              </Collapsible>
+              <SidebarGroup>
+                <SidebarGroupLabel>Product vocabulary</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    <RailFold
+                      label="Shadcn components"
+                      icon="layers"
+                      count={shadcnList.length}
+                      defaultOpen
+                      forceOpen={!!railQuery}
+                    >
+                      {shadcnList.map((c) => (
+                        <RailSubItem key={c.id} id={c.id} label={c.name} selectedId={selectedId} onSelect={setSelectedId} />
+                      ))}
+                    </RailFold>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
             )}
           </SidebarContent>
           <SidebarFooter className="border-border border-t">
@@ -437,7 +454,8 @@ export function DsPage() {
 
       {/* canvas — the inset content card on the sidebar-tinted ground */}
       <main className="bg-sidebar min-w-0 flex-1 p-2">
-        <div className="bg-background border-border h-full min-h-0 overflow-y-auto rounded-lg border px-8 py-6">
+        {/* pt clears the floating site menu; the heading never hides */}
+        <div className="bg-background border-border h-full min-h-0 overflow-y-auto rounded-lg border px-8 pt-16 pb-6">
         {doc ? (
           /* THE REAL FILE. Rendered from its bytes, so the page cannot drift
              from the rules it is showing. */
