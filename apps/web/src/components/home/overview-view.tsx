@@ -886,10 +886,14 @@ const STAGE_GESTURE_DUR: Record<AssistantMode, number> = {
   history: 2600,
 }
 const stageBeatsFor = (form: (typeof FORMS)[number]) =>
-  [
-    { id: "ask", label: "Ask" },
-    { id: "form", label: form.name },
-  ] as const
+  // the Orb IS the resting state — its demo has nothing to ask, so its
+  // transport is one chapter and its window opens on the orb directly
+  form.mode === "line"
+    ? ([{ id: "form", label: form.name }] as const)
+    : ([
+        { id: "ask", label: "Ask" },
+        { id: "form", label: form.name },
+      ] as const)
 
 function FormsDriver({
   active,
@@ -964,6 +968,16 @@ function FormsDriver({
         // returning to a section already staged: just hold its form
         setMode(mode)
         onDone()
+        return
+      }
+      if (mode === "line") {
+        // the Orb demo shows the ORB, immediately — no seeded exchange,
+        // no spotlight: the resting state is the whole exhibit
+        staged.current = true
+        onBeat(0, STAGE_GESTURE_DUR.line)
+        setMode("line")
+        await sleep(STAGE_GESTURE_DUR.line)
+        if (alive) onDone()
         return
       }
       if (!seeded.current) {
