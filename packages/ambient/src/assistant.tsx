@@ -252,6 +252,42 @@ export function Assistant({
     return { left: r.left, top: r.top, w: r.width, h: r.height }
   }
 
+  /**
+   * THE FRAME'S SIZE, WATCHED — because `vw`/`vh` describe the VIEWPORT.
+   *
+   * The surfaces cap themselves with viewport units (`max-w-[92vw]`), which
+   * is right when the layer owns the screen and wrong the moment it is
+   * embedded: inside a 327px demo frame on a 375px phone, 92vw resolves to
+   * 345px and the panel hangs 18px over the edge. Same family as the
+   * quick-ask row's fixed 420 — a number that was true on the author's
+   * screen and false in the frame it was handed.
+   *
+   * `null` when the layer is NOT embedded: a fixed element's offsetParent
+   * is null when its containing block is the viewport, and in that case the
+   * viewport units are already the correct answer, so nothing overrides.
+   */
+  const [frameBox, setFrameBox] = React.useState<{
+    w: number
+    h: number
+  } | null>(null)
+  React.useEffect(() => {
+    const parent = frameProbeRef.current?.offsetParent as HTMLElement | null
+    if (!parent) return
+    const ro = new ResizeObserver(([e]) => {
+      if (e) setFrameBox({ w: e.contentRect.width, h: e.contentRect.height })
+    })
+    ro.observe(parent)
+    return () => ro.disconnect()
+  }, [])
+
+  /**
+   * The inset a surface keeps from its frame's edges — it is the same 16px
+   * the panel already offsets itself by, doubled for the pair of edges.
+   */
+  const framedCap = frameBox
+    ? { maxWidth: frameBox.w - 32, maxHeight: frameBox.h - 32 }
+    : undefined
+
   const startPanelDrag = (e: React.PointerEvent) => {
     if (mode !== "panel" && mode !== "dock") return
     if ((e.target as HTMLElement).closest("button,input")) return
@@ -1204,6 +1240,9 @@ export function Assistant({
         // rounded: the dock is a surface the layer put there, not a pane
         // welded to the window edge
         className="ambient-live-border fixed top-2 right-2 bottom-2 z-50 w-[420px] max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl shadow-[-24px_0_70px_-16px_rgba(0,0,0,0.4)]"
+        // the dock is inset 8px per side, so its cap is the frame less 16 —
+        // the class behind it stays right for an unembedded layer
+        style={frameBox ? { maxWidth: frameBox.w - 16 } : undefined}
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 40, transition: microT }}
@@ -1438,11 +1477,12 @@ export function Assistant({
         exit={{ opacity: 0, y: 12, scale: 0.99, transition: microT }}
         transition={enterT}
         className="ambient-live-border fixed z-50 h-[560px] max-h-[80vh] w-[440px] max-w-[92vw] overflow-hidden rounded-xl shadow-[0_32px_90px_-12px_rgba(0,0,0,0.5),0_8px_28px_-8px_rgba(0,0,0,0.35)]"
-        style={
-          panelPos
+        style={{
+          ...framedCap,
+          ...(panelPos
             ? { left: panelPos.x, top: panelPos.y }
-            : { right: 16, bottom: 16 }
-        }
+            : { right: 16, bottom: 16 }),
+        }}
       >
         {surface}
       </motion.div>
