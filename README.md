@@ -98,8 +98,8 @@ figma/                the code → Figma variable contract
 - [CLAUDE.md](CLAUDE.md) — the hard rules an AI works under in this repo.
 - [PAPER.md](PAPER.md) — the argument the repo is evidence for.
 
-They are rendered at `/ds` from their real bytes, so the documentation cannot
-drift from the rules. The registry is generated from the same component docs,
+The `/ds` reference links to them on GitHub rather than re-rendering them, so
+there is one copy of each and no chance of a stale mirror. The registry is generated from the same component docs,
 so a component is installable *because* it is documented — install one and its
 when-to-use prints in your terminal.
 
@@ -112,7 +112,6 @@ npm run dev          # the site at :3000
 
 - `/` — the argument, built from the real running components
 - `/architecture` — the paper, with the components it argues about running inline
-- `/docs` — how to install, and which of the two tracks is yours
 - `/ds` — 50 documented components, the Foundation, and the governing docs
 - `/demo/devtool` — the layer inside a simulated real workspace
 

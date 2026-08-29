@@ -14,3 +14,15 @@ export const SITE_URL = (
 
 export const SITE_NAME = "ambientui"
 export const REPO_URL = "https://github.com/Lumenridge/ambientui"
+
+/**
+ * A governing document, on GitHub.
+ *
+ * The site used to render these itself at `/docs/<slug>`. That route is
+ * gone, so every place that pointed at it — the /ds rail, the /ds index,
+ * the paper's inline citations — sends the reader to the real file instead.
+ * The blob view is the honest destination anyway: it shows the bytes, the
+ * history, and who changed what, which is most of why these documents are
+ * worth reading at all.
+ */
+export const docUrl = (path: string) => `${REPO_URL}/blob/main/${path}`

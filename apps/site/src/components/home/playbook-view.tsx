@@ -31,6 +31,7 @@ import {
 import { Markdown } from "@/components/markdown"
 import { SYSTEM_DOC_META } from "@/lib/system-docs.meta"
 import { asset } from "@/lib/asset"
+import { docUrl } from "@/lib/site"
 
 /**
  * THE PLAYBOOK — the front door: the paper itself, read as an article.
@@ -108,11 +109,11 @@ function WireframeShell({
 function DocDownload({ docId, blurb }: { docId: string; blurb: string }) {
   const doc = SYSTEM_DOC_META.find((d) => d.id === docId)
   if (!doc) return null
-  // The bytes are no longer bundled — they are read at build time and
-  // rendered at /docs/<slug>, which is a better destination than a blob
-  // the reader has to open somewhere else anyway.
+  // The site does not render these documents any more. GitHub does, with
+  // the history and blame attached — which for a governing document is
+  // most of the point.
   const read = () => {
-    window.location.assign(asset(`/docs/${doc.slug}`))
+    window.open(docUrl(doc.path), "_blank", "noreferrer")
   }
   return (
     <div className="border-border flex items-center gap-4 border-t py-4 first:border-t-0">
@@ -132,10 +133,10 @@ function DocDownload({ docId, blurb }: { docId: string; blurb: string }) {
   )
 }
 
-/** Jump to a document on /ds without the layer knowing routes exist. */
+/** Open a governing document where it actually lives. */
 const openDoc = (docId: string) => {
   const doc = SYSTEM_DOC_META.find((d) => d.id === docId)
-  if (doc) window.location.assign(asset(`/docs/${doc.slug}`))
+  if (doc) window.open(docUrl(doc.path), "_blank", "noreferrer")
 }
 
 /** /ds with no selection IS the Foundation — the setup this paper argues for. */

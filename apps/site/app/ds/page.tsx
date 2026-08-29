@@ -3,6 +3,7 @@ import Link from "next/link"
 
 import { AMBIENT_COMPONENTS, SHADCN_DEFAULT_COMPONENTS } from "@/lib/catalog"
 import { SYSTEM_DOC_META } from "@/lib/system-docs.meta"
+import { docUrl } from "@/lib/site"
 
 export const metadata: Metadata = {
   title: "Design system — ambientui",
@@ -95,12 +96,14 @@ export default function DsIndex() {
         <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
           {SYSTEM_DOC_META.map((d) => (
             <li key={d.id}>
-              <Link
-                href={`/docs/${d.slug}`}
+              <a
+                href={docUrl(d.path)}
+                target="_blank"
+                rel="noreferrer"
                 className="text-primary text-sm underline underline-offset-2"
               >
                 {d.name}
-              </Link>
+              </a>
             </li>
           ))}
         </ul>

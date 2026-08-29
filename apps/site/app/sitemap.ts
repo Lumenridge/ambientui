@@ -2,7 +2,6 @@ import type { MetadataRoute } from "next"
 
 import { AMBIENT_COMPONENTS, SHADCN_DEFAULT_COMPONENTS } from "@/lib/catalog"
 import { SITE_URL } from "@/lib/site"
-import { SYSTEM_DOC_META } from "@/lib/system-docs.meta"
 
 // `output: export` has no server, so these must be declared static:
 // they are generated once at build time and written as files.
@@ -38,14 +37,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: url("/"), lastModified: now, priority: 1 },
     { url: url("/architecture"), lastModified: now, priority: 0.9 },
     { url: url("/ds"), lastModified: now, priority: 0.8 },
-    { url: url("/docs"), lastModified: now, priority: 0.8 },
     ...TOOLS.map((t) => ({
       url: url(`/ds/${t}`),
-      lastModified: now,
-      priority: 0.6,
-    })),
-    ...SYSTEM_DOC_META.map((d) => ({
-      url: url(`/docs/${d.slug}`),
       lastModified: now,
       priority: 0.6,
     })),

@@ -14,6 +14,7 @@ import {
 import { cn } from "@ambientui/ui/lib/utils"
 
 import { useTheme } from "@/components/theme-provider"
+import { THEME_TOGGLE_KEY } from "@/lib/theme-constants"
 
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 
@@ -22,6 +23,11 @@ function subscribeToScheme(onChange: () => void) {
   const mql = window.matchMedia(SCHEME_QUERY)
   mql.addEventListener("change", onChange)
   return () => mql.removeEventListener("change", onChange)
+}
+
+/** The seam between two kinds of control in one pill. */
+function Rule() {
+  return <span aria-hidden className="bg-border mx-0.5 h-5 w-px shrink-0" />
 }
 
 /**
@@ -51,7 +57,15 @@ function subscribeToScheme(onChange: () => void) {
  *
  * Appearance rides at the trailing edge in the same circle treatment. It is
  * the one control here that is not a destination — always one press away,
- * and never expanded, so it cannot be mistaken for somewhere to be.
+ * and never expanded, so it cannot be mistaken for somewhere to be. Its
+ * tooltip names its keyboard shortcut, read from the same constant the
+ * handler binds.
+ *
+ * KINDS ARE SEPARATED BY A RULE. The pill holds more than one sort of
+ * thing — the product's own pages, demos of it, and appearance, which is
+ * not a place at all — and a single unbroken row of circles said they were
+ * all the same sort. The app supplies a `group` per item; the seam is
+ * drawn wherever it changes, so this component never hardcodes an index.
  */
 export function ViewMenu({
   items,
@@ -60,7 +74,17 @@ export function ViewMenu({
   home,
   className,
 }: {
-  items: readonly { id: string; label: string; icon?: IconName }[]
+  /**
+   * The destinations, in order. `group` is a free-form kind name: a thin
+   * rule is drawn wherever it changes, so the app decides what belongs
+   * together and this component only renders the seam.
+   */
+  items: readonly {
+    id: string
+    label: string
+    icon?: IconName
+    group?: string
+  }[]
   value: string
   onSelect: (id: string) => void
   /**
@@ -124,8 +148,15 @@ export function ViewMenu({
         </motion.div>
       )}
 
-      {items.map((item) => {
+      {items.map((item, i) => {
         const active = item.id === value
+        // A RULE BETWEEN KINDS, not between items. The pill mixes two
+        // different things — places that are the product, and demos of it
+        // — and ran them together as one undifferentiated row of circles.
+        // The divider is drawn where `group` changes, so the grouping
+        // lives in the data the app passes rather than in an index this
+        // component would have to keep in step.
+        const newGroup = i > 0 && item.group !== items[i - 1].group
         const segment = (
           <Button
             type="button"
@@ -157,19 +188,25 @@ export function ViewMenu({
         // only the collapsed segments need a tooltip — the expanded one
         // is wearing its name
         return (
-          <motion.div key={item.id} layout="position" transition={spring}>
-            {active ? (
-              segment
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>{segment}</TooltipTrigger>
-                <TooltipContent>{item.label}</TooltipContent>
-              </Tooltip>
-            )}
-          </motion.div>
+          <React.Fragment key={item.id}>
+            {newGroup && <Rule />}
+            <motion.div layout="position" transition={spring}>
+              {active ? (
+                segment
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>{segment}</TooltipTrigger>
+                  <TooltipContent>{item.label}</TooltipContent>
+                </Tooltip>
+              )}
+            </motion.div>
+          </React.Fragment>
         )
       })}
 
+      {/* Appearance is not a destination, so it sits behind a rule of its
+          own rather than at the end of the list of places. */}
+      <Rule />
       <motion.div layout="position" transition={spring}>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -178,6 +215,7 @@ export function ViewMenu({
             size="icon-sm"
             variant="secondary"
             aria-label={isDark ? "Switch to light" : "Switch to dark"}
+            aria-keyshortcuts={THEME_TOGGLE_KEY.toUpperCase()}
             onClick={() => setTheme(isDark ? "light" : "dark")}
             className="rounded-full"
           >
@@ -185,8 +223,13 @@ export function ViewMenu({
             <Icon name={isDark ? "sun" : "moon"} size={14} />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>
+        {/* The key comes from the same constant the handler listens for,
+            so the tooltip cannot promise a binding that no longer exists. */}
+        <TooltipContent className="flex items-center gap-2">
           {isDark ? "Switch to light" : "Switch to dark"}
+          <kbd className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 font-mono text-[11px]">
+            {THEME_TOGGLE_KEY.toUpperCase()}
+          </kbd>
         </TooltipContent>
       </Tooltip>
       </motion.div>

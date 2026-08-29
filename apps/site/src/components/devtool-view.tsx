@@ -856,22 +856,6 @@ export function DevToolView() {
               <span className="text-destructive">−{task.stat.removed}</span>
             </span>
           )}
-          <div className="ms-auto flex shrink-0 items-center gap-1.5 ps-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                seedPrompt("Review this change and tell me what to fix before I submit it", true)
-                setMode("panel")
-              }}
-            >
-              <Icon name="sparkles" size={13} />
-              Review with ambientui
-            </Button>
-            <Button size="sm" variant="outline">
-              Submit review
-            </Button>
-          </div>
         </div>
         <div className="border-border bg-sidebar flex shrink-0 items-center overflow-x-auto border-b">
           {openTabs.map((path) => (

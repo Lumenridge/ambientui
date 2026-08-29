@@ -23,13 +23,17 @@ const DESTINATIONS: {
   label: string
   icon: IconName
   href: string
+  /** The kind this destination is. ViewMenu draws a rule where it changes. */
+  group: string
 }[] = [
-  { id: "overview", label: "Overview", icon: "home", href: "/" },
-  { id: "architecture", label: "Architecture", icon: "ruler", href: "/architecture" },
-  { id: "docs", label: "Docs", icon: "document", href: "/docs" },
-  { id: "ds", label: "Design system", icon: "layers", href: "/ds" },
-  { id: "devtool", label: "Dev tool demo", icon: "code", href: "/demo/devtool" },
-  { id: "canvas", label: "Canvas", icon: "image", href: "/demo/canvas" },
+  // The project itself: the argument, and the system it produced.
+  { id: "overview", label: "Overview", icon: "home", href: "/", group: "site" },
+  { id: "architecture", label: "Architecture", icon: "ruler", href: "/architecture", group: "site" },
+  { id: "ds", label: "Design system", icon: "layers", href: "/ds", group: "site" },
+  // Demonstrations of it. They are noindex and they are not the product,
+  // which the pill should say before someone clicks rather than after.
+  { id: "devtool", label: "Dev tool demo", icon: "code", href: "/demo/devtool", group: "demo" },
+  { id: "canvas", label: "Canvas", icon: "image", href: "/demo/canvas", group: "demo" },
 ]
 
 /** The longest matching prefix wins, so /ds/components/x still reads as /ds. */

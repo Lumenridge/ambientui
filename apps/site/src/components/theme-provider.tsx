@@ -5,6 +5,7 @@ import * as React from "react"
 import {
   THEME_DEFAULT,
   THEME_STORAGE_KEY,
+  THEME_TOGGLE_KEY,
 } from "@/lib/theme-constants"
 
 type Theme = "dark" | "light" | "system"
@@ -185,7 +186,7 @@ export function ThemeProvider({
         return
       }
 
-      if (event.key.toLowerCase() !== "d") {
+      if (event.key.toLowerCase() !== THEME_TOGGLE_KEY) {
         return
       }
 
