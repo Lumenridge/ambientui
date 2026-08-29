@@ -371,17 +371,19 @@ export function OverviewView() {
           §8 (never a raw shader). The tint is the BACKGROUND role, so it
           follows the theme: a light veil in light mode, a dark one in
           dark, and the field glows through both */}
-      {/* the field mounts OVERSIZED (-inset-1/4): the heat shape pads
-          inside its frame, and at exact size that pad reads as seams just
-          shy of the viewport edge — pushed out, the glow runs end to end
-          and the root's overflow clip takes the excess */}
-      <div aria-hidden className="absolute -inset-1/4">
-        <OrbField state={orbState} strength="stage" />
+      {/* THE GROUND IS THE VIEWPORT, NOT THE DOCUMENT. Fixed, so the field
+          stays a steady backdrop while the page scrolls over it — sized to
+          the screen instead of stretching with a four-viewport document
+          (which smeared the glow ramp across the whole lower half). The
+          horizontal oversize (-inset-x-1/4) pushes the heat shape's side
+          pads past the edges so the glow runs end to end; the fixed layer
+          unmounts with the view. */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute inset-y-0 -inset-x-1/4">
+          <OrbField state={orbState} strength="stage" />
+        </div>
+        <div className="bg-background/75 absolute inset-0" />
       </div>
-      <div
-        aria-hidden
-        className="bg-background/75 pointer-events-none absolute inset-0"
-      />
 
       {/* the wordmark — and the UI starts right beneath it */}
       <section className="relative flex items-center justify-center pt-40 pb-16 sm:pt-48">
