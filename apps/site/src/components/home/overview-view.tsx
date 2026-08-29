@@ -269,7 +269,11 @@ function DemoWindow({
         // itself to the frame correctly and the frame was the thing that
         // was wrong. h-96 is a real step on the spacing scale; an
         // arbitrary aspect ratio would not be.
-        "relative z-10 flex h-128 w-full transform-gpu flex-col overflow-hidden rounded-2xl sm:h-auto sm:aspect-video",
+        // TALL ENOUGH TO HOLD THE THING IT IS FRAMING. The panel is 560px
+        // and sits 16px off the bottom edge, so anything under 576px cuts
+        // it no matter how the type is tuned — h-160 leaves the surface
+        // whole with room above it to read as floating rather than wedged.
+        "relative z-10 flex h-160 w-full transform-gpu flex-col overflow-hidden rounded-2xl sm:h-auto sm:aspect-video",
         chrome
           ? "border-border bg-card border shadow-2xl"
           : // no ground of its own: the surfaces bring their own material,

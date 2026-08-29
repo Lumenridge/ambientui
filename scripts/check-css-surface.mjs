@@ -78,9 +78,10 @@ const SENTINELS = [
   // was "aspect-video" until the demo frame became portrait on phones and
   // 16:9 only from sm up. A VARIANT CANNOT STAND IN HERE: the parser stops
   // at the colon, so "sm:aspect-video" would never be found and the check
-  // would fail forever for a reason that has nothing to do with scanning.
-  // h-128 is the frame's mobile height and is just as rare.
-  "h-128",
+  // would fail forever for a reason unrelated to scanning. It was briefly
+  // the frame's mobile height, which broke the moment that height was
+  // tuned — a sentinel must be structural, not a number under adjustment.
+  "transform-gpu",
   "max-w-5xl",
   // apps/site/src/components/ds/* — the reference pages
   "min-h-32",
