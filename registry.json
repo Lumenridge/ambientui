@@ -221,6 +221,11 @@
           "target": "components/ambient/composer.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/index.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/index.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
           "type": "registry:lib",
           "target": "components/ambient/kit-vocabulary.ts"
