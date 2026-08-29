@@ -14,6 +14,8 @@ import "@/styles/viz.css"
 
 import type { Metadata } from "next"
 
+import { SiteChrome } from "@/components/site-chrome"
+import { SiteProviders } from "@/components/providers/site-providers"
 import { SITE_NAME, SITE_URL } from "@/lib/site"
 import { THEME_BOOT } from "@/lib/theme-boot"
 
@@ -55,7 +57,14 @@ export default function RootLayout({
         {/* before first paint — see lib/theme-boot.ts */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* the switcher belongs to the SITE, not to any page — a route
+            cannot forget to render it from here */}
+        <SiteProviders>
+          <SiteChrome />
+          {children}
+        </SiteProviders>
+      </body>
     </html>
   )
 }
