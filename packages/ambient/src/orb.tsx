@@ -124,8 +124,29 @@ export function AssistantOrb() {
     return () => window.removeEventListener("resize", bump)
   }, [])
 
-  const w = window.innerWidth
-  const h = window.innerHeight
+  // THE ORB MEASURES ITS CONTAINING BLOCK, not the window. An embedded
+  // layer (a product demo framed inside another page) scopes its fixed
+  // surfaces to a transformed ancestor; positioning from the viewport
+  // there puts the orb past the frame's edge, half-clipped. offsetParent
+  // of a fixed element IS that containing block — and null means the
+  // viewport, where the window numbers are the truth.
+  const rootRef = React.useRef<HTMLDivElement | null>(null)
+  const [frame, setFrame] = React.useState<{ w: number; h: number } | null>(
+    null
+  )
+  React.useLayoutEffect(() => {
+    const parent = rootRef.current?.offsetParent as HTMLElement | null
+    if (!parent) return
+    const measure = () =>
+      setFrame({ w: parent.clientWidth, h: parent.clientHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(parent)
+    return () => ro.disconnect()
+  }, [])
+
+  const w = frame?.w ?? window.innerWidth
+  const h = frame?.h ?? window.innerHeight
   // The opened form is a SURFACE, so it centers on the CONTENT REGION it
   // opens over — the page's main area, not the raw viewport — so a rail or
   // an inspector on the side doesn't push it off-center. The orb travels
@@ -246,6 +267,7 @@ export function AssistantOrb() {
           )
         })}
       <div
+        ref={rootRef}
         className={cn(
           "fixed z-50 touch-none select-none",
           // snap-to-anchor rides the page role — the largest ambient move

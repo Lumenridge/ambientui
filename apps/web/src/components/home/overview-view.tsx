@@ -72,13 +72,13 @@ function DemoDashboard() {
     { icon: "settings", label: "Settings" },
   ]
   return (
-    <div className="bg-card flex h-full flex-col overflow-hidden text-xs">
+    <div className="bg-card flex h-full flex-col overflow-hidden text-sm">
       {/* header: brand · breadcrumb */}
-      <div className="border-border flex h-11 items-center gap-3 border-b px-4">
-        <span className="bg-primary size-3 rounded-sm" />
+      <div className="border-border flex h-14 items-center gap-3 border-b px-6">
+        <span className="bg-primary size-4 rounded-sm" />
         <span className="font-medium">{APP.org}</span>
         <span className="text-muted-foreground">
-          Services <span className="mx-1">/</span> {APP.service}
+          Services <span className="mx-1.5">/</span> {APP.service}
         </span>
         <span className="text-muted-foreground ms-auto hidden sm:inline">
           Support
@@ -86,31 +86,31 @@ function DemoDashboard() {
       </div>
       <div className="flex min-h-0 flex-1">
         {/* sidebar */}
-        <div className="border-border hidden w-44 flex-col gap-0.5 border-e p-2 sm:flex">
+        <div className="border-border hidden w-56 flex-col gap-1 border-e p-3 sm:flex">
           {nav.map((n) => (
             <span
               key={n.label}
               className={cn(
-                "flex items-center gap-2 rounded-md px-2 py-1.5",
+                "flex items-center gap-2.5 rounded-lg px-3 py-2",
                 n.active
                   ? "bg-muted text-foreground font-medium"
                   : "text-muted-foreground"
               )}
             >
-              <Icon name={n.icon} size={13} />
+              <Icon name={n.icon} size={16} />
               {n.label}
             </span>
           ))}
         </div>
         {/* main: tabs + a dense two-column body that fills the height */}
-        <div className="flex min-w-0 flex-1 flex-col gap-4 p-4 sm:p-6">
-          <div className="flex items-center gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-5 p-6">
+          <div className="flex items-center gap-1.5">
             {["Overview", "Metrics", "Deployments", "Domains", "Settings"].map(
               (t, i) => (
                 <span
                   key={t}
                   className={cn(
-                    "rounded-md px-2.5 py-1",
+                    "rounded-lg px-3 py-1.5",
                     i === 0
                       ? "bg-muted text-foreground font-medium"
                       : "text-muted-foreground"
@@ -120,25 +120,25 @@ function DemoDashboard() {
                 </span>
               )
             )}
-            <span className="bg-primary text-primary-foreground ms-auto hidden rounded-md px-2.5 py-1 font-medium sm:inline">
+            <span className="bg-primary text-primary-foreground ms-auto hidden rounded-lg px-3 py-1.5 font-medium sm:inline">
               New deployment
             </span>
           </div>
-          <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 lg:grid-cols-3">
           <div className="border-border flex min-h-0 flex-col overflow-hidden rounded-lg border lg:col-span-2">
-            <p className="border-border border-b px-3 py-2 font-medium">
+            <p className="border-border border-b px-4 py-3 font-medium">
               Versions
             </p>
 
             {VERSIONS.map((v) => (
               <div
                 key={v.id}
-                className="border-border flex items-center gap-3 border-b px-3 py-2 last:border-b-0"
+                className="border-border flex items-center gap-4 border-b px-4 py-3 last:border-b-0"
               >
-                <span className="text-muted-foreground font-mono">{v.id}</span>
+                <span className="text-muted-foreground font-mono text-xs">{v.id}</span>
                 <span className="min-w-0 truncate">{v.msg}</span>
                 {v.failed && (
-                  <span className="bg-destructive/10 text-destructive rounded px-1.5 py-0.5 text-[10px] font-medium">
+                  <span className="bg-destructive/10 text-destructive rounded px-1.5 py-0.5 text-xs font-medium">
                     failed
                   </span>
                 )}
@@ -151,33 +151,33 @@ function DemoDashboard() {
           {/* the right rail — fills the column so nothing reads empty */}
           <div className="flex min-h-0 flex-col gap-4">
             <div className="border-border rounded-lg border">
-              <p className="border-border border-b px-3 py-2 font-medium">
+              <p className="border-border border-b px-4 py-3 font-medium">
                 Domains &amp; routes
               </p>
-              <div className="flex flex-col gap-2 p-3">
+              <div className="flex flex-col gap-2.5 p-4">
                 <span>{`${APP.service}.${APP.org}.dev`}</span>
                 <span className="text-muted-foreground">Custom domains —</span>
                 <span className="text-muted-foreground">Routes —</span>
               </div>
             </div>
             <div className="border-border rounded-lg border">
-              <p className="border-border border-b px-3 py-2 font-medium">
+              <p className="border-border border-b px-4 py-3 font-medium">
                 Metrics{" "}
                 <span className="text-muted-foreground ms-1 font-normal">
                   Last 24 hours
                 </span>
               </p>
-              <div className="text-muted-foreground flex flex-col gap-2 p-3">
+              <div className="text-muted-foreground flex flex-col gap-2.5 p-4">
                 <span>Requests · 412k</span>
                 <span>p95 latency · 84 ms</span>
                 <span>Errors · 0.02%</span>
               </div>
             </div>
             <div className="border-border flex-1 rounded-lg border">
-              <p className="border-border border-b px-3 py-2 font-medium">
+              <p className="border-border border-b px-4 py-3 font-medium">
                 Next steps
               </p>
-              <div className="text-muted-foreground flex flex-col gap-2 p-3">
+              <div className="text-muted-foreground flex flex-col gap-2.5 p-4">
                 <span>Connect a custom domain</span>
                 <span>Bind a queue to retries</span>
                 <span>Enable trace sampling</span>
