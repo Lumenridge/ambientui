@@ -1034,7 +1034,7 @@ function PlaybookNav(props: {
         onClick={() => props.scrollTo("overview")}
         className="text-muted-foreground hover:text-foreground font-mono text-xs tracking-widest uppercase"
       >
-        The playbook
+        The architecture
       </button>
       <PlaybookContents {...props} className="mt-6" />
     </nav>
@@ -1108,7 +1108,7 @@ export function PlaybookView() {
         <header id="overview" className="scroll-mt-24 pt-10 sm:pt-16">
           <Reveal>
             <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-              ambientui / the playbook · {minutes} min read
+              ambientui / the architecture · {minutes} min read
             </p>
             <h1 className="mt-6 text-6xl font-semibold tracking-tight text-balance sm:text-7xl">
               {title}

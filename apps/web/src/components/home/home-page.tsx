@@ -9,29 +9,31 @@ import { useAssistant } from "ambientui/assistant-context"
 import { withBase } from "@/base"
 import { CanvasBackdrop } from "@/components/canvas-backdrop"
 import { DevToolView } from "@/components/home/devtool-view"
+import { OverviewView } from "@/components/home/overview-view"
 import { PlaybookView } from "@/components/home/playbook-view"
 import { ViewMenu } from "@/components/view-menu"
 
 /**
- * THE HOME SURFACE — three views of the same argument.
+ * THE HOME SURFACE — four views of the same argument.
  *
- * `playbook` is the front door: the paper as a guided read, built from the
- * system it explains. `devtool` shows an ambient layer docked beside real
- * work; `canvas` is the presentation ground, a page that is nothing but the
- * layer, so the assistant has no product to hide behind.
+ * `overview` is the front door: one landing screen naming the thing and
+ * opening the doors. `architecture` is the paper as a follow-along article
+ * (Stop AI drift), built from the system it explains. `devtool` shows an
+ * ambient layer docked beside real work; `canvas` is the presentation
+ * ground, a page that is nothing but the layer.
  *
  * The tab lives in the URL (`?view=`) rather than in component state, because
  * a view someone can't link to or reload into is a demo, not a page.
  */
 
 const VIEWS = [
-  // `icon` is what each view IS, for the context chip: every one of these is
-  // kind "page", which is too coarse to tell a guide from an editor.
+  // `icon` is what each view IS, for the context chip and the menu segment.
   //
-  // ORDER IS THE VISIT, and the playbook leads: a stranger should meet the
-  // argument before the demo. The dev tool shows the layer doing something;
-  // the canvas is the quieter claim.
-  { id: "playbook", label: "Playbook", chip: "Home · The playbook", icon: "home" },
+  // ORDER IS THE VISIT: the overview greets, the architecture argues, the
+  // dev tool shows the layer doing something, and the canvas is the
+  // quieter claim.
+  { id: "overview", label: "Overview", chip: "Home · Overview", icon: "home" },
+  { id: "architecture", label: "Architecture", chip: "Home · The architecture", icon: "ruler" },
   { id: "devtool", label: "Dev tool", chip: "Home · Dev tool", icon: "code" },
   { id: "canvas", label: "Canvas", chip: "Home · Canvas", icon: "image" },
 ] as const
@@ -40,7 +42,9 @@ type ViewId = (typeof VIEWS)[number]["id"]
 
 const readView = (): ViewId => {
   const v = new URLSearchParams(window.location.search).get("view")
-  return VIEWS.some((x) => x.id === v) ? (v as ViewId) : "playbook"
+  // the playbook grew up and became the architecture; old links still land
+  if (v === "playbook") return "architecture"
+  return VIEWS.some((x) => x.id === v) ? (v as ViewId) : "overview"
 }
 
 export function HomePage() {
@@ -73,7 +77,7 @@ export function HomePage() {
   const select = (next: string) => {
     const id = next as ViewId
     setView(id)
-    const url = withBase(id === "canvas" ? "/" : `/?view=${id}`)
+    const url = withBase(id === "overview" ? "/" : `/?view=${id}`)
     if (window.location.pathname + window.location.search !== url) {
       window.history.pushState(null, "", url)
     }
@@ -98,7 +102,7 @@ export function HomePage() {
           view === "devtool" ? "top-1.5 justify-end pe-3" : "top-4 justify-center"
         )}
       >
-        {/* Home IS the playbook, and the playbook is the first segment —
+        {/* Home IS the overview, and the overview is the first segment —
             a separate home control would be the same destination twice. */}
         <ViewMenu items={VIEWS} value={view} onSelect={select} />
       </div>
@@ -123,7 +127,14 @@ export function HomePage() {
       </TabsContent>
 
       <TabsContent
-        value="playbook"
+        value="overview"
+        className="m-0 min-h-0 flex-1 overflow-y-auto pt-16"
+      >
+        <OverviewView onNavigate={select} />
+      </TabsContent>
+
+      <TabsContent
+        value="architecture"
         className="m-0 min-h-0 flex-1 overflow-y-auto pt-16"
       >
         <PlaybookView />

@@ -39,7 +39,8 @@ const FORMS: { mode: AssistantMode; label: string; desc: string }[] = [
 ]
 
 const VIEWS: { id: string; label: string; desc: string }[] = [
-  { id: "playbook", label: "Playbook", desc: "The paper as a guided read" },
+  { id: "overview", label: "Overview", desc: "The front door" },
+  { id: "architecture", label: "Architecture", desc: "Stop AI drift, as a follow-along article" },
   { id: "devtool", label: "Dev tool", desc: "The layer inside real work" },
   { id: "canvas", label: "Canvas", desc: "The ambient layer on a bare page" },
 ]
