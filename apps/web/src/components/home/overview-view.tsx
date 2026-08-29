@@ -879,7 +879,7 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
     The gesture chapter's budget varies by form — the dock's real drag
     takes what a drag takes. */
 const STAGE_GESTURE_DUR: Record<AssistantMode, number> = {
-  line: 900,
+  line: 3400,
   spotlight: 700,
   panel: 2600,
   dock: 6200,
@@ -970,28 +970,44 @@ function FormsDriver({
         onDone()
         return
       }
+      // NOTE ON THE FLAGS: staged/seeded are marked only ON COMPLETION.
+      // Marking them up front looked safe until StrictMode's mount-abort-
+      // remount: the aborted first run left staged=true and the real run
+      // short-circuited to "done" without ever performing the staging.
+      // An aborted run must leave no footprint.
       if (mode === "line") {
-        // the Orb demo shows the ORB, immediately — no seeded exchange,
-        // no spotlight: the resting state is the whole exhibit
-        staged.current = true
+        // the Orb demo IS the orb's own gesture: it opens at rest, the
+        // hand taps the character (a real pointer tap), and the QUICK-ASK
+        // grows out of it — the opened state stays as the exhibit. No
+        // seeded exchange, no spotlight.
         onBeat(0, STAGE_GESTURE_DUR.line)
+        const start = Date.now()
         setMode("line")
-        await sleep(STAGE_GESTURE_DUR.line)
-        if (alive) onDone()
+        await sleep(900)
+        if (!alive) return
+        await cursor.current?.clickOn('[aria-label="Open ambientui"]', "pointer")
+        if (!alive) return
+        await sleep(500)
+        cursor.current?.hide()
+        const left = STAGE_GESTURE_DUR.line - (Date.now() - start)
+        if (left > 0) await sleep(left)
+        if (alive) {
+          staged.current = true
+          onDone()
+        }
         return
       }
       if (!seeded.current) {
         // one real exchange, so every form has a transcript to show. The
         // seed drains when an ASKING surface opens, so it runs through
         // the spotlight first and the section's own form takes over.
-        seeded.current = true
         onBeat(0, 2600)
         setMode("spotlight")
         seedPrompt(DEMO_SUGGESTIONS[0]!, true, true)
         await sleep(2600)
         if (!alive) return
+        seeded.current = true
       }
-      staged.current = true
       onBeat(1, STAGE_GESTURE_DUR[mode])
       const gestureStart = Date.now()
       // SAME BEHAVIOUR AS THE TOP FILM: the hand draws the real gesture
@@ -1023,7 +1039,10 @@ function FormsDriver({
       // let the gesture chapter's bar complete before the pill reads done
       const left = STAGE_GESTURE_DUR[mode] - (Date.now() - gestureStart)
       if (left > 0) await sleep(left)
-      if (alive) onDone()
+      if (alive) {
+        staged.current = true
+        onDone()
+      }
     }
     void run()
     return () => {
