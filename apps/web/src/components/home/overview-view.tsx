@@ -200,7 +200,7 @@ function DemoDashboard() {
  * the spotlight when the frame is being watched.
  */
 function EmbeddedLayer({ active }: { active: boolean }) {
-  const { setMode, setPageChip, setPageIntel } = useAssistant()
+  const { setMode, setPageChip, setPageIntel, seedPrompt } = useAssistant()
 
   React.useEffect(() => {
     setPageChip({
@@ -219,11 +219,25 @@ function EmbeddedLayer({ active }: { active: boolean }) {
     }
   }, [setPageChip, setPageIntel])
 
+  // THE FILM, through the surface's own APIs: the spotlight opens when
+  // the frame is watched, the question writes itself through seedPrompt
+  // (each seed lands in the real input), and the final seed autoSends —
+  // the real pipeline takes it from there: thinking beat, composed
+  // answer, the surface flipping to the AI overview in place. Cadences
+  // are demo choreography; every behavior underneath is the component's.
   React.useEffect(() => {
     if (!active) return
-    const t = window.setTimeout(() => setMode("spotlight"), 900)
-    return () => window.clearTimeout(t)
-  }, [active, setMode])
+    const timers: number[] = []
+    const at = (ms: number, fn: () => void) =>
+      timers.push(window.setTimeout(fn, ms))
+    at(900, () => setMode("spotlight"))
+    const q = DEMO_SUGGESTIONS[0]!
+    q.split("").forEach((_, i) =>
+      at(2200 + i * 38, () => seedPrompt(q.slice(0, i + 1)))
+    )
+    at(2200 + q.length * 38 + 800, () => seedPrompt(q, true))
+    return () => timers.forEach(clearTimeout)
+  }, [active, setMode, seedPrompt])
 
   return <Assistant hotkeys={false} />
 }
