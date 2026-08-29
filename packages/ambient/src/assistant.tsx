@@ -170,7 +170,17 @@ function looksLikeQuestion(q: string) {
   return INTERROGATIVE.test(t) || /^summar\w*/i.test(t)
 }
 
-export function Assistant() {
+export function Assistant({
+  hotkeys = true,
+}: {
+  /**
+   * Claim the global shortcuts (⌘K, Escape). Default true — the app's one
+   * ambient layer owns the keyboard. An EMBEDDED instance (a product demo
+   * framed inside another page) passes false, so the frame's layer never
+   * fights the page's own for the same keystroke.
+   */
+  hotkeys?: boolean
+} = {}) {
   // Surfaces move on the motion system (DESIGN.md §5): transforms ride the
   // configured character's spring — instantly responsive, settles naturally —
   // while opacity fades on the micro tween. Exits are a quick micro fade.
@@ -295,6 +305,7 @@ export function Assistant() {
 
   // Global shortcuts: ⌘K toggles the palette; Esc clears the query, then closes
   React.useEffect(() => {
+    if (!hotkeys) return
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault()
@@ -322,7 +333,7 @@ export function Assistant() {
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [mode, messages.length, input, setMode])
+  }, [hotkeys, mode, messages.length, input, setMode])
 
   React.useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })

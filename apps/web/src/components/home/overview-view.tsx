@@ -1,15 +1,17 @@
 import * as React from "react"
 
-import { AnimatePresence, motion } from "framer-motion"
+import { motion } from "framer-motion"
 
 import { Button } from "@ambientui/ui/components/button"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
-import { useAssistant } from "ambientui/assistant-context"
-import { Composer } from "ambientui/composer"
+import { Assistant } from "ambientui/assistant"
+import {
+  AssistantProvider,
+  useAssistant,
+} from "ambientui/assistant-context"
 import { OrbField, OrbHeat } from "ambientui/orb-character"
-import { StreamingText } from "ambientui/streaming-text"
 
 /**
  * OVERVIEW — the wordmark, and the UI starting right beneath it.
@@ -19,16 +21,18 @@ import { StreamingText } from "ambientui/streaming-text"
  * layer's real orbState, on the field ground under a theme-following veil
  * (sanctioned in DESIGN.md §12).
  *
- * THE DEMO IS THE PALETTE'S REAL BEHAVIOR, filmed. A dashboard for a
- * fictional product sits under the layer's surface, and the script acts
- * out the spotlight's one-input-two-intents rule: a short query ranks
- * LINE ITEMS from the product; the moment the query grows into a
- * long-tail question (the same heuristic the palette documents — 4+
- * words, a leading interrogative, or a trailing ?), Ask AI takes the top
- * row; sending flips the surface in place into the answer. Real parts
- * throughout — the glass, the Composer, StreamingText — and the answer
- * is grounded in the same data the dashboard renders, because an answer
- * about nothing proves nothing.
+ * THE DEMO IS THE ACTUAL COMPONENT. A dashboard for a fictional product
+ * (northbeam / checkout-api) sits inside a frame, and a second, fully
+ * real ambient layer is MOUNTED INSIDE THAT FRAME — its own
+ * AssistantProvider, its own Assistant, its own resting orb — scoped to
+ * the frame by transform containment (a transformed ancestor is the
+ * containing block for fixed descendants). When the frame scrolls into
+ * view its spotlight opens: the real ⌘K surface with the real intent
+ * rule, real suggestions grounded in the product's data, and the real
+ * answer pipeline. Nothing is filmed; the visitor can type into it.
+ * `hotkeys={false}` keeps the embedded layer from fighting the page's
+ * own for ⌘K — the frame is northbeam's product, and its layer answers
+ * to its own chrome only.
  */
 
 /* ---------------------- the fictional product's data ---------------------- */
@@ -43,23 +47,19 @@ const VERSIONS = [
   { id: "ebf2e21", msg: "Manually deployed", when: "4d ago" },
 ]
 
-const DEMO_QUERY = "why did the deploy to checkout-api fail?"
-
-// grounded in the versions list the dashboard is showing
-const DEMO_ANSWER = `The 4-day-old deploy failed because the build step targeted a directory the CI image never produced. Version 5831257 pointed the deploy at the built dist, and the next version (ebf2e21) went out clean. Nothing since has hit the same path.`
-
-/** the line items a short query ranks — the product's own destinations */
-const ITEMS: { icon: IconName; label: string; sub: string }[] = [
-  { icon: "play", label: "New deployment", sub: `${APP.service} · Deploy` },
-  { icon: "globe", label: "Domains & routes", sub: `${APP.service}.${APP.org}.dev` },
-  { icon: "history", label: "5831257 · Fix the failed deploy", sub: "Versions · 4d ago" },
+/** what the embedded layer offers on this page — grounded in the data below */
+const DEMO_SUGGESTIONS = [
+  `Why did the deploy to ${APP.service} fail?`,
+  "Roll back to the last clean version",
+  "What shipped in the last 24 hours?",
 ]
 
-/** the palette's documented intent heuristic, mirrored for the film */
-const isQuestion = (q: string) =>
-  q.trim().split(/\s+/).length >= 4 ||
-  /^(why|how|what|where)/i.test(q.trim()) ||
-  q.trim().endsWith("?")
+const DEMO_NAV = [
+  { id: "overview", label: "Overview", desc: `${APP.service} · service home` },
+  { id: "deployments", label: "Deployments", desc: "History and rollbacks" },
+  { id: "domains", label: "Domains & routes", desc: `${APP.service}.${APP.org}.dev` },
+  { id: "metrics", label: "Metrics", desc: "Last 24 hours" },
+]
 
 /* ------------------------------ the dashboard ------------------------------ */
 
@@ -129,6 +129,7 @@ function DemoDashboard() {
             <p className="border-border border-b px-3 py-2 font-medium">
               Versions
             </p>
+
             {VERSIONS.map((v) => (
               <div
                 key={v.id}
@@ -147,156 +148,101 @@ function DemoDashboard() {
               </div>
             ))}
           </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="border-border rounded-lg border">
+              <p className="border-border border-b px-3 py-2 font-medium">
+                Domains &amp; routes
+              </p>
+              <div className="flex flex-col gap-2 p-3">
+                <span>{`${APP.service}.${APP.org}.dev`}</span>
+                <span className="text-muted-foreground">Custom domains —</span>
+                <span className="text-muted-foreground">Routes —</span>
+              </div>
+            </div>
+            <div className="border-border rounded-lg border">
+              <p className="border-border border-b px-3 py-2 font-medium">
+                Metrics <span className="text-muted-foreground ms-1 font-normal">Last 24 hours</span>
+              </p>
+              <div className="text-muted-foreground flex flex-col gap-2 p-3">
+                <span>Requests · 412k</span>
+                <span>p95 latency · 84 ms</span>
+                <span>Errors · 0.02%</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-/* ------------------------------- the film ------------------------------- */
+/* --------------------------- the embedded layer --------------------------- */
 
 /**
- * The cadences here are demo choreography (a film of an interaction), not
- * product motion — the surfaces themselves still enter on the roles.
+ * Inside the nested provider: declare the product's context to ITS layer
+ * (the same setPageChip/setPageIntel contract every page uses), and open
+ * the spotlight when the frame is being watched.
  */
+function EmbeddedLayer({ active }: { active: boolean }) {
+  const { setMode, setPageChip, setPageIntel } = useAssistant()
+
+  React.useEffect(() => {
+    setPageChip({
+      id: "nb-overview",
+      kind: "page",
+      label: `${APP.service} · Overview`,
+      icon: "code",
+    })
+    setPageIntel({
+      suggestions: DEMO_SUGGESTIONS,
+      askPlaceholder: `Search ${APP.service}, or ask anything…`,
+    })
+    return () => {
+      setPageChip(null)
+      setPageIntel(null)
+    }
+  }, [setPageChip, setPageIntel])
+
+  React.useEffect(() => {
+    if (!active) return
+    const t = window.setTimeout(() => setMode("spotlight"), 900)
+    return () => window.clearTimeout(t)
+  }, [active, setMode])
+
+  return <Assistant hotkeys={false} />
+}
+
 function ShellDemo() {
-  const spring = useMotionSpring()
-  const micro = useMotionTransition("micro")
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
-  const [phase, setPhase] = React.useState<
-    "idle" | "search" | "thinking" | "answer"
-  >("idle")
-  const [typed, setTyped] = React.useState("")
-  const [cycle, setCycle] = React.useState(0)
 
   React.useEffect(() => {
     const el = ref.current
     if (!el) return
     const io = new IntersectionObserver(
-      ([e]) => {
-        const visible = e!.isIntersecting
-        setInView(visible)
-        // reset from the observer callback (an external event), so the
-        // script effect never sets state synchronously in its body
-        if (!visible) {
-          setPhase("idle")
-          setTyped("")
-        }
-      },
+      ([e]) => setInView(e!.isIntersecting),
       { threshold: 0.4 }
     )
     io.observe(el)
     return () => io.disconnect()
   }, [])
 
-  React.useEffect(() => {
-    if (!inView) return
-    let alive = true
-    const timers: number[] = []
-    const at = (ms: number, fn: () => void) =>
-      timers.push(window.setTimeout(() => alive && fn(), ms))
-
-    at(500, () => setPhase("search"))
-    DEMO_QUERY.split("").forEach((_, i) =>
-      at(1300 + i * 38, () => setTyped(DEMO_QUERY.slice(0, i + 1)))
-    )
-    const sent = 1300 + DEMO_QUERY.length * 38 + 900
-    at(sent, () => setPhase("thinking"))
-    at(sent + 1800, () => setPhase("answer"))
-    // hold the settled answer, then run the film again
-    at(sent + 1800 + 11000, () => {
-      setTyped("")
-      setPhase("search")
-      setCycle((c) => c + 1)
-    })
-    return () => {
-      alive = false
-      timers.forEach(clearTimeout)
-    }
-  }, [inView, cycle])
-
-  const question = isQuestion(typed)
-
   return (
     <div ref={ref} className="relative w-full max-w-3xl">
-      <DemoDashboard />
-
-      {/* the layer, arriving over it */}
-      <AnimatePresence>
-        {phase !== "idle" && (
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, transition: micro }}
-            transition={{ ...spring, opacity: micro }}
-            className="ambient-glass border-(--glass-border) absolute inset-x-4 top-14 rounded-2xl border p-2 shadow-xl sm:inset-x-16"
-          >
-            {phase === "search" ? (
-              <>
-                <Composer
-                  value={typed}
-                  onChange={setTyped}
-                  onSend={() => {}}
-                  placeholder={`Search ${APP.service}, or ask anything…`}
-                />
-                <div className="flex flex-col gap-0.5 p-1 pt-2">
-                  {/* the one-input-two-intents rule, live: a question puts
-                      Ask AI first; anything shorter ranks the product */}
-                  {question && (
-                    <div className="bg-(--wash) flex items-center gap-3 rounded-lg px-2.5 py-2">
-                      <Icon
-                        name="sparkles"
-                        size={14}
-                        className="text-(--ambient-accent)"
-                      />
-                      <span className="min-w-0 truncate text-sm font-medium">
-                        Ask AI — “{typed.trim()}”
-                      </span>
-                      <kbd className="bg-muted text-muted-foreground ms-auto rounded px-1.5 font-mono text-[10px]">
-                        ↵
-                      </kbd>
-                    </div>
-                  )}
-                  {ITEMS.map((it) => (
-                    <div
-                      key={it.label}
-                      className="flex items-center gap-3 rounded-lg px-2.5 py-2"
-                    >
-                      <Icon
-                        name={it.icon}
-                        size={14}
-                        className="text-muted-foreground"
-                      />
-                      <span className="min-w-0 truncate text-sm">{it.label}</span>
-                      <span className="text-muted-foreground ms-auto shrink-0 text-xs">
-                        {it.sub}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="p-3">
-                <p className="text-muted-foreground text-xs">{DEMO_QUERY}</p>
-                {phase === "thinking" ? (
-                  <p className="ambient-shimmer mt-3 text-sm">Thinking…</p>
-                ) : (
-                  <StreamingText
-                    key={cycle}
-                    text={DEMO_ANSWER}
-                    className="mt-3 block text-sm leading-relaxed"
-                  />
-                )}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      {/* transform-gpu: a transformed ancestor is the containing block for
+          fixed-position descendants, so the embedded layer's surfaces —
+          spotlight, panel, resting orb — all live INSIDE this frame */}
+      {/* no overflow-hidden: the dashboard clips itself, and the layer's
+          surfaces may float past the frame's edge the way real overlays do */}
+      <div className="relative z-10 transform-gpu">
+        <DemoDashboard />
+        <AssistantProvider navItems={DEMO_NAV}>
+          <EmbeddedLayer active={inView} />
+        </AssistantProvider>
+      </div>
       <p className="text-muted-foreground mt-4 text-center text-xs">
-        One input, two intents: a short query ranks the product, a long-tail
-        question becomes the AI — and the answer knows the page.
+        This is the real component — the same ⌘K surface this page runs,
+        mounted inside a product that never heard of it. Type into it.
       </p>
     </div>
   )
