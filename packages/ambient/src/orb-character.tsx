@@ -371,8 +371,9 @@ export function OrbCharacter({
  * with none of the character's glass shell. FOR SANCTIONED IDENTITY
  * SURFACES ONLY — the shader-surface rule applies to this export exactly
  * as it does to the character; a product surface wanting it is a
- * governance event. Width/height size the render; the box shows the
- * circle's heat at whatever slice the host clips.
+ * governance event. Width/height size the render; `image` picks the heat
+ * shape (the character's circle by default, or a surface rect so the heat
+ * hugs a band); the box shows whatever slice the host clips.
  */
 export function OrbHeat({
   state = "still",
@@ -381,8 +382,16 @@ export function OrbHeat({
   speeds,
   width,
   height,
+  image = CIRCLE_IMAGE_SRC,
+  scale = 1,
   className,
-}: OrbCharacterProps & { width: number; height: number }) {
+}: OrbCharacterProps & {
+  width: number
+  height: number
+  image?: string
+  /** Shape scale within the frame — >1 pushes the rim toward the edges. */
+  scale?: number
+}) {
   const { params, palette } = useHeatEngine({ state, speed, speeds, colors })
   if (palette.length === 0) return null
   return (
@@ -390,7 +399,7 @@ export function OrbHeat({
       <Heatmap
         width={width}
         height={height}
-        image={CIRCLE_IMAGE_SRC}
+        image={image}
         colors={palette}
         colorBack="#00000000"
         contour={params.contour}
@@ -399,7 +408,7 @@ export function OrbHeat({
         innerGlow={params.innerGlow}
         outerGlow={params.outerGlow}
         speed={params.speed}
-        scale={1}
+        scale={scale}
         fit="contain"
       />
     </div>
