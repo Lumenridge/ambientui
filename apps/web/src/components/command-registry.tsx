@@ -10,7 +10,7 @@ import {
 import {
   AMBIENT_COMPONENTS,
   SHADCN_DEFAULT_COMPONENTS,
-} from "@/components/ds/catalog"
+} from "@site/lib/catalog"
 import { SYSTEM_DOCS } from "@/components/ds/system-docs"
 import { withBase } from "@/base"
 import { dsHref } from "@/ds-route"

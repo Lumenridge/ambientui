@@ -11,7 +11,7 @@ any single feature's convenience. Authority: [DESIGN.md](../../../DESIGN.md) is
 the constitution; `tokens/tokens.json` is the value store;
 `packages/ui/src/components` (product vocabulary) and
 `packages/ambient/src` (ambient vocabulary) are the only sanctioned
-building blocks; `apps/web/src/components/ds/catalog.ts` (prose) and
+building blocks; `apps/site/src/lib/catalog.ts` (prose) and
 `apps/web/src/components/ds/stories.tsx` (demos) are the registry.
 
 Remember what this system is *for*: an AI composes UI from it. Every off-system

@@ -2,7 +2,7 @@ import {
   AMBIENT_COMPONENTS as AMBIENT_DOCS,
   SHADCN_DEFAULT_COMPONENTS as SHADCN_DOCS,
   type ComponentDoc,
-} from "@/components/ds/catalog"
+} from "@site/lib/catalog"
 import { STORIES, type StoryEntry } from "@/components/ds/stories"
 
 /**
