@@ -347,7 +347,11 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
           onKeyDownCapture={() => setInteracted(true)}
         >
           <DemoWindow>
-            <DemoDashboard />
+            {/* the product recedes (opacity), the layer does not — the
+                Ambient UI component is the subject of every window */}
+            <div className="h-full opacity-60">
+              <DemoDashboard />
+            </div>
             <AssistantProvider navItems={DEMO_NAV}>
               <EmbeddedLayer active={inView} interacted={interacted} />
             </AssistantProvider>
@@ -450,7 +454,11 @@ function FormSection({
         </Reveal>
         <Reveal className="mt-8">
           <DemoWindow>
-            <DemoDashboard />
+            {/* the product recedes (opacity), the layer does not — the
+                Ambient UI component is the subject of every window */}
+            <div className="h-full opacity-60">
+              <DemoDashboard />
+            </div>
             <AssistantProvider navItems={DEMO_NAV}>
               <FormsDriver active={inView} mode={form.mode} />
             </AssistantProvider>
