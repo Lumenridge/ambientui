@@ -175,7 +175,25 @@ export function AssistantOrb() {
   // opens over — the page's main area, not the raw viewport — so a rail or
   // an inspector on the side doesn't push it off-center. The orb travels
   // there on the page role and returns to its anchor on close.
-  const QUICK_W = 420
+  /**
+   * THE PILL TAKES THE ROOM IT HAS, not a number decided on a desktop.
+   *
+   * This was a flat 420. The open row is the pill plus the history button
+   * beside it — 420 + 8 + 52 = 480px — so on any host narrower than that
+   * the row ran off the edge and the record button was sliced in half. It
+   * showed up first inside the overview's demo frame (327px), but the same
+   * arithmetic fails on a real phone, and the layer is supposed to fit
+   * whatever it is given.
+   *
+   * `w` is already the FRAME's width when the layer is embedded and the
+   * viewport's when it is not, so this adapts to both without knowing
+   * which it is in. The floor keeps the input usable rather than letting
+   * it collapse to a slot on an absurdly narrow host.
+   */
+  const QUICK_W = Math.max(
+    200,
+    Math.min(420, w - MARGIN * 2 - ORB - 8)
+  )
   const [zone, setZone] = React.useState<DOMRect | null>(null)
   // re-measure on resize while open; the open itself measures synchronously
   // (see openQuick) so the first frame is already centered
@@ -195,11 +213,25 @@ export function AssistantOrb() {
   // to open.
   const growsLeft = orbAnchor.endsWith("r")
 
-  // the form centers on the zone's anchor, clamped into the content region…
+  /**
+   * …clamped so the WHOLE ROW fits, not just the pill.
+   *
+   * The open row is two objects: the pill, and the record button 8px
+   * beside it on whichever side the pill did not take. Clamping the pill
+   * alone kept the pill inside and pushed the button out — it sat half
+   * off the edge, which is the bug this arithmetic exists to prevent, one
+   * control further along than the original clamp was looking.
+   */
+  const BESIDE = 8 + ORB
   const formLeft = Math.round(
     Math.min(
-      Math.max(anchored.x + ORB / 2 - QUICK_W / 2, bounds.left + MARGIN),
-      bounds.right - QUICK_W - MARGIN
+      Math.max(
+        anchored.x + ORB / 2 - QUICK_W / 2,
+        // growing left puts the button on the left, so the floor rises
+        bounds.left + MARGIN + (growsLeft ? BESIDE : 0)
+      ),
+      // growing right puts it on the right, so the ceiling drops
+      bounds.right - QUICK_W - MARGIN - (growsLeft ? 0 : BESIDE)
     )
   )
   const pos = drag
