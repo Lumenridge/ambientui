@@ -715,6 +715,27 @@ function DemoPlayback({
   )
 }
 
+/**
+ * THE HANDOVER LINE — what replaces a demo's transport the moment a
+ * trusted press ends its script: the film's last subtitle, in the
+ * layer's own shimmer, telling the visitor the component is now really
+ * theirs — and that the page itself runs the same layer.
+ */
+function HandoverLine({ children }: { children: React.ReactNode }) {
+  const spring = useMotionSpring()
+  const micro = useMotionTransition("micro")
+  return (
+    <motion.p
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...spring, opacity: micro }}
+      className="ambient-shimmer mt-5 text-center text-sm"
+    >
+      {children}
+    </motion.p>
+  )
+}
+
 function ShellDemo({ widthPct }: { widthPct: number | null }) {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
@@ -736,9 +757,6 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
     pausedRef.current = !pausedRef.current
     setPaused(pausedRef.current)
   }
-  const handoverSpring = useMotionSpring()
-  const handoverMicro = useMotionTransition("micro")
-  const handoverT = { ...handoverSpring, opacity: handoverMicro }
 
   React.useEffect(() => {
     const el = ref.current
@@ -816,18 +834,12 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
         </div>
         {/* the transport pill: how long the film is, where it stands, and
             that it loops. The moment the visitor takes over it becomes the
-            HANDOVER LINE — the film's last subtitle, telling them the
-            layer is now really theirs, here and on the page itself */}
+            handover line */}
         {interacted ? (
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={handoverT}
-            className="ambient-shimmer text-muted-foreground mt-5 text-center text-sm"
-          >
+          <HandoverLine>
             All yours — ask a follow-up, drag the panel, dock it. And this
             whole page runs the same layer: press ⌘K anywhere.
-          </motion.p>
+          </HandoverLine>
         ) : (
           <DemoPlayback beat={beat} paused={paused} onToggle={togglePaused} />
         )}
@@ -844,7 +856,19 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
  * whatever form the section currently presents. All public seam — the
  * same setMode/seedPrompt the product itself uses.
  */
-function FormsDriver({ active, mode }: { active: boolean; mode: AssistantMode }) {
+function FormsDriver({
+  active,
+  mode,
+  interacted,
+  cursor,
+}: {
+  active: boolean
+  mode: AssistantMode
+  /** a trusted press ended the script — the layer is the visitor's */
+  interacted: boolean
+  /** the section's hand, drawing the real gesture into its form */
+  cursor: React.MutableRefObject<DemoCursorHandle | null>
+}) {
   const { setMode, setPageChip, setPageIntel, seedPrompt } = useAssistant()
 
   React.useEffect(() => {
@@ -865,20 +889,64 @@ function FormsDriver({ active, mode }: { active: boolean; mode: AssistantMode })
   }, [setPageChip, setPageIntel])
 
   const seeded = React.useRef(false)
+  const staged = React.useRef(false)
   React.useEffect(() => {
-    if (!active) return
-    if (!seeded.current) {
-      // one real exchange, so every form has a transcript to show. The
-      // seed drains when an ASKING surface opens, so it runs through the
-      // spotlight first and the section's own form takes over after.
-      seeded.current = true
-      setMode("spotlight")
-      seedPrompt(DEMO_SUGGESTIONS[0]!, true, true)
-      const t = window.setTimeout(() => setMode(mode), 2600)
-      return () => window.clearTimeout(t)
+    if (!active || interacted) return
+    let alive = true
+    const timers: number[] = []
+    const sleep = (ms: number) =>
+      new Promise<void>((r) => timers.push(window.setTimeout(r, ms)))
+    const run = async () => {
+      if (!seeded.current) {
+        // one real exchange, so every form has a transcript to show. The
+        // seed drains when an ASKING surface opens, so it runs through
+        // the spotlight first and the section's own form takes over.
+        seeded.current = true
+        setMode("spotlight")
+        seedPrompt(DEMO_SUGGESTIONS[0]!, true, true)
+        await sleep(2600)
+        if (!alive) return
+      }
+      if (staged.current) {
+        // returning to a section already staged: just hold its form
+        setMode(mode)
+        return
+      }
+      staged.current = true
+      // SAME BEHAVIOUR AS THE TOP FILM: the hand draws the real gesture
+      // that produces this section's form — the spotlight header's own
+      // buttons, and for the dock the actual drag with the zones live.
+      // Orb and Spotlight need no gesture: one IS rest, the other is the
+      // surface the seed already opened.
+      if (mode === "panel") {
+        await cursor.current?.clickOn('[aria-label="Open in chat window"]')
+        if (!alive) return
+        setMode("panel")
+      } else if (mode === "dock") {
+        await cursor.current?.clickOn('[aria-label="Open in chat window"]')
+        if (!alive) return
+        setMode("panel")
+        await sleep(900)
+        if (!alive) return
+        const dragged = await cursor.current?.dragTo(".group\\/header", 0.94, 0.4)
+        if (!alive) return
+        if (!dragged) setMode("dock")
+      } else if (mode === "history") {
+        await cursor.current?.clickOn('[aria-label="History"]')
+        if (!alive) return
+        setMode("history")
+      } else {
+        setMode(mode)
+      }
+      await sleep(600)
+      cursor.current?.hide()
     }
-    setMode(mode)
-  }, [active, mode, setMode, seedPrompt])
+    void run()
+    return () => {
+      alive = false
+      timers.forEach(clearTimeout)
+    }
+  }, [active, interacted, mode, setMode, seedPrompt, cursor])
 
   return <Assistant hotkeys={false} />
 }
@@ -900,6 +968,8 @@ function FormSection({
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
   const [near, setNear] = React.useState(false)
+  const [interacted, setInteracted] = React.useState(false)
+  const cursorRef = React.useRef<DemoCursorHandle | null>(null)
 
   React.useEffect(() => {
     const el = ref.current
@@ -909,9 +979,14 @@ function FormSection({
       { threshold: 0.3 }
     )
     // same mount gate as the top demo: an off-screen window holds no
-    // WebGL contexts, so five form sections never crowd out the wordmark
+    // WebGL contexts, so five form sections never crowd out the wordmark.
+    // Leaving re-arms the section's script, same as the film.
     const mount = new IntersectionObserver(
-      ([e]) => setNear(e!.isIntersecting),
+      ([e]) => {
+        const v = e!.isIntersecting
+        setNear(v)
+        if (!v) setInteracted(false)
+      },
       { rootMargin: "300px 0px" }
     )
     io.observe(el)
@@ -942,18 +1017,42 @@ function FormSection({
             className="mx-auto w-full"
             style={widthPct ? { width: `${widthPct}%` } : undefined}
           >
-          <DemoWindow>
-            {/* the product recedes (opacity), the layer does not — the
-                Ambient UI component is the subject of every window */}
-            <div className="h-full opacity-60">
-              <DemoDashboard />
-            </div>
-            {near && (
-              <AssistantProvider navItems={DEMO_NAV}>
-                <FormsDriver active={inView} mode={form.mode} />
-              </AssistantProvider>
-            )}
-          </DemoWindow>
+          {/* a TRUSTED press ends the section's script; the hand's own
+              dispatched events are untrusted and pass through */}
+          <div
+            onPointerDownCapture={(e) => e.isTrusted && setInteracted(true)}
+            onKeyDownCapture={(e) => e.isTrusted && setInteracted(true)}
+          >
+            <DemoWindow
+              overlay={
+                near && !interacted ? (
+                  <DemoCursorLayer handleRef={cursorRef} />
+                ) : null
+              }
+            >
+              {/* the product recedes (opacity), the layer does not — the
+                  Ambient UI component is the subject of every window */}
+              <div className="h-full opacity-60">
+                <DemoDashboard />
+              </div>
+              {near && (
+                <AssistantProvider navItems={DEMO_NAV}>
+                  <FormsDriver
+                    active={inView}
+                    mode={form.mode}
+                    interacted={interacted}
+                    cursor={cursorRef}
+                  />
+                </AssistantProvider>
+              )}
+            </DemoWindow>
+          </div>
+          {interacted && (
+            <HandoverLine>
+              All yours — this is the live component, not a recording. And
+              the page itself runs the same layer: press ⌘K anywhere.
+            </HandoverLine>
+          )}
           </div>
         </Reveal>
       </div>
