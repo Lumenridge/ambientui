@@ -73,7 +73,7 @@ function DemoDashboard() {
     { icon: "settings", label: "Settings" },
   ]
   return (
-    <div className="border-border bg-card flex h-full flex-col overflow-hidden border-y text-xs">
+    <div className="bg-card flex h-full flex-col overflow-hidden text-xs">
       {/* header: brand · breadcrumb */}
       <div className="border-border flex h-11 items-center gap-3 border-b px-4">
         <span className="bg-primary size-3 rounded-sm" />
@@ -244,18 +244,31 @@ function ShellDemo() {
   }, [])
 
   return (
-    <div ref={ref} className="relative w-full">
-      {/* full-bleed and viewport-tall: the product is the ground, and the
-          layer lives inside it at real scale. transform-gpu makes this the
-          containing block for the layer's fixed surfaces — spotlight,
-          panel, resting orb all live INSIDE the app. */}
-      <div className="relative z-10 h-svh transform-gpu">
-        <DemoDashboard />
-        <AssistantProvider navItems={DEMO_NAV}>
-          <EmbeddedLayer active={inView} />
-        </AssistantProvider>
+    <div ref={ref} className="mx-auto flex h-full w-full max-w-6xl min-h-0 flex-col">
+      {/* the presentation shell: a desktop window floating on the ambient
+          ground. transform-gpu makes it the containing block for the
+          layer's fixed surfaces, and the rounded overflow clip keeps
+          every surface — spotlight, panel, resting orb — inside the
+          window, exactly where a product's own layer lives. */}
+      <div className="border-border bg-card relative z-10 flex min-h-0 flex-1 transform-gpu flex-col overflow-hidden rounded-2xl border shadow-2xl">
+        <div className="border-border bg-muted/50 relative flex h-9 shrink-0 items-center justify-center border-b">
+          <span className="absolute start-4 flex gap-1.5">
+            <span className="bg-muted-foreground/30 size-3 rounded-full" />
+            <span className="bg-muted-foreground/30 size-3 rounded-full" />
+            <span className="bg-muted-foreground/30 size-3 rounded-full" />
+          </span>
+          <span className="text-muted-foreground text-xs">
+            {APP.org} — {APP.service}
+          </span>
+        </div>
+        <div className="relative min-h-0 flex-1">
+          <DemoDashboard />
+          <AssistantProvider navItems={DEMO_NAV}>
+            <EmbeddedLayer active={inView} />
+          </AssistantProvider>
+        </div>
       </div>
-      <p className="text-muted-foreground mt-4 px-6 text-center text-xs">
+      <p className="text-muted-foreground mt-4 shrink-0 text-center text-xs">
         This is the real component — the same ⌘K surface this page runs,
         mounted inside a product that never heard of it. Type into it.
       </p>
@@ -356,8 +369,9 @@ export function OverviewView({
         </motion.h1>
       </section>
 
-      {/* the demo, starting under the word */}
-      <section className="relative flex justify-center px-6 pb-20">
+      {/* the demo, starting under the word — a desktop window on the
+          presentation ground, Ambient UI in action inside it */}
+      <section className="relative flex h-svh flex-col px-4 pt-4 pb-10 sm:px-10">
         <ShellDemo />
       </section>
 
