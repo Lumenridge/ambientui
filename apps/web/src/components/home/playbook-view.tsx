@@ -1072,7 +1072,9 @@ export function PlaybookView() {
       <PlaybookNav parts={navParts} scrollTo={scrollTo} active={active} />
 
       <div className="lg:pl-72">
-        <div className="mx-auto w-full max-w-3xl px-6 pb-40">
+        {/* the article reads at the page's shared content measure — the
+            same max-w-5xl the overview's written sections use */}
+        <div className="mx-auto w-full max-w-5xl px-6 pb-40">
         {/* hero — the paper's title block at display scale */}
         <header id="overview" className="scroll-mt-24 pt-10 sm:pt-16">
           <Reveal>

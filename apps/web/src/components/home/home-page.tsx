@@ -2,8 +2,6 @@ import * as React from "react"
 
 import { Tabs, TabsContent } from "@ambientui/ui/components/tabs"
 
-import { cn } from "@ambientui/ui/lib/utils"
-
 import { useAssistant } from "ambientui/assistant-context"
 
 import { withBase } from "@/base"
@@ -34,7 +32,7 @@ const VIEWS = [
   // quieter claim.
   { id: "overview", label: "Overview", chip: "Home · Overview", icon: "home" },
   { id: "architecture", label: "Architecture", chip: "Home · The architecture", icon: "ruler" },
-  { id: "devtool", label: "Dev tool", chip: "Home · Dev tool", icon: "code" },
+  { id: "devtool", label: "Dev tool demo", chip: "Home · Dev tool demo", icon: "code" },
   { id: "canvas", label: "Canvas", chip: "Home · Canvas", icon: "image" },
 ] as const
 
@@ -93,15 +91,9 @@ export function HomePage() {
           layer's own glass rather than sitting in a chrome strip that would
           cut the presentation surface in half. A tab strip would spend that
           room permanently; the menu spends it only while you are choosing
-          (see ViewMenu). Over the canvas it floats centred on the photo; over
-          the editor it docks top-right, sharing the file-tab strip instead of
-          covering it. Same object, placed by what is beneath it. */}
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-0 z-20 flex items-start",
-          view === "devtool" ? "top-1.5 justify-end pe-3" : "top-4 justify-center"
-        )}
-      >
+          (see ViewMenu). ONE PLACE ON EVERY VIEW: centred at the top — a
+          menu that moves with the view makes the reader re-find it. */}
+      <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex items-start justify-center">
         {/* Home IS the overview, and the overview is the first segment —
             a separate home control would be the same destination twice. */}
         <ViewMenu items={VIEWS} value={view} onSelect={select} />
