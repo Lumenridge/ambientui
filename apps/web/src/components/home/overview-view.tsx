@@ -1,6 +1,5 @@
 import * as React from "react"
 
-import { Button } from "@ambientui/ui/components/button"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
 import { Assistant } from "ambientui/assistant"
@@ -250,7 +249,14 @@ function DemoWindow({ children }: { children: React.ReactNode }) {
  * (the same setPageChip/setPageIntel contract every page uses), and open
  * the spotlight when the frame is being watched.
  */
-function EmbeddedLayer({ active }: { active: boolean }) {
+function EmbeddedLayer({
+  active,
+  interacted,
+}: {
+  active: boolean
+  /** the visitor touched the window — the film stops, the layer is theirs */
+  interacted: boolean
+}) {
   const { setMode, setPageChip, setPageIntel, seedPrompt } = useAssistant()
 
   React.useEffect(() => {
@@ -270,17 +276,17 @@ function EmbeddedLayer({ active }: { active: boolean }) {
     }
   }, [setPageChip, setPageIntel])
 
-  // THE FILM, through the surface's own APIs: the spotlight opens when
-  // the frame is watched, the question writes itself through seedPrompt
-  // (each seed lands in the real input), and the final seed autoSends —
-  // the real pipeline takes it from there: thinking beat, composed
-  // answer, the surface flipping to the AI overview in place. After the
-  // answer has been read, the layer goes back to rest and the film
-  // replays. Cadences are demo choreography; every behavior underneath
-  // is the component's.
+  // THE FILM, through the surface's own APIs: the spotlight opens, the
+  // question writes itself through seedPrompt, the final seed autoSends
+  // and the real pipeline answers — then the TOUR: the same exchange
+  // carried through every form (panel, dock, history), back to rest,
+  // and the film starts from the beginning. The moment the visitor
+  // interacts with the window, the script stops and the layer is theirs
+  // to explore, form by form. Cadences are demo choreography; every
+  // behavior underneath is the component's.
   const [cycle, setCycle] = React.useState(0)
   React.useEffect(() => {
-    if (!active) return
+    if (!active || interacted) return
     const timers: number[] = []
     const at = (ms: number, fn: () => void) =>
       timers.push(window.setTimeout(fn, ms))
@@ -291,12 +297,15 @@ function EmbeddedLayer({ active }: { active: boolean }) {
     )
     const sent = 2200 + q.length * 38 + 800
     at(sent, () => seedPrompt(q, true))
-    // the pipeline needs its thinking beat plus the staged answer; hold
-    // the settled overview long enough to read, then rest and replay
-    at(sent + 16000, () => setMode("line"))
-    at(sent + 17500, () => setCycle((c) => c + 1))
+    // hold the settled answer, then tour the forms with the transcript
+    let t = sent + 11000
+    for (const m of ["panel", "dock", "history", "line"] as const) {
+      at(t, () => setMode(m))
+      t += 4500
+    }
+    at(t, () => setCycle((c) => c + 1))
     return () => timers.forEach(clearTimeout)
-  }, [active, cycle, setMode, seedPrompt])
+  }, [active, interacted, cycle, setMode, seedPrompt])
 
   return <Assistant hotkeys={false} />
 }
@@ -304,6 +313,7 @@ function EmbeddedLayer({ active }: { active: boolean }) {
 function ShellDemo({ widthPct }: { widthPct: number | null }) {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
+  const [interacted, setInteracted] = React.useState(false)
 
   React.useEffect(() => {
     const el = ref.current
@@ -330,12 +340,19 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
           follows. The layer inside renders at the Foundation's own
           scaling — its size is a THEME decision, not a demo knob. */}
       <Reveal>
-        <DemoWindow>
-          <DemoDashboard />
-          <AssistantProvider navItems={DEMO_NAV}>
-            <EmbeddedLayer active={inView} />
-          </AssistantProvider>
-        </DemoWindow>
+        {/* a real pointer or key inside the window ends the film — from
+            then on the layer belongs to the visitor */}
+        <div
+          onPointerDownCapture={() => setInteracted(true)}
+          onKeyDownCapture={() => setInteracted(true)}
+        >
+          <DemoWindow>
+            <DemoDashboard />
+            <AssistantProvider navItems={DEMO_NAV}>
+              <EmbeddedLayer active={inView} interacted={interacted} />
+            </AssistantProvider>
+          </DemoWindow>
+        </div>
       </Reveal>
     </div>
   )
@@ -373,9 +390,14 @@ function FormsDriver({ active, mode }: { active: boolean; mode: AssistantMode })
   React.useEffect(() => {
     if (!active) return
     if (!seeded.current) {
-      // one real exchange, so panel / dock / history have a transcript
+      // one real exchange, so every form has a transcript to show. The
+      // seed drains when an ASKING surface opens, so it runs through the
+      // spotlight first and the section's own form takes over after.
       seeded.current = true
-      seedPrompt(DEMO_SUGGESTIONS[0]!, true)
+      setMode("spotlight")
+      seedPrompt(DEMO_SUGGESTIONS[0]!, true, true)
+      const t = window.setTimeout(() => setMode(mode), 2600)
+      return () => window.clearTimeout(t)
     }
     setMode(mode)
   }, [active, mode, setMode, seedPrompt])
@@ -383,65 +405,63 @@ function FormsDriver({ active, mode }: { active: boolean; mode: AssistantMode })
   return <Assistant hotkeys={false} />
 }
 
-/** The forms section's demo: the same window, cycling the layer's shapes. */
-function FormsDemo() {
+/**
+ * One form, one section: the form's name and its line from the paper,
+ * then the same presentation window with a real layer HELD in that form.
+ * Each section activates as it scrolls into view and seeds one exchange
+ * so the conversational forms have a transcript; from there the layer is
+ * the visitor's to use.
+ */
+function FormSection({
+  form,
+  widthPct,
+}: {
+  form: (typeof FORMS)[number]
+  widthPct: number | null
+}) {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
-  const [idx, setIdx] = React.useState(0)
 
   React.useEffect(() => {
     const el = ref.current
     if (!el) return
     const io = new IntersectionObserver(
       ([e]) => setInView(e!.isIntersecting),
-      { threshold: 0.35 }
+      { threshold: 0.3 }
     )
     io.observe(el)
     return () => io.disconnect()
   }, [])
 
-  // auto-advance while watched; clicking a form restarts the clock
-  React.useEffect(() => {
-    if (!inView) return
-    const t = window.setInterval(
-      () => setIdx((i) => (i + 1) % FORMS.length),
-      6500
-    )
-    return () => window.clearInterval(t)
-  }, [inView, idx])
-
-  const form = FORMS[idx]!
   return (
-    <div ref={ref} className="w-full">
-      <Reveal>
-        <DemoWindow>
-          <DemoDashboard />
-          <AssistantProvider navItems={DEMO_NAV}>
-            <FormsDriver active={inView} mode={form.mode} />
-          </AssistantProvider>
-        </DemoWindow>
-      </Reveal>
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        {FORMS.map((f, i) => (
-          <Button
-            key={f.name}
-            size="sm"
-            variant={i === idx ? "default" : "secondary"}
-            className="rounded-full"
-            onClick={() => setIdx(i)}
-          >
-            {f.name}
-          </Button>
-        ))}
+    <section className="relative px-6 pt-24">
+      <div
+        ref={ref}
+        className="mx-auto w-full"
+        style={widthPct ? { width: `${widthPct}%` } : undefined}
+      >
+        <Reveal>
+          <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            {form.name}
+          </h3>
+          <p className="text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+            {form.desc}
+          </p>
+        </Reveal>
+        <Reveal className="mt-8">
+          <DemoWindow>
+            <DemoDashboard />
+            <AssistantProvider navItems={DEMO_NAV}>
+              <FormsDriver active={inView} mode={form.mode} />
+            </AssistantProvider>
+          </DemoWindow>
+        </Reveal>
       </div>
-      <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
-        {form.desc}
-      </p>
-    </div>
+    </section>
   )
 }
 
-/* ------------------------------- the page ------------------------------- */
+/* ------------------------------- the page ------------------------------- *//* ------------------------------- the page ------------------------------- */
 
 export function OverviewView() {
   const { setPageIntel, orbState } = useAssistant()
@@ -599,23 +619,30 @@ export function OverviewView() {
         </div>
       </section>
 
-      {/* the forms: one presence, many shapes — same window, real modes */}
-      <section className="relative mx-auto w-full max-w-5xl px-6 pt-8 pb-24">
-        <Reveal>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            One presence, many forms
-          </h2>
-          <p className="text-muted-foreground mt-6 max-w-2xl leading-relaxed">
-            A presence that is always available cannot have one fixed size.
-            The layer changes shape instead of changing identity — the same
-            assistant, the same context, a different geometry for how much
-            of your attention the moment deserves.
-          </p>
-        </Reveal>
-        <div className="mt-10">
-          <FormsDemo />
+      {/* the forms: one presence, many shapes — one section per form,
+          each window at the wordmark's width, each layer real */}
+      <section className="relative px-6 pt-8">
+        <div
+          className="mx-auto w-full"
+          style={glyphPct ? { width: `${glyphPct}%` } : undefined}
+        >
+          <Reveal>
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              One presence, many forms
+            </h2>
+            <p className="text-muted-foreground mt-6 max-w-2xl leading-relaxed">
+              A presence that is always available cannot have one fixed
+              size. The layer changes shape instead of changing identity —
+              the same assistant, the same context, a different geometry
+              for how much of your attention the moment deserves.
+            </p>
+          </Reveal>
         </div>
       </section>
+      {FORMS.map((f) => (
+        <FormSection key={f.name} form={f} widthPct={glyphPct} />
+      ))}
+      <div className="pb-8" />
 
       {/* the resting orb owns the viewport's bottom-center */}
       <div className="pb-24" />
