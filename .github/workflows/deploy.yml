@@ -41,6 +41,11 @@ jobs:
         run: npm run registry:build
 
 
+      # The landing page prints four install commands. Publishing it without
+      # having run them is the same failure the gate exists to prevent.
+      - name: The doors install
+        run: npm run verify:install:quick
+
       - name: Build the site
         env:
           # Project Pages serve from /<repo>/. Set here rather than baked into

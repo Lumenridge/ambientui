@@ -18,6 +18,8 @@
     "css:check": "node scripts/check-css-surface.mjs",
     "registry:check": "node scripts/build-registry.mjs --check",
     "vendor:check": "node scripts/check-vendored-css.mjs",
+    "verify:install": "node scripts/verify-install.mjs",
+    "verify:install:quick": "node scripts/verify-install.mjs --quick",
     "release": "turbo build && changeset publish",
     "docs:check": "node scripts/check-doc-paths.mjs"
   },

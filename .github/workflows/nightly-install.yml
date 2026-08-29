@@ -1,0 +1,21 @@
+name: Nightly install check
+
+# The doors depend on shadcn, Tailwind and Radix, which move on their own
+# schedule. A door that broke because of someone else's release should be
+# found by a cron job, not by a visitor pasting a command.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  verify-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run verify:install

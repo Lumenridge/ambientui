@@ -35,12 +35,31 @@ The full argument is [PAPER.md](PAPER.md). The rules it produced are
 
 ## What you can take
 
+Two tracks, and the line between them is the whole idea: the first gives you
+things that render, the second gives you the thing that decides what rendering
+looks like.
+
+**Take the components**
+
 | | | |
 |---|---|---|
 | **The whole layer** | orb · line · panel · dock · spotlight · history | `npx shadcn add @ambientui/ambient-layer` |
-| **One component** | 31 of them, each with its behavior and its boundaries | `npx shadcn add @ambientui/reasoning-panel` |
+| **One component** | 31 installable, each with its behavior and its boundaries | `npx shadcn add @ambientui/reasoning-panel` |
+
+**Adopt the architecture**
+
+| | | |
+|---|---|---|
+| **A design system to build inside** | the Foundation: accent, gray, radius, spacing, motion character | `npx shadcn add @ambientui/foundation` |
 | **The rules your AI works under** | the constitution + three review roles | `npx shadcn add @ambientui/governance` |
-| **A design system to build inside** | the Foundation, the token master, the Figma contract | *documented; one-command setup in progress* |
+
+31 installable of 50 documented: the other 19 are shadcn's own primitives,
+which you already have or can take from shadcn directly, plus one surface that
+ships inside the layer rather than on its own. The counts come from
+`registry.json` and the catalog, never from this sentence.
+
+Every command above is executed against a scratch project by
+`npm run verify:install` before it is allowed on the site or in this table.
 
 Register the namespace once and the commands stay short:
 
@@ -62,7 +81,10 @@ the whole argument), npm if you want upgrades and will not touch it.
 packages/ambient      the ambient layer            → npm: ambientui
 packages/foundation   the configuration engine     → @ambientui/foundation
 packages/ui           the product primitives       → @ambientui/ui
-apps/web              the website, /ds reference and dev-tool demo
+apps/site             the website: docs, /ds reference, and the demos
+docs/                 the reader-facing guides, including registry vs npm
+scripts/              the registry build and every drift check the gate runs
+fixtures/consumer     a scratch project the install commands are proved against
 skills/               the governance roles an AI works under here
 tokens/tokens.json    the serialized token master
 figma/                the code → Figma variable contract
@@ -85,16 +107,26 @@ when-to-use prints in your terminal.
 
 ```bash
 npm install
-npm run dev          # the site at :5173
+npm run dev          # the site at :3000
 ```
 
 - `/` — the argument, built from the real running components
+- `/architecture` — the paper, with the components it argues about running inline
+- `/docs` — how to install, and which of the two tracks is yours
 - `/ds` — 50 documented components, the Foundation, and the governing docs
-- `/?view=devtool` — the layer inside a simulated real workspace
+- `/demo/devtool` — the layer inside a simulated real workspace
 
-`npm run gate` runs typecheck, lint and build, plus the registry and vendored-CSS
-drift checks. A pre-commit hook runs it, so a failing gate blocks the commit.
-If hooks aren't firing: `git config core.hooksPath .githooks`.
+```bash
+npm run gate             # typecheck, lint, build, and eleven drift checks
+npm run verify:install   # every install command, run against a scratch project
+```
+
+The gate proves this repo is internally consistent, and a pre-commit hook runs
+it, so a failing gate blocks the commit. `verify:install` proves something the
+gate cannot: that a door still works in a project that is not this one. It is
+minutes rather than seconds, so it runs on demand, in CI, nightly, and before
+a deploy publishes a page full of commands. If hooks aren't firing:
+`git config core.hooksPath .githooks`.
 
 ## Contributing
 

@@ -23,7 +23,16 @@ import { fileURLToPath } from "node:url"
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
 /** The governing set: prose whose path claims must stay true. */
-const DOCS = ["CLAUDE.md", "README.md", "PAPER.md", "DESIGN.md", "figma/figma-sync.md", "docs/ambient-shell-spec.md", "docs/motion-spec.md"]
+// The root documents are named; everything under docs/ joins by GLOB. A
+// hardcoded list means a new page ships unchecked, and the whole point of
+// this check is that prose citing a path is a claim the repo has to honour.
+const DOCS = ["CLAUDE.md", "README.md", "PAPER.md", "DESIGN.md", "figma/figma-sync.md"]
+const docsDir = join(ROOT, "docs")
+if (existsSync(docsDir)) {
+  for (const file of readdirSync(docsDir)) {
+    if (file.endsWith(".md")) DOCS.push(join("docs", file))
+  }
+}
 
 // project skills join dynamically; symlinks (a contributor's personal
 // tooling, e.g. a writing aid) are not the project's governance and skip

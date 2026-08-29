@@ -32,3 +32,23 @@ jobs:
       # publish broken install commands on the next deploy.
       - name: Registry builds from a clean checkout
         run: npm run registry:build
+
+  # SEPARATE JOB, because it is minutes rather than seconds: it installs a
+  # scratch project and builds it. Only runs when something it could break
+  # changed — doc-only and site-only PRs skip it entirely.
+  verify-install:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'pull_request' ||
+      contains(join(github.event.pull_request.labels.*.name), 'registry')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # The gate proves the registry is internally consistent. This proves a
+      # door INSTALLS — the failure mode that only ever appears in someone
+      # else's repo, and the one that shipped twice unnoticed.
+      - run: npm run verify:install
