@@ -263,7 +263,13 @@ function DemoWindow({
   return (
     <div
       className={cn(
-        "relative z-10 flex aspect-video w-full transform-gpu flex-col overflow-hidden rounded-2xl",
+        // PORTRAIT ON A PHONE, 16:9 FROM sm UP. At 292px wide a 16:9 box
+        // is 165px tall, and no surface with a header, a message, a
+        // context row and a composer fits in 165px — the layer sized
+        // itself to the frame correctly and the frame was the thing that
+        // was wrong. h-96 is a real step on the spacing scale; an
+        // arbitrary aspect ratio would not be.
+        "relative z-10 flex h-128 w-full transform-gpu flex-col overflow-hidden rounded-2xl sm:h-auto sm:aspect-video",
         chrome
           ? "border-border bg-card border shadow-2xl"
           : // no ground of its own: the surfaces bring their own material,
@@ -1289,7 +1295,7 @@ function FormSection({
   }, [])
 
   return (
-    <section className="relative px-6 pt-24">
+    <section className="relative px-6 pt-16 sm:pt-24">
       <div ref={ref}>
         {/* written content reads at the page's text measure */}
         <div className="mx-auto w-full max-w-5xl">
@@ -1305,8 +1311,8 @@ function FormSection({
         {/* the window spans the wordmark's measure */}
         <Reveal className="mt-8">
           <div
-            className="mx-auto w-full"
-            style={{ width: `${widthPct}%` }}
+            className="mx-auto w-full sm:w-(--demo-measure)"
+            style={{ "--demo-measure": `${widthPct}%` } as React.CSSProperties}
           >
           {/* a TRUSTED press ends the section's script; the hand's own
               dispatched events are untrusted and pass through */}
@@ -1502,22 +1508,22 @@ export function OverviewView() {
       </section>
 
       {/* the statement: what Ambient UI is, and the four principles */}
-      <section className="relative mx-auto w-full max-w-5xl px-6 pt-32 pb-24">
+      <section className="relative mx-auto w-full max-w-5xl px-6 pt-20 pb-16 sm:pt-32 sm:pb-24">
         <Reveal>
-          <p className="text-muted-foreground mx-auto max-w-4xl text-center text-3xl leading-snug font-medium text-balance sm:text-4xl">
+          <p className="text-muted-foreground mx-auto max-w-4xl text-center text-xl leading-snug font-medium text-balance sm:text-3xl md:text-4xl">
             Ambient UI is a decluttering of enterprise software — the system
             of record keeps every pixel of its screen, and the AI works
             above the data, alongside your SaaS, not inside it.
           </p>
         </Reveal>
-        <div className="mt-28 grid gap-x-16 gap-y-16 sm:grid-cols-2">
+        <div className="mt-14 grid gap-x-16 gap-y-12 sm:mt-28 sm:gap-y-16 sm:grid-cols-2">
           {PRINCIPLES.map((pr) => (
             <Reveal key={pr.word}>
-              <div className="border-border border-t pt-8">
-                <h3 className="text-2xl font-semibold tracking-tight">
+              <div className="border-border border-t pt-6 sm:pt-8">
+                <h3 className="text-xl font-semibold tracking-tight sm:text-2xl">
                   {pr.word}.
                 </h3>
-                <p className="text-muted-foreground mt-6 leading-relaxed">
+                <p className="text-muted-foreground mt-4 leading-relaxed sm:mt-6">
                   {pr.body}
                 </p>
                 {pr.link && (
@@ -1540,7 +1546,7 @@ export function OverviewView() {
 
       {/* the forms: one presence, many shapes — one section per form,
           each window at the wordmark's width, each layer real */}
-      <section className="relative px-6 pt-8">
+      <section className="relative px-6 pt-4 sm:pt-8">
         <div className="mx-auto w-full max-w-5xl">
           <Reveal className="text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -1563,7 +1569,7 @@ export function OverviewView() {
           layer; the commands below hand it over. Between them belongs the
           thing that makes the layer possible, or a visitor installs an
           assistant without ever learning why it matches their product. */}
-      <section className="relative mx-auto w-full max-w-5xl px-6 pt-32">
+      <section className="relative mx-auto w-full max-w-5xl px-6 pt-20 sm:pt-32">
         <Reveal>
           <DesignArchitectureSection
             onRead={() => {
@@ -1577,7 +1583,7 @@ export function OverviewView() {
           a visitor stops reading and starts typing. It used to end on two
           spacer divs — the argument reached its conclusion and then offered
           the reader nothing to do with it. */}
-      <section className="relative mx-auto w-full max-w-5xl px-6 pt-32">
+      <section className="relative mx-auto w-full max-w-5xl px-6 pt-20 sm:pt-32">
         <Reveal>
           <InstallSection
             onDocs={() => {

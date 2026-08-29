@@ -75,7 +75,12 @@ const SENTINELS = [
   "text-[11px]",
   // apps/site/src/components/home/overview-view.tsx — the wordmark + demos
   "fill-foreground",
-  "aspect-video",
+  // was "aspect-video" until the demo frame became portrait on phones and
+  // 16:9 only from sm up. A VARIANT CANNOT STAND IN HERE: the parser stops
+  // at the colon, so "sm:aspect-video" would never be found and the check
+  // would fail forever for a reason that has nothing to do with scanning.
+  // h-128 is the frame's mobile height and is just as rare.
+  "h-128",
   "max-w-5xl",
   // apps/site/src/components/ds/* — the reference pages
   "min-h-32",
