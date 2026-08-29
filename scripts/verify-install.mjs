@@ -32,6 +32,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, extname, join, resolve } from "node:path"
@@ -177,13 +178,32 @@ let failed = []
 
 try {
   cpSync(FIXTURE, app, { recursive: true })
+
+  /**
+   * THE NAMESPACE FORM IS WHAT WE PUBLISH, SO IT IS WHAT WE RUN.
+   *
+   * The site and the README print `npx shadcn add @ambientui/ambient-layer`,
+   * not a URL. Those are not the same command: the namespace only resolves
+   * because `components.json` maps `@ambientui` to a URL TEMPLATE, which is
+   * what `shadcn registry add` writes. Running the URL form here proved the
+   * item was fetchable and proved nothing about the line a visitor pastes.
+   *
+   * The fixture commits the mapping with a `{REGISTRY_HOST}` placeholder so
+   * a localhost port never gets baked into a checked-in file.
+   */
+  const cj = join(app, "components.json")
+  writeFileSync(
+    cj,
+    readFileSync(cj, "utf8").replaceAll("{REGISTRY_HOST}", HOST)
+  )
+
   log("· installing the fixture's own dependencies")
   run("npm", ["install", "--no-audit", "--no-fund"], app)
 
   for (const door of doors) {
     log(`· ${door.name}`)
     try {
-      run("npx", ["shadcn@latest", "add", `${HOST}/r/${door.name}.json`, "--yes", "--overwrite"], app)
+      run("npx", ["shadcn@latest", "add", `@ambientui/${door.name}`, "--yes", "--overwrite"], app)
     } catch (e) {
       failed.push(`${door.name}: shadcn add failed — ${String(e.stdout ?? e).slice(-400)}`)
       continue

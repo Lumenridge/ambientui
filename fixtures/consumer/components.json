@@ -15,5 +15,8 @@
     "ui": "@/components/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"
+  },
+  "registries": {
+    "@ambientui": "{REGISTRY_HOST}/r/{name}.json"
   }
 }
