@@ -6,7 +6,7 @@ import { Button } from "@ambientui/ui/components/button"
 import { Icon } from "@ambientui/ui/components/icon"
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 import { useAssistant } from "ambientui/assistant-context"
-import { OrbCharacter, OrbField } from "ambientui/orb-character"
+import { OrbField } from "ambientui/orb-character"
 
 /**
  * OVERVIEW — the front door as a single held breath: the wordmark, the
@@ -14,13 +14,12 @@ import { OrbCharacter, OrbField } from "ambientui/orb-character"
  *
  * THE WORDMARK IS THE IDENTITY AT IDENTITY SCALE. The glyphs are filled
  * with the live heat field (OrbField riding the layer's real orbState, so
- * the name breathes, listens, and thinks with the assistant), and the
- * character itself sits in the wordmark as the dot of the i — the text is
- * set with a dotless ı and the orb takes the dot's place. This is the one
- * page where the mark is the subject rather than chrome, which is what
- * the identity-scale cost rule exists to allow (sanctioned in DESIGN.md
- * §12; the shader surface count is unchanged — these are the identity's
- * own bodies, driven by the same state machine).
+ * the name breathes, listens, and thinks with the assistant). This is the
+ * one page where the mark is the subject rather than chrome, which is
+ * what the identity-scale cost rule exists to allow (sanctioned in
+ * DESIGN.md §12; the field is the identity's own body, driven by the same
+ * state machine). The character stays where it lives — the resting orb —
+ * one character per surface, as the contract says.
  *
  * Drawn as SVG so the mark scales like the graphic it is: the type scale
  * governs text, and a wordmark is a drawing of a name. The clip text uses
@@ -69,7 +68,6 @@ export function OverviewView({
         >
           <defs>
             <clipPath id="wordmark-clip">
-              {/* dotless ı — the character takes the dot's place */}
               <text
                 x="320"
                 y="114"
@@ -79,7 +77,7 @@ export function OverviewView({
                 letterSpacing="-0.03em"
                 style={{ fontFamily: "var(--font-sans)" }}
               >
-                {"Ambıent UI"}
+                {"Ambient UI"}
               </text>
             </clipPath>
           </defs>
@@ -95,10 +93,6 @@ export function OverviewView({
               />
             </foreignObject>
           </g>
-          {/* the identity, sitting as the dot of the ı */}
-          <foreignObject x="257" y="14" width="40" height="40">
-            <OrbCharacter size={40} state={orbState} />
-          </foreignObject>
         </svg>
       </motion.h1>
 
