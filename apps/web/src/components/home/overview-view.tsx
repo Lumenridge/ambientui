@@ -772,9 +772,12 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
   React.useEffect(() => {
     const el = ref.current
     if (!el) return
+    // the film starts only when the WINDOW IS PROPERLY ON SCREEN — the
+    // visitor has scrolled to it and can see the UI, not a cropped sliver
+    // playing to nobody below the fold
     const io = new IntersectionObserver(
       ([e]) => setInView(e!.isIntersecting),
-      { threshold: 0.4 }
+      { threshold: 0.65 }
     )
     // A MOUNT GATE, wider than the film's trigger: each embedded layer
     // holds real WebGL contexts (its orb, its surface fields), and a page
@@ -1070,9 +1073,11 @@ function FormSection({
   React.useEffect(() => {
     const el = ref.current
     if (!el) return
+    // same start gate as the film: the staging plays only once the window
+    // is properly on screen, never to a sliver at the fold
     const io = new IntersectionObserver(
       ([e]) => setInView(e!.isIntersecting),
-      { threshold: 0.3 }
+      { threshold: 0.65 }
     )
     // same mount gate as the top demo: an off-screen window holds no
     // WebGL contexts, so five form sections never crowd out the wordmark.
