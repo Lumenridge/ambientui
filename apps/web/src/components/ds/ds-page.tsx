@@ -187,7 +187,10 @@ export function DsPage() {
   // linked, reloaded into, and jumped to from ⌘K. Local state alone made
   // every entry unaddressable.
   const readSelection = () =>
-    new URLSearchParams(window.location.search).get(DS_PARAM) ?? "foundation"
+    typeof window === "undefined"
+      ? "foundation"
+      : (new URLSearchParams(window.location.search).get(DS_PARAM) ??
+        "foundation")
   const [selectedId, setSelectedIdState] = React.useState<string>(readSelection)
   const setSelectedId = React.useCallback((id: string) => {
     setSelectedIdState(id)

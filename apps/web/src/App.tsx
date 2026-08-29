@@ -34,8 +34,14 @@ function AppToaster() {
 }
 
 export function App() {
+  // The route is read from the URL at first render so a reload lands where
+  // it left off. Guarded because a prerender has no location: the static
+  // build emits the default section and the client corrects it on mount,
+  // which is the same first frame a visitor at "/" already sees.
   const [active, setActive] = useState<SectionId>(() =>
-    sectionFromPath(stripBase(window.location.pathname))
+    typeof window === "undefined"
+      ? "canvas"
+      : sectionFromPath(stripBase(window.location.pathname))
   )
 
   // STABLE IDENTITY MATTERS HERE: this reaches the assistant context, and

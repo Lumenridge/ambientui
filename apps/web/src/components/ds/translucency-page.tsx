@@ -1,3 +1,5 @@
+import * as React from "react"
+
 import { useFoundation } from "@ambientui/foundation"
 
 /**
@@ -132,6 +134,32 @@ function Specimen({ children }: { children: React.ReactNode }) {
 export function TranslucencyPage() {
   const { config } = useFoundation()
 
+  /**
+   * THE LIVE BLUR RADIUS, READ AFTER LAYOUT — never in the render body.
+   * `getComputedStyle` during render is a read of the very DOM React is
+   * still describing, and it does not exist at all during a prerender.
+   *
+   * It is measured rather than taken from the config because this page is
+   * an inspector: it reports what the running document actually resolves,
+   * so a value the Foundation failed to apply shows up here as itself.
+   * `--ambient-blur` is re-read whenever the config changes, since that is
+   * what can change it.
+   */
+  const readBlur = () =>
+    typeof window === "undefined"
+      ? null
+      : getComputedStyle(document.documentElement)
+          .getPropertyValue("--ambient-blur")
+          .trim() || null
+  const [blur, setBlur] = React.useState<string | null>(readBlur)
+  React.useEffect(() => {
+    // NEXT FRAME, deliberately: the Foundation writes its style tag from an
+    // effect too, so reading synchronously here would report the value it
+    // is in the middle of replacing.
+    const id = requestAnimationFrame(() => setBlur(readBlur()))
+    return () => cancelAnimationFrame(id)
+  }, [config])
+
   return (
     <div className="mx-auto max-w-3xl pb-16">
       <h1 className="text-xl font-semibold">Translucency</h1>
@@ -193,9 +221,12 @@ export function TranslucencyPage() {
             A tint alone is not glass — it is a tint. Glass is a token plus a
             backdrop blur, and the blur radius is itself one token (
             <code className="font-mono text-xs">--ambient-blur</code>,
-            currently {getComputedStyle(document.documentElement)
-              .getPropertyValue("--ambient-blur")
-              .trim() || "24px"}
+            currently{" "}
+            {/* a fixed-width slot: the value arrives one frame late, and a
+                sentence that reflows as it lands reads as a glitch */}
+            <span className="inline-block min-w-14 font-mono text-xs">
+              {blur ?? "…"}
+            </span>
             ). These three classes are the only legal combinations.
           </p>
           <div className="flex flex-col gap-3">

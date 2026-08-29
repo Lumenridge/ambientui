@@ -39,6 +39,9 @@ const VIEWS = [
 type ViewId = (typeof VIEWS)[number]["id"]
 
 const readView = (): ViewId => {
+  // no location during a prerender — the default view is what static HTML
+  // carries, and the client resolves the real one on mount
+  if (typeof window === "undefined") return "overview"
   const v = new URLSearchParams(window.location.search).get("view")
   // the playbook grew up and became the architecture; old links still land
   if (v === "playbook") return "architecture"

@@ -782,7 +782,7 @@ function HandoverLine({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ShellDemo({ widthPct }: { widthPct: number | null }) {
+function ShellDemo({ widthPct }: { widthPct: number }) {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
   const [near, setNear] = React.useState(false)
@@ -840,7 +840,7 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
     <div
       ref={ref}
       className="mx-auto flex w-full flex-col"
-      style={widthPct ? { width: `${widthPct}%` } : undefined}
+      style={{ width: `${widthPct}%` }}
     >
       {/* the shell REVEALS as the reader scrolls to it; the film starts
           once it is properly in view, so the entrance leads and the demo
@@ -1193,7 +1193,7 @@ function FormSection({
   widthPct,
 }: {
   form: (typeof FORMS)[number]
-  widthPct: number | null
+  widthPct: number
 }) {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [inView, setInView] = React.useState(false)
@@ -1284,7 +1284,7 @@ function FormSection({
         <Reveal className="mt-8">
           <div
             className="mx-auto w-full"
-            style={widthPct ? { width: `${widthPct}%` } : undefined}
+            style={{ width: `${widthPct}%` }}
           >
           {/* a TRUSTED press ends the section's script; the hand's own
               dispatched events are untrusted and pass through */}
@@ -1351,9 +1351,18 @@ export function OverviewView() {
   // max-w-5xl. The glyphs' extent depends on the configured font, so it
   // is measured from the drawn text (re-run once fonts land), never
   // hardcoded.
+  //
+  // IT STARTS AT A SENSIBLE MEASURE, NOT AT NOTHING. `null` meant the demo
+  // windows rendered full-width for one frame and then snapped in when the
+  // measurement landed — a visible jump on every load, and the only layout
+  // a prerendered build would ever emit. 91% is what the configured font
+  // measures; the real measurement corrects it, imperceptibly.
   const wordmarkRef = React.useRef<SVGTextElement | null>(null)
-  const [glyphPct, setGlyphPct] = React.useState<number | null>(null)
-  React.useLayoutEffect(() => {
+  const [glyphPct, setGlyphPct] = React.useState<number>(91)
+  // useEffect, not useLayoutEffect: the latter warns during a prerender
+  // (it cannot run without a DOM), and the measurement needs laid-out
+  // glyphs anyway — so the paint it would block has to happen first.
+  React.useEffect(() => {
     const measure = () => {
       const b = wordmarkRef.current?.getBBox()
       if (b && b.width > 0) setGlyphPct((b.width / 640) * 100)

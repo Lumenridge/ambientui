@@ -17,6 +17,16 @@ type ThemeProviderState = {
 }
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
+
+/**
+ * THE STORAGE KEY AND THE DEFAULT LIVE HERE, and the pre-paint script in
+ * index.html must use the same two values — it runs before React and stamps
+ * the class so there is no flash. Two copies of one value is this project's
+ * named failure mode, and a checker (scripts/check-theme-boot.mjs) fails the
+ * gate if the HTML and this file disagree.
+ */
+export const THEME_STORAGE_KEY = "ambientui-theme"
+export const THEME_DEFAULT: Theme = "dark"
 const THEME_VALUES: Theme[] = ["dark", "light", "system"]
 
 const ThemeProviderContext = React.createContext<
@@ -79,18 +89,35 @@ function isEditableTarget(target: EventTarget | null) {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
-  storageKey = "theme",
+  defaultTheme = THEME_DEFAULT,
+  storageKey = THEME_STORAGE_KEY,
   disableTransitionOnChange = true,
   ...props
 }: ThemeProviderProps) {
+  /**
+   * THE STORED CHOICE IS READ AT FIRST RENDER, BUT GUARDED.
+   *
+   * `localStorage` does not exist while a page is being prerendered, so an
+   * unguarded read takes the whole build down. Reading it in an effect
+   * instead would be prerender-safe but costs a cascading render on every
+   * load — the rule this repo enforces (react-hooks/set-state-in-effect,
+   * and the reasoning in useIsMobile). So: guarded, at first render.
+   *
+   * The static build therefore emits the DEFAULT theme. That is safe rather
+   * than a flash, because the pre-paint script in the document head (see
+   * index.html) reads the same key and stamps the class before the body
+   * exists — the first frame is already correct, and this state only ever
+   * agrees with what the document is already showing.
+   */
   const [theme, setThemeState] = React.useState<Theme>(() => {
-    const storedTheme = localStorage.getItem(storageKey)
-    if (isTheme(storedTheme)) {
-      return storedTheme
+    if (typeof window === "undefined") return defaultTheme
+    try {
+      const storedTheme = localStorage.getItem(storageKey)
+      return isTheme(storedTheme) ? storedTheme : defaultTheme
+    } catch {
+      // a browser with site data blocked still gets the default
+      return defaultTheme
     }
-
-    return defaultTheme
   })
 
   const setTheme = React.useCallback(

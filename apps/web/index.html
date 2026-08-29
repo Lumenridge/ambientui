@@ -30,6 +30,31 @@
     <!-- og:image is deliberately absent until a real 1200×630 raster exists.
          A social card pointing at a missing or SVG image renders as a broken
          preview, which is worse than the plain-text card you get with none. -->
+
+    <!-- THEME BEFORE FIRST PAINT. The class that selects the palette is
+         applied by React in an effect, which is one frame too late: the
+         document would paint in the default theme and then swap, a visible
+         flash on every load. This stamps the class synchronously, before
+         the body exists, so the first frame is already right and React only
+         ever agrees with it. It matters more after the static-HTML move,
+         where the prerendered document has no stored choice baked in at all.
+
+         It must stay in the head, stay blocking, and keep agreeing with
+         THEME_STORAGE_KEY / THEME_DEFAULT in theme-provider.tsx — a gate
+         check (scripts/check-theme-boot.mjs) fails if they drift. Both are wrapped
+         because a browser with site data blocked throws on access. -->
+    <script>
+      ;(function () {
+        try {
+          var t = localStorage.getItem("ambientui-theme") || "dark"
+          var dark =
+            t === "dark" ||
+            (t === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches)
+          document.documentElement.classList.add(dark ? "dark" : "light")
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

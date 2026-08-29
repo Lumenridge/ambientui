@@ -15,6 +15,13 @@ import { useTheme } from "@/components/theme-provider"
 
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 
+const SCHEME_QUERY = "(prefers-color-scheme: dark)"
+function subscribeToScheme(onChange: () => void) {
+  const mql = window.matchMedia(SCHEME_QUERY)
+  mql.addEventListener("change", onChange)
+  return () => mql.removeEventListener("change", onChange)
+}
+
 /**
  * VIEW MENU — every destination visible, the current one wearing its name.
  *
@@ -65,16 +72,18 @@ export function ViewMenu({
 }) {
   const { theme, setTheme } = useTheme()
   // "system" is a real setting, so the control has to resolve what is
-  // actually on screen before it can offer the opposite of it
-  const [systemDark, setSystemDark] = React.useState(
-    () => window.matchMedia("(prefers-color-scheme: dark)").matches
+  // actually on screen before it can offer the opposite of it.
+  //
+  // The colour scheme is an EXTERNAL STORE, read as one — same pattern and
+  // same reason as useIsMobile: mirroring it into state costs a cascading
+  // render, and matchMedia does not exist during a prerender at all. The
+  // server snapshot is `false`, which is both the safer assumption and the
+  // markup that ships in static HTML.
+  const systemDark = React.useSyncExternalStore(
+    subscribeToScheme,
+    () => window.matchMedia(SCHEME_QUERY).matches,
+    () => false
   )
-  React.useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)")
-    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches)
-    mq.addEventListener("change", onChange)
-    return () => mq.removeEventListener("change", onChange)
-  }, [])
   const isDark = theme === "dark" || (theme === "system" && systemDark)
   const spring = useMotionSpring()
   const micro = useMotionTransition("micro")
