@@ -286,17 +286,13 @@ function ShellDemo() {
         </div>
         <div className="relative min-h-0 flex-1">
           <DemoDashboard />
-          {/* zoom, not transform: it scales the embedded layer's layout
-              (fixed surfaces included) without becoming a containing
-              block, so the surfaces still position against the window.
-              0.8 is presentation choreography, like the film's cadences:
-              it sets the layer at the demo app's own density so the two
-              read as one product. */}
-          <div style={{ zoom: 0.8 }}>
-            <AssistantProvider navItems={DEMO_NAV}>
-              <EmbeddedLayer active={inView} />
-            </AssistantProvider>
-          </div>
+          {/* the layer renders at the Foundation's own scaling — the same
+              rem base as everything else — because its size is a THEME
+              decision, not a demo knob. Only the shell outside carries
+              the presentation sizing. */}
+          <AssistantProvider navItems={DEMO_NAV}>
+            <EmbeddedLayer active={inView} />
+          </AssistantProvider>
         </div>
       </div>
     </div>
