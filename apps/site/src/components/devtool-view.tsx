@@ -36,9 +36,8 @@ type Task = {
   when: string
   state: "done" | "running" | "queued"
   stat?: { added: number; removed: number }
-  /** The change's identity, the way a workspace names one: id and branch. */
+  /** The change's identity, the way a workspace names one. */
   ref?: string
-  branch?: string
 }
 
 const TASKS: Task[] = [
@@ -50,7 +49,6 @@ const TASKS: Task[] = [
     state: "running",
     stat: { added: 14, removed: 3 },
     ref: "AMB-241",
-    branch: "fix/composer-draft-persistence",
   },
   {
     id: "t2",
@@ -791,7 +789,7 @@ export function DevToolView() {
       {/* ── editor ──────────────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* THE CHANGE, NAMED. A workspace is not "some open files" — it is one
-            change with an id, a branch and a size, and the review actions
+            change with an id and a size, and the review actions
             belong beside that identity rather than in a menu. pe clears the
             floating view-switcher pill. */}
         <div className="border-border bg-sidebar flex shrink-0 items-center gap-2 overflow-x-auto border-b px-3 py-2 pe-40">
@@ -820,11 +818,6 @@ export function DevToolView() {
           <span className="shrink-0 text-sm font-medium whitespace-nowrap">
             {task.title}
           </span>
-          {task.branch && (
-            <span className="text-muted-foreground hidden shrink-0 font-mono text-xs lg:inline">
-              {task.branch}
-            </span>
-          )}
           {task.stat && (
             <span className="shrink-0 font-mono text-xs">
               <span className="text-(--positive)">+{task.stat.added}</span>{" "}

@@ -46,13 +46,34 @@ export function DeclareContext({
     return () => setPageChip(null)
   }, [id, label, kind, icon, setPageChip])
 
+  /**
+   * Intel is a literal at every call site, so it is a NEW OBJECT on every
+   * render. Depending on it would re-announce forever; suppressing the
+   * dependency would announce a stale one. Neither is acceptable, so the
+   * identity is its serialisable content, and the freshest object is read
+   * through a ref when that content actually changes.
+   *
+   * `onJump` is a function and JSON drops it — deliberately. A page that
+   * swaps its jump handler without changing a single visible suggestion
+   * has not changed what the layer should offer, and the ref hands over
+   * the current function either way.
+   */
+  const key = intel ? JSON.stringify(intel) : ""
+  const latest = React.useRef(intel)
+
+  // The ref is synced in an EFFECT, not in the render body: writing a ref
+  // during render is a compiler error here, and rightly — a render that
+  // mutates is a render that cannot be replayed. Declared first, so it has
+  // run by the time the announcing effect below reads it.
   React.useEffect(() => {
-    if (!intel) return
-    setPageIntel(intel)
+    latest.current = intel
+  })
+
+  React.useEffect(() => {
+    if (!key) return
+    setPageIntel(latest.current ?? null)
     return () => setPageIntel(null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intel is a
-    // literal at the call site; the page owns when it meaningfully changes
-  }, [setPageIntel])
+  }, [key, setPageIntel])
 
   return null
 }
