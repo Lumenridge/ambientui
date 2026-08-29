@@ -44,7 +44,7 @@
       "description": "The glass recipes, translucency tokens, live border, glyph breath and stream edge that every ambient surface wears.",
       "files": [
         {
-          "path": ".registry/packages/ambient/src/ambient.css",
+          "path": ".registry/packages/ambient/src/styles/ambient.css",
           "type": "registry:file",
           "target": "styles/ambient.css"
         }

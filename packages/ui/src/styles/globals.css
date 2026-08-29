@@ -15,6 +15,12 @@
    disappears the moment code moves into another package. */
 @source "../../../../apps/*/src/**/*.{ts,tsx}";
 @source "../../../../packages/*/src/**/*.{ts,tsx}";
+/* Next puts ROUTE files in app/, outside any src/. Components still live in
+   src/ by convention (apps/site/src), so this glob covers only the route
+   layer — but without it every class used in a page.tsx or layout.tsx is
+   dropped, and nothing reports it. scripts/check-css-surface.mjs is the
+   alarm for exactly this. */
+@source "../../../../apps/*/app/**/*.{ts,tsx}";
 
 @theme inline {
     --font-heading: var(--font-sans);

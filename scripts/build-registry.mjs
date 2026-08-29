@@ -250,7 +250,7 @@ const items = [
       "The glass recipes, translucency tokens, live border, glyph breath and stream edge that every ambient surface wears.",
     files: [
       {
-        path: stage(`${SRC}/ambient.css`),
+        path: stage(`${SRC}/styles/ambient.css`),
         type: "registry:file",
         target: "styles/ambient.css",
       },

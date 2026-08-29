@@ -136,7 +136,7 @@ answer 0.5. The orb is also the sanctioned shader surface (with its heat
 field); nothing else may use canvas/WebGL without governance.
 
 The identity's states also pace fixed CSS loops
-(`packages/ambient/src/ambient.css`), keyed by `data-orb-state` on the
+(`packages/ambient/src/styles/ambient.css`), keyed by `data-orb-state` on the
 surface or glyph — these are deliberate literals, part of the identity,
 not the role system:
 

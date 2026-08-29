@@ -135,8 +135,8 @@ skill before any `use_figma` write.
   orb-character — the animated identity with states still/listening/thinking/
   answer, driven via `orbState` in the context). **It is a package, not app
   code: it may import `@ambientui/ui` and npm, never `@/`.** Its material is
-  `packages/ambient/src/ambient.css`; the app's own shell tokens are
-  `apps/web/src/theme.css`, `viz.css`.
+  `packages/ambient/src/styles/ambient.css`; the app's own shell tokens are
+  `apps/site/src/styles/theme.css`, `viz.css`.
 - What the layer needs from a design system is stated in
   `packages/ambient/src/ambient-runtime.tsx` — seven values and two motion
   hooks, with real defaults, so it renders with no providers at all

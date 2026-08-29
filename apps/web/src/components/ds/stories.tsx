@@ -2,10 +2,8 @@ import * as React from "react"
 import { createPortal } from "react-dom"
 
 import {
-  motion,
   useAnimationFrame,
   useMotionValue,
-  useTransform,
   type MotionValue,
 } from "framer-motion"
 
@@ -15,6 +13,7 @@ import { SectionRail } from "@ambientui/ui/components/section-rail"
 import { toast } from "sonner"
 
 import { SaveReminder } from "@/components/ds/settings-kit"
+import { SeekBar } from "@/components/seek-bar"
 
 import { Badge } from "@ambientui/ui/components/badge"
 import { Button } from "@ambientui/ui/components/button"
@@ -1413,31 +1412,16 @@ const LIFECYCLE_DWELL = 3
  */
 const LIFECYCLE_STEPS = ORB_STATES.length - 1
 
-function LifecycleSegment({
-  progress,
-  index,
-}: {
-  progress: MotionValue<number>
-  index: number
-}) {
-  const scaleX = useTransform(progress, (p) =>
-    Math.min(1, Math.max(0, p - index))
-  )
-  return (
-    <div className="bg-muted relative h-1 flex-1 overflow-hidden rounded-full">
-      <motion.div
-        className="bg-primary absolute inset-y-0 left-0 w-full origin-left"
-        style={{ scaleX }}
-      />
-    </div>
-  )
-}
-
 /**
  * The lifecycle seek bar: plays the whole state journey (still →
  * listening → thinking → answer) in one continuous run, dwelling a few
  * seconds per state so every transition is seen in sequence. One segment
  * per state; click or drag anywhere to scrub.
+ *
+ * The segments and the control are the shared SeekBar — promoted when the
+ * home page's demos became a second consumer. This wrapper keeps the orb's
+ * own vocabulary (its states name the chapters) and supplies onSeek,
+ * because a lifecycle CAN be scrubbed: it is a timeline, not a script.
  */
 function OrbLifecycleBar({
   progress,
@@ -1453,42 +1437,16 @@ function OrbLifecycleBar({
   onToggle: () => void
   onSeek: (p: number) => void
 }) {
-  const trackRef = React.useRef<HTMLDivElement>(null)
-  const seekFromEvent = (e: React.PointerEvent) => {
-    const rect = trackRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const f = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
-    onSeek(f * LIFECYCLE_STEPS)
-  }
   return (
-    <div className="flex w-64 items-center gap-3">
-      <Button
-        size="xs"
-        variant="outline"
-        className="size-6 p-0"
-        aria-label={
-          playing ? "Pause lifecycle" : ended ? "Replay lifecycle" : "Play lifecycle"
-        }
-        onClick={onToggle}
-      >
-        <Icon name={playing ? "pause" : ended ? "replay" : "play"} size={12} />
-      </Button>
-      <div
-        ref={trackRef}
-        className="flex flex-1 cursor-pointer items-center gap-1 py-2"
-        onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture(e.pointerId)
-          seekFromEvent(e)
-        }}
-        onPointerMove={(e) => {
-          if (e.currentTarget.hasPointerCapture(e.pointerId)) seekFromEvent(e)
-        }}
-      >
-        {ORB_STATES.slice(1).map((st, i) => (
-          <LifecycleSegment key={st} progress={progress} index={i} />
-        ))}
-      </div>
-    </div>
+    <SeekBar
+      className="w-64"
+      segments={ORB_STATES.slice(1)}
+      progress={progress}
+      playing={playing}
+      ended={ended}
+      onToggle={onToggle}
+      onSeek={onSeek}
+    />
   )
 }
 

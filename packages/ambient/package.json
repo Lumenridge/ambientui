@@ -5,7 +5,7 @@
   "type": "module",
   "description": "The ambient layer \u2014 an AI assistant surface that lives above a product rather than inside its component tree.",
   "exports": {
-    "./styles/ambient.css": "./src/ambient.css",
+    "./styles/ambient.css": "./src/styles/ambient.css",
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js"

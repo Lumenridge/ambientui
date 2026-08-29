@@ -20,7 +20,7 @@ import { createRoot } from "react-dom/client"
 // theme.css. If the layer ever needs that file again, the CSS split has
 // regressed exactly the way the import split would.
 import "@ambientui/ui/globals.css"
-import "ambientui/ambient.css"
+import "ambientui/styles/ambient.css"
 
 import { Assistant } from "ambientui/assistant"
 import { AssistantProvider } from "ambientui/assistant-context"

@@ -16,6 +16,7 @@ import { OrbField, OrbHeat } from "ambientui/orb-character"
 import { withBase } from "@/base"
 import { InstallSection } from "@/components/home/install-section"
 import { Reveal } from "@/components/reveal"
+import { SeekBar } from "@/components/seek-bar"
 
 /**
  * OVERVIEW — the wordmark, and the UI starting right beneath it.
@@ -694,70 +695,59 @@ function DemoPlayback({
   onToggle,
   onReplay,
 }: {
-  /** this demo's chapters — the film's five, or a section's two */
+  /** this demo's chapters — the film's five, or a section's one or two */
   beats: readonly { id: string; label: string }[]
   beat: { index: number; dur: number; key: number } | null
   paused: boolean
-  /** a one-shot staging that has finished: every dot lit, replay offered */
+  /** a one-shot staging that has finished: every segment full, replay offered */
   done?: boolean
   onToggle: () => void
   onReplay?: () => void
 }) {
+  // ONE PROGRESS VALUE FOR THE WHOLE RUN: chapters completed plus the
+  // fraction of the current one, which is exactly what SeekBar's segments
+  // read. The fill animates linearly for the chapter's own duration, so the
+  // bar is a clock, not a decoration.
   const fill = useMotionValue(0)
+  const progress = useMotionValue(0)
   const ctrl = React.useRef<ReturnType<typeof animate> | null>(null)
+
   React.useEffect(() => {
-    if (!beat) return
+    if (done) {
+      progress.set(beats.length)
+      return
+    }
+    if (!beat) {
+      progress.set(0)
+      return
+    }
     ctrl.current?.stop()
     fill.set(0)
+    const unsub = fill.on("change", (v) => progress.set(beat.index + v))
+    progress.set(beat.index)
     ctrl.current = animate(fill, 1, { duration: beat.dur / 1000, ease: "linear" })
-    return () => ctrl.current?.stop()
-  }, [beat, fill])
+    return () => {
+      unsub()
+      ctrl.current?.stop()
+    }
+  }, [beat, done, beats.length, fill, progress])
+
   React.useEffect(() => {
     if (paused) ctrl.current?.pause()
     else ctrl.current?.play()
   }, [paused])
 
   return (
-    <div className="mt-5 flex items-center justify-center gap-2">
-      <div className="border-border/60 bg-card/75 flex h-9 items-center gap-2.5 rounded-full border px-4 backdrop-blur-md">
-        {beats.map((b, i) => {
-          const state = done
-            ? "done"
-            : beat === null ? "todo" : i < beat.index ? "done" : i === beat.index ? "now" : "todo"
-          return state === "now" ? (
-            <span
-              key={b.id}
-              title={b.label}
-              className="bg-muted-foreground/25 h-1.5 w-14 overflow-hidden rounded-full"
-            >
-              <motion.span
-                className="bg-foreground block h-full rounded-full"
-                style={{ scaleX: fill, originX: 0 }}
-              />
-            </span>
-          ) : (
-            <span
-              key={b.id}
-              title={b.label}
-              className={cn(
-                "size-1.5 rounded-full",
-                state === "done" ? "bg-foreground/70" : "bg-muted-foreground/30"
-              )}
-            />
-          )
-        })}
-      </div>
-      <button
-        type="button"
-        aria-label={
-          done ? "Replay the demo" : paused ? "Play the demo" : "Pause the demo"
-        }
-        onClick={done ? onReplay : onToggle}
-        className="border-border/60 bg-card/75 text-foreground hover:bg-card flex size-9 items-center justify-center rounded-full border backdrop-blur-md"
-      >
-        <Icon name={done ? "replay" : paused ? "play" : "pause"} size={14} />
-      </button>
-    </div>
+    <SeekBar
+      className="mx-auto mt-5 w-64"
+      segments={beats.map((b) => b.label)}
+      progress={progress}
+      playing={!paused && !done}
+      ended={done}
+      onToggle={done ? (onReplay ?? onToggle) : onToggle}
+      // no onSeek: the film is a script, not a timeline — it cannot be
+      // rewound to an arbitrary point, so it must not look like it can
+    />
   )
 }
 

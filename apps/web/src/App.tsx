@@ -13,9 +13,14 @@ import { FoundationProvider } from "@ambientui/foundation"
 import { sections, type SectionId } from "@/nav"
 import { BASE, stripBase, withBase } from "@/base"
 
-import "ambientui/ambient.css"
-import "@/theme.css"
-import "@/viz.css"
+// The specifier the PACKAGE exports. "ambientui/ambient.css" resolved only
+// through this app's Vite alias to source; under real package resolution it
+// falls through to a dist file that does not exist.
+import "ambientui/styles/ambient.css"
+// The shell tokens live in apps/site now — their final home. One copy,
+// imported across the workspace boundary while both apps exist.
+import "../../site/src/styles/theme.css"
+import "../../site/src/styles/viz.css"
 
 // Sections map to URL paths ("/" is the canvas) so pages are addressable
 // and survive a reload.
