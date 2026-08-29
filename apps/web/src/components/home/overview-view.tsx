@@ -258,13 +258,15 @@ function ShellDemo() {
   }, [])
 
   return (
-    <div ref={ref} className="mx-auto flex h-full w-full max-w-6xl min-h-0 flex-col">
+    <div ref={ref} className="mx-auto flex w-full max-w-6xl flex-col">
       {/* the presentation shell: a desktop window floating on the ambient
           ground. transform-gpu makes it the containing block for the
           layer's fixed surfaces, and the rounded overflow clip keeps
           every surface — spotlight, panel, resting orb — inside the
           window, exactly where a product's own layer lives. */}
-      <div className="border-border bg-card relative z-10 flex min-h-0 flex-1 transform-gpu flex-col overflow-hidden rounded-2xl border shadow-2xl">
+      {/* aspect-video: the window keeps its width and sizes itself 16:9,
+          the way a presentation frame is cut */}
+      <div className="border-border bg-card relative z-10 flex aspect-video w-full transform-gpu flex-col overflow-hidden rounded-2xl border shadow-2xl">
         <div className="border-border bg-muted/50 relative flex h-9 shrink-0 items-center justify-center border-b">
           <span className="absolute start-4 flex gap-1.5">
             <span className="bg-muted-foreground/30 size-3 rounded-full" />
@@ -385,7 +387,7 @@ export function OverviewView({
 
       {/* the demo, starting under the word — a desktop window on the
           presentation ground, Ambient UI in action inside it */}
-      <section className="relative flex h-svh flex-col px-4 pt-4 pb-10 sm:px-10">
+      <section className="relative px-4 pt-4 pb-10 sm:px-10">
         <ShellDemo />
       </section>
 
