@@ -687,6 +687,12 @@ const FoundationContext = React.createContext<FoundationContextValue | null>(
  * instead; storage is an external store, and this is a read, not a sync.
  */
 function readSaved(): FoundationConfig {
+  // No storage during a prerender. The try/catch below would swallow that
+  // too, but silently, through an exception path meant for malformed data —
+  // and a host building static HTML deserves to be a stated case rather
+  // than an accident of error handling. The prerendered document therefore
+  // carries the DEFAULT theme, and the client adopts the saved one on mount.
+  if (typeof window === "undefined") return DEFAULT_FOUNDATION
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) return { ...DEFAULT_FOUNDATION, ...migrate(JSON.parse(raw)) }

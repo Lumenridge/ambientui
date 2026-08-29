@@ -20,14 +20,26 @@
  * that actually run during a prerender.
  */
 import ts from "typescript"
-import { readFileSync, readdirSync, statSync } from "node:fs"
+import { readFileSync, readdirSync, statSync, existsSync } from "node:fs"
 import { resolve, dirname, join, relative } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
-/** Only what the SITE prerenders. Packages have their own contract. */
-const ROOTS = ["apps/web/src"]
+/**
+ * Everything the site prerenders — which now includes the PACKAGES, because
+ * a static build renders the ambient layer's own components too. That was
+ * learned the hard way: `orb.tsx` read `window.innerWidth` in its render
+ * body and took down the first export build of a demo route.
+ */
+const ROOTS = [
+  "apps/web/src",
+  "apps/site/src",
+  "apps/site/app",
+  "packages/ambient/src",
+  "packages/foundation/src",
+  "packages/ui/src",
+]
 
 /**
  * Files whose browser reads are deliberate and unreachable from a
@@ -42,13 +54,17 @@ const EXEMPT = {
 const GLOBALS = /^(window|document|localStorage|sessionStorage|navigator)$/
 
 const files = []
-;(function walk(dir) {
-  for (const e of readdirSync(dir)) {
-    const p = join(dir, e)
-    if (statSync(p).isDirectory()) walk(p)
-    else if (/\.(ts|tsx)$/.test(p)) files.push(p)
-  }
-})(resolve(ROOT, ROOTS[0]))
+for (const root of ROOTS) {
+  const base = resolve(ROOT, root)
+  if (!existsSync(base)) continue
+  ;(function walk(dir) {
+    for (const e of readdirSync(dir)) {
+      const p = join(dir, e)
+      if (statSync(p).isDirectory()) walk(p)
+      else if (/\.(ts|tsx)$/.test(p)) files.push(p)
+    }
+  })(base)
+}
 
 const hits = []
 

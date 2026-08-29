@@ -23,6 +23,7 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./src/*"],
+      "@site/*": ["../site/src/*"],
       "@ambientui/ui/*": ["../../packages/ui/src/*"],
       "ambientui/*": ["../../packages/ambient/src/*"],
       "@ambientui/foundation": ["../../packages/foundation/src/foundation-context.tsx"]

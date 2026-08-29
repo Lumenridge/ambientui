@@ -52,3 +52,5 @@ apps/web/public/orb-*.svg
 apps/site/.next/
 apps/site/out/
 apps/site/next-env.d.ts
+
+apps/site/public/orb-*.svg

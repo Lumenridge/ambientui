@@ -145,8 +145,17 @@ export function AssistantOrb() {
     return () => ro.disconnect()
   }, [])
 
-  const w = frame?.w ?? window.innerWidth
-  const h = frame?.h ?? window.innerHeight
+  // GUARDED: the layer is prerendered by hosts that build static HTML, and
+  // there is no viewport during that pass. The fallback numbers only decide
+  // where the orb sits for the first frame — the layout effect above
+  // measures the real containing block on mount and corrects it — so a
+  // plausible desktop guess costs nothing and a crash costs the build.
+  const viewport =
+    typeof window === "undefined"
+      ? { w: 1280, h: 800 }
+      : { w: window.innerWidth, h: window.innerHeight }
+  const w = frame?.w ?? viewport.w
+  const h = frame?.h ?? viewport.h
   // The opened form is a SURFACE, so it centers on the CONTENT REGION it
   // opens over — the page's main area, not the raw viewport — so a rail or
   // an inspector on the side doesn't push it off-center. The orb travels

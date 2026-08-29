@@ -40,6 +40,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Files whose FINAL home is the Next app already live there; this app
+      // borrows them until it is retired. One copy, in its destination.
+      "@site": path.resolve(__dirname, "../site/src"),
       // the layer is a package now; resolve it by name, not by path
       "ambientui": path.resolve(__dirname, "../../packages/ambient/src"),
       "@ambientui/foundation": path.resolve(
