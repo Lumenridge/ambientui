@@ -1117,8 +1117,9 @@ export function OverviewView() {
         <div className="bg-background/75 absolute inset-0" />
       </div>
 
-      {/* the wordmark — and the UI starts right beneath it */}
-      <section className="relative flex items-center justify-center pt-40 pb-16 sm:pt-48">
+      {/* the wordmark — with the demo window rising INTO it: the name
+          passes behind the product, which is the thesis drawn */}
+      <section className="relative flex items-center justify-center pt-40 sm:pt-48">
         <Reveal className="relative w-full px-6">
           <h1>
           <span className="sr-only">Ambient UI</span>
@@ -1173,10 +1174,13 @@ export function OverviewView() {
         </Reveal>
       </section>
 
-      {/* the demo, starting under the word — a desktop window on the
-          presentation ground, Ambient UI in action inside it */}
+      {/* the demo window overlaps the wordmark's lower glyphs — the text
+          runs BEHIND the product. The pull is a percentage because the
+          wordmark's height is width-proportional (viewBox 640×150): -8.5%
+          of width reaches ~2.9%w above the baseline (y=114/150) at every
+          size, where a fixed step would swallow the name on small screens */}
       {/* px-6 matches the wordmark's own gutters — one width, one family */}
-      <section className="relative px-6 pt-4 pb-10">
+      <section className="relative z-10 px-6 pb-10" style={{ marginTop: "-8.5%" }}>
         <ShellDemo widthPct={glyphPct} />
       </section>
 
