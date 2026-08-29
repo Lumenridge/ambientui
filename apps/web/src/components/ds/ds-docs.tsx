@@ -273,6 +273,24 @@ export function Playground({
 
 /* ---------------------------------- playgrounds ---------------------------------- */
 
+/** Live so the story shows the point: selecting a segment expands it. */
+function ViewMenuStory() {
+  const [view, setView] = React.useState("playbook")
+  return (
+    <div className="flex min-h-24 w-full items-start justify-center">
+      <ViewMenu
+        items={[
+          { id: "playbook", label: "Playbook", icon: "home" },
+          { id: "devtool", label: "Dev tool", icon: "code" },
+          { id: "canvas", label: "Canvas", icon: "image" },
+        ]}
+        value={view}
+        onSelect={setView}
+      />
+    </div>
+  )
+}
+
 function SaveReminderStory() {
   const [dirty, setDirty] = React.useState(false)
   return (
@@ -762,20 +780,18 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
     id: "view-menu",
     name: "ViewMenu",
     description:
-      "The app's destinations as a disclosure that morphs from a pill into a card — an ambientui extension to the product vocabulary (promoted via the watchlist).",
+      "The app's destinations as a segmented pill — every view visible as an icon, the current one expanded to wear its name (an ambientui extension to the product vocabulary).",
     behavior: [
-      "Collapsed, it is one pill naming the view you are on. Opening is what costs space, and only while you are choosing — a tab strip spends room proportional to how many destinations exist, permanently, on a surface whose argument is that chrome should get out of the way.",
-      "ONE FORM IN TWO SHAPES: closed, the pill is the width of the view's own name; open, it takes the width of the list beneath it, animated on the surface spring, so the pair reads as a single object changing shape rather than two panels that happen to be stacked.",
-      "The width is MEASURED FROM THE MENU, never guessed — the list is sized by its longest row, and that changes with whatever destinations an app registers. The menu is therefore sized by its own content only; if it also took the pill's width, neither would have anything driving it.",
-      "The list drops beneath the pill rather than pushing it, and both pill controls are the same icon box, so opening never changes the row's HEIGHT. A control that walks out from under the pointer vertically makes closing a game of catch-up.",
-      "The pill carries its icon-only controls in ONE treatment, because they are peers: none of them is a destination in the list. The disclosure shows a menu mark closed and a close mark open; appearance shows the step it takes.",
-      "HOME LEADS, when the app gives it one. It is the only control that leaves the set of views entirely, so it sits outside the list and ahead of everything — a way back is not one destination among others. The component is TOLD where home is (`home={{ label, onSelect }}`) and knows nothing about what is there; omit the prop and no home control appears, because a component that invents a destination is one that will send someone somewhere wrong.",
-      "Both carry a real Tooltip, not a native `title`. The name of an icon-only control is not optional, and `title` waits a second, cannot be styled, and never appears on keyboard focus. The disclosure's tooltip is suppressed while open — the menu it describes is already on screen, and a hint floating over that list is noise.",
+      "One pill of segments, one per destination. The segment you are ON is expanded: icon plus label. Every other collapses to its icon in a circle, so the whole set of places stays one glance and one click away without spending label-width on views you are not in.",
+      "SELECTING IS EXPANDING: the label grows in on the surface spring with a micro fade — the standard enter pair — so the state change is the motion, not a highlight painted on afterward.",
+      "This replaced the disclosure form (pill + drop-down list). The disclosure hid the destinations behind a burger to save room, but with a handful of views the icons cost almost nothing, and a menu that must be opened to be seen makes every switch two clicks.",
+      "Collapsed segments carry a real Tooltip, not a native `title` — the name of an icon-only control is not optional. The expanded segment carries none, because it is wearing its name.",
+      "The current view is marked aria-current=\"page\"; collapsed segments carry their label as aria-label, so the control reads the same to a screen reader in both states.",
+      "HOME LEADS, when the app gives it one and home is not already a view. It renders as a leading icon segment: a way back is not one destination among others. The component is TOLD where home is (`home={{ label, onSelect }}`); omit the prop when home is one of the views — the same destination twice is a trap.",
       "It carries no character mark. The assistant's identity belongs to the assistant; a navigation control wearing it says the wrong thing about what it does.",
-      "Closes on Escape or an outside pointer-down — a menu you cannot dismiss the ordinary way is a trap.",
-      "The current view is marked with aria-current and carries the foreground weight; the others sit muted.",
       "It is the pointer twin of the spotlight's \"Jump to\" — same destinations, reached by hand rather than ⌘K. They read the same list, so they cannot disagree.",
-      "APPEARANCE RIDES AT THE HEAD OF THE PILL, as an icon naming the step it takes. It is the one control here that is not a destination, and it lived inside the menu — one click deep and drawn exactly like the three places you could go, which made a two-state setting read as a fourth destination. Outside, it is always one press away and cannot be mistaken for somewhere to be.",
+      "The pill wears the popover ground, not the ambient glass: it is product chrome, and only the assistant's surfaces wear the ambient material (DESIGN.md §8).",
+      "APPEARANCE RIDES AT THE TRAILING EDGE in the same circle treatment, naming the step it takes. It is the one control here that is not a destination — always one press away, never expanded, so it cannot be mistaken for somewhere to be.",
     ],
     whenToUse: [
       "Switching between a small set of top-level views on a surface where permanent chrome would compete with the content.",
@@ -783,24 +799,12 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentEntry[] = [
     whenNotToUse: [
       "Tabbed panes INSIDE a page — that is Tabs, and the relationship there is between siblings, not destinations.",
       "More than a handful of destinations, or anything needing search — that is the spotlight.",
-      "Anywhere the current location must stay visible while a menu is open; this one covers itself when it expands.",
-      "As a home for settings. Appearance earns its place because it is reached without meaning to go anywhere; a second one would turn a list of destinations into a menu bar.",
+      "As a home for settings. Appearance earns its place because it is reached without meaning to go anywhere; a second one would turn a row of destinations into a menu bar.",
     ],
     stories: [
       {
-        label: "Collapsed and open",
-        render: (
-          <div className="flex min-h-44 w-full items-start justify-center">
-            <ViewMenu
-              items={[
-                { id: "devtool", label: "Dev tool" },
-                { id: "canvas", label: "Canvas" },
-              ]}
-              value="devtool"
-              onSelect={() => {}}
-            />
-          </div>
-        ),
+        label: "Active segment expanded",
+        render: <ViewMenuStory />,
       },
     ],
   },

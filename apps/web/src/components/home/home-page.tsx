@@ -31,7 +31,7 @@ const VIEWS = [
   // ORDER IS THE VISIT, and the playbook leads: a stranger should meet the
   // argument before the demo. The dev tool shows the layer doing something;
   // the canvas is the quieter claim.
-  { id: "playbook", label: "Playbook", chip: "Home · The playbook", icon: "document" },
+  { id: "playbook", label: "Playbook", chip: "Home · The playbook", icon: "home" },
   { id: "devtool", label: "Dev tool", chip: "Home · Dev tool", icon: "code" },
   { id: "canvas", label: "Canvas", chip: "Home · Canvas", icon: "image" },
 ] as const
@@ -98,14 +98,9 @@ export function HomePage() {
           view === "devtool" ? "top-1.5 justify-end pe-3" : "top-4 justify-center"
         )}
       >
-        {/* THE APP NAMES HOME, the menu only knows how to get there. Home is
-            the playbook — the front door the other views depart from. */}
-        <ViewMenu
-          items={VIEWS}
-          value={view}
-          onSelect={select}
-          home={{ label: "Home", onSelect: () => select("playbook") }}
-        />
+        {/* Home IS the playbook, and the playbook is the first segment —
+            a separate home control would be the same destination twice. */}
+        <ViewMenu items={VIEWS} value={view} onSelect={select} />
       </div>
 
       <TabsContent
