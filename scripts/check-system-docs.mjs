@@ -26,9 +26,10 @@ import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-const DS = "apps/web/src/components/ds"
-const META = resolve(ROOT, DS, "system-docs.meta.ts")
-const SOURCE = resolve(ROOT, DS, "system-docs.source.ts")
+// the metadata lives in the site app (its final home); the ?raw sources
+// remain with the SPA until it is retired
+const META = resolve(ROOT, "apps/site/src/lib/system-docs.meta.ts")
+const SOURCE = resolve(ROOT, "apps/web/src/components/ds/system-docs.source.ts")
 
 const parse = (file) =>
   ts.createSourceFile(

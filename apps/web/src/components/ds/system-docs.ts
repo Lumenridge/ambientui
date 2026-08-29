@@ -1,7 +1,7 @@
 import {
   SYSTEM_DOC_META,
   type SystemDocMeta,
-} from "@/components/ds/system-docs.meta"
+} from "@site/lib/system-docs.meta"
 import { SYSTEM_DOC_SOURCE } from "@/components/ds/system-docs.source"
 
 /**
@@ -17,7 +17,7 @@ import { SYSTEM_DOC_SOURCE } from "@/components/ds/system-docs.source"
  * are unchanged by the split.
  */
 
-export type { SystemDocGroup, SystemDocMeta } from "@/components/ds/system-docs.meta"
+export type { SystemDocGroup, SystemDocMeta } from "@site/lib/system-docs.meta"
 
 export interface SystemDoc extends SystemDocMeta {
   source: string
