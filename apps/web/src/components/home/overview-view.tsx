@@ -226,8 +226,17 @@ function DemoDashboard() {
 }
 
 /** The presentation shell both demos share: a desktop window, 16:9,
-    transform-contained so an embedded layer's surfaces live inside it. */
-function DemoWindow({ children }: { children: React.ReactNode }) {
+    transform-contained so an embedded layer's surfaces live inside it.
+    `overlay` renders over the WHOLE window (title bar included) — the
+    layer's full-screen surfaces cover the window edge to edge, so
+    anything meant to ride above them (the film's hand) must too. */
+function DemoWindow({
+  children,
+  overlay,
+}: {
+  children: React.ReactNode
+  overlay?: React.ReactNode
+}) {
   return (
     <div className="border-border bg-card relative z-10 flex aspect-video w-full transform-gpu flex-col overflow-hidden rounded-2xl border shadow-2xl">
       <div className="border-border bg-muted/50 relative flex h-9 shrink-0 items-center justify-center border-b">
@@ -241,6 +250,7 @@ function DemoWindow({ children }: { children: React.ReactNode }) {
         </span>
       </div>
       <div className="relative min-h-0 flex-1">{children}</div>
+      {overlay}
     </div>
   )
 }
@@ -261,13 +271,17 @@ function DemoWindow({ children }: { children: React.ReactNode }) {
  */
 type DemoCursorHandle = {
   /** glide to the element and press it; false if the control isn't there.
-      `fire` also dispatches the real click — for controls whose action
-      has no public-context equivalent (Back to search). A dispatched
-      click never counts as visitor interaction: the stop listens for
-      pointerdown, which only a real pointer produces. */
-  clickOn: (selector: string, fire?: boolean) => Promise<boolean>
+      `fire` also operates the real control — "click" dispatches a click
+      (Back to search), "pointer" a pointerdown/up pair (the orb's tap,
+      which is pointer-driven). A dispatched event never counts as
+      visitor interaction: the stop only honors TRUSTED events, which
+      only a real pointer produces. */
+  clickOn: (selector: string, fire?: "click" | "pointer") => Promise<boolean>
   /** press the element and pull it to a point (fractions of the frame) —
-      the drag-as-mode-switch gesture, drawn */
+      a REAL drag: pointerdown on the element, pointermove streamed along
+      the glide, pointerup at the target. The layer's own drag machinery
+      runs — the panel follows the hand, the hot zones light up, and the
+      drop itself performs the mode switch. */
   dragTo: (selector: string, fx: number, fy: number) => Promise<boolean>
   /** drift aside and wait — the "user" is typing, not pointing */
   rest: () => Promise<void>
@@ -318,14 +332,26 @@ function DemoCursorLayer({
       setPressed(false)
     }
     handleRef.current = {
-      async clickOn(selector, fire = false) {
+      async clickOn(selector, fire) {
         const el = host.parentElement?.querySelector(selector)
         if (!el) return false
         const c = centerOf(el)
         appearNear(c.x, c.y)
         await glide(c.x, c.y)
         await press()
-        if (fire) (el as HTMLElement).click()
+        if (fire === "click") (el as HTMLElement).click()
+        else if (fire === "pointer") {
+          const r = el.getBoundingClientRect()
+          const opts: PointerEventInit = {
+            bubbles: true,
+            clientX: r.left + r.width / 2,
+            clientY: r.top + r.height / 2,
+            pointerId: 1,
+            isPrimary: true,
+          }
+          el.dispatchEvent(new PointerEvent("pointerdown", opts))
+          el.dispatchEvent(new PointerEvent("pointerup", opts))
+        }
         await sleep(220)
         return true
       },
@@ -336,9 +362,31 @@ function DemoCursorLayer({
         appearNear(c.x, c.y)
         await glide(c.x, c.y)
         setPressed(true)
-        await sleep(160)
         const hr = host.getBoundingClientRect()
+        const at = (px: number, py: number): PointerEventInit => ({
+          bubbles: true,
+          clientX: hr.left + px,
+          clientY: hr.top + py,
+          pointerId: 7,
+          isPrimary: true,
+        })
+        el.dispatchEvent(new PointerEvent("pointerdown", at(c.x, c.y)))
+        await sleep(180)
+        // stream the drag: every frame of the glide is a real pointermove,
+        // so the component travels WITH the hand and the zones light up
+        const moveNow = () =>
+          window.dispatchEvent(
+            new PointerEvent("pointermove", at(x.get(), y.get()))
+          )
+        const unsubs = [x.on("change", moveNow), y.on("change", moveNow)]
         await glide(hr.width * fx, hr.height * fy)
+        unsubs.forEach((u) => u())
+        moveNow()
+        // hold in the zone a beat, so the highlight reads before the drop
+        await sleep(420)
+        window.dispatchEvent(
+          new PointerEvent("pointerup", at(x.get(), y.get()))
+        )
         setPressed(false)
         setPulse((p) => p + 1)
         await sleep(220)
@@ -360,10 +408,13 @@ function DemoCursorLayer({
   }, [handleRef, spring, x, y])
 
   return (
+    // inset-0 of the WHOLE WINDOW (the DemoWindow overlay slot) — a host
+    // clipped to the body hid the hand behind full-window surfaces, whose
+    // top edge sits above the body's clip line (the history header)
     <div
       ref={hostRef}
       aria-hidden
-      className="pointer-events-none absolute inset-0 z-50 overflow-hidden"
+      className="pointer-events-none absolute inset-0 z-50"
     >
       <motion.div style={{ x, y }} className="absolute top-0 left-0">
         {pulse > 0 && (
@@ -394,16 +445,31 @@ function DemoCursorLayer({
  * (the same setPageChip/setPageIntel contract every page uses), and open
  * the spotlight when the frame is being watched.
  */
+/** the film's chapters, in tour order — one segment each on the playback pill */
+const FILM_BEATS = [
+  { id: "ask", label: "Ask", dur: 19500 },
+  { id: "panel", label: "Panel", dur: 4500 },
+  { id: "dock", label: "Dock", dur: 4500 },
+  { id: "history", label: "History", dur: 4500 },
+  { id: "orb", label: "Orb", dur: 3200 },
+] as const
+
 function EmbeddedLayer({
   active,
   interacted,
   cursor,
+  pausedRef,
+  onBeat,
 }: {
   active: boolean
   /** the visitor touched the window — the film stops, the layer is theirs */
   interacted: boolean
   /** the film's hand — draws the click that causes each step */
   cursor: React.MutableRefObject<DemoCursorHandle | null>
+  /** the playback control's pause, read between choreography steps */
+  pausedRef: React.MutableRefObject<boolean>
+  /** each chapter announces itself so the playback pill can fill along */
+  onBeat: (index: number, durMs: number) => void
 }) {
   const { setMode, setPageChip, setPageIntel, seedPrompt } = useAssistant()
 
@@ -437,61 +503,102 @@ function EmbeddedLayer({
     if (!active || interacted) return
     let alive = true
     const timers: number[] = []
+    // pause-aware sleep: while the playback control holds the film, time
+    // simply does not pass — typing, holds, and beat budgets all freeze
     const sleep = (ms: number) =>
-      new Promise<void>((r) => timers.push(window.setTimeout(r, ms)))
+      new Promise<void>((resolve) => {
+        let left = ms
+        const tick = () => {
+          if (!alive) return resolve()
+          if (pausedRef.current) {
+            timers.push(window.setTimeout(tick, 150))
+            return
+          }
+          const chunk = Math.min(left, 120)
+          timers.push(
+            window.setTimeout(() => {
+              left -= chunk
+              if (left <= 0) resolve()
+              else tick()
+            }, chunk)
+          )
+        }
+        tick()
+      })
+    // each chapter announces itself, runs its gestures, and sleeps out the
+    // rest of its budget — so the pill's fill and the film agree on time
+    const beat = async (index: number, act: () => Promise<void>) => {
+      const dur = FILM_BEATS[index]!.dur
+      onBeat(index, dur)
+      const start = Date.now()
+      await act()
+      const left = dur - (Date.now() - start)
+      if (left > 0) await sleep(left)
+    }
     // EVERY STEP IS A DRAWN GESTURE ON A REAL CONTROL: the hand presses
-    // the orb to open the spotlight, the header buttons to change form,
-    // and pulls the panel's drag handle to dock it — then the film fires
-    // the exact API that control fires. The visitor sees WHICH click gets
-    // them each shape.
+    // the orb (a real pointer tap, so the QUICK-ASK opens first — the
+    // orb's own opening state, never skipped), the header buttons to
+    // change form, and pulls the panel's drag handle to dock it. The
+    // visitor sees WHICH click gets them each shape.
     const run = async () => {
-      await sleep(900)
-      if (!alive) return
-      await cursor.current?.clickOn('[aria-label="Open ambientui"]')
-      if (!alive) return
-      setMode("spotlight")
-      await sleep(600)
-      if (cycle > 0) {
-        // a repeat cycle finds last round's transcript — press the real
-        // "Back to search" so the loop starts from the clean palette
-        await cursor.current?.clickOn('[aria-label="Back to search"]', true)
+      await beat(0, async () => {
+        await sleep(900)
         if (!alive) return
-        await sleep(500)
-      }
-      cursor.current?.rest()
-      const q = DEMO_SUGGESTIONS[0]!
-      for (let i = 0; i < q.length; i++) {
-        await sleep(38)
+        await cursor.current?.clickOn('[aria-label="Open ambientui"]', "pointer")
         if (!alive) return
-        seedPrompt(q.slice(0, i + 1))
-      }
-      await sleep(800)
+        // the orb's opening state: the quick-ask pill grows out of the
+        // character — hold it, then promote to the full palette (⌘K's move)
+        await sleep(1900)
+        if (!alive) return
+        setMode("spotlight")
+        await sleep(600)
+        if (cycle > 0) {
+          // a repeat cycle finds last round's transcript — press the real
+          // "Back to search" so the loop starts from the clean palette
+          await cursor.current?.clickOn('[aria-label="Back to search"]', "click")
+          if (!alive) return
+          await sleep(500)
+        }
+        cursor.current?.rest()
+        const q = DEMO_SUGGESTIONS[0]!
+        for (let i = 0; i < q.length; i++) {
+          await sleep(38)
+          if (!alive) return
+          seedPrompt(q.slice(0, i + 1))
+        }
+        await sleep(800)
+        if (!alive) return
+        seedPrompt(q, true)
+        // the rest of the budget holds the settled answer
+      })
       if (!alive) return
-      seedPrompt(q, true)
-      // hold the settled answer, then tour the forms with the transcript
-      await sleep(11000)
+      await beat(1, async () => {
+        await cursor.current?.clickOn('[aria-label="Open in chat window"]')
+        if (!alive) return
+        setMode("panel")
+      })
       if (!alive) return
-      await cursor.current?.clickOn('[aria-label="Open in chat window"]')
+      await beat(2, async () => {
+        // dock is a DRAG, not a button — a real one: the panel follows the
+        // hand, the zones appear, and the DROP docks it (the layer's own
+        // machinery). setMode only covers a missing drag handle.
+        const dragged = await cursor.current?.dragTo(".group\\/header", 0.94, 0.4)
+        if (!alive) return
+        if (!dragged) setMode("dock")
+      })
       if (!alive) return
-      setMode("panel")
-      await sleep(4200)
+      await beat(3, async () => {
+        await cursor.current?.clickOn('[aria-label="History"]')
+        if (!alive) return
+        setMode("history")
+      })
       if (!alive) return
-      // dock is a DRAG, not a button — draw the gesture the layer teaches
-      await cursor.current?.dragTo(".group\\/header", 0.94, 0.4)
-      if (!alive) return
-      setMode("dock")
-      await sleep(4200)
-      if (!alive) return
-      await cursor.current?.clickOn('[aria-label="History"]')
-      if (!alive) return
-      setMode("history")
-      await sleep(4200)
-      if (!alive) return
-      await cursor.current?.clickOn('[aria-label="Close history"]')
-      if (!alive) return
-      setMode("line")
-      cursor.current?.hide()
-      await sleep(2600)
+      await beat(4, async () => {
+        await cursor.current?.clickOn('[aria-label="Close history"]')
+        if (!alive) return
+        setMode("line")
+        cursor.current?.hide()
+      })
       if (alive) setCycle((c) => c + 1)
     }
     void run()
@@ -501,9 +608,82 @@ function EmbeddedLayer({
       alive = false
       timers.forEach(clearTimeout)
     }
-  }, [active, interacted, cycle, setMode, seedPrompt, cursor])
+  }, [active, interacted, cycle, setMode, seedPrompt, cursor, pausedRef, onBeat])
 
   return <Assistant hotkeys={false} />
+}
+
+/**
+ * THE FILM'S TRANSPORT — one segment per chapter under the demo window,
+ * story-bar style: chapters already played are lit dots, the playing one
+ * is a bar filling in real time, the rest wait as dim dots. Beside it,
+ * pause/play. It says three things at a glance: this is a recording, this
+ * is how long it is, and it loops. The fill's linear tween is a progress
+ * METER, not motion styling — its duration IS the chapter's length, so
+ * the motion roles don't apply (same license as the cursor's choreography).
+ */
+function DemoPlayback({
+  beat,
+  paused,
+  onToggle,
+}: {
+  beat: { index: number; dur: number; key: number } | null
+  paused: boolean
+  onToggle: () => void
+}) {
+  const fill = useMotionValue(0)
+  const ctrl = React.useRef<ReturnType<typeof animate> | null>(null)
+  React.useEffect(() => {
+    if (!beat) return
+    ctrl.current?.stop()
+    fill.set(0)
+    ctrl.current = animate(fill, 1, { duration: beat.dur / 1000, ease: "linear" })
+    return () => ctrl.current?.stop()
+  }, [beat, fill])
+  React.useEffect(() => {
+    if (paused) ctrl.current?.pause()
+    else ctrl.current?.play()
+  }, [paused])
+
+  return (
+    <div className="mt-5 flex items-center justify-center gap-2">
+      <div className="border-border/60 bg-card/75 flex h-9 items-center gap-2.5 rounded-full border px-4 backdrop-blur-md">
+        {FILM_BEATS.map((b, i) => {
+          const state =
+            beat === null ? "todo" : i < beat.index ? "done" : i === beat.index ? "now" : "todo"
+          return state === "now" ? (
+            <span
+              key={b.id}
+              title={b.label}
+              className="bg-muted-foreground/25 h-1.5 w-14 overflow-hidden rounded-full"
+            >
+              <motion.span
+                className="bg-foreground block h-full rounded-full"
+                style={{ scaleX: fill, originX: 0 }}
+              />
+            </span>
+          ) : (
+            <span
+              key={b.id}
+              title={b.label}
+              className={cn(
+                "size-1.5 rounded-full",
+                state === "done" ? "bg-foreground/70" : "bg-muted-foreground/30"
+              )}
+            />
+          )
+        })}
+      </div>
+      <button
+        type="button"
+        aria-label={paused ? "Play the demo" : "Pause the demo"}
+        onClick={onToggle}
+        className="border-border/60 bg-card/75 text-foreground hover:bg-card flex size-9 items-center justify-center rounded-full border backdrop-blur-md"
+      >
+        <Icon name={paused ? "play" : "pause"} size={14} />
+      </button>
+    </div>
+  )
 }
 
 function ShellDemo({ widthPct }: { widthPct: number | null }) {
@@ -512,6 +692,21 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
   const [near, setNear] = React.useState(false)
   const [interacted, setInteracted] = React.useState(false)
   const cursorRef = React.useRef<DemoCursorHandle | null>(null)
+  const [paused, setPaused] = React.useState(false)
+  const pausedRef = React.useRef(false)
+  const [beat, setBeat] = React.useState<{
+    index: number
+    dur: number
+    key: number
+  } | null>(null)
+  const beatKey = React.useRef(0)
+  const onBeat = React.useCallback((index: number, dur: number) => {
+    setBeat({ index, dur, key: ++beatKey.current })
+  }, [])
+  const togglePaused = () => {
+    pausedRef.current = !pausedRef.current
+    setPaused(pausedRef.current)
+  }
 
   React.useEffect(() => {
     const el = ref.current
@@ -553,13 +748,22 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
           follows. The layer inside renders at the Foundation's own
           scaling — its size is a THEME decision, not a demo knob. */}
       <Reveal>
-        {/* a real pointer or key inside the window ends the film — from
-            then on the layer belongs to the visitor */}
+        {/* a TRUSTED pointer or key inside the window ends the film — from
+            then on the layer belongs to the visitor. The film's own
+            dispatched events are untrusted and pass through. */}
         <div
-          onPointerDownCapture={() => setInteracted(true)}
-          onKeyDownCapture={() => setInteracted(true)}
+          onPointerDownCapture={(e) => e.isTrusted && setInteracted(true)}
+          onKeyDownCapture={(e) => e.isTrusted && setInteracted(true)}
         >
-          <DemoWindow>
+          <DemoWindow
+            overlay={
+              // the hand paints last, over the WHOLE window — full-screen
+              // surfaces (history) reach above the body's clip line
+              near && !interacted ? (
+                <DemoCursorLayer handleRef={cursorRef} />
+              ) : null
+            }
+          >
             {/* the product recedes (opacity), the layer does not — the
                 Ambient UI component is the subject of every window */}
             <div className="h-full opacity-60">
@@ -571,13 +775,18 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
                   active={inView}
                   interacted={interacted}
                   cursor={cursorRef}
+                  pausedRef={pausedRef}
+                  onBeat={onBeat}
                 />
               </AssistantProvider>
             )}
-            {/* the hand paints last, above every surface of the layer */}
-            {near && !interacted && <DemoCursorLayer handleRef={cursorRef} />}
           </DemoWindow>
         </div>
+        {/* the transport pill: how long the film is, where it stands, and
+            that it loops — gone the moment the visitor takes over */}
+        {!interacted && (
+          <DemoPlayback beat={beat} paused={paused} onToggle={togglePaused} />
+        )}
       </Reveal>
     </div>
   )
