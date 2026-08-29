@@ -4,6 +4,7 @@ import dynamic from "next/dynamic"
 
 import { Assistant } from "ambientui/assistant"
 
+import { DeclareContext } from "@/components/declare-context"
 import { DemoProviders } from "@/components/providers/demo-providers"
 
 /**
@@ -24,6 +25,20 @@ const CanvasBackdrop = dynamic(
 export function CanvasDemo() {
   return (
     <DemoProviders>
+      {/* This surface mounted the layer and told it nothing — the one
+          page on the site that genuinely broke §8 rather than simply
+          having no layer to declare to. */}
+      <DeclareContext
+        chip={{ id: "canvas", label: "Canvas", kind: "page", icon: "image" }}
+        intel={{
+          askPlaceholder: "Ask about the layer, or drag the orb…",
+          suggestions: [
+            "What shapes can this layer take?",
+            "How does drag-to-dock decide the mode?",
+            "Show me a composed answer",
+          ],
+        }}
+      />
       <main className="relative flex h-full items-center justify-center overflow-hidden">
         <CanvasBackdrop />
         <div className="text-muted-foreground relative flex flex-col items-center gap-2 text-sm select-none">
