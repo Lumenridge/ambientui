@@ -1,7 +1,5 @@
 import * as React from "react"
 
-import { motion } from "framer-motion"
-
 import { Button } from "@ambientui/ui/components/button"
 import {
   Collapsible,
@@ -10,17 +8,14 @@ import {
 } from "@ambientui/ui/components/collapsible"
 import { Icon } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
-import {
-  useFoundation,
-  useMotionSpring,
-  useMotionTransition,
-} from "@ambientui/foundation"
+import { useFoundation } from "@ambientui/foundation"
 import { useAssistant } from "ambientui/assistant-context"
 import { ReasoningPanel } from "ambientui/message-kit"
 import { ReferenceChips } from "ambientui/response-kit"
 import { CodeDiff, ToolCall } from "ambientui/tool-kit"
 
 import { CommandLine } from "@/components/command-line"
+import { Reveal } from "@/components/reveal"
 import {
   SBar,
   SDot,
@@ -58,10 +53,10 @@ import { withBase } from "@/base"
  * itself as the reader scrolls, entries jump the article, and everything is
  * DERIVED from the same chunk split, never hand-written.
  *
- * Kept-local compositions (watchlist, DESIGN.md §13): `Reveal`,
- * `DocDownload`, `WireframeShell` (a dashed, corner-ticked frame with a
- * mono tag — the page's blueprint device, drawn entirely from the border
- * role and the type scale), and `PlaybookNav`.
+ * Kept-local compositions (watchlist, DESIGN.md §13): `DocDownload`,
+ * `WireframeShell` (a dashed, corner-ticked frame with a mono tag — the
+ * page's blueprint device), and `PlaybookNav`. `Reveal` was promoted to
+ * a shared component when the overview became its second consumer.
  */
 
 const KIT: { docId: string; blurb: string }[] = [
@@ -73,32 +68,6 @@ const KIT: { docId: string; blurb: string }[] = [
 ]
 
 /* ---------------------------------------------------------------- */
-
-/** Sections land as the reader arrives — the surface role, once. */
-function Reveal({
-  children,
-  className,
-  id,
-}: {
-  children: React.ReactNode
-  className?: string
-  id?: string
-}) {
-  const spring = useMotionSpring()
-  const micro = useMotionTransition("micro")
-  return (
-    <motion.div
-      id={id}
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ ...spring, opacity: micro }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  )
-}
 
 /**
  * The blueprint device: a dashed frame with corner ticks and a mono tag.

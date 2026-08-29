@@ -1,16 +1,15 @@
 import * as React from "react"
 
-import { motion } from "framer-motion"
-
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
-import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 import { Assistant } from "ambientui/assistant"
 import {
   AssistantProvider,
   useAssistant,
 } from "ambientui/assistant-context"
 import { OrbField, OrbHeat } from "ambientui/orb-character"
+
+import { Reveal } from "@/components/reveal"
 
 /**
  * OVERVIEW — the wordmark, and the UI starting right beneath it.
@@ -279,7 +278,11 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
           every surface — spotlight, panel, resting orb — inside the
           window, exactly where a product's own layer lives. */}
       {/* aspect-video: the window keeps its width and sizes itself 16:9,
-          the way a presentation frame is cut */}
+          the way a presentation frame is cut. The shell REVEALS as the
+          reader scrolls to it; the film starts once it is properly in
+          view (the observer's 40%), so the entrance leads and the demo
+          follows */}
+      <Reveal>
       <div className="border-border bg-card relative z-10 flex aspect-video w-full transform-gpu flex-col overflow-hidden rounded-2xl border shadow-2xl">
         <div className="border-border bg-muted/50 relative flex h-9 shrink-0 items-center justify-center border-b">
           <span className="absolute start-4 flex gap-1.5">
@@ -302,6 +305,7 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
           </AssistantProvider>
         </div>
       </div>
+      </Reveal>
     </div>
   )
 }
@@ -310,8 +314,6 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
 
 export function OverviewView() {
   const { setPageIntel, orbState } = useAssistant()
-  const spring = useMotionSpring()
-  const micro = useMotionTransition("micro")
 
   // THE WORDMARK SETS THE PAGE'S MEASURE. The glyphs' real extent inside
   // the 640-unit viewBox depends on the Foundation's configured font, so
@@ -355,12 +357,8 @@ export function OverviewView() {
 
       {/* the wordmark — and the UI starts right beneath it */}
       <section className="relative flex items-center justify-center pt-40 pb-16 sm:pt-48">
-        <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...spring, opacity: micro }}
-          className="relative w-full px-6"
-        >
+        <Reveal className="relative w-full px-6">
+          <h1>
           <span className="sr-only">Ambient UI</span>
           <svg
             viewBox="0 0 640 150"
@@ -409,7 +407,8 @@ export function OverviewView() {
               </foreignObject>
             </g>
           </svg>
-        </motion.h1>
+          </h1>
+        </Reveal>
       </section>
 
       {/* the demo, starting under the word — a desktop window on the
