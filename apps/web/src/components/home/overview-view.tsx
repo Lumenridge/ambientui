@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import { animate, motion, useMotionValue } from "framer-motion"
+import { AnimatePresence, animate, motion, useMotionValue } from "framer-motion"
 
 import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
@@ -285,6 +285,9 @@ type DemoCursorHandle = {
   dragTo: (selector: string, fx: number, fy: number) => Promise<boolean>
   /** drift aside and wait — the "user" is typing, not pointing */
   rest: () => Promise<void>
+  /** show a keystroke on screen (screencast-style keycaps) — the gesture
+      a pointer can't draw: ⌘K, ↩ */
+  keys: (caps: string[]) => Promise<void>
   hide: () => void
 }
 
@@ -301,6 +304,7 @@ function DemoCursorLayer({
   const [visible, setVisible] = React.useState(false)
   const [pressed, setPressed] = React.useState(false)
   const [pulse, setPulse] = React.useState(0)
+  const [caps, setCaps] = React.useState<string[] | null>(null)
   const visibleRef = React.useRef(false)
 
   React.useEffect(() => {
@@ -396,6 +400,12 @@ function DemoCursorLayer({
         const hr = host.getBoundingClientRect()
         await glide(hr.width * 0.82, hr.height * 0.72)
       },
+      async keys(k) {
+        setCaps(k)
+        await sleep(1100)
+        setCaps(null)
+        await sleep(250)
+      },
       hide() {
         setVisible(false)
         visibleRef.current = false
@@ -416,6 +426,29 @@ function DemoCursorLayer({
       aria-hidden
       className="pointer-events-none absolute inset-0 z-50"
     >
+      {/* the keystroke card — the gesture a pointer can't draw, shown the
+          way screencasts show it: keycaps over the lower third */}
+      <AnimatePresence>
+        {caps && (
+          <motion.div
+            key="caps"
+            initial={{ opacity: 0, scale: 0.92, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, transition: micro }}
+            transition={{ ...spring, opacity: micro }}
+            className="absolute inset-x-0 bottom-1/4 flex justify-center gap-1.5"
+          >
+            {caps.map((k) => (
+              <kbd
+                key={k}
+                className="border-border bg-card/85 text-foreground rounded-lg border px-3 py-2 text-base font-medium shadow-lg backdrop-blur-md"
+              >
+                {k}
+              </kbd>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <motion.div style={{ x, y }} className="absolute top-0 left-0">
         {pulse > 0 && (
           <motion.span
@@ -880,7 +913,7 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
     takes what a drag takes. */
 const STAGE_GESTURE_DUR: Record<AssistantMode, number> = {
   line: 3400,
-  spotlight: 700,
+  spotlight: 1400,
   panel: 2600,
   dock: 6200,
   history: 2600,
@@ -916,7 +949,15 @@ function FormsDriver({
   onBeat: (index: number, durMs: number) => void
   onDone: () => void
 }) {
-  const { setMode, setPageChip, setPageIntel, seedPrompt } = useAssistant()
+  const { setMode, setPageChip, setPageIntel, seedPrompt, orbState } =
+    useAssistant()
+
+  // the layer's settling signal, read through a ref so watching it never
+  // restarts the staging (same pattern as the film)
+  const orbStateRef = React.useRef(orbState)
+  React.useEffect(() => {
+    orbStateRef.current = orbState
+  })
 
   React.useEffect(() => {
     setPageChip({
@@ -992,6 +1033,44 @@ function FormsDriver({
         const left = STAGE_GESTURE_DUR.line - (Date.now() - start)
         if (left > 0) await sleep(left)
         if (alive) {
+          staged.current = true
+          onDone()
+        }
+        return
+      }
+      const waitUntil = async (cond: () => boolean, maxMs: number) => {
+        const start = Date.now()
+        while (alive && !cond() && Date.now() - start < maxMs) await sleep(150)
+      }
+      if (mode === "spotlight") {
+        // the spotlight's staging is ITS OWN gesture, told in order: the
+        // ⌘K chord on screen, the palette opening, the question typing
+        // itself, ↩, and the real pipeline answering — then the answered
+        // surface holds as the exhibit
+        onBeat(0, 11500)
+        await cursor.current?.keys(["⌘", "K"])
+        if (!alive) return
+        setMode("spotlight")
+        await sleep(700)
+        if (!alive) return
+        const q = DEMO_SUGGESTIONS[0]!
+        for (let i = 0; i < q.length; i++) {
+          await sleep(38)
+          if (!alive) return
+          seedPrompt(q.slice(0, i + 1))
+        }
+        await sleep(500)
+        if (!alive) return
+        await cursor.current?.keys(["↩"])
+        if (!alive) return
+        seedPrompt(q, true)
+        await waitUntil(() => orbStateRef.current !== "still", 4000)
+        await waitUntil(() => orbStateRef.current === "still", 20000)
+        if (!alive) return
+        onBeat(1, STAGE_GESTURE_DUR.spotlight)
+        await sleep(STAGE_GESTURE_DUR.spotlight)
+        if (alive) {
+          seeded.current = true
           staged.current = true
           onDone()
         }
