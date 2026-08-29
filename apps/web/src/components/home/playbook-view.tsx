@@ -202,14 +202,22 @@ function usePaper() {
     const source = SYSTEM_DOCS.find((d) => d.id === "doc-paper")?.source ?? ""
     const lines = source.split("\n")
     let start = 0
+    let title = "The playbook"
+    const subtitleLines: string[] = []
     if (lines[0]?.startsWith("# ")) {
+      title = lines[0].slice(2)
       start = 1
       while (lines[start] === "") start++
       if (lines[start]?.startsWith("**")) {
-        start++
+        // the bold subtitle block, possibly wrapped over lines
+        while (lines[start] && lines[start] !== "") {
+          subtitleLines.push(lines[start])
+          start++
+        }
         while (lines[start] === "") start++
       }
     }
+    const subtitle = subtitleLines.join(" ").replace(/\*\*/g, "")
     const body = lines.slice(start)
     const chunks: Chunk[] = []
     let current: string[] = []
@@ -233,7 +241,7 @@ function usePaper() {
       if (c.md.startsWith("# Part II:")) c.id = "part-2"
     }
     const words = source.split(/\s+/).length
-    return { chunks, minutes: Math.max(1, Math.round(words / 220)) }
+    return { chunks, title, subtitle, minutes: Math.max(1, Math.round(words / 220)) }
   }, [])
 }
 
@@ -1021,7 +1029,7 @@ function PlaybookNav(props: {
 
 export function PlaybookView() {
   const { setPageIntel } = useAssistant()
-  const { chunks, minutes } = usePaper()
+  const { chunks, title, subtitle, minutes } = usePaper()
 
   React.useEffect(() => {
     setPageIntel({
@@ -1087,13 +1095,10 @@ export function PlaybookView() {
               ambientui / the playbook · {minutes} min read
             </p>
             <h1 className="mt-6 text-6xl font-semibold tracking-tight text-balance sm:text-7xl">
-              Design
-              <br />
-              Architecture
+              {title}
             </h1>
             <p className="text-muted-foreground mt-6 max-w-xl text-lg leading-relaxed">
-              What a design system has to become before an AI can build
-              inside it.
+              {subtitle}
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button onClick={() => scrollTo("part-1")}>Start reading</Button>

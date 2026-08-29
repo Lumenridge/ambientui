@@ -1,6 +1,7 @@
-# Design Architecture
+# Stop AI drift
 
-**What a design system has to become before an AI can build inside it.**
+**How to let AI build your product at full speed without your design
+turning to slop: an architecture you can set up in your own codebase.**
 
 This is a framework for one outcome: AI building interfaces for your
 product at full speed, without the quality of your design falling apart.
@@ -23,8 +24,9 @@ archaeology.
 
 Part I is Ambient UI, the outcome you ship: what an assistant above the
 product is, and why it has to live there. Part II is Design Architecture,
-the framework itself: what you need to have in place, step by step, before
-a generator can build inside your product safely.
+the framework itself, written to be followed: it moves in four steps, each
+stretch ends with what to do in your own codebase, and by the last section
+you have the whole thing installed.
 
 Everything here was built. The repository this file lives in is the
 working proof, and the failures recorded below happened in it.
@@ -215,6 +217,11 @@ radius" is a migration. In an architecture, it is a value. In an inventory,
 a generator has a catalogue to browse and infinite freedom between the
 entries. In an architecture, the space between the entries does not exist.
 
+**In your codebase:** start by measuring the problem. Grep your components
+for hex colors, arbitrary values like `p-[10px]`, and raw animation
+durations. That count is your drift inventory. Every step that follows
+exists to drive it to zero and keep it there.
+
 ## 9. The bounded configuration space
 
 The core of the architecture is that every global design decision is a
@@ -389,6 +396,12 @@ of a mapping is the editor of that mapping. Anything else reopens the gap
 between what the system says and what the system does, which is the exact
 gap the architecture exists to close.
 
+**In your codebase:** name your scales of record (here they are
+Tailwind's), then set up the Foundation and make the six choices: accent,
+gray family, radius, spacing unit, type scaling, motion character. Wire
+every component to resolve from it before you build anything new. This is
+the half of the game this section opened with, and you do it once.
+
 ## 10. The anatomy: what each file is for
 
 The architecture is not an idea in this repository. It is a specific set of
@@ -480,6 +493,12 @@ The known gaps are documented along with what to use instead, so "we needed
 a Textarea and there wasn't one" has a written answer rather than an
 improvised component. A genuinely missing primitive is added through the
 standard tooling, documented, and only then used.
+
+**In your codebase:** close the openings in writing. Put the rules in the
+file your AI loads every session (here that is CLAUDE.md), state the
+reference-is-configuration rule first, and add a gate that fails the build
+on raw values and dead paths. A rule the generator never reads is
+folklore. A rule the build enforces is architecture.
 
 **Novelty accumulating silently.** When work produces something that matches
 no existing pattern, the build stops and a question is asked: should this
@@ -608,6 +627,12 @@ That is the honest meaning of "one source of truth." Not one team's file
 that the others defer to, but one value store that every environment
 projects: the running product, the Figma library, and the documentation are
 three views of the same data, and none of them can drift alone.
+
+**In your codebase:** put your values in one token file, mirror them into
+Figma as variables through a sync that treats code as master, and stop
+hand-copying values forever. Then prove it works: change one alias, run
+the sync, and watch both environments re-theme without a component being
+touched in either.
 
 ## 14. Where it breaks anyway
 
