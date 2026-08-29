@@ -652,13 +652,21 @@ function EmbeddedLayer({
  * the motion roles don't apply (same license as the cursor's choreography).
  */
 function DemoPlayback({
+  beats,
   beat,
   paused,
+  done = false,
   onToggle,
+  onReplay,
 }: {
+  /** this demo's chapters — the film's five, or a section's two */
+  beats: readonly { id: string; label: string }[]
   beat: { index: number; dur: number; key: number } | null
   paused: boolean
+  /** a one-shot staging that has finished: every dot lit, replay offered */
+  done?: boolean
   onToggle: () => void
+  onReplay?: () => void
 }) {
   const fill = useMotionValue(0)
   const ctrl = React.useRef<ReturnType<typeof animate> | null>(null)
@@ -677,9 +685,10 @@ function DemoPlayback({
   return (
     <div className="mt-5 flex items-center justify-center gap-2">
       <div className="border-border/60 bg-card/75 flex h-9 items-center gap-2.5 rounded-full border px-4 backdrop-blur-md">
-        {FILM_BEATS.map((b, i) => {
-          const state =
-            beat === null ? "todo" : i < beat.index ? "done" : i === beat.index ? "now" : "todo"
+        {beats.map((b, i) => {
+          const state = done
+            ? "done"
+            : beat === null ? "todo" : i < beat.index ? "done" : i === beat.index ? "now" : "todo"
           return state === "now" ? (
             <span
               key={b.id}
@@ -705,11 +714,13 @@ function DemoPlayback({
       </div>
       <button
         type="button"
-        aria-label={paused ? "Play the demo" : "Pause the demo"}
-        onClick={onToggle}
+        aria-label={
+          done ? "Replay the demo" : paused ? "Play the demo" : "Pause the demo"
+        }
+        onClick={done ? onReplay : onToggle}
         className="border-border/60 bg-card/75 text-foreground hover:bg-card flex size-9 items-center justify-center rounded-full border backdrop-blur-md"
       >
-        <Icon name={paused ? "play" : "pause"} size={14} />
+        <Icon name={done ? "replay" : paused ? "play" : "pause"} size={14} />
       </button>
     </div>
   )
@@ -841,7 +852,12 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
             whole page runs the same layer: press ⌘K anywhere.
           </HandoverLine>
         ) : (
-          <DemoPlayback beat={beat} paused={paused} onToggle={togglePaused} />
+          <DemoPlayback
+            beats={FILM_BEATS}
+            beat={beat}
+            paused={paused}
+            onToggle={togglePaused}
+          />
         )}
       </Reveal>
     </div>
@@ -856,11 +872,30 @@ function ShellDemo({ widthPct }: { widthPct: number | null }) {
  * whatever form the section currently presents. All public seam — the
  * same setMode/seedPrompt the product itself uses.
  */
+/** a section's two chapters: the seeded exchange, then its own gesture.
+    The gesture chapter's budget varies by form — the dock's real drag
+    takes what a drag takes. */
+const STAGE_GESTURE_DUR: Record<AssistantMode, number> = {
+  line: 900,
+  spotlight: 700,
+  panel: 2600,
+  dock: 6200,
+  history: 2600,
+}
+const stageBeatsFor = (form: (typeof FORMS)[number]) =>
+  [
+    { id: "ask", label: "Ask" },
+    { id: "form", label: form.name },
+  ] as const
+
 function FormsDriver({
   active,
   mode,
   interacted,
   cursor,
+  pausedRef,
+  onBeat,
+  onDone,
 }: {
   active: boolean
   mode: AssistantMode
@@ -868,6 +903,11 @@ function FormsDriver({
   interacted: boolean
   /** the section's hand, drawing the real gesture into its form */
   cursor: React.MutableRefObject<DemoCursorHandle | null>
+  /** the section transport's pause, read between choreography steps */
+  pausedRef: React.MutableRefObject<boolean>
+  /** chapter announcements + the staging's end, for the transport */
+  onBeat: (index: number, durMs: number) => void
+  onDone: () => void
 }) {
   const { setMode, setPageChip, setPageIntel, seedPrompt } = useAssistant()
 
@@ -894,25 +934,49 @@ function FormsDriver({
     if (!active || interacted) return
     let alive = true
     const timers: number[] = []
+    // pause-aware, same as the film: while the transport holds the
+    // staging, time does not pass
     const sleep = (ms: number) =>
-      new Promise<void>((r) => timers.push(window.setTimeout(r, ms)))
+      new Promise<void>((resolve) => {
+        let left = ms
+        const tick = () => {
+          if (!alive) return resolve()
+          if (pausedRef.current) {
+            timers.push(window.setTimeout(tick, 150))
+            return
+          }
+          const chunk = Math.min(left, 120)
+          timers.push(
+            window.setTimeout(() => {
+              left -= chunk
+              if (left <= 0) resolve()
+              else tick()
+            }, chunk)
+          )
+        }
+        tick()
+      })
     const run = async () => {
+      if (staged.current) {
+        // returning to a section already staged: just hold its form
+        setMode(mode)
+        onDone()
+        return
+      }
       if (!seeded.current) {
         // one real exchange, so every form has a transcript to show. The
         // seed drains when an ASKING surface opens, so it runs through
         // the spotlight first and the section's own form takes over.
         seeded.current = true
+        onBeat(0, 2600)
         setMode("spotlight")
         seedPrompt(DEMO_SUGGESTIONS[0]!, true, true)
         await sleep(2600)
         if (!alive) return
       }
-      if (staged.current) {
-        // returning to a section already staged: just hold its form
-        setMode(mode)
-        return
-      }
       staged.current = true
+      onBeat(1, STAGE_GESTURE_DUR[mode])
+      const gestureStart = Date.now()
       // SAME BEHAVIOUR AS THE TOP FILM: the hand draws the real gesture
       // that produces this section's form — the spotlight header's own
       // buttons, and for the dock the actual drag with the zones live.
@@ -938,15 +1002,18 @@ function FormsDriver({
       } else {
         setMode(mode)
       }
-      await sleep(600)
       cursor.current?.hide()
+      // let the gesture chapter's bar complete before the pill reads done
+      const left = STAGE_GESTURE_DUR[mode] - (Date.now() - gestureStart)
+      if (left > 0) await sleep(left)
+      if (alive) onDone()
     }
     void run()
     return () => {
       alive = false
       timers.forEach(clearTimeout)
     }
-  }, [active, interacted, mode, setMode, seedPrompt, cursor])
+  }, [active, interacted, mode, setMode, seedPrompt, cursor, pausedRef, onBeat, onDone])
 
   return <Assistant hotkeys={false} />
 }
@@ -970,6 +1037,35 @@ function FormSection({
   const [near, setNear] = React.useState(false)
   const [interacted, setInteracted] = React.useState(false)
   const cursorRef = React.useRef<DemoCursorHandle | null>(null)
+  // the section's transport: two chapters, then done + replay
+  const [paused, setPaused] = React.useState(false)
+  const pausedRef = React.useRef(false)
+  const [beat, setBeat] = React.useState<{
+    index: number
+    dur: number
+    key: number
+  } | null>(null)
+  const beatKey = React.useRef(0)
+  const [done, setDone] = React.useState(false)
+  const [take, setTake] = React.useState(0)
+  const onBeat = React.useCallback((index: number, dur: number) => {
+    setBeat({ index, dur, key: ++beatKey.current })
+  }, [])
+  const onDone = React.useCallback(() => setDone(true), [])
+  const togglePaused = () => {
+    pausedRef.current = !pausedRef.current
+    setPaused(pausedRef.current)
+  }
+  // replay remounts the section's layer (key) — fresh transcript, fresh
+  // refs, the staging plays again from the top
+  const replay = () => {
+    setDone(false)
+    setBeat(null)
+    setInteracted(false)
+    pausedRef.current = false
+    setPaused(false)
+    setTake((t) => t + 1)
+  }
 
   React.useEffect(() => {
     const el = ref.current
@@ -985,7 +1081,11 @@ function FormSection({
       ([e]) => {
         const v = e!.isIntersecting
         setNear(v)
-        if (!v) setInteracted(false)
+        if (!v) {
+          setInteracted(false)
+          setDone(false)
+          setBeat(null)
+        }
       },
       { rootMargin: "300px 0px" }
     )
@@ -1036,22 +1136,34 @@ function FormSection({
                 <DemoDashboard />
               </div>
               {near && (
-                <AssistantProvider navItems={DEMO_NAV}>
+                <AssistantProvider key={take} navItems={DEMO_NAV}>
                   <FormsDriver
                     active={inView}
                     mode={form.mode}
                     interacted={interacted}
                     cursor={cursorRef}
+                    pausedRef={pausedRef}
+                    onBeat={onBeat}
+                    onDone={onDone}
                   />
                 </AssistantProvider>
               )}
             </DemoWindow>
           </div>
-          {interacted && (
+          {interacted ? (
             <HandoverLine>
               All yours — this is the live component, not a recording. And
               the page itself runs the same layer: press ⌘K anywhere.
             </HandoverLine>
+          ) : (
+            <DemoPlayback
+              beats={stageBeatsFor(form)}
+              beat={beat}
+              paused={paused}
+              done={done}
+              onToggle={togglePaused}
+              onReplay={replay}
+            />
           )}
           </div>
         </Reveal>
