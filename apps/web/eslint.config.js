@@ -34,7 +34,7 @@ export default defineConfig([
      * Everywhere the split is honest, we took it: lib/icon-library.ts,
      * assistant/kit-vocabulary.ts, assistant/compose-response.ts.
      */
-    files: ['src/components/ds/ds-docs.tsx'],
+    files: ['src/components/ds/stories.tsx'],
     rules: {
       'react-refresh/only-export-components': 'off',
     },

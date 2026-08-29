@@ -11,7 +11,8 @@ any single feature's convenience. Authority: [DESIGN.md](../../../DESIGN.md) is
 the constitution; `tokens/tokens.json` is the value store;
 `packages/ui/src/components` (product vocabulary) and
 `packages/ambient/src` (ambient vocabulary) are the only sanctioned
-building blocks; `apps/web/src/components/ds/ds-docs.tsx` is the registry.
+building blocks; `apps/web/src/components/ds/catalog.ts` (prose) and
+`apps/web/src/components/ds/stories.tsx` (demos) are the registry.
 
 Remember what this system is *for*: an AI composes UI from it. Every off-system
 value you let through becomes training data for drift.
@@ -80,7 +81,7 @@ Verify visually at `/ds` in light AND dark.
 
 1. Update `tokens/tokens.json` and its implementations
    (foundation-context / globals.css) together — they must not diverge.
-2. Update the registry (`ds-docs.tsx`) and DESIGN.md (inventory, decision log
+2. Update the registry (`catalog.ts` + `stories.tsx`) and DESIGN.md (inventory, decision log
    with date + why).
 3. Ensure `/ds` reflects it live (new components need an entry, stories, and a
    playground where warranted).

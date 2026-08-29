@@ -9,9 +9,9 @@ import { OrbGlyph } from "ambientui/orb-character"
 import { useFoundation } from "@ambientui/foundation"
 import {
   AMBIENT_COMPONENTS,
-  ControlsHostContext,
   SHADCN_DEFAULT_COMPONENTS,
-} from "@/components/ds/ds-docs"
+} from "@/components/ds/entries"
+import { ControlsHostContext } from "@/components/ds/stories"
 import { ColorsPage } from "@/components/ds/colors-page"
 import { toast } from "sonner"
 

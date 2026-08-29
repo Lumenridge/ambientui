@@ -689,10 +689,10 @@ const GITHUB = "https://github.com/Lumenridge/ambientui"
 /**
  * Resolve a File cell from the anatomy table to a GitHub URL. Directories
  * get tree links, files get blob links; the two rows whose cells are not a
- * clean path (the elided ds-docs path, the gate) carry explicit targets.
+ * clean path (the elided catalog path, the gate) carry explicit targets.
  */
 function anatomyHref(cell: string): string | null {
-  if (cell.includes("…")) return `${GITHUB}/blob/main/apps/web/src/components/ds/ds-docs.tsx`
+  if (cell.includes("…")) return `${GITHUB}/blob/main/apps/web/src/components/ds/catalog.ts`
   if (cell.startsWith("The gate")) return `${GITHUB}/blob/main/package.json`
   const path = cell.match(/`([^`]+)`/)?.[1]
   if (!path) return null

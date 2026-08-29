@@ -5,10 +5,12 @@ import {
   type AmbientCommand,
   type AssistantMode,
 } from "ambientui/assistant-context"
+// prose only — the palette lists components by name, so it must not drag
+// the demo kit (framer-motion, the shader, the whole ambient layer) in
 import {
   AMBIENT_COMPONENTS,
   SHADCN_DEFAULT_COMPONENTS,
-} from "@/components/ds/ds-docs"
+} from "@/components/ds/catalog"
 import { SYSTEM_DOCS } from "@/components/ds/system-docs"
 import { withBase } from "@/base"
 import { dsHref } from "@/ds-route"

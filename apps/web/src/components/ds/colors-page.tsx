@@ -1,7 +1,7 @@
 import { Separator } from "@ambientui/ui/components/separator"
 import { Button } from "@ambientui/ui/components/button"
 
-import { ChoiceControl } from "@/components/ds/ds-docs"
+import { ChoiceControl } from "@/components/ds/stories"
 import {
   ACCENT_STEP_OPTIONS,
   GRAY_STEP_OPTIONS,
