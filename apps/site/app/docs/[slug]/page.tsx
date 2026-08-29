@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import { ArticleJsonLd } from "@/components/json-ld"
 import { Markdown } from "@/components/markdown"
 import { readDocBySlug } from "@/lib/read-doc"
 import { SYSTEM_DOC_META } from "@/lib/system-docs.meta"
@@ -27,6 +28,7 @@ export async function generateMetadata({
   return {
     title: `${doc.meta.name} — ambientui`,
     description: doc.meta.summary,
+    alternates: { canonical: `/docs/${slug}` },
     openGraph: { type: "article", title: doc.meta.name, description: doc.meta.summary },
   }
 }
@@ -42,6 +44,11 @@ export default async function DocPage({
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-20">
+      <ArticleJsonLd
+        headline={doc.meta.name}
+        description={doc.meta.summary}
+        path={`/docs/${slug}`}
+      />
       <Link
         href="/docs"
         className="text-muted-foreground hover:text-foreground font-mono text-xs tracking-widest uppercase"

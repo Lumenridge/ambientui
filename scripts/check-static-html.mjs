@@ -64,6 +64,7 @@ const problems = []
 let indexed = 0
 let excluded = 0
 const pending = []
+const canonicals = new Map()
 
 for (const file of pages) {
   const rel = relative(OUT, file)
@@ -86,17 +87,45 @@ for (const file of pages) {
   indexed++
   const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? ""
   const desc = html.match(/name="description" content="([^"]*)"/)?.[1] ?? ""
+  const canonical = html.match(/rel="canonical" href="([^"]*)"/)?.[1] ?? ""
   const body = prose(html)
+  canonicals.set(rel, canonical)
 
   if (!title) problems.push(`${rel}: no <title>`)
   else if (rel !== "index.html" && title === LAYOUT_TITLE)
     problems.push(`${rel}: wears the LAYOUT's title — it has none of its own`)
   if (!desc) problems.push(`${rel}: no meta description`)
   if (noindex) problems.push(`${rel}: an indexed page marked noindex`)
+  if (!canonical) problems.push(`${rel}: no canonical`)
+  else {
+    // the canonical must name THIS page, not some other one
+    const expect = rel === "index.html" ? "/" : "/" + rel.replace(/\.html$/, "")
+    if (!canonical.endsWith(expect) && !canonical.endsWith(expect + "/"))
+      problems.push(`${rel}: canonical points elsewhere (${canonical})`)
+  }
   if (body.length < MIN_PROSE)
     problems.push(
       `${rel}: only ${body.length} chars of prose (min ${MIN_PROSE}) — content may be client-only`
     )
+}
+
+// the sitemap must list exactly the pages that were built and indexed
+const sitemapPath = resolve(OUT, "sitemap.xml")
+if (!existsSync(sitemapPath)) {
+  problems.push("sitemap.xml is missing from the export")
+} else {
+  const xml = readFileSync(sitemapPath, "utf8")
+  const listed = new Set(
+    [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) =>
+      m[1].replace(/\/$/, "").split("/").slice(3).join("/")
+    )
+  )
+  for (const [rel] of canonicals) {
+    const path = rel === "index.html" ? "" : rel.replace(/\.html$/, "")
+    const key = path.split("/").filter(Boolean).join("/")
+    const inMap = [...listed].some((l) => l.endsWith(key))
+    if (!inMap) problems.push(`${rel}: indexed but absent from sitemap.xml`)
+  }
 }
 
 if (problems.length) {
@@ -105,6 +134,6 @@ if (problems.length) {
   process.exit(1)
 }
 console.log(
-  `✔ static html: ${indexed} indexed pages carry their own title, description and prose; ${excluded} excluded`
+  `✔ static html: ${indexed} indexed pages carry their own title, description, canonical and prose, all present in sitemap.xml; ${excluded} excluded`
 )
 for (const p of pending) console.log(`  · not yet ported — ${p}`)

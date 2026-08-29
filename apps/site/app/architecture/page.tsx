@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { ArchitectureView } from "@/components/home/architecture-view"
+import { ArticleJsonLd } from "@/components/json-ld"
 import { readDocById } from "@/lib/read-doc"
 
 /**
@@ -38,6 +39,7 @@ export function generateMetadata(): Metadata {
   return {
     title: `${title} — ambientui`,
     description: lede.slice(0, 200),
+    alternates: { canonical: "/architecture" },
     openGraph: { type: "article", title, description: lede.slice(0, 200) },
   }
 }
@@ -45,5 +47,15 @@ export function generateMetadata(): Metadata {
 export default function ArchitecturePage() {
   // read on the SERVER, rendered by a client tree that adds the diagrams
   // and the live demos — the export still prerenders the prose to HTML
-  return <ArchitectureView source={readDocById("doc-paper")} />
+  const { title, lede } = paperTitleAndLede()
+  return (
+    <>
+      <ArticleJsonLd
+        headline={title}
+        description={lede.slice(0, 200)}
+        path="/architecture"
+      />
+      <ArchitectureView source={readDocById("doc-paper")} />
+    </>
+  )
 }

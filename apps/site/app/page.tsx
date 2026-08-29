@@ -1,4 +1,5 @@
 import { HomeView } from "@/components/home/home-view"
+import { SiteJsonLd } from "@/components/json-ld"
 
 /**
  * The landing page. Metadata comes from the root layout, which already
@@ -6,5 +7,10 @@ import { HomeView } from "@/components/home/home-view"
  * of one sentence.
  */
 export default function Home() {
-  return <HomeView />
+  return (
+    <>
+      <SiteJsonLd />
+      <HomeView />
+    </>
+  )
 }

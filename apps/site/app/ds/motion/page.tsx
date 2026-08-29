@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Motion — ambientui design system",
   description:
     "A Foundation dimension of the ambientui design system: what it decides, and every value it can take. Change it once and every component follows.",
+  alternates: { canonical: "/ds/motion" },
 }
 
 export default function Page() {

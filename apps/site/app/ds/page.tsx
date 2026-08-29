@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Design system — ambientui",
   description:
     "Fifty documented components across two vocabularies — the ambient layer's own surfaces and the shadcn primitives underneath — plus the governing documents.",
+  alternates: { canonical: "/ds" },
 }
 
 /**

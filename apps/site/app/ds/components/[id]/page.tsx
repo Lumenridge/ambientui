@@ -8,6 +8,7 @@ import {
   type ComponentDoc,
 } from "@/lib/catalog"
 import { ComponentDemos } from "@/components/ds/component-demos"
+import { BreadcrumbJsonLd } from "@/components/json-ld"
 import { installCommandFor } from "@/lib/registry-facts"
 
 const ALL: (ComponentDoc & { vocabulary: "ambient" | "product" })[] = [
@@ -34,6 +35,7 @@ export async function generateMetadata({
   return {
     title: `${c.name} — ambientui components`,
     description: c.description,
+    alternates: { canonical: `/ds/components/${id}` },
     openGraph: { title: c.name, description: c.description },
   }
 }
@@ -76,6 +78,13 @@ export default async function ComponentPage({
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-20">
+      <BreadcrumbJsonLd
+        trail={[
+          { name: "Design system", path: "/ds" },
+          { name: "Components", path: "/ds" },
+          { name: c.name, path: `/ds/components/${c.id}` },
+        ]}
+      />
       <nav className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
         <Link href="/ds" className="hover:text-foreground">
           design system

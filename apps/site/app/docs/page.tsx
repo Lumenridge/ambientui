@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Documents — ambientui",
   description:
     "The files that actually govern this repo: the constitution, the paper, the working rules and the review skills — rendered from their real bytes.",
+  alternates: { canonical: "/docs" },
 }
 
 /**
