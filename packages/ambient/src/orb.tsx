@@ -145,14 +145,29 @@ export function AssistantOrb() {
     return () => ro.disconnect()
   }, [])
 
-  // GUARDED: the layer is prerendered by hosts that build static HTML, and
-  // there is no viewport during that pass. The fallback numbers only decide
-  // where the orb sits for the first frame — the layout effect above
-  // measures the real containing block on mount and corrects it — so a
-  // plausible desktop guess costs nothing and a crash costs the build.
+  /**
+   * THE ORB DOES NOT EXIST UNTIL IT IS MOUNTED.
+   *
+   * Its position is a function of the viewport, which a prerender does not
+   * have. Emitting it server-side with guessed coordinates produced markup
+   * the client immediately disagreed with — a hydration mismatch in every
+   * host that builds static HTML, warning about the one element on the page
+   * whose placement is meaningless until there is a window to place it in.
+   *
+   * `useSyncExternalStore` with a server snapshot is the house pattern for
+   * "is this the client yet" (see useIsMobile): no state, no effect, no
+   * cascading render. Nothing indexable is lost — the orb is a control, not
+   * content.
+   */
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
+
   const viewport =
     typeof window === "undefined"
-      ? { w: 1280, h: 800 }
+      ? { w: 0, h: 0 }
       : { w: window.innerWidth, h: window.innerHeight }
   const w = frame?.w ?? viewport.w
   const h = frame?.h ?? viewport.h
@@ -260,6 +275,8 @@ export function AssistantOrb() {
     }
   }, [quick])
 
+
+  if (!mounted) return null
 
   return (
     <>
