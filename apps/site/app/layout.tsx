@@ -16,6 +16,7 @@ import type { Metadata } from "next"
 
 import { SiteChrome } from "@/components/site-chrome"
 import { SiteProviders } from "@/components/providers/site-providers"
+import { INSTALLABLE_COMPONENTS } from "@/lib/registry-facts"
 import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/site"
 import { THEME_BOOT } from "@/lib/theme-boot"
 
@@ -48,8 +49,10 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     url: SITE_URL,
     title: "Ambient UI — the design system an AI cannot drift from",
-    description:
-      "AI can build screens faster than anyone can check them. This is how to keep your design from falling apart while it does.",
+    // THE COUNT IS DERIVED, like every other count on this site. A literal
+    // here would be a number in prose that nothing keeps honest, which is
+    // the one thing the README says never to do.
+    description: `${INSTALLABLE_COMPONENTS} components for the AI parts of your product: the orb, the spotlight, the panel, the dock, the history. Built from your design system, not their own.`,
     images: [OG_IMAGE],
   },
   // summary_large_image was already declared and no image was ever emitted,
