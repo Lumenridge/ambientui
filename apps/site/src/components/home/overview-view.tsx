@@ -972,8 +972,8 @@ function ShellDemo({ widthPct }: { widthPct: number }) {
             handover line */}
         {interacted ? (
           <HandoverLine>
-            All yours — ask a follow-up, drag the panel, dock it. And this
-            whole page runs the same layer: press ⌘K anywhere.
+            All yours — ask a follow-up, drag the panel, dock it. This is
+            the live component, not a recording.
           </HandoverLine>
         ) : (
           <DemoPlayback
@@ -1422,8 +1422,8 @@ function FormSection({
           </div>
           {interacted ? (
             <HandoverLine>
-              All yours — this is the live component, not a recording. And
-              the page itself runs the same layer: press ⌘K anywhere.
+              All yours — this is the live component, not a recording. Drag
+              it, dock it, ask it something.
             </HandoverLine>
           ) : (
             <DemoPlayback

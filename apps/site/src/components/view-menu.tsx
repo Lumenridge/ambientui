@@ -191,13 +191,15 @@ export function ViewMenu({
             <Icon name={item.icon ?? "document"} size={14} />
             {/* the label growing in IS the state change: width rides the
                 surface spring, the fade rides micro — the enter pair.
-                THE LABEL BOX IS THE WIDEST LABEL, ALWAYS. Every label is
-                stacked in one grid cell and only the live one is visible,
-                so the cell is as wide as the longest name whichever page
-                you are on. Without this the pill changed width per route
-                — 343px on the overview, 378px on the design system — and
-                because it is centred, that moved BOTH edges: every icon
-                in the chrome slid sideways on every navigation. */}
+                THE LABEL HUGS ITS TEXT. Sizing the box to the longest
+                name held the pill at one width across routes, which killed
+                the drift when navigating — and left "Overview" sitting in
+                a box cut for "Design system", visibly loose. Hugging is
+                the call: the pill is 343px on the overview and 378px on
+                the design system again, and since it is centred that
+                movement is symmetrical and rides the spring rather than
+                snapping. If it needs to be still AND tight later, the fix
+                is anchoring the pill's left edge, not padding the text. */}
             <AnimatePresence initial={false}>
               {active && (
                 <motion.span
@@ -205,20 +207,9 @@ export function ViewMenu({
                   animate={{ width: "auto", opacity: 1 }}
                   exit={{ width: 0, opacity: 0, transition: micro }}
                   transition={{ ...spring, opacity: micro }}
-                  className="grid overflow-hidden text-sm font-medium whitespace-nowrap"
+                  className="overflow-hidden text-sm font-medium whitespace-nowrap"
                 >
-                  {items.map((other) => (
-                    <span
-                      key={other.id}
-                      aria-hidden={other.id !== item.id}
-                      className={cn(
-                        "col-start-1 row-start-1",
-                        other.id === item.id ? "" : "invisible"
-                      )}
-                    >
-                      {other.label}
-                    </span>
-                  ))}
+                  {item.label}
                 </motion.span>
               )}
             </AnimatePresence>
