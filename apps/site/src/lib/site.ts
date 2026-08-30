@@ -52,3 +52,53 @@ export const REPO_URL = "https://github.com/Lumenridge/ambientui"
  * worth reading at all.
  */
 export const docUrl = (path: string) => `${REPO_URL}/blob/main/${path}`
+
+/**
+ * A PAGE'S METADATA, WITH THE CARD FIELDS ATTACHED.
+ *
+ * Next does NOT deep-merge `openGraph`: a page that sets a title and
+ * description but no openGraph block inherits the layout's card wholesale,
+ * so a link to /ds/motion shared anywhere showed the site's name and the
+ * site's pitch instead of "Motion" and what motion roles are. Seven pages
+ * were in that state and nothing caught it, because each one's <title> and
+ * meta description were correct — only the card was generic, and nothing
+ * in this repo renders a card.
+ *
+ * So the card is not something a page remembers to add. Describe the page
+ * once and the OG and Twitter fields are derived from that description,
+ * which is the same reason `DeclareContext` exists on the layer side: a
+ * rule each page must re-implement is a rule that decays.
+ */
+export function pageMetadata({
+  title,
+  description,
+  canonical,
+  type = "website",
+}: {
+  /** The full <title>, used as the card's title too. */
+  title: string
+  description: string
+  /** Site-relative path, e.g. "/ds/motion". */
+  canonical: string
+  type?: "website" | "article"
+}) {
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type,
+      siteName: SITE_NAME,
+      url: `${SITE_URL}${canonical}`,
+      title,
+      description,
+      images: [OG_IMAGE],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title,
+      description,
+      images: [OG_IMAGE.url],
+    },
+  }
+}

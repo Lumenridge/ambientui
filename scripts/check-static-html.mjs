@@ -41,6 +41,8 @@ function prose(html) {
 const LAYOUT_TITLE = "ambientui — an AI layer that inherits your design system"
 /** Below this, a page is a shell with a heading, not a rendered document. */
 const MIN_PROSE = 400
+/** the shortest card text that can still explain a page to a stranger */
+const MIN_CARD_DESC = 60
 
 /**
  * Routes not yet ported, with the phase that ports them. Every entry is a
@@ -62,6 +64,7 @@ const pages = []
 
 const problems = []
 const ogImages = new Set()
+const ogDescs = new Map()
 
 /**
  * The site's own origin+base, READ FROM THE BUILD rather than restated here.
@@ -137,6 +140,42 @@ for (const file of pages) {
    * against the ORIGIN instead — silently dropping "/ambientui" and
    * pointing every card at a 404 that still looks fine in the HTML.
    */
+  /**
+   * THE CARD MUST DESCRIBE THIS PAGE, NOT THE SITE.
+   *
+   * Next replaces `openGraph` rather than deep-merging it, so a page that
+   * sets only a title and a description inherits the LAYOUT's card whole.
+   * Seven pages shipped that way — every <title> and meta description
+   * correct, every share card showing the site's name and the site's pitch.
+   * The existing title assertion could not see it, because the fields it
+   * checks were right; it is the card that was generic.
+   */
+  const ogTitle = html.match(/property="og:title" content="([^"]*)"/)?.[1] ?? ""
+  const ogDesc =
+    html.match(/property="og:description" content="([^"]*)"/)?.[1] ?? ""
+  if (!ogTitle) problems.push(`${rel}: no og:title`)
+  else if (rel !== "index.html" && ogTitle === LAYOUT_TITLE)
+    problems.push(`${rel}: card wears the LAYOUT's og:title — use pageMetadata()`)
+  if (!ogDesc) problems.push(`${rel}: no og:description`)
+  else {
+    /**
+     * A DESCRIPTION HAS TO DESCRIBE. Eleven component pages shipped card
+     * text under 55 characters ("Single-line text entry.") — correct as a
+     * vocabulary line sitting beside the component, and an explanation of
+     * nothing in a search result, where it is all a stranger gets. The
+     * floor is well under what the pages now carry; it exists to catch a
+     * new page written thin, not to police the ones that are fine.
+     */
+    if (ogDesc.length < MIN_CARD_DESC)
+      problems.push(
+        `${rel}: og:description is ${ogDesc.length} chars (min ${MIN_CARD_DESC}) — too thin to explain the page`
+      )
+    const seen = ogDescs.get(ogDesc)
+    if (seen)
+      problems.push(`${rel}: og:description is identical to ${seen}'s`)
+    else ogDescs.set(ogDesc, rel)
+  }
+
   const card = /name="twitter:card"/.test(html)
   const ogImage = html.match(/property="og:image" content="([^"]*)"/)?.[1] ?? ""
   const twImage = html.match(/name="twitter:image" content="([^"]*)"/)?.[1] ?? ""
