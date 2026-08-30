@@ -46,12 +46,9 @@ function Point({
 
 export function DesignArchitectureSection({
   onRead,
-  onFoundation,
 }: {
   /** Take the reader to the argument this section summarises. */
   onRead: () => void
-  /** Take them to the Foundation itself, which is /ds. */
-  onFoundation: () => void
 }) {
   return (
     <div>
@@ -114,33 +111,6 @@ export function DesignArchitectureSection({
           both sides at once. The point is not tidiness. It is that design
           and engineering end up naming the same things the same way.
         </Point>
-      </div>
-
-      {/* THE ONE PART OF THIS PAGE YOU CAN GO AND DO. Everything above is
-          an argument; the Foundation is a live page where changing a value
-          re-draws the site around you. A section about configuration that
-          does not hand you the configuration is describing a demo it is
-          standing next to. */}
-      <div className="border-border mx-auto mt-20 max-w-2xl border-t px-2 pt-16 text-center sm:pt-20">
-        <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-          Make it yours
-        </p>
-        <h3 className="mt-6 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-          Change the Foundation and watch everything follow
-        </h3>
-        <p className="text-muted-foreground mx-auto mt-6 max-w-xl text-base leading-relaxed">
-          The Foundation on this site is live, not a screenshot of one. Pick
-          a different accent, a different grey, a wider corner or a tighter
-          spacing step, and every component on every page redraws while you
-          watch — the assistant included, since it has no colours of its own
-          to keep. Save, and it is your theme. That is the whole
-          customisation story: not a settings screen bolted on afterwards,
-          but the same short menu the product was built from.
-        </p>
-        <Button variant="outline" size="sm" className="mt-8" onClick={onFoundation}>
-          Open the Foundation
-          <Icon name="chevron-right" size={15} />
-        </Button>
       </div>
     </div>
   )

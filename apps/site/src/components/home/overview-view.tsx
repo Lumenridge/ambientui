@@ -14,11 +14,13 @@ import {
   useAssistant,
   type AssistantMode,
 } from "ambientui/assistant-context"
+import { ORB_STATES, type OrbState } from "ambientui/kit-vocabulary"
 import { OrbField, OrbHeat } from "ambientui/orb-character"
 
 import { useRouter } from "next/navigation"
 
 import { DesignArchitectureSection } from "@/components/home/design-architecture-section"
+import { MakeItYoursSection } from "@/components/home/make-it-yours-section"
 import { InstallSection } from "@/components/home/install-section"
 import { Reveal } from "@/components/reveal"
 import { SeekBar } from "@/components/seek-bar"
@@ -1442,11 +1444,54 @@ function FormSection({
   )
 }
 
-/* ------------------------------- the page ------------------------------- *//* ------------------------------- the page ------------------------------- */
+/* ------------------------------- the page ------------------------------- */
+
+/**
+ * THE WORDMARK'S HEAT RUNS ON ITS OWN CLOCK.
+ *
+ * It used to read the layer's real `orbState`, which meant the identity at
+ * identity scale sat in `still` for the entire visit unless the visitor
+ * happened to talk to the page's assistant — and the page's assistant is
+ * not the one the demos use, so most visitors never moved it at all. A mark
+ * that only animates when nobody is looking at it is a static mark.
+ *
+ * So it cycles the four states itself, forever, disconnected from any
+ * assistant. This is a MARK, not a status readout: the ground field below
+ * still tracks the real state, so nothing that was actually reporting has
+ * stopped reporting.
+ *
+ * The dwell is per state rather than one interval, because the states are
+ * not the same length of idea — `thinking` needs time to read as churn,
+ * `answer` is a release and reads better short.
+ */
+const HEAT_DWELL_MS: Record<OrbState, number> = {
+  still: 3600,
+  listening: 2400,
+  thinking: 4200,
+  answer: 2800,
+}
+
+function useLoopingOrbState(): OrbState {
+  const [i, setI] = React.useState(0)
+  const state = ORB_STATES[i % ORB_STATES.length]
+
+  React.useEffect(() => {
+    // Chained timeouts, not an interval: each state names its own dwell,
+    // and a timeout that is re-armed per state cannot drift out of step
+    // with the one being displayed.
+    const t = window.setTimeout(() => {
+      setI((n) => (n + 1) % ORB_STATES.length)
+    }, HEAT_DWELL_MS[state])
+    return () => window.clearTimeout(t)
+  }, [state])
+
+  return state
+}
 
 export function OverviewView() {
   const router = useRouter()
   const { setPageIntel, orbState } = useAssistant()
+  const heatState = useLoopingOrbState()
 
   // THE WINDOWS TAKE THE WORDMARK'S MEASURE; the written content reads at
   // max-w-5xl. The glyphs' extent depends on the configured font, so it
@@ -1552,7 +1597,9 @@ export function OverviewView() {
                   cool margins fall outside the glyphs */}
               <foreignObject x="-96" y="-22" width="832" height="195">
                 <OrbHeat
-                  state={orbState}
+                  // its OWN loop, not the layer's state — see
+                  // useLoopingOrbState. The mark animates for everyone.
+                  state={heatState}
                   width={832}
                   height={195}
                   // a NAME, not a path: OrbHeat resolves it against the
@@ -1639,18 +1686,28 @@ export function OverviewView() {
         <FormSection key={f.name} form={f} widthPct={glyphPct} />
       ))}
 
+      {/* THE INVITATION COMES BEFORE THE ARGUMENT. A visitor who has just
+          watched the layer work is one click from re-theming it; making them
+          read the case for configuration first spends that moment. */}
+      <section className="relative mx-auto w-full max-w-5xl px-2 pt-20 sm:px-6 sm:pt-32">
+        <Reveal>
+          <MakeItYoursSection
+            onFoundation={() => {
+              router.push("/ds")
+            }}
+          />
+        </Reveal>
+      </section>
+
       {/* WHAT IT IS BUILT ON, BEFORE WHAT TO TYPE. The forms above show the
           layer; the commands below hand it over. Between them belongs the
           thing that makes the layer possible, or a visitor installs an
           assistant without ever learning why it matches their product. */}
-      <section className="relative mx-auto w-full max-w-5xl px-2 pt-20 sm:px-6 sm:pt-32">
+      <section className="relative mx-auto w-full max-w-5xl px-2 sm:px-6">
         <Reveal>
           <DesignArchitectureSection
             onRead={() => {
               router.push("/architecture")
-            }}
-            onFoundation={() => {
-              router.push("/ds")
             }}
           />
         </Reveal>
@@ -1700,9 +1757,6 @@ export function OverviewView() {
           <span className="ms-auto">MIT licensed</span>
         </div>
       </footer>
-
-      {/* the resting orb owns the viewport's bottom-center */}
-      <div className="pb-24" />
     </div>
   )
 }
