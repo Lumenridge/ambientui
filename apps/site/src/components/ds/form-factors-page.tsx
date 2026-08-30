@@ -1,17 +1,15 @@
 "use client"
 
-import { Button } from "@ambientui/ui/components/button"
+import { type AssistantMode } from "ambientui/assistant-context"
 
-import {
-  useAssistant,
-  type AssistantMode,
-} from "ambientui/assistant-context"
+import { FormFactorDemo } from "@/components/ds/form-factor-demo"
 
 /**
  * The Form factors page: the ambient layer's surface model — four modes of
  * one assistant, what each is for, and how you move between them. This is
- * the contract (DESIGN.md §8), not a component gallery: the surfaces are
- * global, so the page drives the real one rather than rendering copies.
+ * the contract (DESIGN.md §8), not a component gallery. Each form is shown
+ * by a REAL assistant held in that form inside its own frame — see
+ * FormFactorDemo for why one per section rather than one for the page.
  */
 
 const FORMS: {
@@ -80,8 +78,6 @@ const FORMS: {
 ]
 
 export function FormFactorsPage() {
-  const { mode, setMode } = useAssistant()
-
   return (
     <div className="mx-auto max-w-3xl pb-16">
       <h1 className="text-xl font-semibold">Form factors</h1>
@@ -108,19 +104,6 @@ export function FormFactorsPage() {
                       {f.line}
                     </span>
                   </div>
-                  {f.name === "Quick ask" ? (
-                    <span className="text-muted-foreground shrink-0 text-xs">
-                      click the orb
-                    </span>
-                  ) : (
-                    <Button
-                      size="xs"
-                      variant={mode === f.mode ? "secondary" : "outline"}
-                      onClick={() => setMode(f.mode)}
-                    >
-                      {mode === f.mode ? "Current" : "Switch"}
-                    </Button>
-                  )}
                 </div>
                 <p className="text-muted-foreground mt-1.5 text-sm">
                   {f.purpose}
@@ -133,13 +116,25 @@ export function FormFactorsPage() {
                     <span className="font-medium">Leaves by</span> — {f.leaves}
                   </div>
                 </div>
+                {/* THE FORM ITSELF, under the words that describe it.
+                    Quick ask is skipped because it is not a mode: it and
+                    Orb are BOTH `line` — the pill is the orb's own opening
+                    state, reached by clicking it, which is exactly what
+                    the Orb frame above already offers. A second identical
+                    frame would claim there are six surfaces when the
+                    contract says five. */}
+                {f.name !== "Quick ask" && (
+                  <div className="mt-4">
+                    <FormFactorDemo mode={f.mode} label={f.name} />
+                  </div>
+                )}
               </div>
             ))}
           </div>
           <p className="text-muted-foreground mt-2 text-xs">
-            Switching here drives the real assistant — these are global
-            surfaces, so the page shows you the actual thing rather than a
-            picture of it.
+            Each frame holds a real assistant, in that form, that you can
+            type into — not a picture of one. They are scoped to their
+            frames, which is why five can sit on one page at once.
           </p>
         </section>
 
