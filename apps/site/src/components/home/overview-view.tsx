@@ -1299,7 +1299,7 @@ function FormSection({
   }, [])
 
   return (
-    <section className="relative px-6 pt-16 sm:pt-24">
+    <section className="relative px-2 pt-16 sm:px-6 sm:pt-24">
       <div ref={ref}>
         {/* written content reads at the page's text measure */}
         <div className="mx-auto w-full max-w-5xl">
@@ -1445,7 +1445,7 @@ export function OverviewView() {
       {/* the wordmark — with the demo window rising INTO it: the name
           passes behind the product, which is the thesis drawn */}
       <section className="relative flex items-center justify-center pt-40 sm:pt-48">
-        <Reveal className="relative w-full px-6">
+        <Reveal className="relative w-full px-2 sm:px-6">
           <h1>
           <span className="sr-only">Ambient UI</span>
           <svg
@@ -1506,13 +1506,15 @@ export function OverviewView() {
           wordmark's height is width-proportional (viewBox 640×150): -8.5%
           of width reaches ~2.9%w above the baseline (y=114/150) at every
           size, where a fixed step would swallow the name on small screens */}
-      {/* px-6 matches the wordmark's own gutters — one width, one family */}
-      <section className="relative z-10 px-6 pb-10" style={{ marginTop: "-8.5%" }}>
+      {/* THE WINDOW SHARES THE WORDMARK'S GUTTER — one width, one family.
+          8px on a phone, 24px from sm up: the pair must change together or
+          the window stops lining up with the name it rises into. */}
+      <section className="relative z-10 px-2 pb-10 sm:px-6" style={{ marginTop: "-8.5%" }}>
         <ShellDemo widthPct={glyphPct} />
       </section>
 
       {/* the statement: what Ambient UI is, and the four principles */}
-      <section className="relative mx-auto w-full max-w-5xl px-6 pt-20 pb-16 sm:pt-32 sm:pb-24">
+      <section className="relative mx-auto w-full max-w-5xl px-2 pt-20 pb-16 sm:px-6 sm:pt-32 sm:pb-24">
         <Reveal>
           <p className="text-muted-foreground mx-auto max-w-4xl text-center text-xl leading-snug font-medium text-balance sm:text-3xl md:text-4xl">
             Ambient UI is a decluttering of enterprise software — the system
@@ -1550,7 +1552,7 @@ export function OverviewView() {
 
       {/* the forms: one presence, many shapes — one section per form,
           each window at the wordmark's width, each layer real */}
-      <section className="relative px-6 pt-4 sm:pt-8">
+      <section className="relative px-2 pt-4 sm:px-6 sm:pt-8">
         <div className="mx-auto w-full max-w-5xl">
           <Reveal className="text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -1573,7 +1575,7 @@ export function OverviewView() {
           layer; the commands below hand it over. Between them belongs the
           thing that makes the layer possible, or a visitor installs an
           assistant without ever learning why it matches their product. */}
-      <section className="relative mx-auto w-full max-w-5xl px-6 pt-20 sm:pt-32">
+      <section className="relative mx-auto w-full max-w-5xl px-2 pt-20 sm:px-6 sm:pt-32">
         <Reveal>
           <DesignArchitectureSection
             onRead={() => {
@@ -1587,7 +1589,7 @@ export function OverviewView() {
           a visitor stops reading and starts typing. It used to end on two
           spacer divs — the argument reached its conclusion and then offered
           the reader nothing to do with it. */}
-      <section className="relative mx-auto w-full max-w-5xl px-6 pt-20 sm:pt-32">
+      <section className="relative mx-auto w-full max-w-5xl px-2 pt-20 sm:px-6 sm:pt-32">
         <Reveal>
           <InstallSection
             onDocs={() => {
@@ -1597,7 +1599,7 @@ export function OverviewView() {
         </Reveal>
       </section>
 
-      <footer className="relative mx-auto w-full max-w-5xl px-6 pt-20 pb-32">
+      <footer className="relative mx-auto w-full max-w-5xl px-2 pt-20 pb-32 sm:px-6">
         <div className="border-border text-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-8 text-sm">
           <span className="text-foreground font-medium">ambientui</span>
           <button
