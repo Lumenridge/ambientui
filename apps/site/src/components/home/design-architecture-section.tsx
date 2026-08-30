@@ -104,13 +104,12 @@ export function DesignArchitectureSection({
         Design architecture
       </h2>
       <p className="text-muted-foreground mt-6 max-w-2xl leading-relaxed">
-        The ambient layer is not the foundation of this repo. It is what the
-        foundation was built to prove. Underneath it is{" "}
+        The assistant is not the point. It is the proof. Underneath it is{" "}
         <span className="text-foreground font-medium">design architecture</span>
-        , the framework the Lumenridge team develops here and works in: a
-        design system tells you what exists, and an architecture tells you
-        what happens when something changes. Every component you can install
-        below is downstream of it.
+        , the framework the Lumenridge team builds with: a design system is a
+        list of what you have, and an architecture decides what happens when
+        one of those things changes. Everything you can install below came
+        out of it.
       </p>
 
       <Button variant="outline" className="mt-6" onClick={onRead}>
@@ -121,34 +120,34 @@ export function DesignArchitectureSection({
       <div className="mt-14 grid gap-10 md:grid-cols-2">
         <Point
           label="The change"
-          title="The Foundation is a configuration space, not a stylesheet"
+          title="You set values, you do not style components"
         >
-          A reference is answered by selecting values, never by styling a
-          component toward it. Accent, gray family, radius window, spacing
-          grid, type scale, icon library, motion character: pick, save, and
-          every component in the product restyles, because each dimension
-          resolves from a variable rather than being written into the parts.
-          The space is deliberately small. What it cannot express is not a
-          gap, it is the point.
+          Someone shows you a product and says “make it feel like that”.
+          The usual answer is to go and adjust components until it looks
+          close. Here you pick from a short menu instead: an accent colour,
+          a grey, a corner radius, a spacing step, a type scale, an icon
+          set, how motion feels. Save, and everything in the product
+          follows. The menu is short on purpose. If it cannot express
+          something, that is the system doing its job.
         </Point>
 
         <Point
           label="The engine"
-          title="Figma mirrors the code, and only in that direction"
+          title="Figma copies the code, never the other way"
         >
-          The sync writes variables and never components, so the file a
-          designer opens is themed by the same values the app is. The
-          Foundation collection holds no numbers at all, only aliases into
-          the primitives the config selected, which is what makes one hue
-          change re-theme every Figma page exactly as it re-themes the app.
-          Code is master; the sync is one-way and safe to re-run.
+          Design files and code normally drift apart the day they are
+          made. Here they read from one set of values. The sync writes
+          variables into Figma and never draws components, so a designer
+          opens a file already wearing the same colours and spacing the app
+          uses. Change one value in code, run the sync, and both sides
+          move. It only ever goes that way, and running it twice is safe.
         </Point>
       </div>
 
       <div className="border-border mt-12 rounded-xl border p-8">
         <SyncSchematic />
         <p className="text-muted-foreground mt-6 text-center text-sm">
-          One store of values, two projections. Nothing writes back.
+          One set of values. Two places it shows up. Nothing comes back the other way.
         </p>
       </div>
     </div>

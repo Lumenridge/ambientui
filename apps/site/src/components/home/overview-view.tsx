@@ -62,31 +62,31 @@ const VERSIONS = [
     simply explainable lines, no abstractions to decode */
 const PRINCIPLES: { word: string; body: string; link?: boolean }[] = [
   {
-    word: "Takes no space",
-    body: "Enterprise screens are full. The AI is a layer above the app — no chat tab, no side panel, nothing carved out of the record. It opens when you call it and leaves when it is done.",
+    word: "It takes no space",
+    body: "Your screens are already full. There is no chat tab to add and no column to give up. The assistant opens when you ask for it and goes away when you are done.",
     link: true,
   },
   {
-    word: "Knows your context",
-    body: "Every page tells the layer what you are looking at. Ask about \u201cthis invoice\u201d and it knows which one — you never paste, describe, or re-explain your screen.",
+    word: "It knows where you are",
+    body: "Each page tells the assistant what you are looking at. Ask about \u201cthis invoice\u201d and it knows which one. You never paste a screenshot or explain your screen first.",
   },
   {
-    word: "Answers with real UI",
-    body: "Not a wall of chat. A diff you can apply, a command with its result, references into your own data — real components from your product, shown in place.",
+    word: "It answers with real things",
+    body: "Not a wall of text. A code change you can apply. A command with its output. Links into your own data. Made from the same components as the rest of your product.",
   },
   {
-    word: "Wears your design system",
-    body: "The layer has no colors, fonts, or motion of its own. It uses yours. Change your theme once and the AI changes with it.",
+    word: "It looks like your product",
+    body: "The assistant has no colours, fonts or motion of its own. It borrows yours. Change your theme and it changes with it.",
   },
 ]
 
 /** the layer's forms, described in the paper's own words (§2) */
 const FORMS: { mode: AssistantMode; name: string; desc: string }[] = [
-  { mode: "line", name: "Orb", desc: "The resting state. Present, watching nothing, costing nothing — a small character docked to the edge of the page." },
-  { mode: "spotlight", name: "Spotlight", desc: "One input that searches the product and asks the model — the command palette, rebuilt for an AI-native product." },
-  { mode: "panel", name: "Panel", desc: "A floating conversation that persists while you work. Answers accumulate; the transcript is the point." },
-  { mode: "dock", name: "Dock", desc: "The panel anchored full-height to an edge. The page reflows around it instead of being covered." },
-  { mode: "history", name: "History", desc: "The record of everything asked here — full screen but translucent, because the work underneath is the reason you opened it." },
+  { mode: "line", name: "Orb", desc: "Resting. A small character parked at the edge of the page, doing nothing until you call it." },
+  { mode: "spotlight", name: "Spotlight", desc: "One box that searches your product and asks the assistant. It is \u2318K, rebuilt for a product that has AI in it." },
+  { mode: "panel", name: "Panel", desc: "A conversation that stays open while you work. Answers stack up, so you can look back at what you asked." },
+  { mode: "dock", name: "Dock", desc: "The panel pinned to one side, full height. Your page makes room for it instead of hiding behind it." },
+  { mode: "history", name: "History", desc: "Everything you have asked here. It fills the screen but stays see-through, because the work underneath is why you opened it." },
 ]
 
 const DEMO_SUGGESTIONS = [
@@ -1578,9 +1578,10 @@ export function OverviewView() {
       <section className="relative mx-auto w-full max-w-5xl px-2 pt-20 pb-16 sm:px-6 sm:pt-32 sm:pb-24">
         <Reveal>
           <p className="text-muted-foreground mx-auto max-w-4xl text-center text-xl leading-snug font-medium text-balance sm:text-3xl md:text-4xl">
-            Ambient UI is a decluttering of enterprise software — the system
-            of record keeps every pixel of its screen, and the AI works
-            above the data, alongside your SaaS, not inside it.
+            Most products add AI by finding a spot for it: a chat tab, a
+            sparkle button, a panel in the corner. Ambient UI does the
+            opposite. The assistant sits above your product instead of
+            inside it, so your screens stay yours.
           </p>
         </Reveal>
         <div className="mt-14 grid gap-x-16 gap-y-12 sm:mt-28 sm:gap-y-16 sm:grid-cols-2">
@@ -1617,13 +1618,13 @@ export function OverviewView() {
         <div className="mx-auto w-full max-w-5xl">
           <Reveal className="text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              One presence, many forms
+              One assistant, five shapes
             </h2>
             <p className="text-muted-foreground mx-auto mt-6 max-w-2xl leading-relaxed">
-              A presence that is always available cannot have one fixed
-              size. The layer changes shape instead of changing identity —
-              the same assistant, the same context, a different geometry
-              for how much of your attention the moment deserves.
+              Sometimes you want to ask one quick question. Sometimes you
+              want to work alongside it for an hour. It is the same
+              assistant either way. It just changes shape to match how
+              much room the moment is worth.
             </p>
           </Reveal>
         </div>

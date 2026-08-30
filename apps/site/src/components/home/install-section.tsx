@@ -59,20 +59,20 @@ const TRACKS: {
   {
     id: "components",
     title: "Take the components",
-    lede: "Things that render, installed as source you own and can edit.",
+    lede: "The parts you can see. They land in your repo as code you own.",
     doors: [
       {
         id: "layer",
         label: "The whole ambient layer",
         blurb:
-          "Every surface this page just demonstrated — the orb, the spotlight, the panel, the dock, the history — with the context contract and the response kit behind them.",
+          "Everything this page just showed you: the orb, the spotlight, the panel, the dock and the history, plus the wiring that lets a page tell it where you are.",
         command: "npx shadcn add @ambientui/ambient-layer",
         icon: "sparkles",
       },
       {
         id: "component",
         label: "One component",
-        blurb: `Take the reasoning panel, the tool timeline, the diff — ${INSTALLABLE_COMPONENTS} of them, each with its behavior and its boundaries.`,
+        blurb: `Just the piece you need — the reasoning panel, the tool timeline, the diff. ${INSTALLABLE_COMPONENTS} to choose from, each documented with what it is and is not for.`,
         command: "npx shadcn add @ambientui/reasoning-panel",
         icon: "layers",
       },
@@ -81,13 +81,13 @@ const TRACKS: {
   {
     id: "architecture",
     title: "Adopt the architecture",
-    lede: "The thing that decides what rendering looks like.",
+    lede: "The part that decides how everything looks.",
     doors: [
       {
         id: "foundation",
         label: "A design system to build inside",
         blurb:
-          "The Foundation: the accent, the gray, the radius window, the spacing grid, the motion character — a bounded configuration space, not a stylesheet. It installs without an assistant attached.",
+          "The Foundation: the short menu of values everything else reads from — colour, grey, corners, spacing, type, motion. You can take this on its own, with no assistant attached.",
         command: "npx shadcn add @ambientui/foundation",
         icon: "sliders",
       },
@@ -95,7 +95,7 @@ const TRACKS: {
         id: "governance",
         label: "The rules your AI works under",
         blurb:
-          "The constitution's hard rules and three review roles — design system, product design, copy. The part nobody else ships.",
+          "The rules your AI reads before it writes anything, and three reviewer roles it can take on. This is the part nobody else ships.",
         command: "npx shadcn add @ambientui/governance",
         icon: "document",
       },
@@ -114,9 +114,10 @@ export function InstallSection({ onDocs }: { onDocs?: () => void }) {
           The whole layer, in one command
         </h2>
         <p className="text-muted-foreground max-w-xl text-base leading-relaxed">
-          It installs as source you own and can edit — the shadcn model, because
-          a system you cannot change is not yours. Built on shadcn/ui and
-          Tailwind CSS, so it composes with what you already have.
+          The code lands in your repo, not in node_modules. You can open it
+          and change it, because a system you cannot change is not really
+          yours. It is built on shadcn/ui and Tailwind CSS, so it fits with
+          what you already have.
         </p>
       </div>
 
