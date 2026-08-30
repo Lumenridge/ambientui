@@ -36,8 +36,8 @@ function Point({
       <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
         {label}
       </p>
-      <h3 className="mt-3 text-lg font-semibold tracking-tight">{title}</h3>
-      <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+      <h3 className="mt-2.5 text-base font-semibold tracking-tight">{title}</h3>
+      <p className="text-muted-foreground mt-2 max-w-prose text-sm leading-relaxed">
         {children}
       </p>
     </div>
@@ -55,10 +55,10 @@ export function DesignArchitectureSection({
       <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
         What it is built on
       </p>
-      <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+      <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
         Design architecture
       </h2>
-      <p className="text-muted-foreground mt-6 max-w-2xl leading-relaxed">
+      <p className="text-muted-foreground mt-4 max-w-xl text-sm leading-relaxed">
         The assistant is not the point. It is the proof. Underneath it is{" "}
         <span className="text-foreground font-medium">design architecture</span>
         , the framework the Lumenridge team builds with: a design system is a
@@ -67,12 +67,12 @@ export function DesignArchitectureSection({
         out of it.
       </p>
 
-      <Button variant="outline" className="mt-6" onClick={onRead}>
+      <Button variant="outline" size="sm" className="mt-5" onClick={onRead}>
         Read the argument in full
         <Icon name="chevron-right" size={15} />
       </Button>
 
-      <div className="mt-14 grid gap-10 md:grid-cols-2">
+      <div className="mt-12 grid gap-10 md:grid-cols-2">
         <Point
           label="The change"
           title="You set values, you do not style components"
