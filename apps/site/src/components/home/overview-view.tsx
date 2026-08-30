@@ -1613,7 +1613,12 @@ export function OverviewView() {
       </section>
 
       <footer className="relative mx-auto w-full max-w-5xl px-2 pt-20 pb-32 sm:px-6">
-        <div className="border-border text-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-8 text-sm">
+        {/* A COLUMN ON A PHONE, A ROW FROM sm UP. Wrapping alone put two
+            links on one line and one on the next, which reads as a broken
+            row rather than as a list — and the licence, pushed right by
+            ms-auto, landed under a link it has nothing to do with. Stacked,
+            each item is its own line and its own tap target. */}
+        <div className="border-border text-muted-foreground flex flex-col items-start gap-x-6 gap-y-3 border-t pt-8 text-sm sm:flex-row sm:flex-wrap sm:items-center">
           <span className="text-foreground font-medium">ambientui</span>
           <button
             type="button"
@@ -1639,7 +1644,9 @@ export function OverviewView() {
           >
             GitHub
           </a>
-          <span className="ms-auto">MIT licensed</span>
+          {/* the push-right is the ROW's device: in a column, ms-auto
+              shoves the licence to the far edge, away from the stack */}
+          <span className="sm:ms-auto">MIT licensed</span>
         </div>
       </footer>
     </div>

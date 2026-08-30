@@ -1,6 +1,6 @@
 # ambientui
 
-**An AI assistant that lives above your product — and the design system that
+**An AI assistant that lives above your product, and the design system that
 lets it build inside your rules.**
 
 Built on [shadcn/ui](https://ui.shadcn.com) and [Tailwind CSS](https://tailwindcss.com).
@@ -10,56 +10,84 @@ Installs as source you own and can edit.
 npx shadcn add https://lumenridge.github.io/ambientui/r/ambient-layer.json
 ```
 
+[See it running](https://lumenridge.github.io/ambientui/)
+
 ---
 
-## The idea
+## What it is
 
-AI can generate interfaces. The problem is that what it generates is
-*unattached* — every value an invention, nothing answerable to anything.
-Documentation doesn't fix that, because documentation is advice, and advice
-does not constrain a generator. Architecture does.
+Most products add AI by finding a spot for it: a tab, a sidebar, a widget in
+the corner. This is the other approach. The assistant is a layer over your
+product rather than a room inside it.
 
-So this repo is one argument, applied to itself: **a design system has to
-become a bounded configuration space before an AI can safely build inside
-it.** Pick the accent, the gray, the radius step, the spacing unit, the motion
-character — and every surface follows, because each one resolves from that
-choice rather than restating it. An AI working here cannot invent a colour.
-There is nowhere to put one.
+**It takes no space.** Your screens are already full. There is no chat tab to
+add and no column to give up. The assistant opens when you ask for it and goes
+away when you are done.
 
-The ambient layer is what that buys you: an assistant with no palette, no type
-scale and no motion of its own, composed entirely from your vocabulary, sitting
-*above* your product instead of inside its component tree.
+**It knows where you are.** Each page tells the assistant what you are looking
+at. Ask about "this invoice" and it knows which one. You never paste a
+screenshot or explain your screen first.
 
-The full argument is the [architecture page](https://lumenridge.github.io/ambientui/architecture).
+**It answers with real things.** Not a wall of text. A code change you can
+apply. A command with its output. Links into your own data. Made from the same
+components as the rest of your product.
+
+**It looks like your product.** The assistant has no colours, fonts or motion
+of its own. It borrows yours. Change your theme and it changes with it.
+
+## One assistant, five shapes
+
+The layer is not five features. It is one presence that changes shape to match
+how much of your attention the moment deserves.
+
+| | |
+|---|---|
+| **Orb** | Resting. A small character parked at the edge of the page, doing nothing until you call it. |
+| **Spotlight** | One box that searches your product and asks the assistant. It is ⌘K, rebuilt for a product that has AI in it. |
+| **Panel** | A conversation that stays open while you work. Answers stack up, so you can look back at what you asked. |
+| **Dock** | The panel pinned to one side, full height. Your page makes room for it instead of hiding behind it. |
+| **History** | Everything you have asked here. It fills the screen but stays see-through, because the work underneath is why you opened it. |
+
+You move between them by dragging the orb. Drop it at the right edge and it
+docks; drop it at the top and it becomes the palette.
+
+## Change one value
+
+The assistant looks like your product because it has nothing of its own to
+look like. Underneath it is the Foundation: a short menu of values that
+everything else reads from. An accent colour, a grey, a corner radius, a
+spacing step, a type scale, an icon set, how motion feels.
+
+Pick a different accent or a tighter spacing step, and every component on
+every page redraws, the assistant included. Save, and it is your theme.
+
+The menu is short on purpose. If it cannot express something, that is the
+system doing its job: an AI working here cannot invent a colour, because there
+is nowhere to put one. That is the whole argument, and the reason the
+assistant can be trusted to build.
+
+The long version is the [architecture page](https://lumenridge.github.io/ambientui/architecture).
 The rules it produced are [DESIGN.md](DESIGN.md).
 
 ## What you can take
 
-Two tracks, and the line between them is the whole idea: the first gives you
-things that render, the second gives you the thing that decides what rendering
-looks like.
+Two tracks. The first gives you things that render; the second gives you the
+thing that decides what rendering looks like.
 
-**Take the components**
-
-| | | |
-|---|---|---|
-| **The whole layer** | orb · line · panel · dock · spotlight · history | `npx shadcn add @ambientui/ambient-layer` |
-| **One component** | 31 installable, each with its behavior and its boundaries | `npx shadcn add @ambientui/reasoning-panel` |
-
-**Adopt the architecture**
+**Take the components.** The parts you can see. They land in your repo as code
+you own.
 
 | | | |
 |---|---|---|
-| **A design system to build inside** | the Foundation: accent, gray, radius, spacing, motion character | `npx shadcn add @ambientui/foundation` |
-| **The rules your AI works under** | the constitution + three review roles | `npx shadcn add @ambientui/governance` |
+| **The whole ambient layer** | The orb, the spotlight, the panel, the dock and the history, plus the wiring that lets a page tell it where you are. | `npx shadcn add @ambientui/ambient-layer` |
+| **One component** | Just the piece you need: the reasoning panel, the tool timeline, the diff. 31 to choose from, each documented with what it is and is not for. | `npx shadcn add @ambientui/reasoning-panel` |
 
-31 installable of 50 documented: the other 19 are shadcn's own primitives,
-which you already have or can take from shadcn directly, plus one surface that
-ships inside the layer rather than on its own. The counts come from
-`registry.json` and the catalog, never from this sentence.
+**Adopt the architecture.** The part that decides how everything looks.
 
-Every command above is executed against a scratch project by
-`npm run verify:install` before it is allowed on the site or in this table.
+| | | |
+|---|---|---|
+| **A design system to build inside** | The Foundation: the short menu of values everything else reads from. You can take this on its own, with no assistant attached. | `npx shadcn add @ambientui/foundation` |
+| **The rules your AI works under** | The rules your AI reads before it writes anything, and three reviewer roles it can take on. This is the part nobody else ships. | `npx shadcn add @ambientui/governance` |
 
 Register the namespace once and the commands stay short:
 
@@ -67,13 +95,21 @@ Register the namespace once and the commands stay short:
 npx shadcn registry add @ambientui=https://lumenridge.github.io/ambientui/r/{name}.json
 ```
 
-The layer runs with **no providers at all** — it falls back to sane defaults and
-binds to a full design system when you give it one. `packages/ambient/dev/index.html` is the
-proof, and it is a test we keep.
+31 installable of 50 documented. The other 19 are shadcn's own primitives,
+which you already have or can take from shadcn directly, plus one surface that
+ships inside the layer rather than on its own. The counts come from
+`registry.json` and the catalog, never from this sentence.
+
+Every command above is executed against a scratch project by
+`npm run verify:install` before it is allowed on the site or in this table.
+
+The layer runs with **no providers at all**. It falls back to sane defaults and
+binds to a full design system when you give it one.
+`packages/ambient/dev/index.html` is the proof, and it is a test we keep.
 
 Prefer a versioned dependency to owned source? `npm i ambientui`. The docs say
-plainly which to choose: the registry if you will restyle it (most people, given
-the whole argument), npm if you want upgrades and will not touch it.
+plainly which to choose: the registry if you will restyle it (most people,
+given the whole argument), npm if you want upgrades and will not touch it.
 
 ## What's in here
 
@@ -85,34 +121,34 @@ apps/site             the website: docs, /ds reference, and the demos
 docs/                 the reader-facing guides, including registry vs npm
 scripts/              the registry build and every drift check the gate runs
 fixtures/consumer     a scratch project the install commands are proved against
-skills/               the governance roles an AI works under here
 tokens/tokens.json    the serialized token master
 figma/                the code → Figma variable contract
 ```
 
 **The governing documents are the control surface**, not a description of one:
 
-- [DESIGN.md](DESIGN.md) — the constitution: token rules, the two vocabularies,
-  the ambient layer contract, and a dated decision log recording every design
-  decision with its *why*.
-- [CLAUDE.md](CLAUDE.md) — the hard rules an AI works under in this repo.
+- [DESIGN.md](DESIGN.md) is the constitution: token rules, the two
+  vocabularies, the ambient layer contract, and a dated decision log recording
+  every design decision with its *why*.
+- [CLAUDE.md](CLAUDE.md) holds the hard rules an AI works under in this repo.
 
 The `/ds` reference links to them on GitHub rather than re-rendering them, so
-there is one copy of each and no chance of a stale mirror. The registry is generated from the same component docs,
-so a component is installable *because* it is documented — install one and its
-when-to-use prints in your terminal.
+there is one copy of each and no chance of a stale mirror. The registry is
+generated from the same component docs, so a component is installable
+*because* it is documented. Install one and its when-to-use prints in your
+terminal.
 
 ## Running it
 
 ```bash
 npm install
-npm run dev          # the site at :3000
+npm run dev          # the site at :5174
 ```
 
-- `/` — the argument, built from the real running components
-- `/architecture` — the paper, with the components it argues about running inline
-- `/ds` — 50 documented components, the Foundation, and the governing docs
-- `/demo/devtool` — the layer inside a simulated real workspace
+- `/` the overview, built from the real running components
+- `/architecture` the argument, with the components it argues about running inline
+- `/ds` 50 documented components, the Foundation, and the governing docs
+- `/demo/devtool` the layer inside a simulated real workspace
 
 ```bash
 npm run gate             # typecheck, lint, build, and eleven drift checks
@@ -129,7 +165,7 @@ a deploy publishes a page full of commands. If hooks aren't firing:
 ## Contributing
 
 The unusual thing about this repo is that its rules are written down and
-enforced. Read [CLAUDE.md](CLAUDE.md) — the rules an AI works under here are the
+enforced. Read [CLAUDE.md](CLAUDE.md): the rules an AI works under here are the
 rules you work under. New patterns go through the watchlist in DESIGN.md §13
 rather than landing quietly.
 
