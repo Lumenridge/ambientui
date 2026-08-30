@@ -55,27 +55,33 @@ export function DesignArchitectureSection({
 }) {
   return (
     <div>
-      <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-        What it is built on
-      </p>
-      <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
-        Design architecture
-      </h2>
-      <p className="text-muted-foreground mt-4 max-w-xl text-sm leading-relaxed">
-        The assistant is not the point. It is the proof. Underneath it is{" "}
-        <span className="text-foreground font-medium">design architecture</span>
-        , the framework the Lumenridge team builds with: a design system is a
-        list of what you have, and an architecture decides what happens when
-        one of those things changes. Everything you can install below came
-        out of it.
-      </p>
+      {/* THE OPENING IS CENTRED AND SPACIOUS; THE BODY IS NOT.
+          A title the size of the thing it names, a single centred line
+          under it, and a lot of air either side — the section announces
+          itself before it starts explaining. The prose below stays left
+          and stays columnar, because centred body text at paragraph
+          length is hard to read: the eye loses the start of each line.
+          Only the opening and the closing invitation are centred. */}
+      <div className="mx-auto max-w-3xl px-2 py-16 text-center sm:py-24">
+        <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
+          What it is built on
+        </p>
+        <h2 className="mt-8 text-5xl font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl">
+          Design architecture
+        </h2>
+        <p className="text-muted-foreground mx-auto mt-10 max-w-xl text-lg leading-relaxed text-balance sm:text-xl">
+          The assistant is not the point. It is the proof. Underneath it is
+          a design system that stopped being a list of what you have, and
+          became something that decides what happens when one of those
+          things changes.
+        </p>
+        <Button variant="outline" size="sm" className="mt-10" onClick={onRead}>
+          Read the argument in full
+          <Icon name="chevron-right" size={15} />
+        </Button>
+      </div>
 
-      <Button variant="outline" size="sm" className="mt-5" onClick={onRead}>
-        Read the argument in full
-        <Icon name="chevron-right" size={15} />
-      </Button>
-
-      <div className="mt-12 grid gap-10 md:grid-cols-2">
+      <div className="mt-4 grid gap-10 md:grid-cols-2">
         <Point
           label="The change"
           title="You set values, you do not style components"
@@ -115,14 +121,14 @@ export function DesignArchitectureSection({
           re-draws the site around you. A section about configuration that
           does not hand you the configuration is describing a demo it is
           standing next to. */}
-      <div className="border-border mt-12 border-t pt-6">
+      <div className="border-border mx-auto mt-20 max-w-2xl border-t px-2 pt-16 text-center sm:pt-20">
         <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
           Make it yours
         </p>
-        <h3 className="mt-2.5 text-base font-semibold tracking-tight">
+        <h3 className="mt-6 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
           Change the Foundation and watch everything follow
         </h3>
-        <p className="text-muted-foreground mt-2 max-w-prose text-sm leading-relaxed">
+        <p className="text-muted-foreground mx-auto mt-6 max-w-xl text-base leading-relaxed">
           The Foundation on this site is live, not a screenshot of one. Pick
           a different accent, a different grey, a wider corner or a tighter
           spacing step, and every component on every page redraws while you
@@ -131,7 +137,7 @@ export function DesignArchitectureSection({
           customisation story: not a settings screen bolted on afterwards,
           but the same short menu the product was built from.
         </p>
-        <Button variant="outline" size="sm" className="mt-4" onClick={onFoundation}>
+        <Button variant="outline" size="sm" className="mt-8" onClick={onFoundation}>
           Open the Foundation
           <Icon name="chevron-right" size={15} />
         </Button>
