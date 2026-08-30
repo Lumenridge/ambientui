@@ -61,14 +61,22 @@ export const cardTitle = (name: string) => `${name} — ${BRAND}, ${PITCH}`
  * — which is how 51 of 63 pages ended up declaring a large-image card with
  * no image in it. One exported constant, spread at each site.
  *
- * The dimensions are the CARD's, not the file's: the PNG is captured at 2x
- * for crispness and every platform scales to the 1200x630 declared here.
+ * THE DIMENSIONS ARE THE FILE'S, MEASURED. A platform reserves the slot
+ * from what is declared here and then fits the image into it, so a
+ * declaration that disagrees with the bytes letterboxes or crops the card
+ * — and nothing in this repo renders one, so the only way to notice is to
+ * post a link. If the artwork is replaced, measure it and set these.
+ *
+ * 1200x640 is very slightly taller than the 1.91:1 most platforms crop to;
+ * they will shave a few pixels top and bottom, which the artwork has room
+ * for. Declaring 630 to match the convention rather than the file would
+ * hand them a different image than the one they were promised.
  */
 export const OG_IMAGE = {
   url: `${SITE_URL}/og-home.png`,
   width: 1200,
-  height: 630,
-  alt: "The ambientui wordmark, filled with the assistant's own heat shader, with a product dashboard rising up behind it.",
+  height: 640,
+  alt: "The Ambient UI wordmark across a dark product dashboard, with the assistant's spotlight open over it: a search field, recent chats, and suggestions for the page underneath.",
 }
 export const REPO_URL = "https://github.com/Lumenridge/ambientui"
 
