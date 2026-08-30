@@ -1649,6 +1649,9 @@ export function OverviewView() {
             onRead={() => {
               router.push("/architecture")
             }}
+            onFoundation={() => {
+              router.push("/ds")
+            }}
           />
         </Reveal>
       </section>
