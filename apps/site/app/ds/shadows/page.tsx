@@ -5,7 +5,7 @@ import { FoundationTool } from "@/components/ds/foundation-tools"
 export const metadata: Metadata = {
   title: "Shadows — ambientui design system",
   description:
-    "A Foundation dimension of the ambientui design system: what it decides, and every value it can take. Change it once and every component follows.",
+    "The seven elevation steps, taken from Tailwind and used as they are. Documented rather than configurable, because depth is chosen per surface by what it means, not set globally.",
   alternates: { canonical: "/ds/shadows" },
 }
 

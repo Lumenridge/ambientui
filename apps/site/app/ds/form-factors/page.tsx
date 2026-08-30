@@ -5,7 +5,7 @@ import { FoundationTool } from "@/components/ds/foundation-tools"
 export const metadata: Metadata = {
   title: "Form Factors — ambientui design system",
   description:
-    "A Foundation dimension of the ambientui design system: what it decides, and every value it can take. Change it once and every component follows.",
+    "One assistant that changes shape rather than five separate features: how each surface behaves, from a small pill at the edge to a full-height dock.",
   alternates: { canonical: "/ds/form-factors" },
 }
 

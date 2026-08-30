@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     template: `%s`,
   },
   description:
-    "An AI assistant that lives above your product, composed entirely from your own design system. Built on shadcn/ui and Tailwind CSS, installed as source you own.",
+    "An AI assistant that sits above your product instead of inside it. It looks like the rest of your app because it is built from your components. Installs as code you own, on shadcn/ui and Tailwind CSS.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     url: SITE_URL,
     title: "ambientui — an AI layer that inherits your design system",
     description:
-      "A design system has to become a bounded configuration space before an AI can safely build inside it. This is that argument, applied to itself.",
+      "AI can build screens faster than anyone can check them. This is how to keep your design from falling apart while it does.",
   },
   twitter: { card: "summary_large_image" },
 }

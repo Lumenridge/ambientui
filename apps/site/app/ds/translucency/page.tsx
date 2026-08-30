@@ -5,7 +5,7 @@ import { FoundationTool } from "@/components/ds/foundation-tools"
 export const metadata: Metadata = {
   title: "Translucency — ambientui design system",
   description:
-    "A Foundation dimension of the ambientui design system: what it decides, and every value it can take. Change it once and every component follows.",
+    "Glass, washes and scrims as named tokens instead of opacity modifiers scattered through components. A look with a name can be changed; a look made of stray utilities can only be re-learned.",
   alternates: { canonical: "/ds/translucency" },
 }
 

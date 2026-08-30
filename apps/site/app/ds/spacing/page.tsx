@@ -5,7 +5,7 @@ import { FoundationTool } from "@/components/ds/foundation-tools"
 export const metadata: Metadata = {
   title: "Spacing — ambientui design system",
   description:
-    "A Foundation dimension of the ambientui design system: what it decides, and every value it can take. Change it once and every component follows.",
+    "One spacing unit that every padding, gap and height is built from, taken from Tailwind's scale. Change the unit and the whole product gets tighter or roomier at once.",
   alternates: { canonical: "/ds/spacing" },
 }
 

@@ -4,7 +4,7 @@ import { CanvasDemo } from "@/components/demos/canvas-demo"
 
 export const metadata: Metadata = {
   title: "Canvas — ambientui",
-  description: "A page that is nothing but the ambient layer.",
+  description: "An empty page with nothing on it but the assistant, so you can try the shapes without a product in the way.",
 }
 
 export default function CanvasPage() {

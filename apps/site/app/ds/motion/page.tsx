@@ -5,7 +5,7 @@ import { FoundationTool } from "@/components/ds/foundation-tools"
 export const metadata: Metadata = {
   title: "Motion — ambientui design system",
   description:
-    "A Foundation dimension of the ambientui design system: what it decides, and every value it can take. Change it once and every component follows.",
+    "Components name a motion role instead of typing a duration. Pick a character and a pace, and every transition in the product re-times together.",
   alternates: { canonical: "/ds/motion" },
 }
 

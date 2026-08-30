@@ -5,7 +5,7 @@ import { FoundationTool } from "@/components/ds/foundation-tools"
 export const metadata: Metadata = {
   title: "Foundation — ambientui design system",
   description:
-    "The Foundation of the ambientui design system: accent, gray family, radius window, spacing grid, type scaling, icon library, motion character. Change one and every component follows.",
+    "Set the handful of values everything else reads from: colour, grey, corner radius, spacing, type size, icons and how motion feels. Change one, save, and every component in the product follows.",
   alternates: { canonical: "/ds" },
 }
 

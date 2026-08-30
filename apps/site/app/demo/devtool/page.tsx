@@ -4,7 +4,7 @@ import { DevToolDemo } from "@/components/demos/devtool-demo"
 
 export const metadata: Metadata = {
   title: "Dev tool demo — ambientui",
-  description: "The ambient layer docked beside real work.",
+  description: "The assistant inside a working editor, answering about the file on screen.",
 }
 
 export default function DevToolPage() {
