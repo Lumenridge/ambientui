@@ -95,6 +95,17 @@ const SITE_URL = (
 const LAYOUT_TITLE = HOME.match(/<title>([^<]*)<\/title>/)?.[1] ?? ""
 const LAYOUT_OG_TITLE =
   HOME.match(/property="og:title" content="([^"]*)"/)?.[1] ?? ""
+
+/**
+ * THE PITCH EVERY OTHER CARD CARRIES, read off the home card.
+ *
+ * The home title is "Ambient UI — <pitch>"; every other page's is
+ * "<page> — Ambient UI, <pitch>". So the tail after the first dash IS the
+ * shared half, and taking it from the build means rewriting the pitch in
+ * site.ts cannot leave this check comparing against a string no page has
+ * — the failure the comment above describes, which already happened once.
+ */
+const PITCH = LAYOUT_OG_TITLE.split(" — ").slice(1).join(" — ")
 let indexed = 0
 let excluded = 0
 const pending = []
@@ -169,9 +180,31 @@ for (const file of pages) {
   const ogTitle = html.match(/property="og:title" content="([^"]*)"/)?.[1] ?? ""
   const ogDesc =
     html.match(/property="og:description" content="([^"]*)"/)?.[1] ?? ""
+  /**
+   * AND IT MUST STILL SAY WHAT THIS IS. A card is shown to someone who
+   * searched for nothing, so "Motion" on its own is a word with no product
+   * attached to it. Every page but the home page names itself and then
+   * carries the pitch — see `cardTitle` in src/lib/site.ts.
+   */
+  const card = /name="twitter:card"/.test(html)
+  const twTitle =
+    html.match(/name="twitter:title" content="([^"]*)"/)?.[1] ?? ""
   if (!ogTitle) problems.push(`${rel}: no og:title`)
-  else if (rel !== "index.html" && ogTitle === LAYOUT_OG_TITLE)
-    problems.push(`${rel}: card wears the LAYOUT's og:title — use pageMetadata()`)
+  else if (rel !== "index.html") {
+    if (ogTitle === LAYOUT_OG_TITLE)
+      problems.push(`${rel}: card wears the LAYOUT's og:title — use pageMetadata()`)
+    else if (PITCH && !ogTitle.endsWith(PITCH))
+      problems.push(`${rel}: og:title does not carry the pitch (${ogTitle})`)
+  }
+  /**
+   * TWITTER IS A SECOND OBJECT WITH THE SAME TRAP. /architecture set its
+   * own openGraph and no twitter block, so it shared on X under the home
+   * page's title while every assertion here passed — og:title was correct,
+   * and nothing looked at the other one.
+   */
+  if (card && !twTitle) problems.push(`${rel}: declares a share card with no twitter:title`)
+  else if (card && rel !== "index.html" && twTitle === LAYOUT_OG_TITLE)
+    problems.push(`${rel}: card wears the LAYOUT's twitter:title — state a twitter block too`)
   if (!ogDesc) problems.push(`${rel}: no og:description`)
   else {
     /**
@@ -192,7 +225,6 @@ for (const file of pages) {
     else ogDescs.set(ogDesc, rel)
   }
 
-  const card = /name="twitter:card"/.test(html)
   const ogImage = html.match(/property="og:image" content="([^"]*)"/)?.[1] ?? ""
   const twImage = html.match(/name="twitter:image" content="([^"]*)"/)?.[1] ?? ""
   if (card && !ogImage)

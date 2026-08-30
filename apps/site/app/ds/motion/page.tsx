@@ -6,6 +6,7 @@ import { FoundationTool } from "@/components/ds/foundation-tools"
 
 export const metadata: Metadata = pageMetadata({
   title: "Motion — ambientui design system",
+  name: "Motion",
   description:
     "Components name a motion role instead of typing a duration. Pick a character and a pace, and every transition in the product re-times together.",
   canonical: "/ds/motion",

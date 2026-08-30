@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 
 import { ArchitectureView } from "@/components/home/architecture-view"
 import { ArticleJsonLd } from "@/components/json-ld"
-import { OG_IMAGE } from "@/lib/site"
+import { cardTitle, OG_IMAGE } from "@/lib/site"
 
 /**
  * THE ARCHITECTURE, AS AN ARTICLE.
@@ -27,11 +27,23 @@ export const metadata: Metadata = {
   alternates: { canonical: "/architecture" },
   openGraph: {
     type: "article",
-    title: TITLE,
+    title: cardTitle(TITLE),
     description: LEDE,
     // repeated, not inherited: Next replaces openGraph rather than
     // merging it, so omitting this drops the card image (see OG_IMAGE)
     images: [OG_IMAGE],
+  },
+  // AND THE TWITTER BLOCK IS NOT OPTIONAL EITHER. Without it this page
+  // inherited the ROOT layout's twitter.title, so /architecture shared on
+  // X as the home page while its og:title was correct — the same
+  // replace-don't-merge trap, one object over. Every hand-rolled metadata
+  // block on this site has to state both; `pageMetadata` is how the rest
+  // of the pages avoid having to remember.
+  twitter: {
+    card: "summary_large_image",
+    title: cardTitle(TITLE),
+    description: LEDE,
+    images: [OG_IMAGE.url],
   },
 }
 

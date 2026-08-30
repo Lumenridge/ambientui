@@ -17,7 +17,7 @@ import type { Metadata } from "next"
 import { SiteChrome } from "@/components/site-chrome"
 import { SiteProviders } from "@/components/providers/site-providers"
 import { INSTALLABLE_COMPONENTS } from "@/lib/registry-facts"
-import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/site"
+import { BRAND_CARD_TITLE, OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/site"
 import { THEME_BOOT } from "@/lib/theme-boot"
 
 export const metadata: Metadata = {
@@ -43,17 +43,16 @@ export const metadata: Metadata = {
    * spot for it, and this is a layer over the product rather than a room
    * inside it.
    *
-   * The <title> above is deliberately different and stays that way. A
-   * search result is FOUND, by someone typing a package name or "AI design
-   * system", so it keeps "ambientui" and the category words a query would
-   * contain. Do not "fix" one to match the other; they answer to different
-   * readers.
+   * This is the ONE card where the brand stands alone. Every other page
+   * carries the same sentence as a suffix behind its own name, which is
+   * why the string lives in site.ts rather than here — see BRAND_CARD_TITLE
+   * and `cardTitle`, and the note there on why the <title> differs.
    */
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
     url: SITE_URL,
-    title: "Ambient UI — the AI layer on top of your product",
+    title: BRAND_CARD_TITLE,
     // THE COUNT IS DERIVED, like every other count on this site. A literal
     // here would be a number in prose that nothing keeps honest, which is
     // the one thing the README says never to do.
@@ -65,7 +64,7 @@ export const metadata: Metadata = {
   // platform reserves the large slot and fills it with nothing.
   twitter: {
     card: "summary_large_image",
-    title: "Ambient UI — the AI layer on top of your product",
+    title: BRAND_CARD_TITLE,
     images: [OG_IMAGE.url],
   },
 }

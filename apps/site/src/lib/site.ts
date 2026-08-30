@@ -15,6 +15,37 @@ export const SITE_URL = (
 export const SITE_NAME = "ambientui"
 
 /**
+ * THE NAME AND THE PITCH, AS SHARE-CARD TITLES.
+ *
+ * A card is read by someone who was not looking for anything — a link in a
+ * feed — so every one of them says what this is, not just which page it is.
+ * "Motion" alone tells a stranger nothing; "Motion — Ambient UI, the AI
+ * layer on top of your product" tells them whether to click.
+ *
+ * THE <title> IS DELIBERATELY DIFFERENT AND STAYS THAT WAY. A search
+ * result is FOUND, by someone typing a package name or "AI design system",
+ * so titles keep "ambientui" and the category words a query would contain.
+ * The card is SHOWN to someone who typed nothing. Do not "fix" one to
+ * match the other; they answer to different readers.
+ *
+ * The comma in the suffix is load-bearing: the page name already spends
+ * the em dash, and two of them in one line reads as three fragments
+ * rather than a page inside a product.
+ */
+const BRAND = "Ambient UI"
+const PITCH = "the AI layer on top of your product"
+
+/** The home card, and the only place the brand stands alone. */
+export const BRAND_CARD_TITLE = `${BRAND} — ${PITCH}`
+
+/**
+ * Every other card. `name` is the SHORT page name — "Motion", not
+ * "Motion — ambientui design system" — because the tail is the brand's
+ * job here, and the section suffix belongs to the <title>.
+ */
+export const cardTitle = (name: string) => `${name} — ${BRAND}, ${PITCH}`
+
+/**
  * THE SHARE CARD — the real hero, captured, not a drawing of it.
  *
  * ITS URL IS ABSOLUTE ON PURPOSE. `metadataBase` is SITE_URL including the
@@ -71,12 +102,19 @@ export const docUrl = (path: string) => `${REPO_URL}/blob/main/${path}`
  */
 export function pageMetadata({
   title,
+  name,
   description,
   canonical,
   type = "website",
 }: {
-  /** The full <title>, used as the card's title too. */
+  /** The full <title>, for a reader who searched. */
   title: string
+  /**
+   * The short page name, for a reader who did not. `cardTitle` adds the
+   * brand and the pitch; passing the full <title> here would say
+   * "ambientui" twice in one line.
+   */
+  name: string
   description: string
   /** Site-relative path, e.g. "/ds/motion". */
   canonical: string
@@ -90,13 +128,13 @@ export function pageMetadata({
       type,
       siteName: SITE_NAME,
       url: `${SITE_URL}${canonical}`,
-      title,
+      title: cardTitle(name),
       description,
       images: [OG_IMAGE],
     },
     twitter: {
       card: "summary_large_image" as const,
-      title,
+      title: cardTitle(name),
       description,
       images: [OG_IMAGE.url],
     },

@@ -64,6 +64,7 @@ export async function generateMetadata({
   const description = cardDescription(c)
   return pageMetadata({
     title: `${c.name} — ambientui components`,
+    name: c.name,
     description,
     canonical: `/ds/components/${id}`,
   })
