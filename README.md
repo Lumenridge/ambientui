@@ -1,3 +1,7 @@
+![The ambientui overview: the wordmark filled with the assistant's own heat
+shader, with a product dashboard rising up behind the lower half of the
+name](.github/assets/hero.png)
+
 # ambientui
 
 **An AI assistant that lives above your product, and the design system that
