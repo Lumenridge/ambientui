@@ -10,6 +10,7 @@ import {
 import { ComponentDemos } from "@/components/ds/component-demos"
 import { BreadcrumbJsonLd } from "@/components/json-ld"
 import { installCommandFor } from "@/lib/registry-facts"
+import { pageMetadata } from "@/lib/site"
 
 const ALL: (ComponentDoc & { vocabulary: "ambient" | "product" })[] = [
   ...AMBIENT_COMPONENTS.map((c) => ({ ...c, vocabulary: "ambient" as const })),
@@ -24,6 +25,34 @@ export function generateStaticParams() {
   return ALL.map((c) => ({ id: c.id }))
 }
 
+/**
+ * WHAT THE CARD AND THE SEARCH RESULT SAY ABOUT A COMPONENT.
+ *
+ * `description` is the VOCABULARY line — it is read by the AI composing
+ * from this system, and it is deliberately terse: "Single-line text
+ * entry." is exactly right sitting next to the component under its own
+ * heading. Standing alone in a search result or a share card it explains
+ * nothing, and eleven of the fifty were under 55 characters.
+ *
+ * So the card composes rather than the vocabulary being padded. The first
+ * `whenToUse` line is the missing half — it is already written, already
+ * reviewed, and says the thing a stranger actually needs (Input: "Free-form
+ * single-line values: names, emails, search queries."). Nothing is
+ * invented here and the AI-facing text is untouched.
+ *
+ * Only SHORT descriptions are extended. The ones that already carry their
+ * own explanation are left exactly as their author wrote them, rather than
+ * being truncated to hit a number.
+ */
+const SHORT = 110
+
+function cardDescription(c: { description: string; whenToUse: string[] }) {
+  if (c.description.length >= SHORT) return c.description
+  const first = c.whenToUse[0]
+  if (!first) return c.description
+  return `${c.description} ${first}`
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -32,12 +61,13 @@ export async function generateMetadata({
   const { id } = await params
   const c = ALL.find((x) => x.id === id)
   if (!c) return {}
-  return {
+  const description = cardDescription(c)
+  return pageMetadata({
     title: `${c.name} — ambientui components`,
-    description: c.description,
-    alternates: { canonical: `/ds/components/${id}` },
-    openGraph: { title: c.name, description: c.description },
-  }
+    name: c.name,
+    description,
+    canonical: `/ds/components/${id}`,
+  })
 }
 
 function DocList({ title, items }: { title: string; items: string[] }) {

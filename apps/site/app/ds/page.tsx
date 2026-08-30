@@ -1,13 +1,16 @@
 import type { Metadata } from "next"
 
+import { pageMetadata } from "@/lib/site"
+
 import { FoundationTool } from "@/components/ds/foundation-tools"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Foundation — ambientui design system",
+  name: "Foundation",
   description:
     "Set the handful of values everything else reads from: colour, grey, corner radius, spacing, type size, icons and how motion feels. Change one, save, and every component in the product follows.",
-  alternates: { canonical: "/ds" },
-}
+  canonical: "/ds",
+})
 
 /**
  * /ds IS THE FOUNDATION.

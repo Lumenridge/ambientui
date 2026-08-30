@@ -16,7 +16,8 @@ import type { Metadata } from "next"
 
 import { SiteChrome } from "@/components/site-chrome"
 import { SiteProviders } from "@/components/providers/site-providers"
-import { SITE_NAME, SITE_URL } from "@/lib/site"
+import { INSTALLABLE_COMPONENTS } from "@/lib/registry-facts"
+import { BRAND_CARD_TITLE, OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/site"
 import { THEME_BOOT } from "@/lib/theme-boot"
 
 export const metadata: Metadata = {
@@ -32,15 +33,40 @@ export const metadata: Metadata = {
   description:
     "An AI assistant that sits above your product instead of inside it. It looks like the rest of your app because it is built from your components. Installs as code you own, on shadcn/ui and Tailwind CSS.",
   alternates: { canonical: "/" },
+  /**
+   * THE CARD LEADS WITH THE WORDMARK AND WHAT THIS IS.
+   *
+   * It is read by someone who was not looking for anything — a link in a
+   * feed — so it has one job: say the name, then say the thing in a breath.
+   * "On top of your product" is the whole shape of the idea, and it is the
+   * distinction the overview opens with: most products add AI by finding a
+   * spot for it, and this is a layer over the product rather than a room
+   * inside it.
+   *
+   * This is the ONE card where the brand stands alone. Every other page
+   * carries the same sentence as a suffix behind its own name, which is
+   * why the string lives in site.ts rather than here — see BRAND_CARD_TITLE
+   * and `cardTitle`, and the note there on why the <title> differs.
+   */
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
     url: SITE_URL,
-    title: "ambientui — an AI layer that inherits your design system",
-    description:
-      "AI can build screens faster than anyone can check them. This is how to keep your design from falling apart while it does.",
+    title: BRAND_CARD_TITLE,
+    // THE COUNT IS DERIVED, like every other count on this site. A literal
+    // here would be a number in prose that nothing keeps honest, which is
+    // the one thing the README says never to do.
+    description: `${INSTALLABLE_COMPONENTS} components for the AI parts of your product: the orb, the spotlight, the panel, the dock, the history. Built from your design system, not their own.`,
+    images: [OG_IMAGE],
   },
-  twitter: { card: "summary_large_image" },
+  // summary_large_image was already declared and no image was ever emitted,
+  // on 68 pages — which renders WORSE than claiming no card at all: the
+  // platform reserves the large slot and fills it with nothing.
+  twitter: {
+    card: "summary_large_image",
+    title: BRAND_CARD_TITLE,
+    images: [OG_IMAGE.url],
+  },
 }
 
 export default function RootLayout({

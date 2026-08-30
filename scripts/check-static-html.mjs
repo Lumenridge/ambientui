@@ -38,9 +38,11 @@ function prose(html) {
     .trim()
 }
 
-const LAYOUT_TITLE = "ambientui — an AI layer that inherits your design system"
+
 /** Below this, a page is a shell with a heading, not a rendered document. */
 const MIN_PROSE = 400
+/** the shortest card text that can still explain a page to a stranger */
+const MIN_CARD_DESC = 60
 
 /**
  * Routes not yet ported, with the phase that ports them. Every entry is a
@@ -61,6 +63,49 @@ const pages = []
 })(OUT)
 
 const problems = []
+const ogImages = new Set()
+const ogDescs = new Map()
+
+/**
+ * The site's own origin+base, READ FROM THE BUILD rather than restated here.
+ *
+ * The home page's canonical is already asserted to be correct above, so it
+ * is the one string in the export that is safe to derive from — and a copy
+ * of SITE_URL in this file would be one more pair that has to be kept in
+ * step by hand, which is the failure this whole script exists to catch.
+ */
+const HOME = readFileSync(join(OUT, "index.html"), "utf8")
+const SITE_URL = (
+  HOME.match(/rel="canonical" href="([^"]*)"/)?.[1] ?? ""
+).replace(/\/$/, "")
+
+/**
+ * What the LAYOUT says, read off the home page instead of restated here.
+ *
+ * These were a hardcoded string, and the moment the layout's card title
+ * was rewritten the copy went stale — at which point the assertion below
+ * still passed on every page while catching nothing, because it was
+ * comparing against a title no page could have any more. A check that
+ * silently stops checking is worse than no check, and this file exists to
+ * catch exactly that failure mode elsewhere.
+ *
+ * The home page IS the layout's metadata (app/page.tsx sets none of its
+ * own), which is what makes it the honest source.
+ */
+const LAYOUT_TITLE = HOME.match(/<title>([^<]*)<\/title>/)?.[1] ?? ""
+const LAYOUT_OG_TITLE =
+  HOME.match(/property="og:title" content="([^"]*)"/)?.[1] ?? ""
+
+/**
+ * THE PITCH EVERY OTHER CARD CARRIES, read off the home card.
+ *
+ * The home title is "Ambient UI — <pitch>"; every other page's is
+ * "<page> — Ambient UI, <pitch>". So the tail after the first dash IS the
+ * shared half, and taking it from the build means rewriting the pitch in
+ * site.ts cannot leave this check comparing against a string no page has
+ * — the failure the comment above describes, which already happened once.
+ */
+const PITCH = LAYOUT_OG_TITLE.split(" — ").slice(1).join(" — ")
 let indexed = 0
 let excluded = 0
 const pending = []
@@ -107,6 +152,100 @@ for (const file of pages) {
     problems.push(
       `${rel}: only ${body.length} chars of prose (min ${MIN_PROSE}) — content may be client-only`
     )
+
+  /**
+   * A LARGE-IMAGE CARD WITH NO IMAGE IS WORSE THAN NO CARD.
+   *
+   * The site declared `summary_large_image` on every page and emitted an
+   * og:image on none of them, for as long as the metadata existed: the
+   * platform reserves the large slot and fills it with nothing. It stayed
+   * invisible because nothing here renders a share card, so the only way
+   * to see it was to post a link.
+   *
+   * The URL is checked too, not just its presence. `metadataBase` carries
+   * the project-Pages base path, and a leading-slash image path resolves
+   * against the ORIGIN instead — silently dropping "/ambientui" and
+   * pointing every card at a 404 that still looks fine in the HTML.
+   */
+  /**
+   * THE CARD MUST DESCRIBE THIS PAGE, NOT THE SITE.
+   *
+   * Next replaces `openGraph` rather than deep-merging it, so a page that
+   * sets only a title and a description inherits the LAYOUT's card whole.
+   * Seven pages shipped that way — every <title> and meta description
+   * correct, every share card showing the site's name and the site's pitch.
+   * The existing title assertion could not see it, because the fields it
+   * checks were right; it is the card that was generic.
+   */
+  const ogTitle = html.match(/property="og:title" content="([^"]*)"/)?.[1] ?? ""
+  const ogDesc =
+    html.match(/property="og:description" content="([^"]*)"/)?.[1] ?? ""
+  /**
+   * AND IT MUST STILL SAY WHAT THIS IS. A card is shown to someone who
+   * searched for nothing, so "Motion" on its own is a word with no product
+   * attached to it. Every page but the home page names itself and then
+   * carries the pitch — see `cardTitle` in src/lib/site.ts.
+   */
+  const card = /name="twitter:card"/.test(html)
+  const twTitle =
+    html.match(/name="twitter:title" content="([^"]*)"/)?.[1] ?? ""
+  if (!ogTitle) problems.push(`${rel}: no og:title`)
+  else if (rel !== "index.html") {
+    if (ogTitle === LAYOUT_OG_TITLE)
+      problems.push(`${rel}: card wears the LAYOUT's og:title — use pageMetadata()`)
+    else if (PITCH && !ogTitle.endsWith(PITCH))
+      problems.push(`${rel}: og:title does not carry the pitch (${ogTitle})`)
+  }
+  /**
+   * TWITTER IS A SECOND OBJECT WITH THE SAME TRAP. /architecture set its
+   * own openGraph and no twitter block, so it shared on X under the home
+   * page's title while every assertion here passed — og:title was correct,
+   * and nothing looked at the other one.
+   */
+  if (card && !twTitle) problems.push(`${rel}: declares a share card with no twitter:title`)
+  else if (card && rel !== "index.html" && twTitle === LAYOUT_OG_TITLE)
+    problems.push(`${rel}: card wears the LAYOUT's twitter:title — state a twitter block too`)
+  if (!ogDesc) problems.push(`${rel}: no og:description`)
+  else {
+    /**
+     * A DESCRIPTION HAS TO DESCRIBE. Eleven component pages shipped card
+     * text under 55 characters ("Single-line text entry.") — correct as a
+     * vocabulary line sitting beside the component, and an explanation of
+     * nothing in a search result, where it is all a stranger gets. The
+     * floor is well under what the pages now carry; it exists to catch a
+     * new page written thin, not to police the ones that are fine.
+     */
+    if (ogDesc.length < MIN_CARD_DESC)
+      problems.push(
+        `${rel}: og:description is ${ogDesc.length} chars (min ${MIN_CARD_DESC}) — too thin to explain the page`
+      )
+    const seen = ogDescs.get(ogDesc)
+    if (seen)
+      problems.push(`${rel}: og:description is identical to ${seen}'s`)
+    else ogDescs.set(ogDesc, rel)
+  }
+
+  const ogImage = html.match(/property="og:image" content="([^"]*)"/)?.[1] ?? ""
+  const twImage = html.match(/name="twitter:image" content="([^"]*)"/)?.[1] ?? ""
+  if (card && !ogImage)
+    problems.push(`${rel}: declares a share card with no og:image`)
+  if (card && !twImage)
+    problems.push(`${rel}: declares a share card with no twitter:image`)
+  for (const [what, url] of [["og:image", ogImage], ["twitter:image", twImage]]) {
+    if (!url) continue
+    // an off-site url is already the bug; do not also try to resolve it to
+    // a local file, which slices it into nonsense and reports the wrong thing
+    if (!url.startsWith(SITE_URL + "/"))
+      problems.push(`${rel}: ${what} is not under the site url (${url})`)
+    else ogImages.add(url)
+  }
+}
+
+// every card image the build emitted must be a file the build shipped
+for (const url of ogImages) {
+  const rel = url.slice(SITE_URL.length).replace(/^\//, "")
+  if (!existsSync(join(OUT, rel)))
+    problems.push(`card image ${url} is not in the export (looked for out/${rel})`)
 }
 
 /**
