@@ -38,7 +38,7 @@ function prose(html) {
     .trim()
 }
 
-const LAYOUT_TITLE = "ambientui — an AI layer that inherits your design system"
+
 /** Below this, a page is a shell with a heading, not a rendered document. */
 const MIN_PROSE = 400
 /** the shortest card text that can still explain a page to a stranger */
@@ -74,11 +74,27 @@ const ogDescs = new Map()
  * of SITE_URL in this file would be one more pair that has to be kept in
  * step by hand, which is the failure this whole script exists to catch.
  */
+const HOME = readFileSync(join(OUT, "index.html"), "utf8")
 const SITE_URL = (
-  readFileSync(join(OUT, "index.html"), "utf8").match(
-    /rel="canonical" href="([^"]*)"/
-  )?.[1] ?? ""
+  HOME.match(/rel="canonical" href="([^"]*)"/)?.[1] ?? ""
 ).replace(/\/$/, "")
+
+/**
+ * What the LAYOUT says, read off the home page instead of restated here.
+ *
+ * These were a hardcoded string, and the moment the layout's card title
+ * was rewritten the copy went stale — at which point the assertion below
+ * still passed on every page while catching nothing, because it was
+ * comparing against a title no page could have any more. A check that
+ * silently stops checking is worse than no check, and this file exists to
+ * catch exactly that failure mode elsewhere.
+ *
+ * The home page IS the layout's metadata (app/page.tsx sets none of its
+ * own), which is what makes it the honest source.
+ */
+const LAYOUT_TITLE = HOME.match(/<title>([^<]*)<\/title>/)?.[1] ?? ""
+const LAYOUT_OG_TITLE =
+  HOME.match(/property="og:title" content="([^"]*)"/)?.[1] ?? ""
 let indexed = 0
 let excluded = 0
 const pending = []
@@ -154,7 +170,7 @@ for (const file of pages) {
   const ogDesc =
     html.match(/property="og:description" content="([^"]*)"/)?.[1] ?? ""
   if (!ogTitle) problems.push(`${rel}: no og:title`)
-  else if (rel !== "index.html" && ogTitle === LAYOUT_TITLE)
+  else if (rel !== "index.html" && ogTitle === LAYOUT_OG_TITLE)
     problems.push(`${rel}: card wears the LAYOUT's og:title — use pageMetadata()`)
   if (!ogDesc) problems.push(`${rel}: no og:description`)
   else {

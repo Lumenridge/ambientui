@@ -32,11 +32,22 @@ export const metadata: Metadata = {
   description:
     "An AI assistant that sits above your product instead of inside it. It looks like the rest of your app because it is built from your components. Installs as code you own, on shadcn/ui and Tailwind CSS.",
   alternates: { canonical: "/" },
+  /**
+   * THE CARD SAYS THE THESIS; THE <title> SAYS THE CATEGORY.
+   *
+   * They are read by different people and the split is deliberate. A search
+   * result is found by someone typing a package name or "AI design system",
+   * so the title above keeps "ambientui" and the category words. A share
+   * card is seen by someone who was not looking for anything, so it leads
+   * with the wordmark and the argument: DESIGN.md's own claim is that AI
+   * can build UI safely only inside a system it selects from instead of
+   * inventing, and that the document is "the drift boundary".
+   */
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
     url: SITE_URL,
-    title: "ambientui — an AI layer that inherits your design system",
+    title: "Ambient UI — the design system an AI cannot drift from",
     description:
       "AI can build screens faster than anyone can check them. This is how to keep your design from falling apart while it does.",
     images: [OG_IMAGE],
@@ -44,7 +55,11 @@ export const metadata: Metadata = {
   // summary_large_image was already declared and no image was ever emitted,
   // on 68 pages — which renders WORSE than claiming no card at all: the
   // platform reserves the large slot and fills it with nothing.
-  twitter: { card: "summary_large_image", images: [OG_IMAGE.url] },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ambient UI — the design system an AI cannot drift from",
+    images: [OG_IMAGE.url],
+  },
 }
 
 export default function RootLayout({
