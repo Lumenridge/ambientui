@@ -10,8 +10,9 @@ one-way-to-do-a-thing, and the AI's ability to compose safely from it — outran
 any single feature's convenience. Authority: [DESIGN.md](../../../DESIGN.md) is
 the constitution; `tokens/tokens.json` is the value store;
 `packages/ui/src/components` (product vocabulary) and
-`apps/web/src/components/assistant` (ambient vocabulary) are the only sanctioned
-building blocks; `apps/web/src/components/ds/ds-docs.tsx` is the registry.
+`packages/ambient/src` (ambient vocabulary) are the only sanctioned
+building blocks; `apps/site/src/lib/catalog.ts` (prose) and
+`apps/site/src/components/ds/stories.tsx` (demos) are the registry.
 
 Remember what this system is *for*: an AI composes UI from it. Every off-system
 value you let through becomes training data for drift.
@@ -37,8 +38,11 @@ scaling) — or into a governance proposal if the config can't reach it.
    scroll internally, the document never scrolls. A new pane arrangement =
    new pattern → governance.
 4. **Icons**: semantic `<Icon name>` only — direct icon-library imports fail (assistant grandfathered).
-5. **Motion**: `theme.css` keyframes + Tailwind transitions only. A new
-   `@keyframes` in a component file fails.
+5. **Motion**: components consume MOTION ROLES, never literal timings.
+   `transition-*` utilities default to the micro role; explicit sites use
+   `duration-(--motion-{role})`; Framer goes through `useMotionTransition` /
+   `useMotionSpring`. A raw duration, a one-off `@keyframes` in a component
+   file, or a second animation library fails (DESIGN.md §5).
 6. **Ambient contract** (DESIGN.md §8): five modes, drag-as-mode-switch,
    `setPageChip` on every page, no glow effects (the beam was removed), the
    response-kit seam stays empty.
@@ -68,7 +72,8 @@ State what a change touches before making it:
 - The gray family → every surface token (backgrounds, cards, borders,
   sidebar) in both modes; the accent hue → primary/ring/ambient accent.
 - A scaling preset's base px → all rem-based text product-wide.
-- Component prop changes → search usages across `apps/web/src` and report the
+- Component prop changes → search usages across `apps/site/src` AND
+  `packages/*/src` (the vocabularies live in packages now) and report the
   blast radius.
 Verify visually at `/ds` in light AND dark.
 
@@ -76,7 +81,7 @@ Verify visually at `/ds` in light AND dark.
 
 1. Update `tokens/tokens.json` and its implementations
    (foundation-context / globals.css) together — they must not diverge.
-2. Update the registry (`ds-docs.tsx`) and DESIGN.md (inventory, decision log
+2. Update the registry (`catalog.ts` + `stories.tsx`) and DESIGN.md (inventory, decision log
    with date + why).
 3. Ensure `/ds` reflects it live (new components need an entry, stories, and a
    playground where warranted).

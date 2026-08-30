@@ -8,9 +8,15 @@ product's thesis applied to its own construction.
 
 ## Commands
 
-- `npm run dev` — the app at :5173 (Turborepo; the web app is `apps/web`).
-  Routes: `/` canvas, `/ds` design system (Foundation + component vocabulary).
+- `npm run dev` — the site at :5174 (Turborepo; the app is `apps/site`).
+  Routes: `/` overview, `/architecture` the argument, `/ds` design system
+  (Foundation + component vocabulary), `/demo/devtool` and `/demo/canvas`
+  (noindex).
 - `npm run typecheck` / `npm run build` / `npm run lint`
+- `npm run gate` — all three plus the drift checks (registry, vendored CSS,
+  governing-doc path claims). A `.githooks/pre-commit` runs it, so a
+  failing gate blocks the commit (`--no-verify` to bypass deliberately). If
+  hooks are not firing, run `git config core.hooksPath .githooks`.
 
 ## Hard rules (non-negotiable)
 
@@ -40,9 +46,11 @@ governance. (DESIGN.md §2, with the Linear precedent.)
 4. **Sanctioned components only.** Product UI composes `packages/ui` components;
    ambient UI composes the assistant's parts. Known gaps are documented in the
    `/ds` registry (no Select/Switch/Textarea/Dialog — use the documented
-   substitutes). Never re-implement a near-miss of an existing component.
+   substitutes). Never re-implement a near-miss of an existing component. A
+   genuinely missing primitive is added through the **shadcn CLI**, then
+   documented at `/ds` before it is used (Tabs, 2026-08-22).
 5. **Foundation is the single source of theme truth.** Theme changes flow through
-   `apps/web/src/foundation/foundation-context.tsx` (one injected style tag,
+   `packages/foundation/src/foundation-context.tsx` (one injected style tag,
    Save-to-persist). Never set theme variables ad hoc. New `--ambient-*` tokens
    must default to values derived from the base theme.
 6. **Icons via `<Icon name="…">`** (`packages/ui/src/components/icon.tsx`; the app re-exports it at `components/icon.tsx`) — semantic names,
@@ -59,11 +67,21 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    `framer-motion` (the one sanctioned library) for interruptible/
    gestural/layout/presence motion. No other animation libraries, no
    one-off keyframes in component files, no raw durations or springs.
-8. **The ambient layer contract (DESIGN.md §8) must not drift**: four modes,
-   drag-as-mode-switch, page context via `setPageChip`, and the response
-   kit (v0, `response-kit.tsx`) fills the `send()` seam with composed
-   answer objects — a model replaces `composeResponse`, never the objects. The beam glow was
-   removed — do not reintroduce glows.
+8. **The ambient layer contract (DESIGN.md §8) must not drift**: five modes
+   (line · panel · dock · spotlight · history),
+   drag-as-mode-switch, page context via `setPageChip` (and what the page
+   knows via `setPageIntel`), and the response kit (v0, `response-kit.tsx`)
+   fills the `send()` seam with composed answer objects — a model replaces
+   `composeResponse`, never the objects. **One character per surface**: the
+   orb/OrbCharacter mark belongs in the row where the user speaks to the
+   assistant (composer mark, quick-ask pill) and in the resting orb — never
+   in headers, footers, navigation or product chrome. **An answer arrives in order**:
+   thinking, then each evidence block, then the prose, then artifacts —
+   enforced by the stage queue inside `useStagedReveal`, never by a block
+   scheduling itself. **Nothing inside an ambient surface is opaque** — every
+   mode wears the glass and the heat field, and a pane within one uses the
+   layer's wash, never a product ground. The beam glow was removed — do not
+   reintroduce glows.
 9. **Any Inspect-rail change raises the save reminder.** The rail has one
    commit affordance and nothing in it changes silently. This is enforced in
    the primitives — `ControlRow` and `ChoiceControl` call the Foundation's
@@ -73,9 +91,11 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    sets no value. Discard remounts rail state (`generation`), so throwing
    away edits works for playground props too.
 10. **Every vocabulary component is documented** in
-   `apps/web/src/components/ds/ds-docs.tsx` (summary, behavior, when to use,
-   when not to; playground where the prop surface warrants it). Undocumented
-   components don't exist as far as the AI vocabulary is concerned.
+   `apps/site/src/lib/catalog.ts` (summary, behavior, when to use,
+   when not to) with its stories and playground in
+   `apps/site/src/components/ds/stories.tsx`, keyed by the same id. Undocumented
+   components don't exist as far as the AI vocabulary is concerned, and a
+   documented one with no stories fails `npm run catalog:check`.
 
 ## Pattern watchlist protocol (always on)
 
@@ -107,17 +127,28 @@ skill before any `use_figma` write.
 
 ## Architecture notes
 
-- Monorepo: `apps/web` (Vite + React 19 + Tailwind v4) + `packages/ui` (the
-  shadcn radix-nova preset; global tokens in `src/styles/globals.css`).
-- Foundation engine: `apps/web/src/foundation/foundation-context.tsx` — accents
+- Monorepo: `apps/site` (Next.js App Router, static export) + `packages/ui`
+  (the shadcn radix-nova preset; global tokens in `src/styles/globals.css`).
+- Foundation engine: `packages/foundation/src/foundation-context.tsx` — accents
   (with paired foregrounds), gray tints, radius set, scaling→base-px presets;
   compiled to `#ambientui-foundation` style tag; persisted on Save under
   `ambientui-foundation`.
-- Assistant: `apps/web/src/components/assistant/` (context, surfaces, orb,
+- Ambient layer: `packages/ambient/src/` (context, surfaces, orb,
   orb-character — the animated identity with states still/listening/thinking/
-  answer, driven via `orbState` in the context). App tokens and keyframes:
-  `apps/web/src/theme.css`, `viz.css`.
-- Sections/routing: `src/nav.ts` + path mapping in `App.tsx` (`/`, `/ds`);
-  the palette's Jump-to builds from `nav.ts`.
-- Component registry (docs + playgrounds): `apps/web/src/components/ds/ds-docs.tsx`;
-  the `/ds` page renders it and portals playground controls into the Inspect rail.
+  answer, driven via `orbState` in the context). **It is a package, not app
+  code: it may import `@ambientui/ui` and npm, never `@/`.** Its material is
+  `packages/ambient/src/styles/ambient.css`; the app's own shell tokens are
+  `apps/site/src/styles/theme.css`, `viz.css`.
+- What the layer needs from a design system is stated in
+  `packages/ambient/src/ambient-runtime.tsx` — seven values and two motion
+  hooks, with real defaults, so it renders with no providers at all
+  (`packages/ambient/dev/index.html` proves it). `FoundationProvider` implements that
+  interface; the layer does not know the Foundation exists.
+- Sections/routing: `src/nav.ts` + path mapping in `App.tsx` (`/`, `/ds`).
+  The palette's Jump-to is **supplied** to `AssistantProvider` as `navItems` —
+  the layer never imports the app's route table.
+- Component registry: prose in `apps/site/src/lib/catalog.ts`
+  (serializable, React-free — the registry build and any static page read it),
+  demos in `apps/site/src/components/ds/stories.tsx`, joined by
+  `apps/site/src/components/ds/entries.ts`; the `/ds` page renders the join and
+  portals playground controls into the Inspect rail.

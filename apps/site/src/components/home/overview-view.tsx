@@ -1,0 +1,1654 @@
+"use client"
+
+import * as React from "react"
+
+import { AnimatePresence, animate, motion, useMotionValue } from "framer-motion"
+
+import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
+import { Button } from "@ambientui/ui/components/button"
+import { Icon, type IconName } from "@ambientui/ui/components/icon"
+import { cn } from "@ambientui/ui/lib/utils"
+import { Assistant } from "ambientui/assistant"
+import {
+  AssistantProvider,
+  useAssistant,
+  type AssistantMode,
+} from "ambientui/assistant-context"
+import { ORB_STATES, type OrbState } from "ambientui/kit-vocabulary"
+import { OrbField, OrbHeat } from "ambientui/orb-character"
+
+import { useRouter } from "next/navigation"
+
+import { DesignArchitectureSection } from "@/components/home/design-architecture-section"
+import { MakeItYoursSection } from "@/components/home/make-it-yours-section"
+import { InstallSection } from "@/components/home/install-section"
+import { DemoWindow } from "@/components/demos/demo-window"
+import { Reveal } from "@/components/reveal"
+import { SeekBar } from "@/components/seek-bar"
+
+/**
+ * OVERVIEW — the wordmark, and the UI starting right beneath it.
+ *
+ * THE WORDMARK IS THE IDENTITY AT IDENTITY SCALE: glyphs clipped over the
+ * orb's exact heat (OrbHeat — same engine, springs, palette), riding the
+ * layer's real orbState, on the field ground under a theme-following veil
+ * (sanctioned in DESIGN.md §12).
+ *
+ * THE DEMO IS THE ACTUAL COMPONENT. A dashboard for a fictional product
+ * (northbeam / checkout-api) sits inside a frame, and a second, fully
+ * real ambient layer is MOUNTED INSIDE THAT FRAME — its own
+ * AssistantProvider, its own Assistant, its own resting orb — scoped to
+ * the frame by transform containment (a transformed ancestor is the
+ * containing block for fixed descendants). When the frame scrolls into
+ * view its spotlight opens: the real ⌘K surface with the real intent
+ * rule, real suggestions grounded in the product's data, and the real
+ * answer pipeline. Nothing is filmed; the visitor can type into it.
+ * `hotkeys={false}` keeps the embedded layer from fighting the page's
+ * own for ⌘K — the frame is northbeam's product, and its layer answers
+ * to its own chrome only.
+ */
+
+/* ---------------------- the fictional product's data ---------------------- */
+
+const APP = { org: "northbeam", service: "checkout-api" }
+
+const VERSIONS = [
+  { id: "2db5ed7", msg: "Fix day dividers rendering twice", when: "18h ago" },
+  { id: "46cee28", msg: "Sweep dead code from the composer", when: "2d ago" },
+  { id: "b3c2e39", msg: "One SurfaceHeader across panels", when: "2d ago" },
+  { id: "5831257", msg: "Fix the failed deploy: target the built dist", when: "4d ago", failed: true },
+  { id: "ebf2e21", msg: "Manually deployed", when: "4d ago" },
+]
+
+/** what the embedded layer offers on this page — grounded in the data below */
+/** the statement section: the philosophy in plain words — direct heads,
+    simply explainable lines, no abstractions to decode */
+const PRINCIPLES: { word: string; body: string; link?: boolean }[] = [
+  {
+    word: "It takes no space",
+    body: "Your screens are already full. There is no chat tab to add and no column to give up. The assistant opens when you ask for it and goes away when you are done.",
+    link: true,
+  },
+  {
+    word: "It knows where you are",
+    body: "Each page tells the assistant what you are looking at. Ask about \u201cthis invoice\u201d and it knows which one. You never paste a screenshot or explain your screen first.",
+  },
+  {
+    word: "It answers with real things",
+    body: "Not a wall of text. A code change you can apply. A command with its output. Links into your own data. Made from the same components as the rest of your product.",
+  },
+  {
+    word: "It looks like your product",
+    body: "The assistant has no colours, fonts or motion of its own. It borrows yours. Change your theme and it changes with it.",
+  },
+]
+
+/** the layer's forms, described in the paper's own words (§2) */
+const FORMS: { mode: AssistantMode; name: string; desc: string }[] = [
+  { mode: "line", name: "Orb", desc: "Resting. A small character parked at the edge of the page, doing nothing until you call it." },
+  { mode: "spotlight", name: "Spotlight", desc: "One box that searches your product and asks the assistant. It is \u2318K, rebuilt for a product that has AI in it." },
+  { mode: "panel", name: "Panel", desc: "A conversation that stays open while you work. Answers stack up, so you can look back at what you asked." },
+  { mode: "dock", name: "Dock", desc: "The panel pinned to one side, full height. Your page makes room for it instead of hiding behind it." },
+  { mode: "history", name: "History", desc: "Everything you have asked here. It fills the screen but stays see-through, because the work underneath is why you opened it." },
+]
+
+const DEMO_SUGGESTIONS = [
+  `Why did the deploy to ${APP.service} fail?`,
+  "Roll back to the last clean version",
+  "What shipped in the last 24 hours?",
+]
+
+const DEMO_NAV = [
+  { id: "overview", label: "Overview", desc: `${APP.service} · service home` },
+  { id: "deployments", label: "Deployments", desc: "History and rollbacks" },
+  { id: "domains", label: "Domains & routes", desc: `${APP.service}.${APP.org}.dev` },
+  { id: "metrics", label: "Metrics", desc: "Last 24 hours" },
+]
+
+/* ------------------------------ the dashboard ------------------------------ */
+
+function DemoDashboard() {
+  const nav: { icon: IconName; label: string; active?: boolean }[] = [
+    { icon: "home", label: "Account home" },
+    { icon: "history", label: "Recents" },
+    { icon: "code", label: "Services", active: true },
+    { icon: "globe", label: "Domains" },
+    { icon: "layers", label: "Queues" },
+    { icon: "settings", label: "Settings" },
+  ]
+  return (
+    <div className="bg-card flex h-full flex-col overflow-hidden text-sm">
+      {/* header: brand · breadcrumb */}
+      <div className="border-border flex h-14 items-center gap-3 border-b px-6">
+        <span className="bg-primary size-4 rounded-sm" />
+        <span className="font-medium">{APP.org}</span>
+        <span className="text-muted-foreground">
+          Services <span className="mx-1.5">/</span> {APP.service}
+        </span>
+        <span className="text-muted-foreground ms-auto hidden sm:inline">
+          Support
+        </span>
+      </div>
+      <div className="flex min-h-0 flex-1">
+        {/* sidebar */}
+        <div className="border-border hidden w-56 flex-col gap-1 border-e p-3 sm:flex">
+          {nav.map((n) => (
+            <span
+              key={n.label}
+              className={cn(
+                "flex items-center gap-2.5 rounded-lg px-3 py-2",
+                n.active
+                  ? "bg-muted text-foreground font-medium"
+                  : "text-muted-foreground"
+              )}
+            >
+              <Icon name={n.icon} size={16} />
+              {n.label}
+            </span>
+          ))}
+        </div>
+        {/* main: tabs + a dense two-column body that fills the height */}
+        <div className="flex min-w-0 flex-1 flex-col gap-5 p-6">
+          <div className="flex items-center gap-1.5">
+            {["Overview", "Metrics", "Deployments", "Domains", "Settings"].map(
+              (t, i) => (
+                <span
+                  key={t}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5",
+                    i === 0
+                      ? "bg-muted text-foreground font-medium"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {t}
+                </span>
+              )
+            )}
+            <span className="bg-primary text-primary-foreground ms-auto hidden rounded-lg px-3 py-1.5 font-medium sm:inline">
+              New deployment
+            </span>
+          </div>
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="border-border flex min-h-0 flex-col overflow-hidden rounded-lg border lg:col-span-2">
+            <p className="border-border border-b px-4 py-3 font-medium">
+              Versions
+            </p>
+
+            {VERSIONS.map((v) => (
+              <div
+                key={v.id}
+                className="border-border flex items-center gap-4 border-b px-4 py-3 last:border-b-0"
+              >
+                <span className="text-muted-foreground font-mono text-xs">{v.id}</span>
+                <span className="min-w-0 truncate">{v.msg}</span>
+                {v.failed && (
+                  <span className="bg-destructive/10 text-destructive rounded px-1.5 py-0.5 text-xs font-medium">
+                    failed
+                  </span>
+                )}
+                <span className="text-muted-foreground ms-auto shrink-0">
+                  {v.when}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* the right rail — fills the column so nothing reads empty */}
+          <div className="flex min-h-0 flex-col gap-4">
+            <div className="border-border rounded-lg border">
+              <p className="border-border border-b px-4 py-3 font-medium">
+                Domains &amp; routes
+              </p>
+              <div className="flex flex-col gap-2.5 p-4">
+                <span>{`${APP.service}.${APP.org}.dev`}</span>
+                <span className="text-muted-foreground">Custom domains —</span>
+                <span className="text-muted-foreground">Routes —</span>
+              </div>
+            </div>
+            <div className="border-border rounded-lg border">
+              <p className="border-border border-b px-4 py-3 font-medium">
+                Metrics{" "}
+                <span className="text-muted-foreground ms-1 font-normal">
+                  Last 24 hours
+                </span>
+              </p>
+              <div className="text-muted-foreground flex flex-col gap-2.5 p-4">
+                <span>Requests · 412k</span>
+                <span>p95 latency · 84 ms</span>
+                <span>Errors · 0.02%</span>
+              </div>
+            </div>
+            <div className="border-border flex-1 rounded-lg border">
+              <p className="border-border border-b px-4 py-3 font-medium">
+                Next steps
+              </p>
+              <div className="text-muted-foreground flex flex-col gap-2.5 p-4">
+                <span>Connect a custom domain</span>
+                <span>Bind a queue to retries</span>
+                <span>Enable trace sampling</span>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** The presentation shell both demos share: a desktop window, 16:9,
+    transform-contained so an embedded layer's surfaces live inside it.
+    `overlay` renders over the WHOLE window (title bar included) — the
+    layer's full-screen surfaces cover the window edge to edge, so
+    anything meant to ride above them (the film's hand) must too. */
+/* ----------------------------- the demo cursor ---------------------------- */
+
+/**
+ * THE FILM'S HAND (Figma: Cursor, 163:230) — a glass puck that glides to
+ * the layer's REAL controls and presses them, so every form change in the
+ * film reads as "this is the click that gets you this". Presentation
+ * choreography only: it draws the gesture, and the film fires the same
+ * public API the control itself would. It never intercepts input
+ * (pointer-events-none throughout) — the moment the visitor's own cursor
+ * arrives, the film and this hand both stand down.
+ *
+ * Sizing per the token rule: the design's 22px disc rides size-5 (20px,
+ * nearest legal step); the 14px core is size-3.5 exactly.
+ */
+type DemoCursorHandle = {
+  /** glide to the element and press it; false if the control isn't there.
+      `fire` also operates the real control — "click" dispatches a click
+      (Back to search), "pointer" a pointerdown/up pair (the orb's tap,
+      which is pointer-driven). A dispatched event never counts as
+      visitor interaction: the stop only honors TRUSTED events, which
+      only a real pointer produces. */
+  clickOn: (selector: string, fire?: "click" | "pointer") => Promise<boolean>
+  /** press the element and pull it to a point (fractions of the frame) —
+      a REAL drag: pointerdown on the element, pointermove streamed along
+      the glide, pointerup at the target. The layer's own drag machinery
+      runs — the panel follows the hand, the hot zones light up, and the
+      drop itself performs the mode switch. */
+  dragTo: (selector: string, fx: number, fy: number) => Promise<boolean>
+  /** drift aside and wait — the "user" is typing, not pointing */
+  rest: () => Promise<void>
+  /** show a keystroke on screen (screencast-style keycaps) — the gesture
+      a pointer can't draw: ⌘K, ↩ */
+  keys: (caps: string[]) => Promise<void>
+  hide: () => void
+}
+
+function DemoCursorLayer({
+  handleRef,
+}: {
+  handleRef: React.MutableRefObject<DemoCursorHandle | null>
+}) {
+  const spring = useMotionSpring()
+  const micro = useMotionTransition("micro")
+  const hostRef = React.useRef<HTMLDivElement | null>(null)
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const [visible, setVisible] = React.useState(false)
+  const [pressed, setPressed] = React.useState(false)
+  const [pulse, setPulse] = React.useState(0)
+  const [caps, setCaps] = React.useState<string[] | null>(null)
+  const visibleRef = React.useRef(false)
+
+  React.useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+    const sleep = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms))
+    const glide = async (px: number, py: number) => {
+      await Promise.all([animate(x, px, spring), animate(y, py, spring)])
+    }
+    const centerOf = (el: Element) => {
+      const hr = host.getBoundingClientRect()
+      const r = el.getBoundingClientRect()
+      return { x: r.left - hr.left + r.width / 2, y: r.top - hr.top + r.height / 2 }
+    }
+    const appearNear = (px: number, py: number) => {
+      // a hand that fades in beside its first target, not one that flies
+      // across the whole frame from a stale corner
+      if (!visibleRef.current) {
+        x.jump(px + 60)
+        y.jump(py + 40)
+      }
+      setVisible(true)
+      visibleRef.current = true
+    }
+    const press = async () => {
+      setPressed(true)
+      setPulse((p) => p + 1)
+      await sleep(180)
+      setPressed(false)
+    }
+    handleRef.current = {
+      async clickOn(selector, fire) {
+        const el = host.parentElement?.querySelector(selector)
+        if (!el) return false
+        const c = centerOf(el)
+        appearNear(c.x, c.y)
+        await glide(c.x, c.y)
+        await press()
+        if (fire === "click") (el as HTMLElement).click()
+        else if (fire === "pointer") {
+          const r = el.getBoundingClientRect()
+          const opts: PointerEventInit = {
+            bubbles: true,
+            clientX: r.left + r.width / 2,
+            clientY: r.top + r.height / 2,
+            pointerId: 1,
+            isPrimary: true,
+          }
+          el.dispatchEvent(new PointerEvent("pointerdown", opts))
+          el.dispatchEvent(new PointerEvent("pointerup", opts))
+        }
+        await sleep(220)
+        return true
+      },
+      async dragTo(selector, fx, fy) {
+        const el = host.parentElement?.querySelector(selector)
+        if (!el) return false
+        const c = centerOf(el)
+        appearNear(c.x, c.y)
+        await glide(c.x, c.y)
+        setPressed(true)
+        const hr = host.getBoundingClientRect()
+        const at = (px: number, py: number): PointerEventInit => ({
+          bubbles: true,
+          clientX: hr.left + px,
+          clientY: hr.top + py,
+          pointerId: 7,
+          isPrimary: true,
+        })
+        el.dispatchEvent(new PointerEvent("pointerdown", at(c.x, c.y)))
+        await sleep(180)
+        // stream the drag: every frame of the glide is a real pointermove,
+        // so the component travels WITH the hand and the zones light up
+        const moveNow = () =>
+          window.dispatchEvent(
+            new PointerEvent("pointermove", at(x.get(), y.get()))
+          )
+        const unsubs = [x.on("change", moveNow), y.on("change", moveNow)]
+        await glide(hr.width * fx, hr.height * fy)
+        unsubs.forEach((u) => u())
+        moveNow()
+        // hold in the zone a beat, so the highlight reads before the drop
+        await sleep(420)
+        window.dispatchEvent(
+          new PointerEvent("pointerup", at(x.get(), y.get()))
+        )
+        setPressed(false)
+        setPulse((p) => p + 1)
+        await sleep(220)
+        return true
+      },
+      async rest() {
+        const hr = host.getBoundingClientRect()
+        await glide(hr.width * 0.82, hr.height * 0.72)
+      },
+      async keys(k) {
+        setCaps(k)
+        await sleep(1100)
+        setCaps(null)
+        await sleep(250)
+      },
+      hide() {
+        setVisible(false)
+        visibleRef.current = false
+      },
+    }
+    return () => {
+      handleRef.current = null
+    }
+    // spring/micro are stable per Foundation config; x/y are motion values
+  }, [handleRef, spring, x, y])
+
+  return (
+    // inset-0 of the WHOLE WINDOW (the DemoWindow overlay slot) — a host
+    // clipped to the body hid the hand behind full-window surfaces, whose
+    // top edge sits above the body's clip line (the history header)
+    <div
+      ref={hostRef}
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-50"
+    >
+      {/* the keystroke card — the gesture a pointer can't draw, shown the
+          way screencasts show it: keycaps over the lower third */}
+      <AnimatePresence>
+        {caps && (
+          <motion.div
+            key="caps"
+            initial={{ opacity: 0, scale: 0.92, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, transition: micro }}
+            transition={{ ...spring, opacity: micro }}
+            className="absolute inset-x-0 bottom-1/4 flex justify-center gap-1.5"
+          >
+            {caps.map((k) => (
+              <kbd
+                key={k}
+                className="border-border bg-card/85 text-foreground rounded-lg border px-3 py-2 text-base font-medium shadow-lg backdrop-blur-md"
+              >
+                {k}
+              </kbd>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <motion.div style={{ x, y }} className="absolute top-0 left-0">
+        {pulse > 0 && (
+          <motion.span
+            key={pulse}
+            initial={{ scale: 0.5, opacity: 0.45 }}
+            animate={{ scale: 2.4, opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="border-foreground/50 absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+          />
+        )}
+        <motion.div
+          animate={{ scale: pressed ? 0.78 : 1, opacity: visible ? 1 : 0 }}
+          transition={{ ...spring, opacity: micro }}
+          className="border-border/60 bg-background/60 flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-md backdrop-blur-md"
+        >
+          <span className="bg-foreground/70 size-3.5 rounded-full shadow-sm" />
+        </motion.div>
+      </motion.div>
+    </div>
+  )
+}
+
+/* --------------------------- the embedded layer --------------------------- */
+
+/**
+ * Inside the nested provider: declare the product's context to ITS layer
+ * (the same setPageChip/setPageIntel contract every page uses), and open
+ * the spotlight when the frame is being watched.
+ */
+/** the film's chapters, in tour order — one segment each on the playback pill */
+const FILM_BEATS = [
+  // Ask's dur is the pill's ESTIMATE — the chapter itself ends on the
+  // answer's settling signal, so it never overstays a finished exchange
+  { id: "ask", label: "Ask", dur: 15500 },
+  { id: "panel", label: "Panel", dur: 4500 },
+  { id: "dock", label: "Dock", dur: 4500 },
+  { id: "history", label: "History", dur: 4500 },
+  { id: "orb", label: "Orb", dur: 3200 },
+] as const
+
+function EmbeddedLayer({
+  active,
+  interacted,
+  cursor,
+  pausedRef,
+  onBeat,
+}: {
+  active: boolean
+  /** the visitor touched the window — the film stops, the layer is theirs */
+  interacted: boolean
+  /** the film's hand — draws the click that causes each step */
+  cursor: React.MutableRefObject<DemoCursorHandle | null>
+  /** the playback control's pause, read between choreography steps */
+  pausedRef: React.MutableRefObject<boolean>
+  /** each chapter announces itself so the playback pill can fill along */
+  onBeat: (index: number, durMs: number) => void
+}) {
+  const { setMode, setPageChip, setPageIntel, seedPrompt, orbState } =
+    useAssistant()
+
+  // the film reads the layer's own settling signal (orbState returns to
+  // "still" once an answer has fully settled) through a ref, so watching
+  // it never restarts the choreography
+  const orbStateRef = React.useRef(orbState)
+  React.useEffect(() => {
+    orbStateRef.current = orbState
+  })
+
+  React.useEffect(() => {
+    setPageChip({
+      id: "nb-overview",
+      kind: "page",
+      label: `${APP.service} · Overview`,
+      icon: "code",
+    })
+    setPageIntel({
+      suggestions: DEMO_SUGGESTIONS,
+      askPlaceholder: `Search ${APP.service}, or ask anything…`,
+    })
+    return () => {
+      setPageChip(null)
+      setPageIntel(null)
+    }
+  }, [setPageChip, setPageIntel])
+
+  // THE FILM, through the surface's own APIs: the spotlight opens, the
+  // question writes itself through seedPrompt, the final seed autoSends
+  // and the real pipeline answers — then the TOUR: the same exchange
+  // carried through every form (panel, dock, history), back to rest,
+  // and the film starts from the beginning. The moment the visitor
+  // interacts with the window, the script stops and the layer is theirs
+  // to explore, form by form. Cadences are demo choreography; every
+  // behavior underneath is the component's.
+  const [cycle, setCycle] = React.useState(0)
+  React.useEffect(() => {
+    if (!active || interacted) return
+    let alive = true
+    const timers: number[] = []
+    // pause-aware sleep: while the playback control holds the film, time
+    // simply does not pass — typing, holds, and beat budgets all freeze
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => {
+        let left = ms
+        const tick = () => {
+          if (!alive) return resolve()
+          if (pausedRef.current) {
+            timers.push(window.setTimeout(tick, 150))
+            return
+          }
+          const chunk = Math.min(left, 120)
+          timers.push(
+            window.setTimeout(() => {
+              left -= chunk
+              if (left <= 0) resolve()
+              else tick()
+            }, chunk)
+          )
+        }
+        tick()
+      })
+    // each chapter announces itself, runs its gestures, and sleeps out the
+    // rest of its budget — so the pill's fill and the film agree on time.
+    // pad:false for a chapter that ends on its own signal (the answer
+    // settling) instead of a clock: it moves on the moment it is done.
+    const beat = async (
+      index: number,
+      act: () => Promise<void>,
+      { pad = true }: { pad?: boolean } = {}
+    ) => {
+      const dur = FILM_BEATS[index]!.dur
+      onBeat(index, dur)
+      const start = Date.now()
+      await act()
+      if (!pad) return
+      const left = dur - (Date.now() - start)
+      if (left > 0) await sleep(left)
+    }
+    // pause-aware condition wait, with a ceiling so a wedged pipeline
+    // can never wedge the film
+    const waitUntil = async (cond: () => boolean, maxMs: number) => {
+      const start = Date.now()
+      while (alive && !cond() && Date.now() - start < maxMs) await sleep(150)
+    }
+    // EVERY STEP IS A DRAWN GESTURE ON A REAL CONTROL: the hand presses
+    // the orb (a real pointer tap, so the QUICK-ASK opens first — the
+    // orb's own opening state, never skipped), the header buttons to
+    // change form, and pulls the panel's drag handle to dock it. The
+    // visitor sees WHICH click gets them each shape.
+    const run = async () => {
+      await beat(0, async () => {
+        await sleep(900)
+        if (!alive) return
+        await cursor.current?.clickOn('[aria-label="Open ambientui"]', "pointer")
+        if (!alive) return
+        // the orb's opening state: the quick-ask pill grows out of the
+        // character — hold it, then promote to the full palette (⌘K's move)
+        await sleep(1900)
+        if (!alive) return
+        setMode("spotlight")
+        await sleep(600)
+        if (cycle > 0) {
+          // a repeat cycle finds last round's transcript — press the real
+          // "Back to search" so the loop starts from the clean palette
+          await cursor.current?.clickOn('[aria-label="Back to search"]', "click")
+          if (!alive) return
+          await sleep(500)
+        }
+        cursor.current?.rest()
+        const q = DEMO_SUGGESTIONS[0]!
+        for (let i = 0; i < q.length; i++) {
+          await sleep(38)
+          if (!alive) return
+          seedPrompt(q.slice(0, i + 1))
+        }
+        await sleep(800)
+        if (!alive) return
+        seedPrompt(q, true)
+        // move on when the ANSWER says so, not when a clock runs out: wait
+        // for the exchange to start, then for the layer's settling signal,
+        // hold a reading beat, and hand over to the next chapter
+        await waitUntil(() => orbStateRef.current !== "still", 4000)
+        await waitUntil(() => orbStateRef.current === "still", 20000)
+        await sleep(2400)
+      }, { pad: false })
+      if (!alive) return
+      await beat(1, async () => {
+        await cursor.current?.clickOn('[aria-label="Open in chat window"]')
+        if (!alive) return
+        setMode("panel")
+      })
+      if (!alive) return
+      await beat(2, async () => {
+        // dock is a DRAG, not a button — a real one: the panel follows the
+        // hand, the zones appear, and the DROP docks it (the layer's own
+        // machinery). setMode only covers a missing drag handle.
+        const dragged = await cursor.current?.dragTo(".group\\/header", 0.94, 0.4)
+        if (!alive) return
+        if (!dragged) setMode("dock")
+      })
+      if (!alive) return
+      await beat(3, async () => {
+        await cursor.current?.clickOn('[aria-label="History"]')
+        if (!alive) return
+        setMode("history")
+      })
+      if (!alive) return
+      await beat(4, async () => {
+        await cursor.current?.clickOn('[aria-label="Close history"]')
+        if (!alive) return
+        setMode("line")
+        cursor.current?.hide()
+      })
+      if (alive) setCycle((c) => c + 1)
+    }
+    void run()
+    // no hide on cleanup: the hand either glides on into the next cycle,
+    // or its whole layer unmounts (interaction, scroll-away)
+    return () => {
+      alive = false
+      timers.forEach(clearTimeout)
+    }
+  }, [active, interacted, cycle, setMode, seedPrompt, cursor, pausedRef, onBeat])
+
+  return <Assistant hotkeys={false} />
+}
+
+/**
+ * THE FILM'S TRANSPORT — one segment per chapter under the demo window,
+ * story-bar style: chapters already played are lit dots, the playing one
+ * is a bar filling in real time, the rest wait as dim dots. Beside it,
+ * pause/play. It says three things at a glance: this is a recording, this
+ * is how long it is, and it loops. The fill's linear tween is a progress
+ * METER, not motion styling — its duration IS the chapter's length, so
+ * the motion roles don't apply (same license as the cursor's choreography).
+ */
+function DemoPlayback({
+  beats,
+  beat,
+  paused,
+  done = false,
+  onToggle,
+  onReplay,
+}: {
+  /** this demo's chapters — the film's five, or a section's one or two */
+  beats: readonly { id: string; label: string }[]
+  beat: { index: number; dur: number; key: number } | null
+  paused: boolean
+  /** a one-shot staging that has finished: every segment full, replay offered */
+  done?: boolean
+  onToggle: () => void
+  onReplay?: () => void
+}) {
+  // ONE PROGRESS VALUE FOR THE WHOLE RUN: chapters completed plus the
+  // fraction of the current one, which is exactly what SeekBar's segments
+  // read. The fill animates linearly for the chapter's own duration, so the
+  // bar is a clock, not a decoration.
+  const fill = useMotionValue(0)
+  const progress = useMotionValue(0)
+  const ctrl = React.useRef<ReturnType<typeof animate> | null>(null)
+
+  React.useEffect(() => {
+    if (done) {
+      progress.set(beats.length)
+      return
+    }
+    if (!beat) {
+      progress.set(0)
+      return
+    }
+    ctrl.current?.stop()
+    fill.set(0)
+    const unsub = fill.on("change", (v) => progress.set(beat.index + v))
+    progress.set(beat.index)
+    ctrl.current = animate(fill, 1, { duration: beat.dur / 1000, ease: "linear" })
+    return () => {
+      unsub()
+      ctrl.current?.stop()
+    }
+  }, [beat, done, beats.length, fill, progress])
+
+  React.useEffect(() => {
+    if (paused) ctrl.current?.pause()
+    else ctrl.current?.play()
+  }, [paused])
+
+  return (
+    <SeekBar
+      className="mx-auto mt-5 w-64"
+      segments={beats.map((b) => b.label)}
+      progress={progress}
+      playing={!paused && !done}
+      ended={done}
+      onToggle={done ? (onReplay ?? onToggle) : onToggle}
+      // no onSeek: the film is a script, not a timeline — it cannot be
+      // rewound to an arbitrary point, so it must not look like it can
+    />
+  )
+}
+
+/**
+ * THE HANDOVER LINE — what replaces a demo's transport the moment a
+ * trusted press ends its script: the film's last subtitle, in the
+ * layer's own shimmer, telling the visitor the component is now really
+ * theirs — and that the page itself runs the same layer.
+ */
+function HandoverLine({ children }: { children: React.ReactNode }) {
+  const spring = useMotionSpring()
+  const micro = useMotionTransition("micro")
+  return (
+    <motion.p
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...spring, opacity: micro }}
+      className="ambient-shimmer mt-5 text-center text-sm"
+    >
+      {children}
+    </motion.p>
+  )
+}
+
+function ShellDemo({ widthPct }: { widthPct: number }) {
+  const ref = React.useRef<HTMLDivElement | null>(null)
+  const [inView, setInView] = React.useState(false)
+  const [near, setNear] = React.useState(false)
+  const [interacted, setInteracted] = React.useState(false)
+  const cursorRef = React.useRef<DemoCursorHandle | null>(null)
+  const [paused, setPaused] = React.useState(false)
+  const pausedRef = React.useRef(false)
+  const [beat, setBeat] = React.useState<{
+    index: number
+    dur: number
+    key: number
+  } | null>(null)
+  const beatKey = React.useRef(0)
+  const onBeat = React.useCallback((index: number, dur: number) => {
+    setBeat({ index, dur, key: ++beatKey.current })
+  }, [])
+  const togglePaused = () => {
+    pausedRef.current = !pausedRef.current
+    setPaused(pausedRef.current)
+  }
+
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    // the film starts only when the WINDOW IS PROPERLY ON SCREEN — the
+    // visitor has scrolled to it and can see the UI, not a cropped sliver
+    // playing to nobody below the fold
+    const io = new IntersectionObserver(
+      ([e]) => setInView(e!.isIntersecting),
+      { threshold: 0.65 }
+    )
+    // A MOUNT GATE, wider than the film's trigger: each embedded layer
+    // holds real WebGL contexts (its orb, its surface fields), and a page
+    // of demo windows all alive at once trips the browser's context cap —
+    // which evicts the oldest context, the wordmark. Off-screen windows
+    // give their layer back; leaving also resets `interacted`, so the
+    // film re-arms for the next visit.
+    const mount = new IntersectionObserver(
+      ([e]) => {
+        const v = e!.isIntersecting
+        setNear(v)
+        if (!v) setInteracted(false)
+      },
+      { rootMargin: "300px 0px" }
+    )
+    io.observe(el)
+    mount.observe(el)
+    return () => {
+      io.disconnect()
+      mount.disconnect()
+    }
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      className="mx-auto flex w-full flex-col"
+      style={{ width: `${widthPct}%` }}
+    >
+      {/* the shell REVEALS as the reader scrolls to it; the film starts
+          once it is properly in view, so the entrance leads and the demo
+          follows. The layer inside renders at the Foundation's own
+          scaling — its size is a THEME decision, not a demo knob. */}
+      <Reveal>
+        {/* a TRUSTED pointer or key inside the window ends the film — from
+            then on the layer belongs to the visitor. The film's own
+            dispatched events are untrusted and pass through. */}
+        <div
+          onPointerDownCapture={(e) => e.isTrusted && setInteracted(true)}
+          onKeyDownCapture={(e) => e.isTrusted && setInteracted(true)}
+        >
+          <DemoWindow
+            overlay={
+              // the hand paints last, over the WHOLE window — full-screen
+              // surfaces (history) reach above the body's clip line
+              near && !interacted ? (
+                <DemoCursorLayer handleRef={cursorRef} />
+              ) : null
+            }
+          >
+            {/* the product recedes (opacity), the layer does not — the
+                Ambient UI component is the subject of every window */}
+            <div className="h-full opacity-60">
+              <DemoDashboard />
+            </div>
+            {near && (
+              <AssistantProvider navItems={DEMO_NAV}>
+                <EmbeddedLayer
+                  active={inView}
+                  interacted={interacted}
+                  cursor={cursorRef}
+                  pausedRef={pausedRef}
+                  onBeat={onBeat}
+                />
+              </AssistantProvider>
+            )}
+          </DemoWindow>
+        </div>
+        {/* the transport pill: how long the film is, where it stands, and
+            that it loops. The moment the visitor takes over it becomes the
+            handover line */}
+        {interacted ? (
+          <HandoverLine>
+            All yours — ask a follow-up, drag the panel, dock it. This is
+            the live component, not a recording.
+          </HandoverLine>
+        ) : (
+          <DemoPlayback
+            beats={FILM_BEATS}
+            beat={beat}
+            paused={paused}
+            onToggle={togglePaused}
+          />
+        )}
+      </Reveal>
+    </div>
+  )
+}
+
+/* ------------------------------ the forms ------------------------------ */
+
+/**
+ * Inside its own nested provider: declare the product, seed one real
+ * exchange so every form has a transcript to show, and hold the layer in
+ * whatever form the section currently presents. All public seam — the
+ * same setMode/seedPrompt the product itself uses.
+ */
+/** a section's two chapters: the seeded exchange, then its own gesture.
+    The gesture chapter's budget varies by form — the dock's real drag
+    takes what a drag takes. */
+const STAGE_GESTURE_DUR: Record<AssistantMode, number> = {
+  line: 3400,
+  spotlight: 1400,
+  panel: 3200,
+  dock: 4800,
+  history: 3200,
+}
+const stageBeatsFor = (form: (typeof FORMS)[number]) =>
+  // the Orb IS the resting state — its demo has nothing to ask, so its
+  // transport is one chapter and its window opens on the orb directly.
+  // The Spotlight tells the whole ask (⌘K · type · ↩), so its first
+  // chapter is "Ask"; every later form INHERITS the answered palette,
+  // so theirs is named "Spotlight" — the state it picks up from
+  // only the Spotlight shows two chapters (the ask, then the hold) — the
+  // later forms PRE-LOAD their starting state off-screen, so their whole
+  // visible show is the one gesture, one chapter
+  form.mode === "spotlight"
+    ? ([
+        { id: "ask", label: "Ask" },
+        { id: "form", label: form.name },
+      ] as const)
+    : ([{ id: "form", label: form.name }] as const)
+
+function FormsDriver({
+  active,
+  mode,
+  nonce,
+  interacted,
+  cursor,
+  pausedRef,
+  onBeat,
+  onDone,
+}: {
+  active: boolean
+  mode: AssistantMode
+  /** bumps when the transport's replay asks the GESTURE to run again on
+      the living layer (pre-loaded forms only — no re-prep, no dead bar) */
+  nonce: number
+  /** a trusted press ended the script — the layer is the visitor's */
+  interacted: boolean
+  /** the section's hand, drawing the real gesture into its form */
+  cursor: React.MutableRefObject<DemoCursorHandle | null>
+  /** the section transport's pause, read between choreography steps */
+  pausedRef: React.MutableRefObject<boolean>
+  /** chapter announcements + the staging's end, for the transport */
+  onBeat: (index: number, durMs: number) => void
+  onDone: () => void
+}) {
+  const { setMode, setPageChip, setPageIntel, seedPrompt, orbState } =
+    useAssistant()
+
+  // the layer's settling signal, read through a ref so watching it never
+  // restarts the staging (same pattern as the film)
+  const orbStateRef = React.useRef(orbState)
+  React.useEffect(() => {
+    orbStateRef.current = orbState
+  })
+
+  React.useEffect(() => {
+    setPageChip({
+      id: "nb-overview",
+      kind: "page",
+      label: `${APP.service} · Overview`,
+      icon: "code",
+    })
+    setPageIntel({
+      suggestions: DEMO_SUGGESTIONS,
+      askPlaceholder: `Search ${APP.service}, or ask anything…`,
+    })
+    return () => {
+      setPageChip(null)
+      setPageIntel(null)
+    }
+  }, [setPageChip, setPageIntel])
+
+  // PREP RUNS OFF-SCREEN, THE GESTURE RUNS ON ARRIVAL. The section is
+  // mounted 300px early; that head start now does the loading: the
+  // exchange seeds and settles (and the Dock's starting panel opens)
+  // while nobody is watching, so the moment the window enters view the
+  // FIRST thing shown is the gesture itself — Panel's click carrying the
+  // loaded palette over, Dock's drag starting from the loaded panel.
+  // rest and the spotlight tell their whole story on screen — born ready
+  const [prepped, setPrepped] = React.useState(
+    () => mode === "line" || mode === "spotlight"
+  )
+  React.useEffect(() => {
+    if (mode === "line" || mode === "spotlight") return
+    let alive = true
+    const timers: number[] = []
+    const sleep = (ms: number) =>
+      new Promise<void>((r) => timers.push(window.setTimeout(r, ms)))
+    const run = async () => {
+      setMode("spotlight")
+      seedPrompt(DEMO_SUGGESTIONS[0]!, true, true)
+      await sleep(1200)
+      const start = Date.now()
+      while (alive && orbStateRef.current !== "still" && Date.now() - start < 20000)
+        await sleep(150)
+      if (!alive) return
+      if (mode === "dock" || mode === "history") {
+        // these stories START at the panel: the Dock's drag begins there,
+        // and History is opened from the panel's own header button
+        setMode("panel")
+        await sleep(600)
+        if (!alive) return
+      }
+      setPrepped(true)
+    }
+    void run()
+    return () => {
+      alive = false
+      timers.forEach(clearTimeout)
+    }
+  }, [mode, setMode, seedPrompt])
+
+  const staged = React.useRef(false)
+  const lastNonce = React.useRef(nonce)
+  React.useEffect(() => {
+    if (!active || interacted || !prepped) return
+    let alive = true
+    const timers: number[] = []
+    // pause-aware, same as the film: while the transport holds the
+    // staging, time does not pass
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => {
+        let left = ms
+        const tick = () => {
+          if (!alive) return resolve()
+          if (pausedRef.current) {
+            timers.push(window.setTimeout(tick, 150))
+            return
+          }
+          const chunk = Math.min(left, 120)
+          timers.push(
+            window.setTimeout(() => {
+              left -= chunk
+              if (left <= 0) resolve()
+              else tick()
+            }, chunk)
+          )
+        }
+        tick()
+      })
+    const run = async () => {
+      if (lastNonce.current !== nonce) {
+        // REPLAY, for a pre-loaded form: rewind the LIVING layer to the
+        // gesture's starting state — the transcript survives, the bar
+        // starts immediately, and the gesture performs again
+        lastNonce.current = nonce
+        staged.current = false
+        setMode(mode === "panel" ? "spotlight" : "panel")
+        await sleep(800)
+        if (!alive) return
+      }
+      if (staged.current) {
+        // returning to a section already staged: just hold its form
+        setMode(mode)
+        onDone()
+        return
+      }
+      // NOTE ON THE FLAGS: staged/seeded are marked only ON COMPLETION.
+      // Marking them up front looked safe until StrictMode's mount-abort-
+      // remount: the aborted first run left staged=true and the real run
+      // short-circuited to "done" without ever performing the staging.
+      // An aborted run must leave no footprint.
+      if (mode === "line") {
+        // the Orb demo IS the orb's own gesture: it opens at rest, the
+        // hand taps the character (a real pointer tap), and the QUICK-ASK
+        // grows out of it — the opened state stays as the exhibit. No
+        // seeded exchange, no spotlight.
+        onBeat(0, STAGE_GESTURE_DUR.line)
+        const start = Date.now()
+        setMode("line")
+        await sleep(900)
+        if (!alive) return
+        await cursor.current?.clickOn('[aria-label="Open ambientui"]', "pointer")
+        if (!alive) return
+        await sleep(500)
+        cursor.current?.hide()
+        const left = STAGE_GESTURE_DUR.line - (Date.now() - start)
+        if (left > 0) await sleep(left)
+        if (alive) {
+          staged.current = true
+          onDone()
+        }
+        return
+      }
+      const waitUntil = async (cond: () => boolean, maxMs: number) => {
+        const start = Date.now()
+        while (alive && !cond() && Date.now() - start < maxMs) await sleep(150)
+      }
+      if (mode === "spotlight") {
+        // the spotlight's staging is ITS OWN gesture, told in order: the
+        // ⌘K chord on screen, the palette opening, the question typing
+        // itself, ↩, and the real pipeline answering — then the answered
+        // surface holds as the exhibit
+        onBeat(0, 11500)
+        await cursor.current?.keys(["⌘", "K"])
+        if (!alive) return
+        setMode("spotlight")
+        await sleep(700)
+        if (!alive) return
+        const q = DEMO_SUGGESTIONS[0]!
+        for (let i = 0; i < q.length; i++) {
+          await sleep(38)
+          if (!alive) return
+          seedPrompt(q.slice(0, i + 1))
+        }
+        await sleep(500)
+        if (!alive) return
+        await cursor.current?.keys(["↩"])
+        if (!alive) return
+        seedPrompt(q, true)
+        await waitUntil(() => orbStateRef.current !== "still", 4000)
+        await waitUntil(() => orbStateRef.current === "still", 20000)
+        if (!alive) return
+        onBeat(1, STAGE_GESTURE_DUR.spotlight)
+        await sleep(STAGE_GESTURE_DUR.spotlight)
+        if (alive) {
+          staged.current = true
+          onDone()
+        }
+        return
+      }
+      // THE GESTURE OPENS THE SHOW: prep already loaded the answered
+      // palette (Dock: the panel) off-screen, so on arrival the hand
+      // performs the transition immediately — the click that carries the
+      // palette into the panel, the drag that docks the panel, the press
+      // that opens history. One chapter each: the loading was not a scene.
+      onBeat(0, STAGE_GESTURE_DUR[mode])
+      const gestureStart = Date.now()
+      await sleep(500)
+      if (!alive) return
+      if (mode === "panel") {
+        await cursor.current?.clickOn('[aria-label="Open in chat window"]')
+        if (!alive) return
+        setMode("panel")
+      } else if (mode === "dock") {
+        // starting FROM the panel: the drag is the whole story
+        const dragged = await cursor.current?.dragTo(".group\\/header", 0.94, 0.4)
+        if (!alive) return
+        if (!dragged) setMode("dock")
+      } else if (mode === "history") {
+        await cursor.current?.clickOn('[aria-label="History"]')
+        if (!alive) return
+        setMode("history")
+      } else {
+        setMode(mode)
+      }
+      cursor.current?.hide()
+      // let the gesture chapter's bar complete before the pill reads done
+      const left = STAGE_GESTURE_DUR[mode] - (Date.now() - gestureStart)
+      if (left > 0) await sleep(left)
+      if (alive) {
+        staged.current = true
+        onDone()
+      }
+    }
+    void run()
+    return () => {
+      alive = false
+      timers.forEach(clearTimeout)
+    }
+  }, [active, interacted, prepped, nonce, mode, setMode, seedPrompt, cursor, pausedRef, onBeat, onDone])
+
+  return <Assistant hotkeys={false} />
+}
+
+/**
+ * One form, one section: the form's name and its line from the paper,
+ * then the same presentation window with a real layer HELD in that form.
+ * Each section activates as it scrolls into view and seeds one exchange
+ * so the conversational forms have a transcript; from there the layer is
+ * the visitor's to use.
+ */
+function FormSection({
+  form,
+  widthPct,
+}: {
+  form: (typeof FORMS)[number]
+  widthPct: number
+}) {
+  const ref = React.useRef<HTMLDivElement | null>(null)
+  const [inView, setInView] = React.useState(false)
+  const [near, setNear] = React.useState(false)
+  const [interacted, setInteracted] = React.useState(false)
+  const cursorRef = React.useRef<DemoCursorHandle | null>(null)
+  // the section's transport: two chapters, then done + replay
+  const [paused, setPaused] = React.useState(false)
+  const pausedRef = React.useRef(false)
+  const [beat, setBeat] = React.useState<{
+    index: number
+    dur: number
+    key: number
+  } | null>(null)
+  const beatKey = React.useRef(0)
+  const [done, setDone] = React.useState(false)
+  const [take, setTake] = React.useState(0)
+  const onBeat = React.useCallback((index: number, dur: number) => {
+    setBeat({ index, dur, key: ++beatKey.current })
+  }, [])
+  const onDone = React.useCallback(() => setDone(true), [])
+  const togglePaused = () => {
+    pausedRef.current = !pausedRef.current
+    setPaused(pausedRef.current)
+  }
+  // replay: the pre-loaded forms re-run their GESTURE on the living
+  // layer (a nonce — no remount, no silent re-prep, the bar starts at
+  // once); Orb and Spotlight tell their whole story on screen, so they
+  // rebuild from scratch (a remount key)
+  const [nonce, setNonce] = React.useState(0)
+  const replay = () => {
+    setDone(false)
+    setBeat(null)
+    setInteracted(false)
+    pausedRef.current = false
+    setPaused(false)
+    if (form.mode === "line" || form.mode === "spotlight") setTake((t) => t + 1)
+    else setNonce((n) => n + 1)
+  }
+
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    // same start gate as the film: the staging plays only once the window
+    // is properly on screen, never to a sliver at the fold
+    const io = new IntersectionObserver(
+      ([e]) => setInView(e!.isIntersecting),
+      { threshold: 0.65 }
+    )
+    // same mount gate as the top demo: an off-screen window holds no
+    // WebGL contexts, so five form sections never crowd out the wordmark.
+    // Leaving re-arms the section's script, same as the film.
+    const mount = new IntersectionObserver(
+      ([e]) => {
+        const v = e!.isIntersecting
+        setNear(v)
+        if (!v) {
+          setInteracted(false)
+          setDone(false)
+          setBeat(null)
+        }
+      },
+      { rootMargin: "300px 0px" }
+    )
+    io.observe(el)
+    mount.observe(el)
+    return () => {
+      io.disconnect()
+      mount.disconnect()
+    }
+  }, [])
+
+  return (
+    <section className="relative px-2 pt-16 sm:px-6 sm:pt-24">
+      <div ref={ref}>
+        {/* written content reads at the page's text measure */}
+        <div className="mx-auto w-full max-w-5xl">
+          <Reveal>
+            {/* THE NAME AND THE SENTENCE ARE ONE BLOCK. The description used
+                to be small muted body text, which read as a caption under a
+                label — the name did the announcing and the sentence was
+                fine print. At title scale the pair reads as one line of
+                thought that happens to start with a name, the way the
+                page's opening statement does. */}
+            <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              {form.name}
+            </h3>
+            <p className="text-muted-foreground mt-3 max-w-3xl text-xl leading-snug font-medium text-balance sm:text-2xl md:text-3xl">
+              {form.desc}
+            </p>
+          </Reveal>
+        </div>
+        {/* the window spans the wordmark's measure */}
+        <Reveal className="mt-8">
+          <div
+            className="mx-auto w-full sm:w-(--demo-measure)"
+            style={{ "--demo-measure": `${widthPct}%` } as React.CSSProperties}
+          >
+          {/* a TRUSTED press ends the section's script; the hand's own
+              dispatched events are untrusted and pass through */}
+          <div
+            onPointerDownCapture={(e) => e.isTrusted && setInteracted(true)}
+            onKeyDownCapture={(e) => e.isTrusted && setInteracted(true)}
+          >
+            <DemoWindow
+              chrome={false}
+              overlay={
+                near && !interacted ? (
+                  <DemoCursorLayer handleRef={cursorRef} />
+                ) : null
+              }
+            >
+              {/* THE PRODUCT IS BACK, and scaling is what makes it work.
+                  It was removed because a full-size dashboard crowded the
+                  surface it was supposed to sit behind; at a phone width
+                  the frame then read as a large empty box with a small pill
+                  at the bottom, which says less about a dock than a
+                  workspace does. Now the shell renders at its own measure
+                  and shrinks with everything else, so it reads as the room
+                  the surface is standing in rather than as competition.
+                  Receded, as before: the layer is the subject. */}
+              <div className="h-full opacity-60">
+                <DemoDashboard />
+              </div>
+              {near && (
+                <AssistantProvider key={take} navItems={DEMO_NAV}>
+                  <FormsDriver
+                    active={inView}
+                    mode={form.mode}
+                    nonce={nonce}
+                    interacted={interacted}
+                    cursor={cursorRef}
+                    pausedRef={pausedRef}
+                    onBeat={onBeat}
+                    onDone={onDone}
+                  />
+                </AssistantProvider>
+              )}
+            </DemoWindow>
+          </div>
+          {interacted ? (
+            <HandoverLine>
+              All yours — this is the live component, not a recording. Drag
+              it, dock it, ask it something.
+            </HandoverLine>
+          ) : (
+            <DemoPlayback
+              beats={stageBeatsFor(form)}
+              beat={beat}
+              paused={paused}
+              done={done}
+              onToggle={togglePaused}
+              onReplay={replay}
+            />
+          )}
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
+/* ------------------------------- the page ------------------------------- */
+
+/**
+ * THE WORDMARK'S HEAT RUNS ON ITS OWN CLOCK.
+ *
+ * It used to read the layer's real `orbState`, which meant the identity at
+ * identity scale sat in `still` for the entire visit unless the visitor
+ * happened to talk to the page's assistant — and the page's assistant is
+ * not the one the demos use, so most visitors never moved it at all. A mark
+ * that only animates when nobody is looking at it is a static mark.
+ *
+ * So it cycles the four states itself, forever, disconnected from any
+ * assistant. This is a MARK, not a status readout: the ground field below
+ * still tracks the real state, so nothing that was actually reporting has
+ * stopped reporting.
+ *
+ * The dwell is per state rather than one interval, because the states are
+ * not the same length of idea — `thinking` needs time to read as churn,
+ * `answer` is a release and reads better short.
+ */
+const HEAT_DWELL_MS: Record<OrbState, number> = {
+  still: 3600,
+  listening: 2400,
+  thinking: 4200,
+  answer: 2800,
+}
+
+function useLoopingOrbState(): OrbState {
+  const [i, setI] = React.useState(0)
+  const state = ORB_STATES[i % ORB_STATES.length]
+
+  React.useEffect(() => {
+    // Chained timeouts, not an interval: each state names its own dwell,
+    // and a timeout that is re-armed per state cannot drift out of step
+    // with the one being displayed.
+    const t = window.setTimeout(() => {
+      setI((n) => (n + 1) % ORB_STATES.length)
+    }, HEAT_DWELL_MS[state])
+    return () => window.clearTimeout(t)
+  }, [state])
+
+  return state
+}
+
+export function OverviewView() {
+  const router = useRouter()
+  const { setPageIntel, orbState } = useAssistant()
+  const heatState = useLoopingOrbState()
+
+  // THE WINDOWS TAKE THE WORDMARK'S MEASURE; the written content reads at
+  // max-w-5xl. The glyphs' extent depends on the configured font, so it
+  // is measured from the drawn text (re-run once fonts land), never
+  // hardcoded.
+  //
+  // IT STARTS AT A SENSIBLE MEASURE, NOT AT NOTHING. `null` meant the demo
+  // windows rendered full-width for one frame and then snapped in when the
+  // measurement landed — a visible jump on every load, and the only layout
+  // a prerendered build would ever emit. 91% is what the configured font
+  // measures; the real measurement corrects it, imperceptibly.
+  const wordmarkRef = React.useRef<SVGTextElement | null>(null)
+  const [glyphPct, setGlyphPct] = React.useState<number>(91)
+  // useEffect, not useLayoutEffect: the latter warns during a prerender
+  // (it cannot run without a DOM), and the measurement needs laid-out
+  // glyphs anyway — so the paint it would block has to happen first.
+  React.useEffect(() => {
+    const measure = () => {
+      const b = wordmarkRef.current?.getBBox()
+      if (b && b.width > 0) setGlyphPct((b.width / 640) * 100)
+    }
+    measure()
+    document.fonts?.ready.then(measure)
+  }, [])
+
+
+  React.useEffect(() => {
+    setPageIntel({
+      suggestions: [
+        "What is ambientui?",
+        "How do I install the ambient layer?",
+        "What is design architecture?",
+      ],
+      askPlaceholder: "Ask about ambientui…",
+    })
+    return () => setPageIntel(null)
+  }, [setPageIntel])
+
+  return (
+    <div className="bg-background relative overflow-hidden">
+      {/* the ground is the identity's own field under a tint — a veil per
+          §8 (never a raw shader). The tint is the BACKGROUND role, so it
+          follows the theme: a light veil in light mode, a dark one in
+          dark, and the field glows through both */}
+      {/* THE GROUND IS THE VIEWPORT, NOT THE DOCUMENT. Fixed, so the field
+          stays a steady backdrop while the page scrolls over it — sized to
+          the screen instead of stretching with a four-viewport document
+          (which smeared the glow ramp across the whole lower half). The
+          horizontal oversize (-inset-x-1/4) pushes the heat shape's side
+          pads past the edges so the glow runs end to end; the fixed layer
+          unmounts with the view. */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+        {/* the field anchors at the screen top and stretches one viewport
+            past the bottom (-bottom-full): its top rim reads as the
+            horizon and its glow gradient spans the whole visible screen,
+            instead of pinching into a thin stripe at each edge */}
+        <div className="absolute -inset-x-1/4 top-0 -bottom-full">
+          <OrbField state={orbState} strength="stage" />
+        </div>
+        <div className="bg-background/75 absolute inset-0" />
+      </div>
+
+      {/* the wordmark — with the demo window rising INTO it: the name
+          passes behind the product, which is the thesis drawn */}
+      <section className="relative flex items-center justify-center pt-40 sm:pt-48">
+        <Reveal className="relative w-full px-2 sm:px-6">
+          <h1>
+          <span className="sr-only">Ambient UI</span>
+          <svg
+            viewBox="0 0 640 150"
+            aria-hidden
+            className="mx-auto block w-full select-none"
+          >
+            <defs>
+              <clipPath id="wordmark-clip">
+                <text
+                  ref={wordmarkRef}
+                  x="320"
+                  y="114"
+                  textAnchor="middle"
+                  fontSize="118"
+                  fontWeight="500"
+                  letterSpacing="-0.03em"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  {"Ambient UI"}
+                </text>
+              </clipPath>
+            </defs>
+            {/* the glyph base — the FOREGROUND role, the tint's opposite:
+                dark glyphs on the light veil, bright ones on the dark, so
+                the name pops in both modes and the heat rides it as color.
+                Also the fallback while the shader warms up. */}
+            <g clipPath="url(#wordmark-clip)">
+              <rect
+                width="640"
+                height="150"
+                className="fill-foreground"
+                opacity="0.75"
+              />
+              {/* the heat shaped to the wordmark's band, its frame OVERSIZED
+                  past the clip: the warm span covers the whole name and the
+                  cool margins fall outside the glyphs */}
+              <foreignObject x="-96" y="-22" width="832" height="195">
+                <OrbHeat
+                  // its OWN loop, not the layer's state — see
+                  // useLoopingOrbState. The mark animates for everyone.
+                  state={heatState}
+                  width={832}
+                  height={195}
+                  // a NAME, not a path: OrbHeat resolves it against the
+                  // layer's assetBase, so it must not be prefixed twice
+                  image="orb-rect-banner.svg?v=1"
+                  scale={1.7}
+                  className="h-full w-full"
+                />
+              </foreignObject>
+            </g>
+          </svg>
+          </h1>
+        </Reveal>
+      </section>
+
+      {/* the demo window overlaps the wordmark's lower glyphs — the text
+          runs BEHIND the product. The pull is a percentage because the
+          wordmark's height is width-proportional (viewBox 640×150): -8.5%
+          of width reaches ~2.9%w above the baseline (y=114/150) at every
+          size, where a fixed step would swallow the name on small screens */}
+      {/* THE WINDOW SHARES THE WORDMARK'S GUTTER — one width, one family.
+          8px on a phone, 24px from sm up: the pair must change together or
+          the window stops lining up with the name it rises into. */}
+      <section className="relative z-10 px-2 pb-10 sm:px-6" style={{ marginTop: "-8.5%" }}>
+        <ShellDemo widthPct={glyphPct} />
+      </section>
+
+      {/* the statement: what Ambient UI is, and the four principles */}
+      <section className="relative mx-auto w-full max-w-5xl px-2 pt-20 pb-16 sm:px-6 sm:pt-32 sm:pb-24">
+        <Reveal>
+          <p className="text-muted-foreground mx-auto max-w-4xl text-center text-xl leading-snug font-medium text-balance sm:text-3xl md:text-4xl">
+            Most products add AI by finding a spot for it: a chat tab, a
+            sparkle button, a panel in the corner. Ambient UI does the
+            opposite. The assistant sits above your product instead of
+            inside it, so your screens stay yours.
+          </p>
+        </Reveal>
+        <div className="mt-14 grid gap-x-16 gap-y-12 sm:mt-28 sm:gap-y-16 sm:grid-cols-2">
+          {PRINCIPLES.map((pr) => (
+            <Reveal key={pr.word}>
+              <div className="border-border border-t pt-6 sm:pt-8">
+                <h3 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                  {pr.word}.
+                </h3>
+                <p className="text-muted-foreground mt-4 leading-relaxed sm:mt-6">
+                  {pr.body}
+                </p>
+                {pr.link && (
+                  <Button
+                    variant="ghost"
+                    className="-ms-3 mt-4"
+                    onClick={() => {
+                      router.push("/architecture")
+                    }}
+                  >
+                    Read the architecture
+                    <Icon name="chevron-right" size={15} />
+                  </Button>
+                )}
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* the forms: one presence, many shapes — one section per form,
+          each window at the wordmark's width, each layer real */}
+      <section className="relative px-2 pt-4 sm:px-6 sm:pt-8">
+        <div className="mx-auto w-full max-w-5xl">
+          <Reveal className="text-center">
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              One assistant, five shapes
+            </h2>
+            <p className="text-muted-foreground mx-auto mt-6 max-w-2xl leading-relaxed">
+              Sometimes you want to ask one quick question. Sometimes you
+              want to work alongside it for an hour. It is the same
+              assistant either way. It just changes shape to match how
+              much room the moment is worth.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+      {FORMS.map((f) => (
+        <FormSection key={f.name} form={f} widthPct={glyphPct} />
+      ))}
+
+      {/* THE INVITATION COMES BEFORE THE ARGUMENT. A visitor who has just
+          watched the layer work is one click from re-theming it; making them
+          read the case for configuration first spends that moment. */}
+      <section className="relative mx-auto w-full max-w-5xl px-2 pt-20 sm:px-6 sm:pt-32">
+        <Reveal>
+          <MakeItYoursSection
+            onFoundation={() => {
+              router.push("/ds")
+            }}
+          />
+        </Reveal>
+      </section>
+
+      {/* WHAT IT IS BUILT ON, BEFORE WHAT TO TYPE. The forms above show the
+          layer; the commands below hand it over. Between them belongs the
+          thing that makes the layer possible, or a visitor installs an
+          assistant without ever learning why it matches their product. */}
+      <section className="relative mx-auto w-full max-w-5xl px-2 sm:px-6">
+        <Reveal>
+          <DesignArchitectureSection
+            onRead={() => {
+              router.push("/architecture")
+            }}
+          />
+        </Reveal>
+      </section>
+
+      {/* THE PAGE ENDS ON A COMMAND. Everything above argues; this is where
+          a visitor stops reading and starts typing. It used to end on two
+          spacer divs — the argument reached its conclusion and then offered
+          the reader nothing to do with it. */}
+      <section className="relative mx-auto w-full max-w-5xl px-2 pt-20 sm:px-6 sm:pt-32">
+        <Reveal>
+          <InstallSection
+            onDocs={() => {
+              router.push("/ds")
+            }}
+          />
+        </Reveal>
+      </section>
+
+      <footer className="relative mx-auto w-full max-w-5xl px-2 pt-20 pb-32 sm:px-6">
+        {/* A COLUMN ON A PHONE, A ROW FROM sm UP. Wrapping alone put two
+            links on one line and one on the next, which reads as a broken
+            row rather than as a list — and the licence, pushed right by
+            ms-auto, landed under a link it has nothing to do with. Stacked,
+            each item is its own line and its own tap target. */}
+        <div className="border-border text-muted-foreground flex flex-col items-start gap-x-6 gap-y-3 border-t pt-8 text-sm sm:flex-row sm:flex-wrap sm:items-center">
+          <span className="text-foreground font-medium">ambientui</span>
+          <button
+            type="button"
+            className="hover:text-foreground"
+            onClick={() => {
+              router.push("/architecture")
+            }}
+          >
+            The architecture
+          </button>
+          <button
+            type="button"
+            className="hover:text-foreground"
+            onClick={() => {
+              router.push("/ds")
+            }}
+          >
+            Design system
+          </button>
+          <a
+            href="https://github.com/Lumenridge/ambientui"
+            className="hover:text-foreground"
+          >
+            GitHub
+          </a>
+          {/* the push-right is the ROW's device: in a column, ms-auto
+              shoves the licence to the far edge, away from the stack */}
+          <span className="sm:ms-auto">MIT licensed</span>
+        </div>
+      </footer>
+    </div>
+  )
+}

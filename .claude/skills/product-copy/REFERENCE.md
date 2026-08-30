@@ -27,11 +27,11 @@ unfilled entry as "not available", never as licence to invent the answer.
 
 - [DESIGN.md](../../../DESIGN.md) — §1 principles, §8 the ambient layer
   contract (surface names), §9 save semantics
-- `apps/web/src/components/ds/ds-docs.tsx` — the vocabulary docs (AI-facing
+- `apps/site/src/lib/catalog.ts` — the vocabulary docs (AI-facing
   copy of record)
-- `apps/web/src/foundation/foundation-page.tsx` — Foundation strings, Figma
+- `apps/site/src/components/ds/foundation-page.tsx` — Foundation strings, Figma
   connection impact copy, Save Theme states
-- `apps/web/src/components/assistant/assistant.tsx` — assistant strings,
+- `packages/ambient/src/assistant.tsx` — assistant strings,
   suggested prompts, palette hints
 
 ## Open questions

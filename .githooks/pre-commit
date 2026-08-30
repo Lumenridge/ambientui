@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# THE GATE, where it cannot be skipped by accident.
+#
+# It used to live in whatever shell line happened to precede `git commit`,
+# and that line usually piped turbo through grep to keep the output short —
+# which reports GREP's exit status, not the build's. A failing build with a
+# matching log line read as success, and the commit went through. Twice.
+#
+# Here the exit status is the gate's own. Deliberate bypass is still
+# available and still explicit: git commit --no-verify.
+set -e
+
+echo "gate: typecheck · lint · build"
+npm run --silent gate

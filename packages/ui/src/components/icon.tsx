@@ -3,12 +3,18 @@
 import * as React from "react"
 
 import {
+  IconLibraryContext,
+  type IconName,
+} from "@ambientui/ui/lib/icon-library"
+
+import {
   ArrowDown01Icon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
   Calendar01Icon,
   Alert02Icon,
   ArrowUp01Icon,
+  ArrowUpRight01Icon,
   Attachment01Icon,
   Cancel01Icon,
   CodeIcon,
@@ -18,19 +24,30 @@ import {
   File01Icon,
   GlobalIcon,
   Image01Icon,
+  Layers01Icon,
+  SlidersHorizontalIcon,
+  HistoryIcon,
   Link01Icon,
   MoreHorizontalIcon,
+  PaintBoardIcon,
   Moon02Icon,
   PauseIcon,
   PlayIcon,
   PlusSignIcon,
   QuoteDownIcon,
   ReplayIcon,
+  RulerIcon,
+  ScissorIcon,
   Search01Icon,
   Settings01Icon,
   SidebarLeftIcon,
+  Menu01Icon,
+  Home01Icon,
+  SmileIcon,
+  StopIcon,
   SparklesIcon,
   Sun03Icon,
+  TextFontIcon,
   ThumbsDownIcon,
   ThumbsUpIcon,
   Tick02Icon,
@@ -45,14 +62,18 @@ import {
   IconChevronRight,
   IconAlertCircle,
   IconArrowUp,
+  IconArrowUpRight,
   IconCode,
   IconCopy,
   IconDots,
   IconFileText,
   IconHeart,
   IconLayoutSidebar,
+  IconMenu2,
+  IconHome,
   IconLink,
   IconMoon,
+  IconPalette,
   IconPaperclip,
   IconPencil,
   IconPhoto,
@@ -61,12 +82,20 @@ import {
   IconPlus,
   IconQuote,
   IconReload,
+  IconRuler2,
+  IconScissors,
   IconSearch,
   IconSettings,
+  IconMoodSmile,
+  IconPlayerStop,
   IconSparkles,
+  IconStack2,
+  IconAdjustmentsHorizontal,
+  IconHistory,
   IconSun,
   IconThumbDown,
   IconThumbUp,
+  IconTypography,
   IconUser,
   IconWorld,
   IconX,
@@ -87,18 +116,30 @@ import {
   Heart,
   MagnifyingGlass,
   Moon,
+  Palette,
   Paperclip,
   Pause,
   PencilSimple,
   Play,
   Plus,
   ArrowUp as PhArrowUp,
+  ArrowUpRight as PhArrowUpRight,
   Image as PhImage,
   Link as PhLink,
   Quotes,
+  Ruler,
+  Scissors,
   Sidebar as PhSidebar,
+  List as PhList,
+  House as PhHouse,
+  Smiley,
+  Stack,
+  SlidersHorizontal as PSliders,
+  ClockCounterClockwise,
+  Stop,
   ThumbsDown,
   ThumbsUp,
+  TextT,
   WarningCircle,
   Sparkle,
   Sun,
@@ -111,6 +152,7 @@ import {
   RiArrowLeftSLine,
   RiArrowRightSLine,
   RiArrowUpLine,
+  RiArrowRightUpLine,
   RiAttachment2,
   RiCalendarLine,
   RiCodeSSlashLine,
@@ -122,13 +164,24 @@ import {
   RiImageLine,
   RiLinkM,
   RiMoreFill,
+  RiPaletteLine,
   RiPencilLine,
+  RiRulerLine,
+  RiScissorsLine,
+  RiEmotionLine,
+  RiText,
+  RiStopLine,
+  RiStackLine,
+  RiEqualizerLine,
+  RiHistoryLine,
   RiThumbDownLine,
   RiThumbUpLine,
   RiCheckLine,
   RiCloseLine,
   RiHeartLine,
   RiLayoutLeftLine,
+  RiMenuLine,
+  RiHomeLine,
   RiMoonLine,
   RiPauseLine,
   RiPlayLine,
@@ -145,6 +198,7 @@ import {
   Code as LCode,
   ChevronDown as LChevronDown,
   ArrowUp as LArrowUp,
+  ArrowUpRight as LArrowUpRight,
   ChevronLeft as LChevronLeft,
   CircleAlert as LCircleAlert,
   Copy as LCopy,
@@ -153,6 +207,15 @@ import {
   Paperclip as LPaperclip,
   Pencil as LPencil,
   Quote as LQuote,
+  Scissors as LScissors,
+  Layers as LLayers,
+  SlidersHorizontal as LSliders,
+  History as LHistory,
+  Palette as LPalette,
+  Ruler as LRuler,
+  Smile as LSmile,
+  Square as LSquare,
+  Type as LType,
   ThumbsDown as LThumbsDown,
   ThumbsUp as LThumbsUp,
   FileText as LFileText,
@@ -162,6 +225,8 @@ import {
   Heart as LHeart,
   Moon as LMoon,
   PanelLeft as LPanelLeft,
+  Menu as LMenu,
+  House as LHouse,
   Pause as LPause,
   Play as LPlay,
   Plus as LPlus,
@@ -182,39 +247,6 @@ import {
  * mapped in every library or they don't exist.
  */
 
-export type IconName =
-  | "search"
-  | "settings"
-  | "user"
-  | "heart"
-  | "check"
-  | "close"
-  | "chevron-down"
-  | "chevron-left"
-  | "chevron-right"
-  | "sidebar"
-  | "sun"
-  | "moon"
-  | "play"
-  | "pause"
-  | "replay"
-  | "sparkles"
-  | "plus"
-  | "calendar"
-  | "document"
-  | "link"
-  | "globe"
-  | "code"
-  | "copy"
-  | "thumbs-up"
-  | "thumbs-down"
-  | "more"
-  | "quote"
-  | "edit"
-  | "alert"
-  | "arrow-up"
-  | "image"
-  | "paperclip"
 
 type Renderer = (size: number, strokeWidth: number, className?: string) => React.ReactNode
 
@@ -248,6 +280,8 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "chevron-left": hi(ArrowLeft01Icon),
     "chevron-right": hi(ArrowRight01Icon),
     sidebar: hi(SidebarLeftIcon),
+    menu: hi(Menu01Icon),
+    home: hi(Home01Icon),
     sun: hi(Sun03Icon),
     moon: hi(Moon02Icon),
     play: hi(PlayIcon),
@@ -264,9 +298,19 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "paperclip": hi(Attachment01Icon),
     "image": hi(Image01Icon),
     "arrow-up": hi(ArrowUp01Icon),
+    "arrow-up-right": hi(ArrowUpRight01Icon),
     "alert": hi(Alert02Icon),
     "edit": hi(Edit02Icon),
     "quote": hi(QuoteDownIcon),
+    "scissors": hi(ScissorIcon),
+    "type": hi(TextFontIcon),
+    "smile": hi(SmileIcon),
+    "stop": hi(StopIcon),
+    "palette": hi(PaintBoardIcon),
+    "ruler": hi(RulerIcon),
+    "layers": hi(Layers01Icon),
+    "sliders": hi(SlidersHorizontalIcon),
+    "history": hi(HistoryIcon),
     "more": hi(MoreHorizontalIcon),
     "thumbs-down": hi(ThumbsDownIcon),
     "thumbs-up": hi(ThumbsUpIcon),
@@ -282,6 +326,8 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "chevron-left": lu(LChevronLeft),
     "chevron-right": lu(LChevronRight),
     sidebar: lu(LPanelLeft),
+    menu: lu(LMenu),
+    home: lu(LHouse),
     sun: lu(LSun),
     moon: lu(LMoon),
     play: lu(LPlay),
@@ -298,9 +344,19 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "paperclip": lu(LPaperclip),
     "image": lu(LImage),
     "arrow-up": lu(LArrowUp),
+    "arrow-up-right": lu(LArrowUpRight),
     "alert": lu(LCircleAlert),
     "edit": lu(LPencil),
     "quote": lu(LQuote),
+    "scissors": lu(LScissors),
+    "type": lu(LType),
+    "smile": lu(LSmile),
+    "stop": lu(LSquare),
+    "palette": lu(LPalette),
+    "ruler": lu(LRuler),
+    "layers": lu(LLayers),
+    "sliders": lu(LSliders),
+    "history": lu(LHistory),
     "more": lu(LMoreHorizontal),
     "thumbs-down": lu(LThumbsDown),
     "thumbs-up": lu(LThumbsUp),
@@ -316,6 +372,8 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "chevron-left": tb(IconChevronLeft),
     "chevron-right": tb(IconChevronRight),
     sidebar: tb(IconLayoutSidebar),
+    menu: tb(IconMenu2),
+    home: tb(IconHome),
     sun: tb(IconSun),
     moon: tb(IconMoon),
     play: tb(IconPlayerPlay),
@@ -332,9 +390,19 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "paperclip": tb(IconPaperclip),
     "image": tb(IconPhoto),
     "arrow-up": tb(IconArrowUp),
+    "arrow-up-right": tb(IconArrowUpRight),
     "alert": tb(IconAlertCircle),
     "edit": tb(IconPencil),
     "quote": tb(IconQuote),
+    "scissors": tb(IconScissors),
+    "type": tb(IconTypography),
+    "smile": tb(IconMoodSmile),
+    "stop": tb(IconPlayerStop),
+    "palette": tb(IconPalette),
+    "ruler": tb(IconRuler2),
+    "layers": tb(IconStack2),
+    "sliders": tb(IconAdjustmentsHorizontal),
+    "history": tb(IconHistory),
     "more": tb(IconDots),
     "thumbs-down": tb(IconThumbDown),
     "thumbs-up": tb(IconThumbUp),
@@ -350,6 +418,8 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "chevron-left": ph(CaretLeft),
     "chevron-right": ph(CaretRight),
     sidebar: ph(PhSidebar),
+    menu: ph(PhList),
+    home: ph(PhHouse),
     sun: ph(Sun),
     moon: ph(Moon),
     play: ph(Play),
@@ -366,9 +436,19 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "paperclip": ph(Paperclip),
     "image": ph(PhImage),
     "arrow-up": ph(PhArrowUp),
+    "arrow-up-right": ph(PhArrowUpRight),
     "alert": ph(WarningCircle),
     "edit": ph(PencilSimple),
     "quote": ph(Quotes),
+    "scissors": ph(Scissors),
+    "type": ph(TextT),
+    "smile": ph(Smiley),
+    "stop": ph(Stop),
+    "palette": ph(Palette),
+    "ruler": ph(Ruler),
+    "layers": ph(Stack),
+    "sliders": ph(PSliders),
+    "history": ph(ClockCounterClockwise),
     "more": ph(DotsThree),
     "thumbs-down": ph(ThumbsDown),
     "thumbs-up": ph(ThumbsUp),
@@ -384,6 +464,8 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "chevron-left": rx(RiArrowLeftSLine),
     "chevron-right": rx(RiArrowRightSLine),
     sidebar: rx(RiLayoutLeftLine),
+    menu: rx(RiMenuLine),
+    home: rx(RiHomeLine),
     sun: rx(RiSunLine),
     moon: rx(RiMoonLine),
     play: rx(RiPlayLine),
@@ -400,56 +482,25 @@ const SETS: Record<string, Record<IconName, Renderer>> = {
     "paperclip": rx(RiAttachment2),
     "image": rx(RiImageLine),
     "arrow-up": rx(RiArrowUpLine),
+    "arrow-up-right": rx(RiArrowRightUpLine),
     "alert": rx(RiErrorWarningLine),
     "edit": rx(RiPencilLine),
     "quote": rx(RiDoubleQuotesL),
+    "scissors": rx(RiScissorsLine),
+    "type": rx(RiText),
+    "smile": rx(RiEmotionLine),
+    "stop": rx(RiStopLine),
+    "palette": rx(RiPaletteLine),
+    "ruler": rx(RiRulerLine),
+    "layers": rx(RiStackLine),
+    "sliders": rx(RiEqualizerLine),
+    "history": rx(RiHistoryLine),
     "more": rx(RiMoreFill),
     "thumbs-down": rx(RiThumbDownLine),
     "thumbs-up": rx(RiThumbUpLine),
   },
 }
 
-export const ICON_NAMES: IconName[] = [
-  "search",
-  "settings",
-  "user",
-  "heart",
-  "check",
-  "close",
-  "chevron-down",
-  "chevron-left",
-  "chevron-right",
-  "sidebar",
-  "sun",
-  "moon",
-  "play",
-  "pause",
-  "replay",
-  "sparkles",
-  "plus",
-  "calendar",
-  "document",
-  "link",
-  "globe",
-  "code",
-  "copy",
-  "thumbs-up",
-  "thumbs-down",
-  "more",
-  "quote",
-  "edit",
-  "alert",
-  "arrow-up",
-  "image",
-  "paperclip",
-]
-
-/**
- * The active icon library. The app's FoundationProvider supplies the saved
- * config's choice; packages/ui primitives render through it without knowing
- * where the config lives.
- */
-export const IconLibraryContext = React.createContext<string>("hugeicons")
 
 export function IconLibraryProvider({
   library,
@@ -485,3 +536,5 @@ export function Icon({
   const set = SETS[library ?? configured] ?? SETS.hugeicons!
   return <>{set[name](size, strokeWidth, className)}</>
 }
+
+export type { IconName }

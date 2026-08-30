@@ -4,8 +4,24 @@
 The Figma file mirrors them.
 **Target file:** set on the Foundation page (`/ds` → Foundation → Figma
 connection); the file key lives in the saved config (`figmaFileUrl`) and in
-`figma/tokens-figma-map.json` once verified. **No file is connected yet** — the
-first sync must first build the variable collections described below.
+`tokens/tokens.json` (`figma.fileKey`). **First sync ran 2026-08-22** into
+`DxCX3RUqjzefoUc9eOV8hr`; the latest (accent blue, scaling 100%) ran
+2026-08-24. The file holds four collections: Palette (244, primitives
+verbatim) · Foundation (42, Light/Dark, aliases only) · Tailwind Primitives
+(120, nominal scales) · Typography (1).
+
+**Primitives are nominal; the Foundation is nothing but aliases.** Two
+primitive collections hold the scales verbatim — **Palette** (Tailwind's colour
+ramps) and **Tailwind Primitives** (border radius, gap, padding, opacity,
+max-w, font size, at Tailwind's own values). They never bend to the config.
+**Foundation** holds no numbers at all: every token points at the primitive the
+saved config selected, so re-pointing one alias re-themes the file exactly as
+changing the config re-themes the app.
+
+The scaling preset is recorded as `Scale/Root font size` + `Scale/Factor`
+(95% → 14px, 0.875) rather than multiplied into every value. Figma therefore
+shows the design values a designer reasons about, and the runtime multiplier
+stays visible instead of hiding inside a pile of 3.5s and 10.5s.
 
 The agent applies `sync-payload.json` with `use_figma` (load the `figma-use`
 skill first). Every step is **idempotent** — re-running is safe.
@@ -31,9 +47,10 @@ what makes one hue/family change re-theme every component page.
 | `palette` (Tailwind, verbatim) | **Palette** collection · `{Family}/{50…950}` — the saved accent hue + gray family at minimum, ideally all families |
 | `foundation.roles.map` (accent roles, resolved through the saved config's `roles` overrides) | **Foundation** · `Color/Primary`, `Color/Primary Foreground`, `Color/Ring`, `Color/Ambient Accent` · modes Light / Dark — each an ALIAS into Palette (`{hue}/600`, `{hue}/500`, `{hue}/400`) |
 | `foundation.roles.map` (gray roles, resolved the same way) | **Foundation** · `Color/Background`, `Color/Card`, `Color/Muted`, `Color/Border`, `Color/Sidebar…` · modes Light / Dark — aliases into the gray family's steps |
-| `foundation.radius` | **Radius** collection · all steps, plus `Radius/Active` aliasing the saved step and derived steps (`sm…4xl` as ×0.6…×2.6 of active) |
-| `foundation.spacingUnits` (saved) × Tailwind steps | **Spacing** · `Step/0.5…16` (step × unit, resolved px at the saved base) + `Unit` |
-| `type.rampAtBase` × `foundation.scaling` (saved) | **Type** · `xs…4xl` (resolved px at the saved base) + `Base/Font size` |
+| Tailwind's radius / spacing / type / opacity / max-w scales | **Tailwind Primitives** · `border radius/rounded-*`, `gap/gap-*`, `padding/p-*`, `opacity/*`, `max-w/*`, `font size/text-*` — nominal, verbatim |
+| `foundation.radius` (saved) | **Foundation** · `Radius/Active` + the window `xs…4xl`, each an ALIAS at `border radius/rounded-*` — the chosen step becomes `lg` and its neighbours are the adjacent Tailwind values |
+| `foundation.spacingUnits` (saved) | **Foundation** · `Spacing/Unit` → `gap/gap-1` |
+| `type.rampAtBase` | **Foundation** · `Type/xs…4xl` → `font size/text-*`, plus `Scale/Root font size` and `Scale/Factor` from the saved scaling |
 
 **The alias chain is the trick:** components bind to `Radius/Active` and the
 Foundation colors, so switching the saved config re-themes the file without
@@ -96,9 +113,9 @@ const probe = (collName, varName) => {
 return {
   primary: probe("Foundation", "Color/Primary"),    // expect alias → Palette {hue}/600
   ambientAccent: probe("Foundation", "Color/Ambient Accent"),
-  radiusActive: probe("Radius", "Radius/Active"),   // expect alias → saved step
-  space4: probe("Spacing", "Step/4"),               // expect 4 × unit
-  textBase: probe("Type", "base"),                  // expect the saved base px
+  radiusActive: probe("Foundation", "Radius/Active"), // expect alias → saved step
+  spacingUnit: probe("Foundation", "Spacing/Unit"),    // expect alias → gap/gap-1
+  rootFontSize: probe("Foundation", "Scale/Root font size"), // expect saved base px
 }
 ```
 

@@ -1,7 +1,7 @@
 {
-  "status": "none",
-  "requestedAt": null,
-  "summary": null,
-  "appliedAt": null,
-  "note": "No sync has been requested yet. A request is created when a Figma file is connected on the Foundation page and the user asks to 'sync to Figma'; the agent then generates sync-payload.json from tokens/tokens.json + the saved Foundation config, applies it per figma/figma-sync.md, and records the result here (status: pending → applied)."
+  "status": "applied",
+  "requestedAt": "2026-08-24",
+  "appliedAt": "2026-08-24",
+  "summary": "Theme sync: accent indigo→blue (Color/Primary, Color/Ring, Color/Ambient Accent repointed in both modes), Scale/Root font size 14→16, Scale/Factor 0.875→1.0. Six alias edits; zero components touched. First full sync ran 2026-08-22 (all collections built from empty).",
+  "note": "A request is created when the user asks to sync; the agent regenerates sync-payload.json from tokens/tokens.json + the saved Foundation config, applies it per figma/figma-sync.md, and records the result here."
 }

@@ -1,0 +1,48 @@
+/* Visual language: dark charcoal desktop-app shell.
+   Loaded after globals.css so these win inside .dark. */
+
+:root {
+  /* 4px base — rounded-lg resolves to exactly 4px, md ~3px, xl ~6px */
+  --radius: 0.25rem;
+}
+
+/* THE DOCUMENT SCROLLS. This used to be `html, body { overflow: hidden }` —
+   correct for a desktop-app shell whose panes scroll internally, and fatal
+   for a site of documents: it silently froze every page at one viewport,
+   including a 40,000-word article.
+
+   The surfaces that genuinely want a locked viewport (the canvas and dev
+   tool demos) lock a WRAPPER instead, in app/demo/layout.tsx. A global rule
+   cannot know which kind of page it is on; a layout can. */
+
+/* The app's own accents. --app-blue is now an ALIAS: the token it named is
+   public API of the ambient layer (it drives the live border, the stream's
+   leading edge and the shimmer), so it is --ambient-accent there. The alias
+   stays for one release so 8k lines need not change in the same commit. */
+:root {
+  --app-blue: var(--ambient-accent);
+  --app-blue-wash: var(--ambient-accent-wash);
+  --app-chip: #ececea;
+}
+
+.dark {
+  --background: #212121;
+  --foreground: #f2f2f2;
+  --card: #282828;
+  --card-foreground: #f2f2f2;
+  --popover: #2a2a2a;
+  --popover-foreground: #f2f2f2;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #2e2e2e;
+  --secondary-foreground: #f2f2f2;
+  --muted: #2c2c2c;
+  --muted-foreground: #8f8f8f;
+  --accent: #2e2e2e;
+  --accent-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #3b82f6;
+
+  --app-chip: #303030;
+}

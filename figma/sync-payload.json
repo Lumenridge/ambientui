@@ -1,34 +1,64 @@
 {
-  "$comment": "Example payload shape, generated from tokens/tokens.json + the DEFAULT Foundation config (accent blue, gray neutral, radius small, scaling 100%). A real payload is regenerated from the *saved* config at sync time — this file documents the contract until the first sync runs.",
-  "generatedFrom": ["tokens/tokens.json", "saved Foundation config (DEFAULT shown)"],
+  "$comment": "Payload for the LATEST applied sync (2026-08-24): tokens/tokens.json + the saved Foundation config - accent blue, gray neutral, radius small, scaling 100%. Regenerated at sync time from the saved config; this file records what was applied.",
+  "generatedFrom": [
+    "tokens/tokens.json",
+    "saved Foundation config (accent blue · gray neutral · radius 4px · scaling 100%)"
+  ],
   "system": "ambientui Design System v0.1.0",
   "foundation": {
     "accent": "blue",
     "colors": {
       "light": {
-        "Color/Primary": "oklch(0.488 0.243 264.376)",
-        "Color/Primary Foreground": "oklch(0.97 0.014 254.604)",
-        "Color/Ring": "oklch(0.488 0.243 264.376)",
-        "Color/Ambient Accent": "#2563eb"
+        "Color/Primary": "oklch(0.546 0.245 262.881)",
+        "Color/Primary Foreground": "#ffffff",
+        "Color/Ring": "oklch(0.546 0.245 262.881)",
+        "Color/Ambient Accent": "oklch(0.546 0.245 262.881)"
       },
       "dark": {
-        "Color/Primary": "oklch(0.424 0.199 265.638)",
-        "Color/Primary Foreground": "oklch(0.97 0.014 254.604)",
-        "Color/Ring": "oklch(0.424 0.199 265.638)",
-        "Color/Ambient Accent": "#4d9aff"
+        "Color/Primary": "oklch(0.623 0.214 259.815)",
+        "Color/Primary Foreground": "#ffffff",
+        "Color/Ring": "oklch(0.623 0.214 259.815)",
+        "Color/Ambient Accent": "oklch(0.707 0.165 254.624)"
+      }
+    },
+    "aliases": {
+      "Color/Primary": {
+        "light": "blue/600",
+        "dark": "blue/500"
+      },
+      "Color/Ring": {
+        "light": "blue/600",
+        "dark": "blue/500"
+      },
+      "Color/Ambient Accent": {
+        "light": "blue/600",
+        "dark": "blue/400"
+      },
+      "Color/Primary Foreground": {
+        "light": "base/white",
+        "dark": "base/white"
       }
     },
     "gray": "neutral",
-    "surfaces": "untinted (gray=neutral) — tinted grays resolve chroma/hue over the surface lightness table in foundation-context.tsx"
+    "surfaces": "untinted (gray=neutral) - tinted grays resolve chroma/hue over the surface lightness table in foundation-context.tsx"
   },
   "radius": {
-    "presets": { "None": "0px", "Small": "4px", "Medium": "10px", "Large": "16px", "Full": "24px" },
-    "active": "Small"
+    "presets": {
+      "None": "0px",
+      "Small": "4px",
+      "Medium": "10px",
+      "Large": "16px",
+      "Full": "24px"
+    },
+    "active": "Small",
+    "figma": "Foundation Radius/Active → border radius/rounded-sm"
   },
   "scale": {
-    "space": { "1": 2, "2": 4, "3": 8, "4": 16, "5": 24, "6": 32, "7": 40, "8": 48, "9": 56, "10": 64 },
-    "textAtBase": { "1": 11, "2": 12, "3": 13, "4": 14, "5": 16, "6": 18, "7": 20, "8": 24, "9": 30 },
-    "baseFontSize": 16
+    "baseFontSize": 16,
+    "factor": 1.0,
+    "figma": "Scale/Root font size = 16 · Scale/Factor = 1.0"
   },
-  "typography": { "family": "Geist Variable" }
+  "typography": {
+    "family": "Geist Variable"
+  }
 }
