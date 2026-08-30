@@ -74,11 +74,17 @@ export function MakeItYoursSection({
 }) {
   return (
     <div className="mx-auto max-w-3xl px-2 py-16 text-center sm:py-24">
+      {/* THE PAIR SPLITS THE PHRASE RATHER THAN REPEATING IT. The eyebrow
+          used to say "Make it yours" over a heading that said "Change one
+          value", which named the mechanism before the reader had a reason
+          to care about it. Now the eyebrow names the job and the heading
+          makes the promise. Putting "make it yours" in both would have
+          been the obvious move and would have read as a stutter at 72px. */}
       <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-        Make it yours
+        Customize
       </p>
       <h2 className="mt-8 text-5xl font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl">
-        Change one value
+        Make it yours
       </h2>
       <p className="text-muted-foreground mx-auto mt-10 max-w-xl text-lg leading-relaxed text-balance sm:text-xl">
         The Foundation on this site is live, not a picture of one. Pick a
