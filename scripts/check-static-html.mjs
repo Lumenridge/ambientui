@@ -61,6 +61,21 @@ const pages = []
 })(OUT)
 
 const problems = []
+const ogImages = new Set()
+
+/**
+ * The site's own origin+base, READ FROM THE BUILD rather than restated here.
+ *
+ * The home page's canonical is already asserted to be correct above, so it
+ * is the one string in the export that is safe to derive from — and a copy
+ * of SITE_URL in this file would be one more pair that has to be kept in
+ * step by hand, which is the failure this whole script exists to catch.
+ */
+const SITE_URL = (
+  readFileSync(join(OUT, "index.html"), "utf8").match(
+    /rel="canonical" href="([^"]*)"/
+  )?.[1] ?? ""
+).replace(/\/$/, "")
 let indexed = 0
 let excluded = 0
 const pending = []
@@ -107,6 +122,43 @@ for (const file of pages) {
     problems.push(
       `${rel}: only ${body.length} chars of prose (min ${MIN_PROSE}) — content may be client-only`
     )
+
+  /**
+   * A LARGE-IMAGE CARD WITH NO IMAGE IS WORSE THAN NO CARD.
+   *
+   * The site declared `summary_large_image` on every page and emitted an
+   * og:image on none of them, for as long as the metadata existed: the
+   * platform reserves the large slot and fills it with nothing. It stayed
+   * invisible because nothing here renders a share card, so the only way
+   * to see it was to post a link.
+   *
+   * The URL is checked too, not just its presence. `metadataBase` carries
+   * the project-Pages base path, and a leading-slash image path resolves
+   * against the ORIGIN instead — silently dropping "/ambientui" and
+   * pointing every card at a 404 that still looks fine in the HTML.
+   */
+  const card = /name="twitter:card"/.test(html)
+  const ogImage = html.match(/property="og:image" content="([^"]*)"/)?.[1] ?? ""
+  const twImage = html.match(/name="twitter:image" content="([^"]*)"/)?.[1] ?? ""
+  if (card && !ogImage)
+    problems.push(`${rel}: declares a share card with no og:image`)
+  if (card && !twImage)
+    problems.push(`${rel}: declares a share card with no twitter:image`)
+  for (const [what, url] of [["og:image", ogImage], ["twitter:image", twImage]]) {
+    if (!url) continue
+    // an off-site url is already the bug; do not also try to resolve it to
+    // a local file, which slices it into nonsense and reports the wrong thing
+    if (!url.startsWith(SITE_URL + "/"))
+      problems.push(`${rel}: ${what} is not under the site url (${url})`)
+    else ogImages.add(url)
+  }
+}
+
+// every card image the build emitted must be a file the build shipped
+for (const url of ogImages) {
+  const rel = url.slice(SITE_URL.length).replace(/^\//, "")
+  if (!existsSync(join(OUT, rel)))
+    problems.push(`card image ${url} is not in the export (looked for out/${rel})`)
 }
 
 /**

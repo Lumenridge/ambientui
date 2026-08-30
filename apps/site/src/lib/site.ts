@@ -13,6 +13,32 @@ export const SITE_URL = (
 ).replace(/\/$/, "")
 
 export const SITE_NAME = "ambientui"
+
+/**
+ * THE SHARE CARD — the real hero, captured, not a drawing of it.
+ *
+ * ITS URL IS ABSOLUTE ON PURPOSE. `metadataBase` is SITE_URL including the
+ * project-Pages base path, and a leading-slash path resolves against the
+ * ORIGIN rather than that base: "/og-home.png" would become
+ * lumenridge.github.io/og-home.png, dropping "/ambientui" and pointing
+ * every card at a 404. Written out in full it cannot lose the prefix, and
+ * it follows SITE_URL if a custom domain ever removes one.
+ *
+ * IT LIVES HERE BECAUSE EVERY PAGE THAT DECLARES `openGraph` MUST REPEAT
+ * IT. Next replaces that object rather than deep-merging it, so a page
+ * setting its own title and description silently drops the parent's image
+ * — which is how 51 of 63 pages ended up declaring a large-image card with
+ * no image in it. One exported constant, spread at each site.
+ *
+ * The dimensions are the CARD's, not the file's: the PNG is captured at 2x
+ * for crispness and every platform scales to the 1200x630 declared here.
+ */
+export const OG_IMAGE = {
+  url: `${SITE_URL}/og-home.png`,
+  width: 1200,
+  height: 630,
+  alt: "The ambientui wordmark, filled with the assistant's own heat shader, with a product dashboard rising up behind it.",
+}
 export const REPO_URL = "https://github.com/Lumenridge/ambientui"
 
 /**

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 
 import { ArchitectureView } from "@/components/home/architecture-view"
 import { ArticleJsonLd } from "@/components/json-ld"
+import { OG_IMAGE } from "@/lib/site"
 
 /**
  * THE ARCHITECTURE, AS AN ARTICLE.
@@ -24,7 +25,14 @@ export const metadata: Metadata = {
   title: `${TITLE} — ambientui`,
   description: LEDE,
   alternates: { canonical: "/architecture" },
-  openGraph: { type: "article", title: TITLE, description: LEDE },
+  openGraph: {
+    type: "article",
+    title: TITLE,
+    description: LEDE,
+    // repeated, not inherited: Next replaces openGraph rather than
+    // merging it, so omitting this drops the card image (see OG_IMAGE)
+    images: [OG_IMAGE],
+  },
 }
 
 export default function ArchitecturePage() {

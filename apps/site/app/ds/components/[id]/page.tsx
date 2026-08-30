@@ -10,6 +10,7 @@ import {
 import { ComponentDemos } from "@/components/ds/component-demos"
 import { BreadcrumbJsonLd } from "@/components/json-ld"
 import { installCommandFor } from "@/lib/registry-facts"
+import { OG_IMAGE } from "@/lib/site"
 
 const ALL: (ComponentDoc & { vocabulary: "ambient" | "product" })[] = [
   ...AMBIENT_COMPONENTS.map((c) => ({ ...c, vocabulary: "ambient" as const })),
@@ -36,7 +37,12 @@ export async function generateMetadata({
     title: `${c.name} — ambientui components`,
     description: c.description,
     alternates: { canonical: `/ds/components/${id}` },
-    openGraph: { title: c.name, description: c.description },
+    openGraph: {
+      title: c.name,
+      description: c.description,
+      // repeated, not inherited — see OG_IMAGE
+      images: [OG_IMAGE],
+    },
   }
 }
 

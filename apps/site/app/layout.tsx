@@ -16,7 +16,7 @@ import type { Metadata } from "next"
 
 import { SiteChrome } from "@/components/site-chrome"
 import { SiteProviders } from "@/components/providers/site-providers"
-import { SITE_NAME, SITE_URL } from "@/lib/site"
+import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/site"
 import { THEME_BOOT } from "@/lib/theme-boot"
 
 export const metadata: Metadata = {
@@ -39,8 +39,12 @@ export const metadata: Metadata = {
     title: "ambientui — an AI layer that inherits your design system",
     description:
       "AI can build screens faster than anyone can check them. This is how to keep your design from falling apart while it does.",
+    images: [OG_IMAGE],
   },
-  twitter: { card: "summary_large_image" },
+  // summary_large_image was already declared and no image was ever emitted,
+  // on 68 pages — which renders WORSE than claiming no card at all: the
+  // platform reserves the large slot and fills it with nothing.
+  twitter: { card: "summary_large_image", images: [OG_IMAGE.url] },
 }
 
 export default function RootLayout({
