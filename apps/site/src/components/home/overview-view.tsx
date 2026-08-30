@@ -242,6 +242,7 @@ function DemoWindow({
   children,
   overlay,
   chrome = true,
+  logicalWidth = 1000,
 }: {
   children: React.ReactNode
   overlay?: React.ReactNode
@@ -259,21 +260,51 @@ function DemoWindow({
    * and the dock docks to the browser.
    */
   chrome?: boolean
+  /**
+   * The width the contents are LAID OUT at before being scaled to fit.
+   *
+   * A desktop product in a phone-width box has two honest answers: crop it,
+   * or shrink it. This is the shrink — the contents render at a laptop
+   * measure and the whole frame is scaled down, so a phone sees the same
+   * composition a desktop does rather than a slice of it. Nothing inside
+   * has to know: the layer keeps sizing itself against a 1000px frame and
+   * the transform does the rest.
+   *
+   * The cost is legibility, and it is not small — at a 359px frame the
+   * factor is 0.36, so 14px body text lands near 5px. That is the trade
+   * this mode makes: recognisable over readable.
+   */
+  logicalWidth?: number
 }) {
+  /**
+   * SCALE ONLY WHEN THE BOX IS TOO SMALL. At desktop width the factor
+   * clamps to 1 and the contents render normally — no fixed logical width
+   * leaving a gap inside a wider frame, and no transform where none is
+   * wanted.
+   */
+  const boxRef = React.useRef<HTMLDivElement | null>(null)
+  const [box, setBox] = React.useState<{ w: number; h: number } | null>(null)
+  React.useEffect(() => {
+    const el = boxRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => {
+      if (e) setBox({ w: e.contentRect.width, h: e.contentRect.height })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  const scale = box ? Math.min(1, box.w / logicalWidth) : 1
+  const scaled = scale < 0.999 && !!box
+
   return (
     <div
       className={cn(
-        // PORTRAIT ON A PHONE, 16:9 FROM sm UP. At 292px wide a 16:9 box
-        // is 165px tall, and no surface with a header, a message, a
-        // context row and a composer fits in 165px — the layer sized
-        // itself to the frame correctly and the frame was the thing that
-        // was wrong. h-96 is a real step on the spacing scale; an
-        // arbitrary aspect ratio would not be.
-        // TALL ENOUGH TO HOLD THE THING IT IS FRAMING. The panel is 560px
-        // and sits 16px off the bottom edge, so anything under 576px cuts
-        // it no matter how the type is tuned — h-160 leaves the surface
-        // whole with room above it to read as floating rather than wedged.
-        "relative z-10 flex h-160 w-full transform-gpu flex-col overflow-hidden rounded-2xl sm:h-auto sm:aspect-video",
+        // ONE ASPECT AT EVERY WIDTH, now that the contents scale. The
+        // frame went portrait and then 640px tall while it was trying to
+        // physically contain a desktop-sized surface; scaling removes that
+        // job from the frame, so it can go back to being the same 16:9
+        // window everywhere and show the same composition at every size.
+        "relative z-10 flex aspect-video w-full transform-gpu flex-col overflow-hidden rounded-2xl",
         chrome
           ? "border-border bg-card border shadow-2xl"
           : // no ground of its own: the surfaces bring their own material,
@@ -294,7 +325,30 @@ function DemoWindow({
           </span>
         </div>
       )}
-      <div className="relative min-h-0 flex-1">{children}</div>
+      <div ref={boxRef} className="relative min-h-0 flex-1">
+        {scaled ? (
+          // The transform makes THIS the containing block for the layer's
+          // fixed surfaces, which is what carries them into the scale with
+          // everything else. Height is the box divided by the factor, so
+          // the logical page is exactly as tall as the frame can show.
+          <div
+            className="relative"
+            style={{
+              width: logicalWidth,
+              height: box!.h / scale,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            {children}
+          </div>
+        ) : (
+          children
+        )}
+      </div>
+      {/* the cursor layer stays OUTSIDE the scale: it reads real element
+          rects off the page and draws in real pixels, so scaling it would
+          send the hand to coordinates that no longer match anything */}
       {overlay}
     </div>
   )
@@ -1332,11 +1386,18 @@ function FormSection({
                 ) : null
               }
             >
-              {/* NO PRODUCT BEHIND IT. The film at the top has already made
-                  the "living in your app" argument; these five sections are
-                  answering "what IS a dock", and a dashboard under the
-                  answer is the loudest thing on screen while being the one
-                  thing the section is not about. */}
+              {/* THE PRODUCT IS BACK, and scaling is what makes it work.
+                  It was removed because a full-size dashboard crowded the
+                  surface it was supposed to sit behind; at a phone width
+                  the frame then read as a large empty box with a small pill
+                  at the bottom, which says less about a dock than a
+                  workspace does. Now the shell renders at its own measure
+                  and shrinks with everything else, so it reads as the room
+                  the surface is standing in rather than as competition.
+                  Receded, as before: the layer is the subject. */}
+              <div className="h-full opacity-60">
+                <DemoDashboard />
+              </div>
               {near && (
                 <AssistantProvider key={take} navItems={DEMO_NAV}>
                   <FormsDriver
