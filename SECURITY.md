@@ -17,7 +17,7 @@ advisory unless you prefer otherwise.
 ## Scope
 
 - Code in `packages/` (the published surface) is in scope.
-- The demo app under `apps/web` is in scope where a flaw would carry into
+- The site under `apps/site` is in scope where a flaw would carry into
   a consumer through the registry.
 - Vulnerabilities in upstream dependencies belong upstream, but we will
   bump pinned versions promptly when a fix exists.

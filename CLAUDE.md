@@ -8,8 +8,10 @@ product's thesis applied to its own construction.
 
 ## Commands
 
-- `npm run dev` — the app at :5173 (Turborepo; the web app is `apps/web`).
-  Routes: `/` home (Dev tool · Canvas views), `/ds` design system (Foundation + component vocabulary).
+- `npm run dev` — the site at :5174 (Turborepo; the app is `apps/site`).
+  Routes: `/` overview, `/architecture` the argument, `/ds` design system
+  (Foundation + component vocabulary), `/demo/devtool` and `/demo/canvas`
+  (noindex).
 - `npm run typecheck` / `npm run build` / `npm run lint`
 - `npm run gate` — all three plus the drift checks (registry, vendored CSS,
   governing-doc path claims). A `.githooks/pre-commit` runs it, so a
@@ -125,8 +127,8 @@ skill before any `use_figma` write.
 
 ## Architecture notes
 
-- Monorepo: `apps/web` (Vite + React 19 + Tailwind v4) + `packages/ui` (the
-  shadcn radix-nova preset; global tokens in `src/styles/globals.css`).
+- Monorepo: `apps/site` (Next.js App Router, static export) + `packages/ui`
+  (the shadcn radix-nova preset; global tokens in `src/styles/globals.css`).
 - Foundation engine: `packages/foundation/src/foundation-context.tsx` — accents
   (with paired foregrounds), gray tints, radius set, scaling→base-px presets;
   compiled to `#ambientui-foundation` style tag; persisted on Save under

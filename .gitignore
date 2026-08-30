@@ -44,10 +44,6 @@ apps/site/public/r/
 .claude/skills/humanizer
 skills-lock.json
 
-# generated: the orb shapes are copied from packages/ambient/assets by
-# the vite orbShapes plugin — one source of truth, see vite.config.ts
-apps/web/public/orb-*.svg
-
 # the Next site's build output
 apps/site/.next/
 apps/site/out/
