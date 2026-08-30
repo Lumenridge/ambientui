@@ -1358,10 +1358,16 @@ function FormSection({
         {/* written content reads at the page's text measure */}
         <div className="mx-auto w-full max-w-5xl">
           <Reveal>
+            {/* THE NAME AND THE SENTENCE ARE ONE BLOCK. The description used
+                to be small muted body text, which read as a caption under a
+                label — the name did the announcing and the sentence was
+                fine print. At title scale the pair reads as one line of
+                thought that happens to start with a name, the way the
+                page's opening statement does. */}
             <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               {form.name}
             </h3>
-            <p className="text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+            <p className="text-muted-foreground mt-3 max-w-3xl text-xl leading-snug font-medium text-balance sm:text-2xl md:text-3xl">
               {form.desc}
             </p>
           </Reveal>
