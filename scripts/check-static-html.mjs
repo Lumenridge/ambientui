@@ -142,9 +142,14 @@ for (const file of pages) {
   if (!desc) problems.push(`${rel}: no meta description`)
   if (noindex) problems.push(`${rel}: an indexed page marked noindex`)
   if (!canonical) problems.push(`${rel}: no canonical`)
-  else {
+  else if (rel === "index.html") {
+    // it must at least be absolute; that it is the SITE ROOT is settled
+    // below, against a sibling page rather than against a pattern
+    if (!/^https:\/\/[^/\s]+/.test(canonical))
+      problems.push(`${rel}: canonical is not absolute (${canonical})`)
+  } else {
     // the canonical must name THIS page, not some other one
-    const expect = rel === "index.html" ? "/" : "/" + rel.replace(/\.html$/, "")
+    const expect = "/" + rel.replace(/\.html$/, "")
     if (!canonical.endsWith(expect) && !canonical.endsWith(expect + "/"))
       problems.push(`${rel}: canonical points elsewhere (${canonical})`)
   }
@@ -238,6 +243,43 @@ for (const file of pages) {
     if (!url.startsWith(SITE_URL + "/"))
       problems.push(`${rel}: ${what} is not under the site url (${url})`)
     else ogImages.add(url)
+  }
+}
+
+/**
+ * THE HOME CANONICAL IS THE SITE ROOT — measured against a SIBLING, not a
+ * pattern.
+ *
+ * Whether it ends in a slash is the HOST's decision, not this repo's.
+ * Under a project-Pages base path the metadataBase carries a path of its
+ * own, so Next resolves "/" to ".../ambientui/", slash included; served
+ * from a domain root there is nothing to append to and it emits the bare
+ * origin. The old assertion demanded the slash, which passed for exactly
+ * as long as the site had a base path and failed the instant it did not —
+ * a law about one deployment wearing a check's clothes.
+ *
+ * Loosening it to "origin, maybe one path segment" would have accepted
+ * /ds as the home page's canonical. So the root is DERIVED: take any
+ * other page, subtract its own path from its canonical, and what remains
+ * is where the site is rooted, base path and all. A wrong home canonical
+ * cannot agree with that by accident.
+ */
+{
+  const home = (canonicals.get("index.html") ?? "").replace(/\/$/, "")
+  const sibling = [...canonicals].find(([r]) => r !== "index.html")
+  if (home && sibling) {
+    const [rel, url] = sibling
+    const path = "/" + rel.replace(/\.html$/, "")
+    const bare = url.replace(/\/$/, "")
+    if (!bare.endsWith(path))
+      problems.push(`${rel}: canonical does not end in its own path (${url})`)
+    else {
+      const root = bare.slice(0, -path.length).replace(/\/$/, "")
+      if (home !== root)
+        problems.push(
+          `index.html: canonical is not the site root — says ${home}, ${rel} puts the root at ${root}`
+        )
+    }
   }
 }
 
