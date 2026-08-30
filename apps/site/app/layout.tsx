@@ -34,21 +34,26 @@ export const metadata: Metadata = {
     "An AI assistant that sits above your product instead of inside it. It looks like the rest of your app because it is built from your components. Installs as code you own, on shadcn/ui and Tailwind CSS.",
   alternates: { canonical: "/" },
   /**
-   * THE CARD SAYS THE THESIS; THE <title> SAYS THE CATEGORY.
+   * THE CARD LEADS WITH THE WORDMARK AND WHAT THIS IS.
    *
-   * They are read by different people and the split is deliberate. A search
-   * result is found by someone typing a package name or "AI design system",
-   * so the title above keeps "ambientui" and the category words. A share
-   * card is seen by someone who was not looking for anything, so it leads
-   * with the wordmark and the argument: DESIGN.md's own claim is that AI
-   * can build UI safely only inside a system it selects from instead of
-   * inventing, and that the document is "the drift boundary".
+   * It is read by someone who was not looking for anything — a link in a
+   * feed — so it has one job: say the name, then say the thing in a breath.
+   * "On top of your product" is the whole shape of the idea, and it is the
+   * distinction the overview opens with: most products add AI by finding a
+   * spot for it, and this is a layer over the product rather than a room
+   * inside it.
+   *
+   * The <title> above is deliberately different and stays that way. A
+   * search result is FOUND, by someone typing a package name or "AI design
+   * system", so it keeps "ambientui" and the category words a query would
+   * contain. Do not "fix" one to match the other; they answer to different
+   * readers.
    */
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
     url: SITE_URL,
-    title: "Ambient UI — the design system an AI cannot drift from",
+    title: "Ambient UI — the AI layer on top of your product",
     // THE COUNT IS DERIVED, like every other count on this site. A literal
     // here would be a number in prose that nothing keeps honest, which is
     // the one thing the README says never to do.
@@ -60,7 +65,7 @@ export const metadata: Metadata = {
   // platform reserves the large slot and fills it with nothing.
   twitter: {
     card: "summary_large_image",
-    title: "Ambient UI — the design system an AI cannot drift from",
+    title: "Ambient UI — the AI layer on top of your product",
     images: [OG_IMAGE.url],
   },
 }
