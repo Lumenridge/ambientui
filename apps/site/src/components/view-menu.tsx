@@ -190,7 +190,14 @@ export function ViewMenu({
           >
             <Icon name={item.icon ?? "document"} size={14} />
             {/* the label growing in IS the state change: width rides the
-                surface spring, the fade rides micro — the enter pair */}
+                surface spring, the fade rides micro — the enter pair.
+                THE LABEL BOX IS THE WIDEST LABEL, ALWAYS. Every label is
+                stacked in one grid cell and only the live one is visible,
+                so the cell is as wide as the longest name whichever page
+                you are on. Without this the pill changed width per route
+                — 343px on the overview, 378px on the design system — and
+                because it is centred, that moved BOTH edges: every icon
+                in the chrome slid sideways on every navigation. */}
             <AnimatePresence initial={false}>
               {active && (
                 <motion.span
@@ -198,9 +205,20 @@ export function ViewMenu({
                   animate={{ width: "auto", opacity: 1 }}
                   exit={{ width: 0, opacity: 0, transition: micro }}
                   transition={{ ...spring, opacity: micro }}
-                  className="overflow-hidden text-sm font-medium whitespace-nowrap"
+                  className="grid overflow-hidden text-sm font-medium whitespace-nowrap"
                 >
-                  {item.label}
+                  {items.map((other) => (
+                    <span
+                      key={other.id}
+                      aria-hidden={other.id !== item.id}
+                      className={cn(
+                        "col-start-1 row-start-1",
+                        other.id === item.id ? "" : "invisible"
+                      )}
+                    >
+                      {other.label}
+                    </span>
+                  ))}
                 </motion.span>
               )}
             </AnimatePresence>
