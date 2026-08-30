@@ -266,6 +266,5 @@ export const ANATOMY: AnatomyRow[] = [
   { title: "The distribution", path: "registry.json", job: "Generated from the docs by script, never written by hand, so a component cannot be installable but undocumented." },
   { title: "The constitution", path: "DESIGN.md", job: "The rules, the contracts, the governance procedure, and a decision log recording not just what was decided but why." },
   { title: "The standing orders", path: "CLAUDE.md", job: "The hard rules an AI works under here, loaded at the start of every session." },
-  { title: "The roles", path: ".claude/skills/", job: "Roles the AI can take on demand: design system manager, product design manager, copywriter, site voice." },
   { title: "The enforcement", path: "npm run gate", job: "Typecheck, lint and build across every package, plus the drift checks. A pre-commit hook runs it, so a failing gate blocks the commit." },
 ]

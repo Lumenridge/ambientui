@@ -12,9 +12,17 @@
  *
  * `notes/` is deliberately absent: it is gitignored provenance, not part of
  * the system's public account of itself.
+ *
+ * THE SKILLS ARE ABSENT FOR THE SAME REASON, as of 2026-08-30. `.claude/
+ * skills/*` is how WE brief an assistant working in this repo — a working
+ * process, not a contract anyone installing ambientui needs or is owed.
+ * Listing them invited strangers into the room where the work is planned,
+ * and there is nothing in that room they can act on. What ships is the
+ * system and the rules it enforces; how we ask an AI to apply them is
+ * ours. The files stay in the repo, and stay unlisted.
  */
 
-export type SystemDocGroup = "The system" | "Working rules" | "Skills"
+export type SystemDocGroup = "The system" | "Working rules"
 
 export interface SystemDocMeta {
   id: string
@@ -86,41 +94,5 @@ export const SYSTEM_DOC_META: SystemDocMeta[] = [
     group: "Working rules",
     summary:
       "Code → Figma, variables only, code wins on conflict — the procedure and the drift check.",
-  },
-  {
-    id: "doc-ds-manager",
-    slug: "ds-manager",
-    name: "ds-manager",
-    path: ".claude/skills/ds-manager/SKILL.md",
-    group: "Skills",
-    summary:
-      "System impact: token and component compliance, promote-or-reject, the blast radius of a token change.",
-  },
-  {
-    id: "doc-product-design-manager",
-    slug: "product-design-manager",
-    name: "product-design-manager",
-    path: ".claude/skills/product-design-manager/SKILL.md",
-    group: "Skills",
-    summary:
-      "UX judgment: the right surface for the use case, and flow consistency.",
-  },
-  {
-    id: "doc-product-copy",
-    slug: "product-copy",
-    name: "product-copy",
-    path: ".claude/skills/product-copy/SKILL.md",
-    group: "Skills",
-    summary:
-      "UI copy, microcopy and voice — including the terminology register that keeps the surfaces named correctly.",
-  },
-  {
-    id: "doc-product-copy-reference",
-    slug: "product-copy-reference",
-    name: "product-copy · REFERENCE",
-    path: ".claude/skills/product-copy/REFERENCE.md",
-    group: "Skills",
-    summary:
-      "What context the copy skill has and, deliberately, what it does not — an unfilled placeholder means not available.",
   },
 ]
