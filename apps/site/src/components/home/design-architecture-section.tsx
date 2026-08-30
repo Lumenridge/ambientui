@@ -3,13 +3,6 @@ import * as React from "react"
 import { Button } from "@ambientui/ui/components/button"
 import { Icon } from "@ambientui/ui/components/icon"
 import {
-  ACCENTS,
-  GRAYS,
-  RADIUS_STEPS,
-  MOTION_CHARACTERS,
-} from "@ambientui/foundation"
-
-import {
   Schematic,
   SNode,
   SLink,
@@ -28,25 +21,24 @@ import {
  * Foundation and the Figma engine only make sense once you know they are
  * two projections of one value store rather than two features.
  *
- * EVERY NUMBER HERE IS READ, NOT WRITTEN. The counts come from the
- * Foundation's own token module, so a nineteenth accent or a fourth motion
- * character updates this prose by existing. The paper made the same
- * argument in words the site was not repeating anywhere a stranger would
- * see it; a claim about a bounded space that hardcodes its own bounds is
- * the drift it is warning about.
+ * IT MAKES THE ARGUMENT IN WORDS, NOT COUNTS. It carried the Foundation's
+ * accent/gray/radius/motion tallies read live from the token module, which
+ * was honest but answered a question nobody had arrived with: a stranger
+ * meeting "design architecture" for the first time needs the idea, and the
+ * exact size of the configuration space is what /ds is for. The paper made
+ * this argument at length and the site was repeating none of it where a
+ * visitor would see it; that gap is what this section closes.
  */
 
-/** One point, stated once, with the thing that proves it. */
+/** One point, stated once. */
 function Point({
   label,
   title,
   children,
-  proof,
 }: {
   label: string
   title: string
   children: React.ReactNode
-  proof?: React.ReactNode
 }) {
   return (
     <div className="border-border border-t pt-6">
@@ -57,17 +49,6 @@ function Point({
       <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
         {children}
       </p>
-      {proof && <div className="mt-4">{proof}</div>}
-    </div>
-  )
-}
-
-/** A fact with a number in front of it. */
-function Fact({ n, of }: { n: number | string; of: string }) {
-  return (
-    <div className="flex items-baseline gap-2">
-      <span className="text-foreground font-mono text-sm">{n}</span>
-      <span className="text-muted-foreground text-xs">{of}</span>
     </div>
   )
 }
@@ -141,14 +122,6 @@ export function DesignArchitectureSection({
         <Point
           label="The change"
           title="The Foundation is a configuration space, not a stylesheet"
-          proof={
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-              <Fact n={ACCENTS.length} of="accents" />
-              <Fact n={GRAYS.length} of="gray families" />
-              <Fact n={RADIUS_STEPS.length} of="radius steps" />
-              <Fact n={MOTION_CHARACTERS.length} of="motion characters" />
-            </div>
-          }
         >
           A reference is answered by selecting values, never by styling a
           component toward it. Accent, gray family, radius window, spacing
@@ -162,14 +135,6 @@ export function DesignArchitectureSection({
         <Point
           label="The engine"
           title="Figma mirrors the code, and only in that direction"
-          proof={
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-              <Fact n={244} of="palette primitives" />
-              <Fact n={120} of="Tailwind primitives" />
-              <Fact n={42} of="Foundation aliases" />
-              <Fact n="0" of="components written" />
-            </div>
-          }
         >
           The sync writes variables and never components, so the file a
           designer opens is themed by the same values the app is. The
