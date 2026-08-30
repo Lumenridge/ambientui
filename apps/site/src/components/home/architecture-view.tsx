@@ -12,10 +12,10 @@ import { DemoProviders } from "@/components/providers/demo-providers"
  * prerenders it, so the full text lands in the HTML. That is asserted by
  * scripts/check-static-html.mjs rather than assumed.
  */
-export function ArchitectureView({ source }: { source: string }) {
+export function ArchitectureView() {
   return (
     <DemoProviders>
-      <PlaybookView source={source} />
+      <PlaybookView />
     </DemoProviders>
   )
 }

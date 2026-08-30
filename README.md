@@ -30,8 +30,8 @@ The ambient layer is what that buys you: an assistant with no palette, no type
 scale and no motion of its own, composed entirely from your vocabulary, sitting
 *above* your product instead of inside its component tree.
 
-The full argument is [PAPER.md](PAPER.md). The rules it produced are
-[DESIGN.md](DESIGN.md).
+The full argument is the [architecture page](https://lumenridge.github.io/ambientui/architecture).
+The rules it produced are [DESIGN.md](DESIGN.md).
 
 ## What you can take
 
@@ -96,7 +96,6 @@ figma/                the code → Figma variable contract
   the ambient layer contract, and a dated decision log recording every design
   decision with its *why*.
 - [CLAUDE.md](CLAUDE.md) — the hard rules an AI works under in this repo.
-- [PAPER.md](PAPER.md) — the argument the repo is evidence for.
 
 The `/ds` reference links to them on GitHub rather than re-rendering them, so
 there is one copy of each and no chance of a stale mirror. The registry is generated from the same component docs,

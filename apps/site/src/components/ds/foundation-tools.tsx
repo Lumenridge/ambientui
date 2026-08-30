@@ -34,7 +34,11 @@ export function FoundationTool({ id }: { id: ToolId }) {
   const Tool = TOOLS[id]
   return (
     <DemoProviders>
-      <div className="mx-auto w-full max-w-5xl px-6 py-16">
+            {/* 108px of clearance at the top: the floating switcher sits over
+          this column, and a heading that starts under it reads as clipped.
+          pt-27 is 27 spacing steps, not a literal — so it re-densifies with
+          the Foundation's grid like every other dimension. */}
+      <div className="mx-auto w-full max-w-5xl px-6 pt-27 pb-16">
         <Tool />
       </div>
     </DemoProviders>

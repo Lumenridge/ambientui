@@ -28,7 +28,13 @@ import {
   SText,
   Schematic,
 } from "@/components/home/schematic-kit"
-import { Markdown } from "@/components/markdown"
+import {
+  ANATOMY,
+  PARTS,
+  READING_MINUTES,
+  SECTIONS,
+  type SectionSlot,
+} from "@/components/home/architecture-content"
 import { SYSTEM_DOC_META } from "@/lib/system-docs.meta"
 import { asset } from "@/lib/asset"
 import { docUrl } from "@/lib/site"
@@ -36,13 +42,12 @@ import { docUrl } from "@/lib/site"
 /**
  * THE PLAYBOOK — the front door: the paper itself, read as an article.
  *
- * THE ARTICLE IS THE PAPER'S REAL BYTES. The body is PAPER.md rendered
- * through the same Markdown reader /ds uses — not a rewrite, not entries
- * that link away. Edit the paper and this page changes, because there is no
- * copy to fall out of step. One presentation transform: the file's title
- * block (H1 + bold subtitle) is sliced off, because the hero renders those
- * two lines at display scale — showing them twice would be the page
- * stuttering.
+ * THE ARTICLE IS WRITTEN, NOT RENDERED. It was PAPER.md's real bytes, cut
+ * into chunks at build time — which meant no second copy could drift, and
+ * also meant the page spoke to a reader who had already committed half an
+ * hour while the front door had been rewritten for a stranger. The prose
+ * moved to `architecture-content.ts` and the paper was deleted; this file
+ * decides what a section looks like and which demo sits under it.
  *
  * THE DEMOS ARE THE REAL COMPONENTS IN A SHELL FRAME: after the section on
  * the six shapes, buttons that open the live layer's actual surfaces; after
@@ -50,10 +55,10 @@ import { docUrl } from "@/lib/site"
  * ReasoningPanel, ToolCall, CodeDiff, ReferenceChips — rendered settled
  * inside a wireframe shell, so the article shows the thing it just argued.
  *
- * THE CONTENTS COLUMN (wide screens): the paper's sixteen sections divided
- * into six labeled groups, each a Collapsible — the group being read opens
- * itself as the reader scrolls, entries jump the article, and everything is
- * DERIVED from the same chunk split, never hand-written.
+ * THE CONTENTS COLUMN (wide screens): the sections divided into labelled
+ * groups, each a Collapsible — the group being read opens itself as the
+ * reader scrolls. Both the column and the article read the same SECTIONS
+ * array, so the contents cannot list a section the page does not have.
  *
  * Kept-local compositions (watchlist, DESIGN.md §13): `DocDownload`,
  * `WireframeShell` (a dashed, corner-ticked frame with a mono tag — the
@@ -62,7 +67,6 @@ import { docUrl } from "@/lib/site"
  */
 
 const KIT: { docId: string; blurb: string }[] = [
-  { docId: "doc-paper", blurb: "This article, as the file it is." },
   { docId: "doc-motion-spec", blurb: "Roles, characters, and the arrival choreography. Read first when porting." },
   { docId: "doc-shell-spec", blurb: "The layer's complete behavior contract, shape by shape." },
   { docId: "doc-design", blurb: "The constitution: rules, contracts, and the decision log." },
@@ -142,69 +146,6 @@ const openDoc = (docId: string) => {
 /** /ds with no selection IS the Foundation — the setup this paper argues for. */
 const openFoundation = () => {
   window.location.assign(asset("/ds"))
-}
-
-/* ------------------------- the article chunks ------------------------- */
-
-type Chunk = {
-  id: string
-  md: string
-  /** parsed for the contents nav; absent on non-section chunks */
-  heading?: { level: 1 | 2; label: string }
-}
-
-/**
- * The paper, sliced for staged reading and for the contents column: the
- * title block the hero renders is dropped, the body splits at part and
- * section headings, and each chunk's heading feeds the nav. The bytes
- * inside each chunk are untouched, and the nav cannot drift from the
- * article because both come from the same split.
- */
-function usePaper(source: string) {
-  return React.useMemo(() => {
-    const lines = source.split("\n")
-    let start = 0
-    let title = "The playbook"
-    const subtitleLines: string[] = []
-    if (lines[0]?.startsWith("# ")) {
-      title = lines[0].slice(2)
-      start = 1
-      while (lines[start] === "") start++
-      if (lines[start]?.startsWith("**")) {
-        // the bold subtitle block, possibly wrapped over lines
-        while (lines[start] && lines[start] !== "") {
-          subtitleLines.push(lines[start])
-          start++
-        }
-        while (lines[start] === "") start++
-      }
-    }
-    const subtitle = subtitleLines.join(" ").replace(/\*\*/g, "")
-    const body = lines.slice(start)
-    const chunks: Chunk[] = []
-    let current: string[] = []
-    const flush = () => {
-      const md = current.join("\n").trim()
-      if (!md) return (current = [])
-      const first = md.split("\n")[0] ?? ""
-      let heading: Chunk["heading"]
-      if (first.startsWith("# Part ")) heading = { level: 1, label: first.slice(2) }
-      else if (first.startsWith("## ")) heading = { level: 2, label: first.slice(3) }
-      chunks.push({ id: `s-${chunks.length}`, md, heading })
-      current = []
-    }
-    for (const line of body) {
-      if (/^## /.test(line) || /^# Part /.test(line)) flush()
-      current.push(line)
-    }
-    flush()
-    for (const c of chunks) {
-      if (c.md.startsWith("# Part I:")) c.id = "part-1"
-      if (c.md.startsWith("# Part II:")) c.id = "part-2"
-    }
-    const words = source.split(/\s+/).length
-    return { chunks, title, subtitle, minutes: Math.max(1, Math.round(words / 220)) }
-  }, [source])
 }
 
 /* --------------------------- the shell demos --------------------------- */
@@ -429,78 +370,6 @@ function ConfigDiagram() {
  * waypoint into the two projections, compile (to the running product) and
  * sync (to the Figma variables), each drawn as a small wireframe.
  */
-function PipelineDiagram() {
-  const keys = ["palette", "roles", "radius", "type", "motion"]
-  const ys = [55, 85, 115, 145, 175]
-  return (
-    <WireframeShell tag="diagram · one master, two projections" className="my-10">
-      <Schematic
-        viewBox="0 0 720 240"
-        label="One master, two projections: tokens.json compiled to the product and synced to Figma"
-        className="w-full"
-      >
-        {/* the master's keys, fanning in */}
-        {keys.map((k, i) => (
-          <g key={k}>
-            <SText x={70} y={ys[i] + 2.5} anchor="end" muted>
-              {k}
-            </SText>
-            <SDot x={80} y={ys[i]} />
-            <SLink x1={80} y1={ys[i]} x2={138} y2={115} bend={0.6} />
-          </g>
-        ))}
-        <SNode x={177} y={115} r={39} lines={["tokens/", "tokens.json"]} />
-        <SText x={177} y={170} anchor="middle" size={7} muted>
-          the one master
-        </SText>
-
-        {/* the split */}
-        <SLink x1={216} y1={115} x2={300} y2={115} bend={0} />
-        <SDot x={300} y={115} ring />
-
-        {/* projection one: compiled into the running product */}
-        <SLink x1={300} y1={115} x2={416} y2={65} bend={0.6} />
-        <SText x={352} y={72} size={7} accent>
-          compile · on save
-        </SText>
-        <SScreen x={420} y={30} w={116} h={70} />
-        <SLink x1={452} y1={36} x2={452} y2={94} bend={0} />
-        <SBar x={428} y={44} w={16} h={3} />
-        <SBar x={428} y={54} w={12} h={3} />
-        <SScreen x={460} y={42} w={64} h={20} rx={3} />
-        <SBar x={466} y={49} w={30} h={3} />
-        <SScreen x={460} y={68} w={64} h={20} rx={3} />
-        <SBar x={466} y={75} w={38} h={3} />
-        <SText x={552} y={60}>the running product</SText>
-        <SText x={552} y={73} size={7} muted>
-          css variables, per save
-        </SText>
-
-        {/* projection two: synced into the Figma variables */}
-        <SLink x1={300} y1={115} x2={416} y2={165} bend={0.6} />
-        <SText x={352} y={162} size={7} accent>
-          sync
-        </SText>
-        <SScreen x={420} y={130} w={116} h={70} />
-        {[146, 160, 174].map((y) => (
-          <g key={y}>
-            <SDot x={434} y={y} r={2} accent />
-            <SBar x={442} y={y - 1.5} w={60} h={3} />
-          </g>
-        ))}
-        <SText x={552} y={160}>the figma variables</SText>
-        <SText x={552} y={173} size={7} muted>
-          variables only, never components
-        </SText>
-      </Schematic>
-      <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
-        Code is master. Designers and the running product read the same
-        values, so a divergence is a bug with a location — not a meeting.
-      </p>
-    </WireframeShell>
-  )
-}
-
 /** After §2: the shapes, opened for real on this page. */
 function ShapesDemo() {
   const { setMode } = useAssistant()
@@ -664,125 +533,63 @@ function PipelineSchematic() {
  * §12 renders with the ascii pipeline block swapped for the schematic.
  * Everything else in the section is the paper's bytes, untouched.
  */
-function TokenPipelineSection({ md }: { md: string }) {
-  const parts = md.split("```")
-  return (
-    <>
-      <Markdown source={parts[0].trim()} />
-      <PipelineSchematic />
-      <Markdown source={parts.slice(2).join("```").trim()} />
-    </>
-  )
-}
-
 /* ------------------------ the anatomy as cards ------------------------ */
 
-const GITHUB = "https://github.com/Lumenridge/ambientui"
 
 /**
  * Resolve a File cell from the anatomy table to a GitHub URL. Directories
  * get tree links, files get blob links; the two rows whose cells are not a
  * clean path (the elided catalog path, the gate) carry explicit targets.
  */
-function anatomyHref(cell: string): string | null {
-  if (cell.includes("…")) return `${GITHUB}/blob/main/apps/web/src/components/ds/catalog.ts`
-  if (cell.startsWith("The gate")) return `${GITHUB}/blob/main/package.json`
-  const path = cell.match(/`([^`]+)`/)?.[1]
-  if (!path) return null
-  const clean = path.replace(/\/$/, "")
-  const isDir = path.endsWith("/") || !clean.split("/").pop()?.includes(".")
-  return `${GITHUB}/${isDir ? "tree" : "blob"}/main/${clean}`
-}
-
 /**
  * §10's File/Job table, rendered as cards instead of rows — but DERIVED
  * from the table's own bytes in the paper, never written here. Each card:
  * the job's first sentence as its name, the path in mono, the rest of the
  * job as the description, and the file on GitHub one click away. Edit the
- * table in PAPER.md and the cards follow; there is no second copy.
+ * rows are written down and the list follows them.
  */
-function AnatomySection({ md }: { md: string }) {
-  const lines = md.split("\n")
-  const first = lines.findIndex((l) => l.startsWith("|"))
-  let last = first
-  while (last < lines.length && lines[last].startsWith("|")) last++
-  const before = lines.slice(0, first).join("\n").trim()
-  const after = lines.slice(last).join("\n").trim()
-  const rows = lines
-    .slice(first + 2, last) // skip header + divider
-    .map((l) => l.split("|").map((c) => c.trim()))
-    .filter((c) => c.length >= 3)
-    .map(([, file, job]) => {
-      // the job's lead — up to the first ". " or ": " — names the card
-      const cut = [job.indexOf(". "), job.indexOf(": ")]
-        .filter((i) => i > 0)
-        .sort((a, b) => a - b)[0]
-      const rest = cut ? job.slice(cut + 2) : ""
-      return {
-        file,
-        title: cut ? job.slice(0, cut) : job,
-        desc: rest ? rest[0].toUpperCase() + rest.slice(1) : "",
-        href: anatomyHref(file),
-        path: file.match(/`([^`]+)`/)?.[1] ?? file,
-      }
-    })
+/**
+ * THE ANATOMY, AS A LIST. It parsed a markdown table out of the paper and
+ * rebuilt it; the rows are written down now, so it just renders them.
+ * Still a list rather than a card grid: twelve files read in order, and
+ * two columns of equal-weight cards turn an inventory into a gallery.
+ */
+function AnatomyList() {
   return (
-    <>
-      <Markdown source={before} />
-      {/* A LIST, NOT A CARD GRID. This is an inventory of twelve files read
-          in order, and two columns of equal-weight cards made it a gallery:
-          the eye picks a card instead of reading down. Rows on a rule keep
-          the reading order the table had, and the card's height padding
-          stops competing with the prose it sits inside. */}
-      <ul className="border-border mt-6 border-t">
-        {rows.map((r) => (
-          <li
-            key={r.path}
-            className="border-border flex flex-col gap-2 border-b py-4 sm:flex-row sm:items-baseline sm:gap-6"
-          >
-            <div className="min-w-0 sm:flex-1">
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="text-sm font-medium">{r.title}</span>
-                <span className="text-muted-foreground font-mono text-xs">
-                  {r.path}
-                </span>
-              </div>
-              {r.desc && (
-                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-                  {r.desc}
-                </p>
-              )}
+    <ul className="border-border mt-8 max-w-3xl border-t">
+      {ANATOMY.map((r) => (
+        <li
+          key={r.path}
+          className="border-border flex flex-col gap-2 border-b py-4 sm:flex-row sm:items-baseline sm:gap-6"
+        >
+          <div className="min-w-0 sm:flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="text-sm font-medium">{r.title}</span>
+              <span className="text-muted-foreground font-mono text-xs">
+                {r.path}
+              </span>
             </div>
-            {r.href && (
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="shrink-0 self-start"
-              >
-                <a href={r.href} target="_blank" rel="noreferrer">
-                  View
-                  <Icon name="arrow-up-right" size={13} />
-                </a>
-              </Button>
-            )}
-          </li>
-        ))}
-      </ul>
-      {after && <Markdown source={after} className="mt-8" />}
-    </>
+            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+              {r.job}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }
 
 /** Which demo follows which section, matched on the section heading. */
-const DEMOS: { match: RegExp; node: React.ReactNode }[] = [
-  { match: /^## 1\. /, node: <EmbeddedVsAmbientDiagram /> },
-  { match: /^## 2\. /, node: <ShapesDemo /> },
-  { match: /^## 3\. /, node: <ContextDiagram /> },
-  { match: /^## 4\. /, node: <AnswerDemo /> },
-  { match: /^## 9\. /, node: <ConfigDiagram /> },
-  { match: /^## 12\. /, node: <PipelineDiagram /> },
-]
+/** A section names the slot it wants; this is what fills each one. */
+const SLOTS: Record<SectionSlot, React.ReactNode> = {
+  embedded: <EmbeddedVsAmbientDiagram />,
+  shapes: <ShapesDemo />,
+  context: <ContextDiagram />,
+  answer: <AnswerDemo />,
+  config: <ConfigDiagram />,
+  pipeline: <PipelineSchematic />,
+  anatomy: <AnatomyList />,
+}
 
 /* ---------------------------- the contents nav ---------------------------- */
 
@@ -793,45 +600,7 @@ const DEMOS: { match: RegExp; node: React.ReactNode }[] = [
  * them against the live chunk split — so a renumbered paper drops a section
  * from the nav loudly instead of pointing it at the wrong prose.
  */
-const NAV_PARTS: {
-  id: string
-  part: string
-  title: string
-  /** A named opening that precedes the numbered sections — entry 00. */
-  lead?: string
-  groups: { label: string; nums: number[] }[]
-}[] = [
-  {
-    id: "part-1",
-    part: "Part I",
-    title: "Ambient UI",
-    lead: "The philosophy",
-    groups: [
-      { label: "A presence above the product", nums: [1, 2, 3] },
-      { label: "Answers made of your UI", nums: [4, 5, 6] },
-    ],
-  },
-  {
-    id: "part-2",
-    part: "Part II",
-    title: "Design Architecture",
-    groups: [
-      { label: "Name the enemy: drift", nums: [7, 8] },
-      { label: "Bound the design space", nums: [9, 10, 11] },
-      { label: "One source of truth", nums: [12, 13] },
-      { label: "Make it yours", nums: [14, 15, 16] },
-    ],
-  },
-]
-
 /** What each part gets you — the one-line frame under its divider. */
-const PART_INTRO: Record<string, string> = {
-  "part-1":
-    "What you ship: an assistant that lives above your product, wears your design system, and answers with real components.",
-  "part-2":
-    "How you get there: four steps that turn a design system into something a generator can build inside without drifting.",
-}
-
 /** Which section heading is currently at the top of the reading line. */
 function useActiveSection(ids: string[]) {
   const [active, setActive] = React.useState<string | undefined>()
@@ -1016,9 +785,8 @@ function PlaybookNav(props: {
 
 /* ---------------------------------------------------------------- */
 
-export function PlaybookView({ source }: { source: string }) {
+export function PlaybookView() {
   const { setPageIntel } = useAssistant()
-  const { chunks, title, subtitle, minutes } = usePaper(source)
 
   React.useEffect(() => {
     setPageIntel({
@@ -1038,29 +806,18 @@ export function PlaybookView({ source }: { source: string }) {
   // resolve the nav's section numbers against the live chunk split
   const navParts = React.useMemo(
     () =>
-      NAV_PARTS.map((p) => ({
+      PARTS.map((p) => ({
         ...p,
+        part: p.label,
         groups: p.groups.map((g) => ({
           label: g.label,
           entries: g.nums.flatMap((num) => {
-            const chunk = chunks.find((c) =>
-              c.heading?.level === 2
-                ? c.heading.label.startsWith(`${num}. `)
-                : false
-            )
-            return chunk
-              ? [
-                  {
-                    id: chunk.id,
-                    num,
-                    title: chunk.heading!.label.slice(`${num}. `.length),
-                  },
-                ]
-              : []
+            const sec = SECTIONS.find((x) => x.num === num)
+            return sec ? [{ id: sec.id, num, title: sec.title }] : []
           }),
         })),
       })),
-    [chunks]
+    []
   )
   const sectionIds = React.useMemo(
     () =>
@@ -1090,13 +847,15 @@ export function PlaybookView({ source }: { source: string }) {
         >
           <Reveal>
             <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-              ambientui / the architecture · {minutes} min read
+              ambientui / the architecture · {READING_MINUTES} min read
             </p>
             <h1 className="mt-6 text-6xl font-semibold tracking-tight text-balance sm:text-7xl">
-              {title}
+              Stop AI drift
             </h1>
             <p className="text-muted-foreground mt-6 max-w-xl text-lg leading-relaxed">
-              {subtitle}
+              AI can build screens faster than anyone can check them. Here is
+              how to keep your design from falling apart while it does — and
+              what you get once it cannot.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button onClick={() => scrollTo("part-1")}>Start reading</Button>
@@ -1122,74 +881,71 @@ export function PlaybookView({ source }: { source: string }) {
         </nav>
 
         <article className="mt-2">
-          {chunks.map((chunk) => {
-            // a part boundary renders as a designed chapter break; any prose
-            // in the part chunk (the philosophy under Part I) follows it
-            if (chunk.heading?.level === 1) {
-              const m = chunk.heading.label.match(/^(Part [IVX]+):\s*(.*)$/)
-              const prose = chunk.md.split("\n").slice(1).join("\n").trim()
-              return (
-                <Reveal key={chunk.id} id={chunk.id} className="scroll-mt-24">
-                  <div className="border-border mt-20 border-t pt-12">
-                    <p className="text-primary font-mono text-xs tracking-widest uppercase">
-                      {m?.[1] ?? chunk.heading.label}
-                    </p>
-                    <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-                      {m?.[2] ?? ""}
-                    </h2>
-                    {PART_INTRO[chunk.id] && (
-                      <p className="text-muted-foreground mt-4 max-w-xl text-base leading-relaxed">
-                        {PART_INTRO[chunk.id]}
-                      </p>
-                    )}
-                    {/* Part II is the framework — show its steps up front */}
-                    {chunk.id === "part-2" && (
-                      <ol className="mt-6 flex flex-col gap-1.5">
-                        {navParts
-                          .find((p) => p.id === "part-2")
-                          ?.groups.map((g, i) => (
-                            <li key={g.label}>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  g.entries[0] && scrollTo(g.entries[0].id)
-                                }
-                                className="text-muted-foreground hover:text-foreground flex items-baseline gap-2.5 text-sm"
-                              >
-                                <span className="text-primary font-mono text-xs tabular-nums">
-                                  {String(i + 1).padStart(2, "0")}
-                                </span>
-                                {g.label}
-                              </button>
-                            </li>
-                          ))}
-                      </ol>
-                    )}
-                    {prose && <Markdown source={prose} className="mt-6" />}
-                  </div>
-                </Reveal>
-              )
-            }
-            const demo = DEMOS.find((d) => d.match.test(chunk.md))
-            // two sections carry richer presentations of their own bytes:
-            // §10's table as cards, §12's ascii pipeline as a schematic
-            const isAnatomy = /^## 10\. /.test(chunk.md)
-            const isPipeline = /^## 12\. /.test(chunk.md)
-            return (
-              <React.Fragment key={chunk.id}>
-                <Reveal id={chunk.id} className="scroll-mt-24">
-                  {isAnatomy ? (
-                    <AnatomySection md={chunk.md} />
-                  ) : isPipeline ? (
-                    <TokenPipelineSection md={chunk.md} />
-                  ) : (
-                    <Markdown source={chunk.md} />
+          {PARTS.map((part) => (
+            <React.Fragment key={part.id}>
+              <Reveal id={part.id} className="scroll-mt-24">
+                <div className="border-border mt-20 border-t pt-12">
+                  <p className="text-primary font-mono text-xs tracking-widest uppercase">
+                    {part.label}
+                  </p>
+                  <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+                    {part.title}
+                  </h2>
+                  <p className="text-muted-foreground mt-4 max-w-xl text-base leading-relaxed">
+                    {part.lede}
+                  </p>
+                  {/* Part II is the framework — show its steps up front */}
+                  {part.id === "part-2" && (
+                    <ol className="mt-6 flex flex-col gap-1.5">
+                      {part.groups.map((g, i) => {
+                        const first = SECTIONS.find((x) => x.num === g.nums[0])
+                        return (
+                          <li key={g.label}>
+                            <button
+                              type="button"
+                              onClick={() => first && scrollTo(first.id)}
+                              className="text-muted-foreground hover:text-foreground flex items-baseline gap-2.5 text-sm"
+                            >
+                              <span className="text-primary font-mono text-xs tabular-nums">
+                                {String(i + 1).padStart(2, "0")}
+                              </span>
+                              {g.label}
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ol>
                   )}
-                </Reveal>
-                {demo && <Reveal>{demo.node}</Reveal>}
-              </React.Fragment>
-            )
-          })}
+                </div>
+              </Reveal>
+
+              {SECTIONS.filter((sec) =>
+                part.groups.some((g) => g.nums.includes(sec.num))
+              ).map((sec) => (
+                <React.Fragment key={sec.id}>
+                  <Reveal id={sec.id} className="scroll-mt-24">
+                    <div className="mt-16 max-w-3xl">
+                      <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                        <span className="text-muted-foreground me-3 font-mono text-base tabular-nums">
+                          {String(sec.num).padStart(2, "0")}
+                        </span>
+                        {sec.title}
+                      </h3>
+                      {sec.body.map((para) => (
+                        <p
+                          key={para.slice(0, 40)}
+                          className="text-muted-foreground mt-5 leading-relaxed"
+                        >
+                          {para}
+                        </p>
+                      ))}
+                    </div>
+                  </Reveal>
+                  {sec.slot && <Reveal>{SLOTS[sec.slot]}</Reveal>}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          ))}
         </article>
 
         {/* the porting kit */}
@@ -1233,14 +989,6 @@ export function PlaybookView({ source }: { source: string }) {
                   onClick={() => openDoc("doc-readme")}
                 >
                   Read the README
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openDoc("doc-paper")}
-                >
-                  View this article at /ds
-                  <Icon name="arrow-up-right" size={13} />
                 </Button>
               </div>
             </WireframeShell>

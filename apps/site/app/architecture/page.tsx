@@ -2,60 +2,40 @@ import type { Metadata } from "next"
 
 import { ArchitectureView } from "@/components/home/architecture-view"
 import { ArticleJsonLd } from "@/components/json-ld"
-import { readDocById } from "@/lib/read-doc"
 
 /**
- * THE PAPER, AS AN ARTICLE — and the page with the most to gain from being
- * real HTML: ~1,400 lines of argument that was previously invisible to any
- * crawler, behind a `?view=` query param on a single-document SPA.
+ * THE ARCHITECTURE, AS AN ARTICLE.
  *
- * Title and description are DERIVED FROM THE FILE, never restated, so they
- * cannot drift from the document they describe.
+ * This route used to read PAPER.md at build time and derive its title and
+ * description from the file, so the two could not drift. The paper is gone
+ * and the argument is written directly in `architecture-content.ts`, so the
+ * headline lives here — one place, still not restated anywhere else on the
+ * page, since the hero renders these same two strings.
+ *
+ * The prose is a client tree only because the diagrams and live demos are
+ * interleaved with it. `output: export` prerenders client components to
+ * HTML too, so every word is still in the file a crawler receives.
  */
-function paperTitleAndLede() {
-  const source = readDocById("doc-paper")
-  const lines = source.split("\n")
-  const title = lines[0]?.startsWith("# ") ? lines[0].slice(2) : "The architecture"
-  // the bold subtitle block under the H1, unwrapped
-  const subtitle: string[] = []
-  let i = 1
-  while (lines[i] === "") i++
-  if (lines[i]?.startsWith("**")) {
-    while (lines[i] && lines[i] !== "") {
-      subtitle.push(lines[i]!)
-      i++
-    }
-  }
-  return {
-    title,
-    lede: subtitle.join(" ").replace(/\*\*/g, ""),
-    source,
-    body: lines.slice(i).join("\n"),
-  }
-}
+const TITLE = "Stop AI drift"
+const LEDE =
+  "AI can build screens faster than anyone can check them. Here is how to keep your design from falling apart while it does, and what you get once it cannot."
 
-export function generateMetadata(): Metadata {
-  const { title, lede } = paperTitleAndLede()
-  return {
-    title: `${title} — ambientui`,
-    description: lede.slice(0, 200),
-    alternates: { canonical: "/architecture" },
-    openGraph: { type: "article", title, description: lede.slice(0, 200) },
-  }
+export const metadata: Metadata = {
+  title: `${TITLE} — ambientui`,
+  description: LEDE,
+  alternates: { canonical: "/architecture" },
+  openGraph: { type: "article", title: TITLE, description: LEDE },
 }
 
 export default function ArchitecturePage() {
-  // read on the SERVER, rendered by a client tree that adds the diagrams
-  // and the live demos — the export still prerenders the prose to HTML
-  const { title, lede } = paperTitleAndLede()
   return (
     <>
       <ArticleJsonLd
-        headline={title}
-        description={lede.slice(0, 200)}
+        headline={TITLE}
+        description={LEDE}
         path="/architecture"
       />
-      <ArchitectureView source={readDocById("doc-paper")} />
+      <ArchitectureView />
     </>
   )
 }

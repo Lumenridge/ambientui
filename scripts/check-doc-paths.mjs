@@ -26,7 +26,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 // The root documents are named; everything under docs/ joins by GLOB. A
 // hardcoded list means a new page ships unchecked, and the whole point of
 // this check is that prose citing a path is a claim the repo has to honour.
-const DOCS = ["CLAUDE.md", "README.md", "PAPER.md", "DESIGN.md", "figma/figma-sync.md"]
+const DOCS = ["CLAUDE.md", "README.md", "DESIGN.md", "figma/figma-sync.md"]
 const docsDir = join(ROOT, "docs")
 if (existsSync(docsDir)) {
   for (const file of readdirSync(docsDir)) {

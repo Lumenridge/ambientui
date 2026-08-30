@@ -45,14 +45,6 @@ export const SYSTEM_DOC_META: SystemDocMeta[] = [
       "The constitution: the two vocabularies, the token rules, the ambient layer contract, and every governance decision in the log.",
   },
   {
-    id: "doc-paper",
-    slug: "paper",
-    name: "PAPER.md",
-    path: "PAPER.md",
-    group: "The system",
-    summary: "The argument the repo is evidence for.",
-  },
-  {
     id: "doc-readme",
     slug: "readme",
     name: "README.md",

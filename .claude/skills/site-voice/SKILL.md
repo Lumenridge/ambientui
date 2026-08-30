@@ -11,10 +11,10 @@ in about eight seconds whether this is worth their afternoon, and has never
 heard the words "ambient layer" or "design architecture" in their life.
 
 This is a different job from [product-copy](../product-copy/SKILL.md), which
-writes strings inside a product for someone already using it, and from
-`PAPER.md`, which argues at length for a reader who has chosen to read. Use
-this skill for `apps/site` prose. Use product-copy for UI strings and the
-component vocabulary.
+writes strings inside a product for someone already using it. Use this
+skill for `apps/site` prose — including the architecture page, whose
+argument now lives in `architecture-content.ts` rather than in a markdown
+file. Use product-copy for UI strings and the component vocabulary.
 
 ## The test
 
@@ -67,8 +67,8 @@ the reader now has.
   family", unless the register below requires the term.
 - Say "you". The reader is a person with a codebase.
 - Cut the sentence that only restates the previous one at a higher altitude.
-- Em dashes are house style here and stay. (`PAPER.md` and committed docs
-  are the opposite: no em dashes in that prose.)
+- Em dashes are house style here and stay. Committed markdown docs
+  (DESIGN.md, README.md) are the opposite: no em dashes in that prose.
 
 ## What simplicity does NOT license
 
