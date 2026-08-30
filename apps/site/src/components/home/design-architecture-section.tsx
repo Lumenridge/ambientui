@@ -133,21 +133,29 @@ export function DesignArchitectureSection({
 
         <Point
           label="The engine"
-          title="Figma copies the code, never the other way"
+          title="Design and code read from the same values"
         >
-          Design files and code normally drift apart the day they are
-          made. Here they read from one set of values. The sync writes
-          variables into Figma and never draws components, so a designer
-          opens a file already wearing the same colours and spacing the app
-          uses. Change one value in code, run the sync, and both sides
-          move. It only ever goes that way, and running it twice is safe.
+          Your codebase and your Figma file are two different places, and
+          they start drifting apart the day you make them. Underneath both
+          there is one data layer: the tokens. Figma already has variables
+          as a concept — colours for light and dark, spacing, radius — so
+          the same Tailwind scales your code uses are written into them,
+          and the Foundation points at those. Change a value, run the sync,
+          and Figma follows without anyone redrawing anything.
+          <br />
+          <br />
+          Pulling a design out of Figma and into code is a well-travelled
+          road. This is the return trip: not just writing variables, but
+          wiring them to a short menu of choices, so one save re-themes
+          both sides at once. The point is not tidiness. It is that design
+          and engineering end up naming the same things the same way.
         </Point>
       </div>
 
       <div className="border-border mt-12 rounded-xl border p-8">
         <SyncSchematic />
         <p className="text-muted-foreground mt-6 text-center text-sm">
-          One set of values. Two places it shows up. Nothing comes back the other way.
+          One data layer. Two environments reading from it. Change the values, both follow.
         </p>
       </div>
     </div>
