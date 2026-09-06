@@ -37,6 +37,7 @@ const ROOTS = [
   "apps/site/app",
   "packages/ambient/src",
   "packages/foundation/src",
+  "packages/patterns/src",
   "packages/ui/src",
 ]
 

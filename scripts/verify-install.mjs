@@ -61,6 +61,11 @@ const DOORS = [
   { name: "ambient-styles", compile: false },
   { name: "ambient-assets", compile: false },
   { name: "foundation-theme", compile: false },
+  // the promoted product patterns — /ds prints an install command for each,
+  // so each is exercised like any other door
+  { name: "section-rail", compile: true },
+  { name: "view-menu", compile: true },
+  { name: "save-reminder", compile: true },
 ]
 
 const log = (s) => console.log(s)

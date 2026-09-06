@@ -20,7 +20,7 @@ import {
   SettingsRow,
   SettingsSection,
   SettingsTitle,
-} from "@/components/ds/settings-kit"
+} from "@ambientui/patterns/settings-kit"
 import { ICON_NAMES } from "@/components/icon"
 import { useTheme } from "@/components/theme-provider"
 import {

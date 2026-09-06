@@ -30,6 +30,40 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const HOST =
   process.env.AMBIENTUI_REGISTRY_HOST ?? "https://lumenridge.github.io/ambientui"
 const url = (name) => `${HOST}/r/${name}.json`
+const STAGE = ".registry"
+
+/**
+ * --scrub <dir>: post-process the `shadcn build` output. The build inlines
+ * each file's CONTENT but keeps its `path` verbatim — which is the staging
+ * directory. `.registry/...` is this repo's internal layout, meaningless to
+ * a consumer and one more thing that could be mistaken for a fetchable URL.
+ * The published artifact names the real source instead.
+ */
+const scrubAt = process.argv.indexOf("--scrub")
+if (scrubAt !== -1) {
+  const dir = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    "..",
+    process.argv[scrubAt + 1] ?? ""
+  )
+  let scrubbed = 0
+  for (const f of readdirSync(dir).filter((f) => f.endsWith(".json"))) {
+    const p = resolve(dir, f)
+    const doc = JSON.parse(readFileSync(p, "utf8"))
+    // an item carries `files` at the top; the index carries them per item
+    for (const holder of doc.items ?? [doc]) {
+      for (const file of holder.files ?? []) {
+        if (file.path?.startsWith(`${STAGE}/`)) {
+          file.path = file.path.slice(STAGE.length + 1)
+          scrubbed++
+        }
+      }
+    }
+    writeFileSync(p, JSON.stringify(doc, null, 2) + "\n")
+  }
+  console.log(`✔ scrubbed ${scrubbed} staging paths from ${process.argv[scrubAt + 1]}`)
+  process.exit(0)
+}
 
 /**
  * THE PUBLISHED FILES SPEAK THE CONSUMER'S DIALECT.
@@ -59,9 +93,12 @@ const IMPORT_REWRITES = [
   // These follow the targets declared on the items below.
   [/from\s+"\.\/tokens"/g, 'from "@/lib/foundation/tokens"'],
   [/from\s+"\.\/foundation-context"/g, 'from "@/components/foundation-provider"'],
+  // The bare package root — the motion hooks the patterns reach for. In a
+  // consumer's project those live in the installed foundation provider, so
+  // any item using this rewrite must declare the `foundation` door as a
+  // registry dependency.
+  [/(from\s+")@ambientui\/foundation(")/g, "$1@/components/foundation-provider$2"],
 ]
-
-const STAGE = ".registry"
 
 function stage(relPath) {
   const src = resolve(ROOT, relPath)
@@ -462,7 +499,7 @@ const items = [
       type: fileType(f),
       target: `components/ambient/${f}`,
     })),
-    docs: 'Import the material once: `@import "./styles/ambient.css";` in your globals.css. Then mount the layer at the root of your app:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nIt needs no other providers — it falls back to DEFAULT_AMBIENT_RUNTIME. Supply your own design system by wrapping it in AmbientRuntimeProvider. This copies ~8,300 lines you will own and can edit; prefer `npm i ambientui` if you want an upgrade path instead.',
+    docs: 'Import the material once: `@import "./styles/ambient.css";` in your globals.css. Then mount the layer at the root of your app:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nIt needs no other providers — it falls back to DEFAULT_AMBIENT_RUNTIME. Supply your own design system by wrapping it in AmbientRuntimeProvider. This copies ~8,300 lines you will own and can edit — owning the source is the point; a versioned `ambientui` npm package is planned for those who want an upgrade path instead.',
   },
   {
     name: "icon",
@@ -514,6 +551,65 @@ const items = [
     docs: "These files are written for THIS repo and reference its paths. Read them and adapt the paths to your own before relying on them — an unedited copy will point an agent at directories you do not have.",
   },
 ]
+
+/**
+ * PROMOTED PRODUCT PATTERNS — ambientui extensions to the product
+ * vocabulary (SectionRail, ViewMenu, the settings kit). Unlike the ambient
+ * vocabulary these do not share one source directory, so they are listed by
+ * hand — but their prose still comes from the catalog, because an item whose
+ * description drifts from its documentation is two sources of truth.
+ */
+const productDocs = new Map(
+  readCatalog()
+    .filter((e) => e.vocabulary === "product")
+    .map((e) => [e.id, e])
+)
+
+function productItem(id, { file, target, dependencies = [], registryDependencies = [], exportsNames }) {
+  const entry = productDocs.get(id)
+  if (!entry) {
+    console.error(`✗ ${id}: promoted pattern is not documented in the catalog`)
+    process.exit(1)
+  }
+  return {
+    name: id,
+    type: "registry:ui",
+    title: entry.name,
+    description: entry.description,
+    dependencies,
+    registryDependencies,
+    files: [{ path: stage(file), type: "registry:ui", target }],
+    docs:
+      bullets("WHEN TO USE", entry.whenToUse) +
+      bullets("WHEN NOT TO USE", entry.whenNotToUse) +
+      `  import { ${exportsNames.join(", ")} } from "@/${target.replace(/\.tsx?$/, "")}"`,
+    meta: { vocabulary: "product" },
+  }
+}
+
+items.push(
+  productItem("section-rail", {
+    file: "packages/ui/src/components/section-rail.tsx",
+    target: "components/ui/section-rail.tsx",
+    exportsNames: ["SectionRail"],
+  }),
+  productItem("view-menu", {
+    file: "packages/patterns/src/view-menu.tsx",
+    target: "components/ui/view-menu.tsx",
+    dependencies: ["framer-motion"],
+    // the motion hooks rewrite to @/components/foundation-provider, so the
+    // foundation door is not optional here
+    registryDependencies: [url("foundation"), url("icon"), "button", "tooltip"],
+    exportsNames: ["ViewMenu"],
+  }),
+  productItem("save-reminder", {
+    file: "packages/patterns/src/settings-kit.tsx",
+    target: "components/ui/settings-kit.tsx",
+    dependencies: ["framer-motion"],
+    registryDependencies: [url("foundation"), "button"],
+    exportsNames: ["SaveReminder"],
+  })
+)
 
 items.push(...perComponent)
 

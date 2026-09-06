@@ -7,20 +7,13 @@
 @import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
-/* @source resolves relative to THIS FILE. From packages/ui/src/styles that is
-   four levels to the repo root, not three — the old globs pointed at
-   packages/apps/** and packages/components/**, neither of which has ever
-   existed, so they matched nothing and the app's classes survived only on
-   Tailwind v4's automatic detection from the Vite root. That crutch
-   disappears the moment code moves into another package. */
-@source "../../../../apps/*/src/**/*.{ts,tsx}";
-@source "../../../../packages/*/src/**/*.{ts,tsx}";
-/* Next puts ROUTE files in app/, outside any src/. Components still live in
-   src/ by convention (apps/site/src), so this glob covers only the route
-   layer — but without it every class used in a page.tsx or layout.tsx is
-   dropped, and nothing reports it. scripts/check-css-surface.mjs is the
-   alarm for exactly this. */
-@source "../../../../apps/*/app/**/*.{ts,tsx}";
+/* NO @source HERE. This file is library CSS: it cannot know where the app
+   that compiles it keeps its sources, and a glob reaching out of the package
+   dangles silently the day the app lives in another repo — Tailwind scans
+   nothing and reports nothing. The APP owns its @source declarations
+   (apps/site/src/styles/theme.css), covering its own files AND the package
+   sources it compiles. scripts/check-css-surface.mjs is the alarm if a
+   package's classes stop surviving the build. */
 
 @theme inline {
     --font-heading: var(--font-sans);

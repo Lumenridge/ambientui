@@ -1,0 +1,22 @@
+/**
+ * THE SITE'S TAILWIND ENTRY — the one file that roots the Tailwind build.
+ *
+ * The library's globals.css brings `@import "tailwindcss"` and the whole
+ * token bridge, but it declares NO @source: a package cannot know where its
+ * consumer keeps sources, and a glob reaching out of the package dangles
+ * silently the day the app lives in another repo. So the APP wraps it and
+ * declares its own — @source is only honored inside the graph that imports
+ * tailwindcss, which is why these lines cannot live in theme.css (a separate
+ * CSS entry; the directives there parse as unknown at-rules and scan
+ * nothing).
+ *
+ * The globs resolve relative to THIS FILE (apps/site/src/styles). Next puts
+ * ROUTE files in app/, outside src/, so both are named; the packages glob is
+ * what keeps classes used only inside @ambientui/* sources alive in the
+ * build. scripts/check-css-surface.mjs is the alarm for a miss.
+ */
+@import "@ambientui/ui/globals.css";
+
+@source "../**/*.{ts,tsx}";
+@source "../../app/**/*.{ts,tsx}";
+@source "../../../../packages/*/src/**/*.{ts,tsx}";

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ambientui/foundation": "*",
+    "@ambientui/patterns": "*",
     "@ambientui/ui": "*",
     "ambientui": "*",
     "next": "^16.3.3",

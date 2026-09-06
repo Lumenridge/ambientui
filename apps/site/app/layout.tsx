@@ -7,7 +7,7 @@
  * above any component import, is the whole mitigation — split them across
  * components and the cascade becomes build-order dependent.
  */
-import "@ambientui/ui/globals.css"
+import "@/styles/tailwind.css"
 import "ambientui/styles/ambient.css"
 import "@/styles/theme.css"
 import "@/styles/viz.css"
