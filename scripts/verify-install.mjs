@@ -66,6 +66,9 @@ const DOORS = [
   { name: "section-rail", compile: true },
   { name: "view-menu", compile: true },
   { name: "save-reminder", compile: true },
+  // the governance files: the CLI resolves their ~/ targets to the project
+  // root, so this proves the fetch and the landing, not their content
+  { name: "governance", compile: false },
 ]
 
 const log = (s) => console.log(s)
