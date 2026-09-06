@@ -10,6 +10,16 @@ lets it build inside your rules.**
 Built on [shadcn/ui](https://ui.shadcn.com) and [Tailwind CSS](https://tailwindcss.com).
 Installs as source you own and can edit.
 
+Starting a product from scratch? Paste one line into your coding agent and
+it runs the whole journey, from install to asking you for an inspiration
+screenshot to the moment it tells you to press Cmd-K:
+
+```
+Read https://ambientui.ai/start.md and set this project up by following it.
+```
+
+Or take the layer on its own:
+
 ```bash
 npx shadcn add https://registry.ambientui.ai/r/ambient-layer.json
 ```
