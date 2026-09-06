@@ -11,11 +11,13 @@ log that explains why things are the way they are.
 ```bash
 npm install
 git config core.hooksPath .githooks
-npm run dev
+npm run build
 ```
 
-The app runs at `localhost:5173`. The pre-commit hook runs the same gate
-as CI, so a failing gate blocks the commit. That is intentional.
+This repo is the library; the website lives in
+[ambientui-site](https://github.com/Lumenridge/ambientui-site) and consumes
+these packages from npm. The pre-commit hook runs the same gate as CI, so a
+failing gate blocks the commit. That is intentional.
 
 ## The gate
 
@@ -23,11 +25,13 @@ as CI, so a failing gate blocks the commit. That is intentional.
 npm run gate
 ```
 
-Typecheck, lint, and build across every package, plus three drift checks:
+Typecheck, lint, and build across every package, plus the drift checks:
 the committed `registry.json` still matches what the sources generate, the
-vendored shadcn stylesheet still matches upstream, and every path a
-governing document cites still exists. If you change anything under
-`packages/`, run `npm run registry:build` and commit the result.
+vendored shadcn stylesheet still matches upstream, every path a governing
+document cites still exists, `tokens/tokens.json` still agrees with the
+code, and the packages' classes still survive a Tailwind scan. If you
+change anything under `packages/`, run `npm run registry:build` and commit
+the result.
 
 ## The rules that will actually affect your patch
 
@@ -40,14 +44,15 @@ governing document cites still exists. If you change anything under
 3. Motion rides the four roles (`micro`, `control`, `surface`, `page`).
    No raw durations, no new keyframes in component files, no animation
    libraries beyond framer-motion.
-4. The ambient layer is a package. It may import `@ambientui/ui` and npm,
+4. The ambient layer is a package. It may import `@ambient-ui/ui` and npm,
    never app code. Every global it touches (window size, document ids,
    focus scroll) is a way to escape an embedding frame; the decision log
    records the family of bugs this caused.
 5. Every vocabulary component is documented in
-   `apps/site/src/lib/catalog.ts` (the prose) and demonstrated in
-   `apps/site/src/components/ds/stories.tsx`. Undocumented components do
-   not exist, and documented ones without a demo fail the gate.
+   `packages/docs/src/catalog.ts` (the prose) and demonstrated in the site
+   repo's stories. Undocumented components do not exist, and a documented
+   one without a demo fails the site repo's gate when it takes the next
+   docs release.
 
 ## Proposing a change to the system itself
 

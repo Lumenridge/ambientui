@@ -125,7 +125,10 @@ export function SettingsRow({
 }) {
   return (
     <div className={cn("px-5 py-4", className)}>
-      <div className="flex items-center justify-between gap-6">
+      {/* flex-wrap: a wide control beside a shrink-0 box crushed the
+          description to a word a line on phone widths — wrapping drops
+          the control onto its own row instead, and costs desktop nothing */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           <div className="text-sm font-medium">{title}</div>
           {description && (

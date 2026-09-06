@@ -17,7 +17,10 @@ advisory unless you prefer otherwise.
 ## Scope
 
 - Code in `packages/` (the published surface) is in scope.
-- The site under `apps/site` is in scope where a flaw would carry into
-  a consumer through the registry.
+- The registry build (`scripts/build-registry.mjs` and what it publishes
+  to registry.ambientui.ai) is in scope: it is how code reaches a
+  consumer's repo. The website lives in its own repo,
+  Lumenridge/ambientui-site, and reports about it are welcome through the
+  same channel.
 - Vulnerabilities in upstream dependencies belong upstream, but we will
   bump pinned versions promptly when a fix exists.

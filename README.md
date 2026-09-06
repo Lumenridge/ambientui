@@ -14,7 +14,7 @@ Installs as source you own and can edit.
 npx shadcn add https://registry.ambientui.ai/r/ambient-layer.json
 ```
 
-[See it running](https://lumenridge.github.io/ambientui/)
+[See it running](https://ambientui.ai)
 
 ---
 
@@ -70,7 +70,7 @@ system doing its job: an AI working here cannot invent a colour, because there
 is nowhere to put one. That is the whole argument, and the reason the
 assistant can be trusted to build.
 
-The long version is the [architecture page](https://lumenridge.github.io/ambientui/architecture).
+The long version is the [architecture page](https://ambientui.ai/architecture).
 The rules it produced are [DESIGN.md](DESIGN.md).
 
 ## What you can take
@@ -148,27 +148,24 @@ terminal.
 
 ## Running it
 
+This repo is the library. The website that shows it all running lives at
+[ambientui.ai](https://ambientui.ai), from its own repo,
+[ambientui-site](https://github.com/Lumenridge/ambientui-site).
+
 ```bash
 npm install
-npm run dev          # the site at :5174
-```
-
-- `/` the overview, built from the real running components
-- `/architecture` the argument, with the components it argues about running inline
-- `/ds` 50 documented components, the Foundation, and the governing docs
-- `/demo/devtool` the layer inside a simulated real workspace
-
-```bash
-npm run gate             # typecheck, lint, build, and eleven drift checks
+npm run build            # every package
+npm run gate             # typecheck, lint, build, and the drift checks
 npm run verify:install   # every install command, run against a scratch project
+npm run registry:build   # the deployable registry (registry-dist/)
 ```
 
 The gate proves this repo is internally consistent, and a pre-commit hook runs
 it, so a failing gate blocks the commit. `verify:install` proves something the
 gate cannot: that a door still works in a project that is not this one. It is
-minutes rather than seconds, so it runs on demand, in CI, nightly, and before
-a deploy publishes a page full of commands. If hooks aren't firing:
-`git config core.hooksPath .githooks`.
+minutes rather than seconds, so it runs on demand, in CI on registry changes,
+and nightly, because shadcn, Tailwind and Radix move underneath us. If hooks
+aren't firing: `git config core.hooksPath .githooks`.
 
 ## Contributing
 

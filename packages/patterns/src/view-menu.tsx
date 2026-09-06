@@ -207,7 +207,13 @@ export function ViewMenu({
           </Button>
         )
         // only the collapsed segments need a tooltip — the expanded one
-        // is wearing its name
+        // is wearing its name. The Tooltip WRAPS EVERY SEGMENT, active or
+        // not, and only the content is conditional: branching the wrapper
+        // re-parented the Button the moment it became active, and a
+        // re-parented element is a REMOUNTED one — AnimatePresence never
+        // saw the label enter or leave, so the grow/shrink morph this
+        // component is built around never played. Same tree shape in both
+        // states, and a content-less tooltip has nothing to show.
         return (
           <React.Fragment key={item.id}>
             {newGroup && <Rule desktopOnly={groupHidden} />}
@@ -216,14 +222,10 @@ export function ViewMenu({
               transition={spring}
               className={cn(item.desktopOnly && "hidden sm:block")}
             >
-              {active ? (
-                segment
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>{segment}</TooltipTrigger>
-                  <TooltipContent>{item.label}</TooltipContent>
-                </Tooltip>
-              )}
+              <Tooltip open={active ? false : undefined}>
+                <TooltipTrigger asChild>{segment}</TooltipTrigger>
+                {!active && <TooltipContent>{item.label}</TooltipContent>}
+              </Tooltip>
             </motion.div>
           </React.Fragment>
         )
