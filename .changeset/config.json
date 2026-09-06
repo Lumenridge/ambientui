@@ -6,10 +6,10 @@
   "linked": [
     [
       "ambientui",
-      "@ambientui/ui",
-      "@ambientui/foundation",
-      "@ambientui/patterns",
-      "@ambientui/docs"
+      "@ambient-ui/ui",
+      "@ambient-ui/foundation",
+      "@ambient-ui/patterns",
+      "@ambient-ui/docs"
     ]
   ],
   "access": "public",

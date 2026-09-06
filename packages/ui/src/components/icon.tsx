@@ -5,7 +5,7 @@ import * as React from "react"
 import {
   IconLibraryContext,
   type IconName,
-} from "@ambientui/ui/lib/icon-library"
+} from "@ambient-ui/ui/lib/icon-library"
 
 import {
   ArrowDown01Icon,

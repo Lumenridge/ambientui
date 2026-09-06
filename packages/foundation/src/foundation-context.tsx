@@ -6,7 +6,7 @@
 
 import * as React from "react"
 
-import { IconLibraryProvider } from "@ambientui/ui/components/icon"
+import { IconLibraryProvider } from "@ambient-ui/ui/components/icon"
 
 import {
   FONTS,

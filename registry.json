@@ -501,11 +501,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -598,11 +594,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -695,11 +687,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -792,8 +780,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "https://registry.ambientui.ai/r/icon.json"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -841,8 +828,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "https://registry.ambientui.ai/r/icon.json"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -890,11 +876,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -972,11 +954,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1052,8 +1030,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "https://registry.ambientui.ai/r/icon.json"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1101,11 +1078,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1183,11 +1156,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1265,11 +1234,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1347,11 +1312,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1429,11 +1390,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1511,11 +1468,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1593,11 +1546,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1675,11 +1624,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1757,11 +1702,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1839,11 +1780,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -1921,11 +1858,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -2008,11 +1941,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -2095,11 +2024,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -2182,11 +2107,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -2269,11 +2190,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -2356,11 +2273,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -2443,11 +2356,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -2530,11 +2439,7 @@
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/ambient-assets.json",
-        "button",
-        "https://registry.ambientui.ai/r/icon.json",
-        "input",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-assets.json"
       ],
       "files": [
         {
@@ -2613,9 +2518,7 @@
         "framer-motion"
       ],
       "registryDependencies": [
-        "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/icon.json",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-styles.json"
       ],
       "files": [
         {
@@ -2669,9 +2572,7 @@
         "framer-motion"
       ],
       "registryDependencies": [
-        "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/icon.json",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-styles.json"
       ],
       "files": [
         {
@@ -2725,9 +2626,7 @@
         "framer-motion"
       ],
       "registryDependencies": [
-        "https://registry.ambientui.ai/r/ambient-styles.json",
-        "https://registry.ambientui.ai/r/icon.json",
-        "skeleton"
+        "https://registry.ambientui.ai/r/ambient-styles.json"
       ],
       "files": [
         {

@@ -4,13 +4,13 @@ import * as React from "react"
 
 import { AnimatePresence, motion } from "framer-motion"
 
-import { Button } from "@ambientui/ui/components/button"
-import { cn } from "@ambientui/ui/lib/utils"
+import { Button } from "@ambient-ui/ui/components/button"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
 import {
   useMotionSpring,
   useMotionTransition,
-} from "@ambientui/foundation"
+} from "@ambient-ui/foundation"
 
 /**
  * The settings-page pattern (promoted through governance, DESIGN.md §12):

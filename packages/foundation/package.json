@@ -1,5 +1,5 @@
 {
-  "name": "@ambientui/foundation",
+  "name": "@ambient-ui/foundation",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -59,13 +59,13 @@
     "react": "^19",
     "react-dom": "^19",
     "ambientui": "^0.1.0",
-    "@ambientui/ui": "^0.1.0"
+    "@ambient-ui/ui": "^0.1.0"
   },
   "peerDependenciesMeta": {
     "ambientui": {
       "optional": true
     },
-    "@ambientui/ui": {
+    "@ambient-ui/ui": {
       "optional": true
     }
   },

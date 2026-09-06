@@ -2,8 +2,8 @@
 
 Version and release the three published packages.
 
-**They are `linked`, and that is deliberate.** `ambientui`, `@ambientui/ui` and
-`@ambientui/foundation` are three halves of one contract: the layer states what
+**They are `linked`, and that is deliberate.** `ambientui`, `@ambient-ui/ui` and
+`@ambient-ui/foundation` are three halves of one contract: the layer states what
 it needs from a design system, the Foundation implements that interface, and
 both compose the primitives. A version number that could drift between them
 would tell a user nothing about whether the three they installed fit together.

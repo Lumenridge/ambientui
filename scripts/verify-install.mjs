@@ -142,7 +142,7 @@ function checkDoor(door, app, registry) {
   for (const p of walk(join(app, "src"))) {
     if (!/\.(ts|tsx|css)$/.test(p)) continue
     const text = readFileSync(p, "utf8")
-    const leak = text.match(/from\s+"(@ambientui\/[^"]+|ambientui\/[^"]+)"/)
+    const leak = text.match(/from\s+"(@ambient-?ui\/[^"]+|ambientui\/[^"]+)"/)
     if (leak) problems.push(`${door.name}: ${p.slice(app.length + 1)} imports ${leak[1]}`)
     if (text.includes(".registry/"))
       problems.push(`${door.name}: ${p.slice(app.length + 1)} references the staging dir`)

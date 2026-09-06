@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Tooltip as TooltipPrimitive } from "radix-ui"
 
-import { cn } from "@ambientui/ui/lib/utils"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
 function TooltipProvider({
   delayDuration = 0,

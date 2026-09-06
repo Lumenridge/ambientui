@@ -2,10 +2,10 @@
 
 import * as React from "react"
 
-import { cn } from "@ambientui/ui/lib/utils"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
-import { Button } from "@ambientui/ui/components/button"
-import { Icon } from "@ambientui/ui/components/icon"
+import { Button } from "@ambient-ui/ui/components/button"
+import { Icon } from "@ambient-ui/ui/components/icon"
 
 import {
   AssistantMark,

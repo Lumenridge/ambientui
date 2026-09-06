@@ -15,7 +15,7 @@
         "content/**"
       ]
     },
-    "@ambientui/docs#build": {
+    "@ambient-ui/docs#build": {
       "dependsOn": [
         "^build"
       ],

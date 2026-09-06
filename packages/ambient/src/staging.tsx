@@ -4,8 +4,8 @@ import * as React from "react"
 
 import { motion } from "framer-motion"
 
-import { Skeleton } from "@ambientui/ui/components/skeleton"
-import { cn } from "@ambientui/ui/lib/utils"
+import { Skeleton } from "@ambient-ui/ui/components/skeleton"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
 import { useMotionTransition } from "./ambient-runtime"
 

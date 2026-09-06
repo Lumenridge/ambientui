@@ -25,7 +25,7 @@
     "bare": "vite --config dev/vite.config.ts"
   },
   "dependencies": {
-    "@ambientui/ui": "^0.1.0",
+    "@ambient-ui/ui": "^0.1.0",
     "@hugeicons/core-free-icons": "^4.2.3",
     "@hugeicons/react": "^1.1.9"
   },
