@@ -111,12 +111,11 @@ The layer runs with **no providers at all**. It falls back to sane defaults and
 binds to a full design system when you give it one.
 `packages/ambient/dev/index.html` is the proof, and it is a test we keep.
 
-Prefer a versioned dependency to owned source? The packages are built to
-publish as `ambientui`, `@ambient-ui/ui` and `@ambient-ui/foundation`, but the
-first release has not shipped yet — today the registry is the way in. The
-docs say plainly which to choose once both exist: the registry if you will
-restyle it (most people, given the whole argument), npm if you want upgrades
-and will not touch it.
+Prefer a versioned dependency to owned source? `npm i ambientui`, and
+`@ambient-ui/foundation` for the configuration engine on its own. The docs
+say plainly which to choose: the registry if you will restyle it (most
+people, given the whole argument), npm if you want upgrades and will not
+touch it.
 
 ## What's in here
 

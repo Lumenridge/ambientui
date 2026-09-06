@@ -232,6 +232,34 @@ try {
       }
     }
   }
+
+  /**
+   * THE npm DOOR RUNS TOO. The site prints `npm i ambientui` beside the
+   * registry commands, and the same rule applies: a command is not printed
+   * until something has run it. This one needs the real npm registry, so it
+   * rides the full run (with the vite build), not --quick — the nightly
+   * exercises it against whatever npm is serving.
+   */
+  if (!has("quick") && !failed.length) {
+    log("· npm i ambientui — the versioned door")
+    try {
+      run("npm", ["install", "ambientui@^0.1.0", "--no-audit", "--no-fund"], app)
+      // resolve through the exports map, the way a consumer's import would —
+      // ESM resolution deliberately: the package exports import-only, and a
+      // CJS require.resolve is the wrong question to ask of it
+      run(
+        "node",
+        [
+          "--input-type=module",
+          "-e",
+          "import.meta.resolve('ambientui'); import.meta.resolve('ambientui/styles/ambient.css')",
+        ],
+        app
+      )
+    } catch (e) {
+      failed.push(`npm i ambientui failed:\n${String(e.stdout ?? e).slice(0, 1200)}`)
+    }
+  }
 } finally {
   server.kill()
   // put the registry back on its published host, or the next commit ships

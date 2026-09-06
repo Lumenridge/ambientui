@@ -534,7 +534,7 @@ const items = [
       type: fileType(f),
       target: `components/ambient/${f}`,
     })),
-    docs: 'Import the material once: `@import "./styles/ambient.css";` in your globals.css. Then mount the layer at the root of your app:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nIt needs no other providers — it falls back to DEFAULT_AMBIENT_RUNTIME. Supply your own design system by wrapping it in AmbientRuntimeProvider. This copies ~8,300 lines you will own and can edit — owning the source is the point; a versioned `ambientui` npm package is planned for those who want an upgrade path instead.',
+    docs: 'Import the material once: `@import "./styles/ambient.css";` in your globals.css. Then mount the layer at the root of your app:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nIt needs no other providers — it falls back to DEFAULT_AMBIENT_RUNTIME. Supply your own design system by wrapping it in AmbientRuntimeProvider. This copies ~8,300 lines you will own and can edit — owning the source is the point; prefer `npm i ambientui` if you want an upgrade path instead.',
   },
   {
     name: "icon",

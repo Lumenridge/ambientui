@@ -15,10 +15,6 @@ edits. Nothing upgrades them, and nothing needs to.
 gives you a versioned dependency that you import and configure through props.
 You get fixes by bumping a number. You cannot change the inside.
 
-> The npm route is described here so the choice is understood, but the first
-> release has not been published yet. Until it ships, the registry is the only
-> door that opens.
-
 ## Why the registry is the default here
 
 The layer's whole claim is that an assistant should be built from your design
@@ -58,7 +54,7 @@ Then take a door:
 npx shadcn add @ambientui/ambient-layer
 ```
 
-Or the npm route (once the first release is published):
+Or the npm route:
 
 ```bash
 npm i ambientui
