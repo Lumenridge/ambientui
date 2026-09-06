@@ -69,6 +69,7 @@ const DOORS = [
   // the governance files: the CLI resolves their ~/ targets to the project
   // root, so this proves the fetch and the landing, not their content
   { name: "governance", compile: false },
+  { name: "start", compile: false },
 ]
 
 const log = (s) => console.log(s)

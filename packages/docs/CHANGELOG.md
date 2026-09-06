@@ -1,5 +1,12 @@
 # @ambient-ui/docs
 
+## 0.1.4
+
+### Patch Changes
+
+- The content set gains start.md: the guided setup written for the AI agent
+  doing the work, from install to the Cmd-K reveal.
+
 ## 0.1.3
 
 ### Patch Changes
