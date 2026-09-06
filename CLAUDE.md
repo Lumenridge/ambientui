@@ -8,15 +8,20 @@ product's thesis applied to its own construction.
 
 ## Commands
 
-- `npm run dev` — the site at :5174 (Turborepo; the app is `apps/site`).
-  Routes: `/` overview, `/architecture` the argument, `/ds` design system
-  (Foundation + component vocabulary), `/demo/devtool` and `/demo/canvas`
-  (noindex).
+- This repo is the LIBRARY — the packages, the tokens, DESIGN.md, and the
+  shadcn registry. The website (`/` overview, `/architecture`, `/ds`, the
+  demos) lives in its own repo, `Lumenridge/ambientui-site`, and consumes
+  these packages as versioned dependencies.
 - `npm run typecheck` / `npm run build` / `npm run lint`
 - `npm run gate` — all three plus the drift checks (registry, vendored CSS,
-  governing-doc path claims). A `.githooks/pre-commit` runs it, so a
-  failing gate blocks the commit (`--no-verify` to bypass deliberately). If
-  hooks are not firing, run `git config core.hooksPath .githooks`.
+  governing-doc path claims, the library's own CSS surface). A
+  `.githooks/pre-commit` runs it, so a failing gate blocks the commit
+  (`--no-verify` to bypass deliberately). If hooks are not firing, run
+  `git config core.hooksPath .githooks`.
+- `npm run verify:install` — every registry door installed for real into a
+  scratch project; `npm run registry:build` — the deployable registry
+  (`registry-dist/`, published by the `ambientui-registry` Cloudflare Pages
+  project; see `docs/registry-hosting.md`).
 
 ## Hard rules (non-negotiable)
 
@@ -92,10 +97,11 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    away edits works for playground props too.
 10. **Every vocabulary component is documented** in
    `packages/docs/src/catalog.ts` (summary, behavior, when to use,
-   when not to) with its stories and playground in
-   `apps/site/src/components/ds/stories.tsx`, keyed by the same id. Undocumented
-   components don't exist as far as the AI vocabulary is concerned, and a
-   documented one with no stories fails `npm run catalog:check`.
+   when not to) with its stories and playground in the site repo
+   (`site:src/components/ds/stories.tsx`), keyed by the same id. Undocumented
+   components don't exist as far as the AI vocabulary is concerned, and the
+   site repo's `catalog:check` fails on a documented component with no
+   stories the next time it takes a docs release.
 
 ## Pattern watchlist protocol (always on)
 
@@ -127,8 +133,10 @@ skill before any `use_figma` write.
 
 ## Architecture notes
 
-- Monorepo: `apps/site` (Next.js App Router, static export) + `packages/ui`
-  (the shadcn radix-nova preset; global tokens in `src/styles/globals.css`).
+- Package workspace: `packages/ui` (the shadcn radix-nova preset; global
+  tokens in `src/styles/globals.css`), `packages/ambient`,
+  `packages/foundation`, `packages/patterns`, `packages/docs`. The website
+  is a separate repo (`Lumenridge/ambientui-site`) consuming all five.
 - Foundation engine: `packages/foundation/src/foundation-context.tsx` — accents
   (with paired foregrounds), gray tints, radius set, scaling→base-px presets;
   compiled to `#ambientui-foundation` style tag; persisted on Save under
@@ -137,8 +145,8 @@ skill before any `use_figma` write.
   orb-character — the animated identity with states still/listening/thinking/
   answer, driven via `orbState` in the context). **It is a package, not app
   code: it may import `@ambientui/ui` and npm, never `@/`.** Its material is
-  `packages/ambient/src/styles/ambient.css`; the app's own shell tokens are
-  `apps/site/src/styles/theme.css`, `viz.css`.
+  `packages/ambient/src/styles/ambient.css`; the site's own shell tokens are
+  its `site:src/styles/theme.css`, `viz.css`.
 - What the layer needs from a design system is stated in
   `packages/ambient/src/ambient-runtime.tsx` — seven values and two motion
   hooks, with real defaults, so it renders with no providers at all
@@ -149,6 +157,6 @@ skill before any `use_figma` write.
   the layer never imports the app's route table.
 - Component registry: prose in `packages/docs/src/catalog.ts`
   (serializable, React-free — the registry build and any static page read it),
-  demos in `apps/site/src/components/ds/stories.tsx`, joined by
-  `apps/site/src/components/ds/entries.ts`; the `/ds` page renders the join and
+  demos in the site repo (`site:src/components/ds/stories.tsx`, joined by
+  `site:src/components/ds/entries.ts`); the `/ds` page renders the join and
   portals playground controls into the Inspect rail.

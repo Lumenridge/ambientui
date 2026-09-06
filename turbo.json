@@ -6,19 +6,12 @@
       "dependsOn": [
         "^build"
       ],
-      "env": [
-        "AMBIENTUI_BASE_PATH",
-        "NEXT_PUBLIC_SITE_URL"
-      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env*"
       ],
       "outputs": [
         "dist/**",
-        "out/**",
-        ".next/**",
-        "!.next/cache/**",
         "content/**"
       ]
     },
@@ -55,13 +48,6 @@
       "dependsOn": [
         "^build"
       ]
-    },
-    "dev": {
-      "dependsOn": [
-        "^build"
-      ],
-      "cache": false,
-      "persistent": true
     }
   }
 }

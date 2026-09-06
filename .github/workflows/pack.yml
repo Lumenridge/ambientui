@@ -1,0 +1,38 @@
+name: Pack release tarballs
+
+# The interim distribution channel while the packages are unpublished: npm
+# pack each workspace and attach the tarballs to a pre-release. The site
+# repo vendors them. When 0.1.0 ships to npm this workflow becomes history.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0-pre.2)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx turbo build --filter='./packages/*'
+      - run: |
+          mkdir -p /tmp/pack
+          for w in packages/ambient packages/ui packages/foundation packages/patterns packages/docs; do
+            npm pack --pack-destination /tmp/pack -w ./$w
+          done
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ inputs.tag }}" /tmp/pack/*.tgz \
+            --prerelease \
+            --title "${{ inputs.tag }} — package tarballs" \
+            --notes "npm-pack tarballs of the five workspace packages, for the site repo to vendor until the first npm publish."
