@@ -1,6 +1,6 @@
 {
   "name": "@ambient-ui/docs",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "type": "module",
   "description": "The system's account of itself — the component catalog, the governing documents, and the built registry index, shipped as a versioned package so the site (or any consumer) renders the release it depends on.",
