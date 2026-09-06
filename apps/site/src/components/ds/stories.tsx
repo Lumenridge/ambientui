@@ -14,7 +14,7 @@ import { SectionRail } from "@ambientui/ui/components/section-rail"
 
 import { toast } from "sonner"
 
-import { SaveReminder } from "@/components/ds/settings-kit"
+import { SaveReminder } from "@ambientui/patterns/settings-kit"
 import { SeekBar } from "@/components/seek-bar"
 
 import { Badge } from "@ambientui/ui/components/badge"
@@ -102,7 +102,7 @@ import {
   type ReasoningEffortLevel,
   ReviewComment,
 } from "ambientui/message-kit"
-import { ViewMenu } from "@/components/view-menu"
+import { ViewMenu } from "@ambientui/patterns/view-menu"
 import {
   CodeDiff,
   CodeRunner,

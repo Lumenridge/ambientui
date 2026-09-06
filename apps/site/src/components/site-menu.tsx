@@ -1,10 +1,21 @@
 "use client"
 
+import * as React from "react"
+
 import { usePathname, useRouter } from "next/navigation"
 
 import { type IconName } from "@ambientui/ui/components/icon"
+import { ViewMenu } from "@ambientui/patterns/view-menu"
 
-import { ViewMenu } from "@/components/view-menu"
+import { useTheme } from "@/components/theme-provider"
+import { THEME_TOGGLE_KEY } from "@/lib/theme-constants"
+
+const SCHEME_QUERY = "(prefers-color-scheme: dark)"
+function subscribeToScheme(onChange: () => void) {
+  const mql = window.matchMedia(SCHEME_QUERY)
+  mql.addEventListener("change", onChange)
+  return () => mql.removeEventListener("change", onChange)
+}
 
 /**
  * SITE MENU — the one switcher, everywhere.
@@ -58,6 +69,19 @@ function activeId(pathname: string) {
 export function SiteMenu() {
   const pathname = usePathname()
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
+  // "system" is a real setting, so the app has to resolve what is actually
+  // on screen before it can hand ViewMenu the opposite of it. The colour
+  // scheme is an EXTERNAL STORE, read as one — mirroring it into state
+  // costs a cascading render, and matchMedia does not exist during a
+  // prerender at all. The server snapshot is `false`, which is both the
+  // safer assumption and the markup that ships in static HTML.
+  const systemDark = React.useSyncExternalStore(
+    subscribeToScheme,
+    () => window.matchMedia(SCHEME_QUERY).matches,
+    () => false
+  )
+  const isDark = theme === "dark" || (theme === "system" && systemDark)
   return (
     <ViewMenu
       items={DESTINATIONS}
@@ -65,6 +89,13 @@ export function SiteMenu() {
       onSelect={(id) => {
         const dest = DESTINATIONS.find((d) => d.id === id)
         if (dest) router.push(dest.href)
+      }}
+      appearance={{
+        isDark,
+        onToggle: () => setTheme(isDark ? "light" : "dark"),
+        // the same constant the keydown handler binds, so the tooltip
+        // cannot promise a shortcut that no longer exists
+        shortcutKey: THEME_TOGGLE_KEY,
       }}
     />
   )

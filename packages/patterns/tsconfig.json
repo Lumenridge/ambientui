@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "paths": {
+      "@ambientui/ui/*": ["../ui/src/*"],
+      "@ambientui/foundation": ["../foundation/src/index.ts"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist", "tsup.config.ts"]
+}

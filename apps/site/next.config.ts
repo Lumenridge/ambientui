@@ -31,7 +31,12 @@ const nextConfig: NextConfig = {
   basePath,
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
   images: { unoptimized: true },
-  transpilePackages: ["@ambientui/ui", "ambientui", "@ambientui/foundation"],
+  transpilePackages: [
+    "@ambientui/ui",
+    "ambientui",
+    "@ambientui/foundation",
+    "@ambientui/patterns",
+  ],
 }
 
 export default nextConfig

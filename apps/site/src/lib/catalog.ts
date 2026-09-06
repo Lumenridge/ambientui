@@ -194,7 +194,7 @@ export const SHADCN_DEFAULT_COMPONENTS: ComponentDoc[] = [
       "It carries no character mark. The assistant's identity belongs to the assistant; a navigation control wearing it says the wrong thing about what it does.",
       "It is the pointer twin of the spotlight's \"Jump to\" — same destinations, reached by hand rather than ⌘K. They read the same list, so they cannot disagree.",
       "The pill wears the popover ground, not the ambient glass: it is product chrome, and only the assistant's surfaces wear the ambient material (DESIGN.md §8).",
-      "APPEARANCE RIDES AT THE TRAILING EDGE in the same circle treatment, naming the step it takes. It is the one control here that is not a destination — always one press away, never expanded, so it cannot be mistaken for somewhere to be.",
+      "APPEARANCE RIDES AT THE TRAILING EDGE in the same circle treatment, naming the step it takes. It is the one control here that is not a destination — always one press away, never expanded, so it cannot be mistaken for somewhere to be. The app supplies it (`appearance={{ isDark, onToggle, shortcutKey }}`) — resolving a \"system\" theme setting is the app's job, not the pill's; omit the prop and the pill is destinations only.",
     ],
     whenToUse: [
       "Switching between a small set of top-level views on a surface where permanent chrome would compete with the content.",

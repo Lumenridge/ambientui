@@ -3,7 +3,9 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [["ambientui", "@ambientui/ui", "@ambientui/foundation"]],
+  "linked": [
+    ["ambientui", "@ambientui/ui", "@ambientui/foundation", "@ambientui/patterns"]
+  ],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

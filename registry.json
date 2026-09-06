@@ -286,7 +286,7 @@
           "target": "components/ambient/use-staged-reveal.ts"
         }
       ],
-      "docs": "Import the material once: `@import \"./styles/ambient.css\";` in your globals.css. Then mount the layer at the root of your app:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nIt needs no other providers — it falls back to DEFAULT_AMBIENT_RUNTIME. Supply your own design system by wrapping it in AmbientRuntimeProvider. This copies ~8,300 lines you will own and can edit; prefer `npm i ambientui` if you want an upgrade path instead."
+      "docs": "Import the material once: `@import \"./styles/ambient.css\";` in your globals.css. Then mount the layer at the root of your app:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nIt needs no other providers — it falls back to DEFAULT_AMBIENT_RUNTIME. Supply your own design system by wrapping it in AmbientRuntimeProvider. This copies ~8,300 lines you will own and can edit — owning the source is the point; a versioned `ambientui` npm package is planned for those who want an upgrade path instead."
     },
     {
       "name": "icon",
@@ -348,6 +348,75 @@
         }
       ],
       "docs": "These files are written for THIS repo and reference its paths. Read them and adapt the paths to your own before relying on them — an unedited copy will point an agent at directories you do not have."
+    },
+    {
+      "name": "section-rail",
+      "type": "registry:ui",
+      "title": "SectionRail",
+      "description": "Right-edge dash rail for jumping between page sections — an ambientui extension to the product vocabulary (promoted via the watchlist).",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": ".registry/packages/ui/src/components/section-rail.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/section-rail.tsx"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Long single-column settings or document pages with 4+ named sections (the Foundation page).\n  • When the reader needs a sense of place plus one-click jumps without a full sidebar.\n\nWHEN NOT TO USE\n  • Pages that already have a navigation rail for their sections — one wayfinding system per page.\n  • Fewer than three sections — a rail for two items is noise.\n\n  import { SectionRail } from \"@/components/ui/section-rail\"",
+      "meta": {
+        "vocabulary": "product"
+      }
+    },
+    {
+      "name": "view-menu",
+      "type": "registry:ui",
+      "title": "ViewMenu",
+      "description": "The app's destinations as a segmented pill — every view visible as an icon, the current one expanded to wear its name (an ambientui extension to the product vocabulary).",
+      "dependencies": [
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/foundation.json",
+        "https://lumenridge.github.io/ambientui/r/icon.json",
+        "button",
+        "tooltip"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/patterns/src/view-menu.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/view-menu.tsx"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Switching between a small set of top-level views on a surface where permanent chrome would compete with the content.\n\nWHEN NOT TO USE\n  • Tabbed panes INSIDE a page — that is Tabs, and the relationship there is between siblings, not destinations.\n  • More than a handful of destinations, or anything needing search — that is the spotlight.\n  • As a home for settings. Appearance earns its place because it is reached without meaning to go anywhere; a second one would turn a row of destinations into a menu bar.\n\n  import { ViewMenu } from \"@/components/ui/view-menu\"",
+      "meta": {
+        "vocabulary": "product"
+      }
+    },
+    {
+      "name": "save-reminder",
+      "type": "registry:ui",
+      "title": "SaveReminder",
+      "description": "A save bar that rises from the bottom only while there are unsaved changes — the settings-kit's save affordance (promoted via the watchlist).",
+      "dependencies": [
+        "framer-motion"
+      ],
+      "registryDependencies": [
+        "https://lumenridge.github.io/ambientui/r/foundation.json",
+        "button"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/patterns/src/settings-kit.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/settings-kit.tsx"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • Pages with explicit save semantics where edits apply live but persist on save (the Foundation page).\n  • Any form where forgetting to save loses work on reload.\n\nWHEN NOT TO USE\n  • Autosaving surfaces — a reminder for something already saved erodes trust.\n  • Modal flows with their own confirm/cancel footer.\n\n  import { SaveReminder } from \"@/components/ui/settings-kit\"",
+      "meta": {
+        "vocabulary": "product"
+      }
     },
     {
       "name": "orb-character",

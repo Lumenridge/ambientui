@@ -95,7 +95,15 @@ eq(
 )
 
 // Every path this file claims to be implemented by must exist. The markdown
-// path checker cannot see this one — it only reads .md.
+// path checker cannot see this one — it only reads .md. `mirroredBy` is the
+// informational list — paths in OTHER repos (prefixed `site:`), recorded for
+// the reader and deliberately not checkable from here.
+for (const p of json.meta.mirroredBy ?? []) {
+  if (!/^[a-z-]+:/.test(p))
+    problems.push(
+      `meta.mirroredBy is for cross-repo paths and needs a repo prefix (e.g. site:): ${p}`
+    )
+}
 for (const p of json.meta.implementedBy ?? []) {
   try {
     readFileSync(resolve(ROOT, p))
