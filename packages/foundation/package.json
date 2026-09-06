@@ -1,6 +1,6 @@
 {
   "name": "@ambient-ui/foundation",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "private": false,
   "type": "module",
   "description": "The Foundation engine \u2014 the design system's configuration space, compiled to CSS variables at runtime.",
@@ -46,7 +46,7 @@
     "url": "git+https://github.com/Lumenridge/ambientui.git",
     "directory": "packages/foundation"
   },
-  "homepage": "https://github.com/Lumenridge/ambientui",
+  "homepage": "https://ambientui.ai",
   "bugs": "https://github.com/Lumenridge/ambientui/issues",
   "publishConfig": {
     "access": "public"
@@ -58,8 +58,8 @@
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19",
-    "ambientui": "^0.1.0",
-    "@ambient-ui/ui": "^0.1.0"
+    "ambientui": "^0.1.3",
+    "@ambient-ui/ui": "^0.1.3"
   },
   "peerDependenciesMeta": {
     "ambientui": {
@@ -69,5 +69,15 @@
       "optional": true
     }
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "keywords": [
+    "design-system",
+    "design-tokens",
+    "theme",
+    "theming",
+    "tailwindcss",
+    "shadcn",
+    "react",
+    "css-variables"
+  ]
 }

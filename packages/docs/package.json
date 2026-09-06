@@ -1,9 +1,9 @@
 {
   "name": "@ambient-ui/docs",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": false,
   "type": "module",
-  "description": "The system's account of itself — the component catalog, the governing documents, and the built registry index, shipped as a versioned package so the site (or any consumer) renders the release it depends on.",
+  "description": "The system's account of itself \u2014 the component catalog, the governing documents, and the built registry index, shipped as a versioned package so the site (or any consumer) renders the release it depends on.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -38,7 +38,7 @@
     "url": "git+https://github.com/Lumenridge/ambientui.git",
     "directory": "packages/docs"
   },
-  "homepage": "https://github.com/Lumenridge/ambientui",
+  "homepage": "https://ambientui.ai",
   "bugs": "https://github.com/Lumenridge/ambientui/issues",
   "publishConfig": {
     "access": "public"
@@ -48,5 +48,11 @@
     "content",
     "src"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "keywords": [
+    "ambientui",
+    "design-system",
+    "documentation",
+    "component-catalog"
+  ]
 }
