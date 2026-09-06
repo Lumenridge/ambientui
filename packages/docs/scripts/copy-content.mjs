@@ -29,6 +29,7 @@ const FILES = [
   "README.md",
   "CLAUDE.md",
   "docs/motion-spec.md",
+  "docs/start.md",
   "docs/ambient-shell-spec.md",
   "figma/figma-sync.md",
   "registry.json",

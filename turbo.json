@@ -25,6 +25,7 @@
         "$TURBO_ROOT$/README.md",
         "$TURBO_ROOT$/CLAUDE.md",
         "$TURBO_ROOT$/docs/motion-spec.md",
+        "$TURBO_ROOT$/docs/start.md",
         "$TURBO_ROOT$/docs/ambient-shell-spec.md",
         "$TURBO_ROOT$/figma/figma-sync.md",
         "$TURBO_ROOT$/registry.json"

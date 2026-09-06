@@ -316,6 +316,20 @@
       "docs": "Every name is mapped in all five libraries, so switching library redraws the whole product and never leaves a hole. That is why all five are dependencies: they are named ESM exports, so the bundle cost is near zero — the cost is install size. Wrap your app in IconLibraryProvider to choose one; it defaults to hugeicons."
     },
     {
+      "name": "start",
+      "type": "registry:file",
+      "title": "From nothing to Cmd-K",
+      "description": "The guided setup, written for the AI agent doing the work: install the system, ask the owner for one inspiration reference, express it as Foundation configuration, build the product, and end with the spotlight open. Installs as a skill, so the repo itself carries the guidance.",
+      "files": [
+        {
+          "path": "docs/start.md",
+          "type": "registry:file",
+          "target": "~/.claude/skills/ambientui-start/SKILL.md"
+        }
+      ],
+      "docs": "Also readable without installing anything: tell your agent to read https://ambientui.ai/start.md and set the project up. The installed copy makes the guidance part of the repo, so any future session finds it."
+    },
+    {
       "name": "governance",
       "type": "registry:file",
       "title": "The governance layer for your AI",
