@@ -12,6 +12,7 @@
     "prebuild": "node scripts/copy-orb-shapes.mjs"
   },
   "dependencies": {
+    "@ambientui/docs": "*",
     "@ambientui/foundation": "*",
     "@ambientui/patterns": "*",
     "@ambientui/ui": "*",

@@ -4,7 +4,13 @@
   "commit": false,
   "fixed": [],
   "linked": [
-    ["ambientui", "@ambientui/ui", "@ambientui/foundation", "@ambientui/patterns"]
+    [
+      "ambientui",
+      "@ambientui/ui",
+      "@ambientui/foundation",
+      "@ambientui/patterns",
+      "@ambientui/docs"
+    ]
   ],
   "access": "public",
   "baseBranch": "main",

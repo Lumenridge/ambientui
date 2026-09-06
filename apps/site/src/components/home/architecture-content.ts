@@ -262,7 +262,7 @@ export const ANATOMY: AnatomyRow[] = [
   { title: "The product vocabulary", path: "packages/ui/", job: "Buttons, inputs, sheets, tables. They consume roles and scale utilities, never values." },
   { title: "The ambient vocabulary", path: "packages/ambient/", job: "The assistant, and everything its answers are composed from." },
   { title: "The seam", path: "packages/ambient/src/ambient-runtime.tsx", job: "The complete list of what the assistant needs from a design system, with working defaults, so it renders with no providers at all. The Foundation implements it; the assistant does not know the Foundation exists." },
-  { title: "The component registry", path: "apps/site/src/lib/catalog.ts", job: "Every component with its behaviour, when to use it, and when not to. Undocumented components do not exist as far as the system is concerned." },
+  { title: "The component registry", path: "packages/docs/src/catalog.ts", job: "Every component with its behaviour, when to use it, and when not to. Undocumented components do not exist as far as the system is concerned." },
   { title: "The distribution", path: "registry.json", job: "Generated from the docs by script, never written by hand, so a component cannot be installable but undocumented." },
   { title: "The constitution", path: "DESIGN.md", job: "The rules, the contracts, the governance procedure, and a decision log recording not just what was decided but why." },
   { title: "The standing orders", path: "CLAUDE.md", job: "The hard rules an AI works under here, loaded at the start of every session." },

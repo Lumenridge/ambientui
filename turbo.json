@@ -18,7 +18,8 @@
         "dist/**",
         "out/**",
         ".next/**",
-        "!.next/cache/**"
+        "!.next/cache/**",
+        "content/**"
       ]
     },
     "lint": {
@@ -37,6 +38,9 @@
       ]
     },
     "dev": {
+      "dependsOn": [
+        "^build"
+      ],
       "cache": false,
       "persistent": true
     }

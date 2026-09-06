@@ -1,4 +1,7 @@
-import registry from "../../../../registry.json"
+// From the docs package's content snapshot, not a repo-layout path: the site
+// reads the registry index of the release it was built against, and the
+// import keeps working when the repos split.
+import registry from "@ambientui/docs/content/registry.json"
 
 /**
  * WHAT THE REGISTRY ACTUALLY SHIPS — read from the built registry, never

@@ -1,0 +1,12 @@
+/* THE LIBRARY'S OWN TAILWIND COMPILE — no app involved.
+   check-css-surface-lib.mjs compiles this with @tailwindcss/cli and asserts
+   the packages' classes survive. The imports bring the token bridge and the
+   ambient material; the @source globs are the claim under test: every
+   package source directory, named from HERE. */
+@import "../packages/ui/src/styles/globals.css";
+@import "../packages/ambient/src/styles/ambient.css";
+
+@source "../packages/ui/src/**/*.{ts,tsx}";
+@source "../packages/ambient/src/**/*.{ts,tsx}";
+@source "../packages/foundation/src/**/*.{ts,tsx}";
+@source "../packages/patterns/src/**/*.{ts,tsx}";

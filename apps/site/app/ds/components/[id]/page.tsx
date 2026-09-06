@@ -6,7 +6,7 @@ import {
   AMBIENT_COMPONENTS,
   SHADCN_DEFAULT_COMPONENTS,
   type ComponentDoc,
-} from "@/lib/catalog"
+} from "@ambientui/docs/catalog"
 import { ComponentDemos } from "@/components/ds/component-demos"
 import { BreadcrumbJsonLd } from "@/components/json-ld"
 import { installCommandFor } from "@/lib/registry-facts"

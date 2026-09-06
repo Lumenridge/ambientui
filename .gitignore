@@ -54,3 +54,4 @@ apps/site/public/orb-*.svg
 # Next writes these; this repo governs its own at the root
 apps/site/CLAUDE.md
 apps/site/AGENTS.md
+packages/docs/content/

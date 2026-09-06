@@ -36,6 +36,7 @@ const nextConfig: NextConfig = {
     "ambientui",
     "@ambientui/foundation",
     "@ambientui/patterns",
+    "@ambientui/docs",
   ],
 }
 
