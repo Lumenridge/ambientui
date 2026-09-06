@@ -106,6 +106,14 @@ Give each page a context line for the assistant while you build it: call
 person is. It is one call per page and it is what makes the assistant feel
 aware later.
 
+Also build one page the person did not ask for: a `/foundation` settings
+page, composed on the installed FoundationProvider, where every value from
+step 4 is a control — accent, gray, radius, spacing, type scaling, motion.
+This is where they will make the product theirs after you hand it over,
+and both user tests of this journey taught the same lesson: if the
+Foundation is not a page they can open, it does not exist to them. Mention
+the page when you finish.
+
 ## 6. The reveal
 
 Do not describe the ambient layer. Show it. When the build runs clean,

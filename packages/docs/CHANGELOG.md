@@ -1,5 +1,12 @@
 # @ambient-ui/docs
 
+## 0.1.5
+
+### Patch Changes
+
+- start.md now has the agent build a /foundation settings page during the
+  build step, so the owner has somewhere real to turn the dials afterward.
+
 ## 0.1.4
 
 ### Patch Changes
