@@ -4,22 +4,14 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
-    "gate": "npm run gate:lib && npm run gate:site",
- "gate:lib": "npm run catalog:lib:check && npm run prerender:check -- --scope=packages && npm run registry:check && npm run vendor:check && npm run docs:check && turbo typecheck lint build --filter=./packages/* && npm run roots:check && npm run tokens:check && npm run css:lib:check",
- "gate:site": "npm run catalog:check && npm run docs:sync:check && npm run prerender:check -- --scope=app && npm run theme:check && turbo typecheck lint build --filter=@ambientui/site && npm run css:check && npm run html:check",
+    "gate": "npm run catalog:check && npm run prerender:check && npm run registry:check && npm run vendor:check && npm run docs:check && turbo typecheck lint build && npm run roots:check && npm run tokens:check && npm run css:check",
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
     "registry:build": "node scripts/build-registry.mjs && shadcn build --output registry-dist/r && node scripts/build-registry.mjs --finalize registry-dist",
-    "catalog:check": "node scripts/check-catalog.mjs",
- "catalog:lib:check": "node scripts/extract-catalog.mjs",
- "css:lib:check": "node scripts/check-css-surface-lib.mjs",
+    "catalog:check": "node scripts/extract-catalog.mjs",
     "prerender:check": "node scripts/check-prerender.mjs",
-    "theme:check": "node scripts/check-theme-boot.mjs",
-    "docs:sync:check": "node scripts/check-system-docs.mjs",
-    "html:check": "node scripts/check-static-html.mjs",
-    "css:check": "node scripts/check-css-surface.mjs",
+    "css:check": "node scripts/check-css-surface-lib.mjs",
     "registry:check": "node scripts/build-registry.mjs --check",
     "vendor:check": "node scripts/check-vendored-css.mjs",
     "roots:check": "node scripts/check-package-roots.mjs",
@@ -42,7 +34,6 @@
     "node": ">=20"
   },
   "workspaces": [
-    "apps/*",
     "packages/*"
   ]
 }

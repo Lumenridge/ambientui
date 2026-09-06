@@ -12,7 +12,7 @@ the constitution; `tokens/tokens.json` is the value store;
 `packages/ui/src/components` (product vocabulary) and
 `packages/ambient/src` (ambient vocabulary) are the only sanctioned
 building blocks; `packages/docs/src/catalog.ts` (prose) and
-`apps/site/src/components/ds/stories.tsx` (demos) are the registry.
+`site:src/components/ds/stories.tsx` (demos, in the site repo) are the registry.
 
 Remember what this system is *for*: an AI composes UI from it. Every off-system
 value you let through becomes training data for drift.
@@ -72,7 +72,7 @@ State what a change touches before making it:
 - The gray family → every surface token (backgrounds, cards, borders,
   sidebar) in both modes; the accent hue → primary/ring/ambient accent.
 - A scaling preset's base px → all rem-based text product-wide.
-- Component prop changes → search usages across `apps/site/src` AND
+- Component prop changes → search usages across the site repo (`site:src`) AND
   `packages/*/src` (the vocabularies live in packages now) and report the
   blast radius.
 Verify visually at `/ds` in light AND dark.
