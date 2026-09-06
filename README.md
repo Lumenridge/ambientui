@@ -11,7 +11,7 @@ Built on [shadcn/ui](https://ui.shadcn.com) and [Tailwind CSS](https://tailwindc
 Installs as source you own and can edit.
 
 ```bash
-npx shadcn add https://lumenridge.github.io/ambientui/r/ambient-layer.json
+npx shadcn add https://ambientui-registry.pages.dev/r/ambient-layer.json
 ```
 
 [See it running](https://lumenridge.github.io/ambientui/)
@@ -96,7 +96,7 @@ you own.
 Register the namespace once and the commands stay short:
 
 ```bash
-npx shadcn registry add @ambientui=https://lumenridge.github.io/ambientui/r/{name}.json
+npx shadcn registry add @ambientui=https://ambientui-registry.pages.dev/r/{name}.json
 ```
 
 31 installable of 50 documented. The other 19 are shadcn's own primitives,

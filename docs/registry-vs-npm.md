@@ -49,7 +49,7 @@ a parallel styling channel, and that channel is how design systems fork.
 Register the namespace once so the names stay short:
 
 ```bash
-npx shadcn registry add @ambientui=https://lumenridge.github.io/ambientui/r/{name}.json
+npx shadcn registry add @ambientui=https://ambientui-registry.pages.dev/r/{name}.json
 ```
 
 Then take a door:

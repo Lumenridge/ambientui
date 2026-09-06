@@ -22,6 +22,25 @@
         "content/**"
       ]
     },
+    "@ambientui/docs#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/DESIGN.md",
+        "$TURBO_ROOT$/README.md",
+        "$TURBO_ROOT$/CLAUDE.md",
+        "$TURBO_ROOT$/docs/motion-spec.md",
+        "$TURBO_ROOT$/docs/ambient-shell-spec.md",
+        "$TURBO_ROOT$/figma/figma-sync.md",
+        "$TURBO_ROOT$/registry.json"
+      ],
+      "outputs": [
+        "dist/**",
+        "content/**"
+      ]
+    },
     "lint": {
       "dependsOn": [
         "^build"
