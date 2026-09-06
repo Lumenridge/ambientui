@@ -9,7 +9,7 @@ import {
 import { Heatmap } from "@paper-design/shaders-react"
 import { animate, useAnimationFrame, useMotionValue } from "framer-motion"
 
-import { cn } from "@ambientui/ui/lib/utils"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
 import { useAmbientAsset, useAmbientRuntime } from "./ambient-runtime"
 

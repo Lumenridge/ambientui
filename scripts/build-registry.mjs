@@ -103,7 +103,7 @@ an AI layer that inherits your design system. Register it once:</p>
 /**
  * THE PUBLISHED FILES SPEAK THE CONSUMER'S DIALECT.
  *
- * In this repo the layer imports `@ambientui/ui/components/button` — a real
+ * In this repo the layer imports `@ambient-ui/ui/components/button` — a real
  * package specifier, which is what makes the boundary enforceable by the
  * compiler. In someone else's project that package does not exist, and the
  * shadcn CLI only rewrites `@/`-prefixed aliases to their configured ones.
@@ -114,11 +114,11 @@ an AI layer that inherits your design system. Register it once:</p>
  * dialects — the transform is one map, applied at build.
  */
 const IMPORT_REWRITES = [
-  [/@ambientui\/ui\/components\//g, "@/components/ui/"],
-  [/@ambientui\/ui\/lib\//g, "@/lib/"],
-  [/@ambientui\/ui\/hooks\//g, "@/hooks/"],
+  [/@ambient-ui\/ui\/components\//g, "@/components/ui/"],
+  [/@ambient-ui\/ui\/lib\//g, "@/lib/"],
+  [/@ambient-ui\/ui\/hooks\//g, "@/hooks/"],
   // `ambientui/...` — the layer's own specifier. Anchored on the quote so
-  // it can never chew into the `@ambientui/` rules above, and placed after
+  // it can never chew into the `@ambient-ui/` rules above, and placed after
   // them so those match first. Without this, the Foundation's ambient
   // bridge would install carrying an import nothing can resolve.
   [/(from\s+")ambientui\/([a-z-]+)"/g, '$1@/components/ambient/$2"'],
@@ -132,7 +132,7 @@ const IMPORT_REWRITES = [
   // consumer's project those live in the installed foundation provider, so
   // any item using this rewrite must declare the `foundation` door as a
   // registry dependency.
-  [/(from\s+")@ambientui\/foundation(")/g, "$1@/components/foundation-provider$2"],
+  [/(from\s+")@ambient-ui\/foundation(")/g, "$1@/components/foundation-provider$2"],
 ]
 
 function stage(relPath) {
@@ -146,7 +146,7 @@ function stage(relPath) {
   // cannot see, because it happens in a repo that is not this one. A byte
   // scan on ~40 files makes the whole class impossible rather than fixing
   // instances of it.
-  const leaked = text.match(/from\s+"(@ambientui\/[^"]+|ambientui\/[^"]+)"/)
+  const leaked = text.match(/from\s+"(@ambient-?ui\/[^"]+|ambientui\/[^"]+)"/)
   if (leaked) {
     console.error(
       `✗ ${relPath} would publish an unresolvable import: ${leaked[1]}\n` +

@@ -4,10 +4,10 @@ import * as React from "react"
 
 import { AnimatePresence, motion } from "framer-motion"
 
-import { Button } from "@ambientui/ui/components/button"
-import { Icon, type IconName } from "@ambientui/ui/components/icon"
-import { Input } from "@ambientui/ui/components/input"
-import { cn } from "@ambientui/ui/lib/utils"
+import { Button } from "@ambient-ui/ui/components/button"
+import { Icon, type IconName } from "@ambient-ui/ui/components/icon"
+import { Input } from "@ambient-ui/ui/components/input"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
 import { useMotionTransition } from "./ambient-runtime"
 

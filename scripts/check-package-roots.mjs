@@ -31,8 +31,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
  *  nothing would otherwise pass. */
 const ROOTS = [
   { spec: "ambientui", name: "Assistant" },
-  { spec: "@ambientui/ui", name: "Button" },
-  { spec: "@ambientui/foundation", name: "FoundationProvider" },
+  { spec: "@ambient-ui/ui", name: "Button" },
+  { spec: "@ambient-ui/foundation", name: "FoundationProvider" },
 ]
 
 // The entry has to live INSIDE the repo: resolution walks up from the file,

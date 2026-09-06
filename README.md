@@ -112,7 +112,7 @@ binds to a full design system when you give it one.
 `packages/ambient/dev/index.html` is the proof, and it is a test we keep.
 
 Prefer a versioned dependency to owned source? The packages are built to
-publish as `ambientui`, `@ambientui/ui` and `@ambientui/foundation`, but the
+publish as `ambientui`, `@ambient-ui/ui` and `@ambient-ui/foundation`, but the
 first release has not shipped yet — today the registry is the way in. The
 docs say plainly which to choose once both exist: the registry if you will
 restyle it (most people, given the whole argument), npm if you want upgrades
@@ -122,10 +122,10 @@ and will not touch it.
 
 ```
 packages/ambient      the ambient layer            → npm: ambientui
-packages/foundation   the configuration engine     → @ambientui/foundation
-packages/ui           the product primitives       → @ambientui/ui
-packages/patterns     promoted product patterns    → @ambientui/patterns
-packages/docs         the catalog + governing docs → @ambientui/docs
+packages/foundation   the configuration engine     → @ambient-ui/foundation
+packages/ui           the product primitives       → @ambient-ui/ui
+packages/patterns     promoted product patterns    → @ambient-ui/patterns
+packages/docs         the catalog + governing docs → @ambient-ui/docs
 (the website lives in its own repo: github.com/Lumenridge/ambientui-site)
 docs/                 the reader-facing guides, including registry vs npm
 scripts/              the registry build and every drift check the gate runs

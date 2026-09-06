@@ -1,8 +1,8 @@
 /**
- * THE ROOT ENTRY — `import { Button } from "@ambientui/ui"`.
+ * THE ROOT ENTRY — `import { Button } from "@ambient-ui/ui"`.
  *
  * Same reasoning as the ambient package's barrel: the per-module exports
- * (`@ambientui/ui/components/button`) are the documented form and still
+ * (`@ambient-ui/ui/components/button`) are the documented form and still
  * work, but a bare import should not be a mistake someone discovers at
  * their first line.
  *

@@ -3,9 +3,9 @@
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "radix-ui"
 
-import { cn } from "@ambientui/ui/lib/utils"
-import { Button } from "@ambientui/ui/components/button"
-import { Icon } from "@ambientui/ui/components/icon"
+import { cn } from "@ambient-ui/ui/lib/utils"
+import { Button } from "@ambient-ui/ui/components/button"
+import { Icon } from "@ambient-ui/ui/components/icon"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />

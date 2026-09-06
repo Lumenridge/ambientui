@@ -3,7 +3,7 @@
 
 import * as React from "react"
 
-import type { IconName } from "@ambientui/ui/components/icon"
+import type { IconName } from "@ambient-ui/ui/components/icon"
 
 import type { OrbState } from "./orb-character"
 

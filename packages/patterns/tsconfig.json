@@ -10,8 +10,8 @@
     "strict": true,
     "noEmit": true,
     "paths": {
-      "@ambientui/ui/*": ["../ui/src/*"],
-      "@ambientui/foundation": ["../foundation/src/index.ts"]
+      "@ambient-ui/ui/*": ["../ui/src/*"],
+      "@ambient-ui/foundation": ["../foundation/src/index.ts"]
     }
   },
   "include": ["."],

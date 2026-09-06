@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-import { cn } from "@ambientui/ui/lib/utils"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
 /**
  * SectionRail — an ambientui extension to the product vocabulary: a

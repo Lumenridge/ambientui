@@ -4,7 +4,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Tabs as TabsPrimitive } from "radix-ui"
 
-import { cn } from "@ambientui/ui/lib/utils"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
 function Tabs({
   className,

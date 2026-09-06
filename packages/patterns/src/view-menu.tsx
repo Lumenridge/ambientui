@@ -4,16 +4,16 @@ import * as React from "react"
 
 import { AnimatePresence, motion } from "framer-motion"
 
-import { Button } from "@ambientui/ui/components/button"
-import { Icon, type IconName } from "@ambientui/ui/components/icon"
+import { Button } from "@ambient-ui/ui/components/button"
+import { Icon, type IconName } from "@ambient-ui/ui/components/icon"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@ambientui/ui/components/tooltip"
-import { cn } from "@ambientui/ui/lib/utils"
+} from "@ambient-ui/ui/components/tooltip"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
-import { useMotionSpring, useMotionTransition } from "@ambientui/foundation"
+import { useMotionSpring, useMotionTransition } from "@ambient-ui/foundation"
 
 /** The seam between two kinds of control in one pill. */
 function Rule({ desktopOnly = false }: { desktopOnly?: boolean }) {

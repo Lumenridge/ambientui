@@ -4,25 +4,25 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
-import { useIsMobile } from "@ambientui/ui/hooks/use-mobile"
-import { cn } from "@ambientui/ui/lib/utils"
-import { Button } from "@ambientui/ui/components/button"
-import { Input } from "@ambientui/ui/components/input"
-import { Separator } from "@ambientui/ui/components/separator"
+import { useIsMobile } from "@ambient-ui/ui/hooks/use-mobile"
+import { cn } from "@ambient-ui/ui/lib/utils"
+import { Button } from "@ambient-ui/ui/components/button"
+import { Input } from "@ambient-ui/ui/components/input"
+import { Separator } from "@ambient-ui/ui/components/separator"
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@ambientui/ui/components/sheet"
-import { Skeleton } from "@ambientui/ui/components/skeleton"
+} from "@ambient-ui/ui/components/sheet"
+import { Skeleton } from "@ambient-ui/ui/components/skeleton"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@ambientui/ui/components/tooltip"
-import { Icon } from "@ambientui/ui/components/icon"
+} from "@ambient-ui/ui/components/tooltip"
+import { Icon } from "@ambient-ui/ui/components/icon"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7

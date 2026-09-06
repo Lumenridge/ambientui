@@ -10,7 +10,7 @@
     "strict": true,
     "noEmit": true,
     "paths": {
-      "@ambientui/ui/*": ["../ui/src/*"]
+      "@ambient-ui/ui/*": ["../ui/src/*"]
     }
   },
   "include": ["."],

@@ -5,8 +5,8 @@ import * as React from "react"
 import { Cancel01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { cn } from "@ambientui/ui/lib/utils"
-import { Icon, type IconName } from "@ambientui/ui/components/icon"
+import { cn } from "@ambient-ui/ui/lib/utils"
+import { Icon, type IconName } from "@ambient-ui/ui/components/icon"
 
 import { useAmbientRuntime } from "./ambient-runtime"
 import { useAssistant, type ContextChip } from "./assistant-context"

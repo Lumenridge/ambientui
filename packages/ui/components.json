@@ -11,11 +11,11 @@
   },
   "iconLibrary": "hugeicons",
   "aliases": {
-    "components": "@ambientui/ui/components",
-    "utils": "@ambientui/ui/lib/utils",
-    "hooks": "@ambientui/ui/hooks",
-    "lib": "@ambientui/ui/lib",
-    "ui": "@ambientui/ui/components"
+    "components": "@ambient-ui/ui/components",
+    "utils": "@ambient-ui/ui/lib/utils",
+    "hooks": "@ambient-ui/ui/hooks",
+    "lib": "@ambient-ui/ui/lib",
+    "ui": "@ambient-ui/ui/components"
   },
   "rtl": true,
   "menuColor": "inverted-translucent",

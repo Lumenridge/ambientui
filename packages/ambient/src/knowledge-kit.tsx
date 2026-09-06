@@ -4,8 +4,8 @@ import * as React from "react"
 
 import { AnimatePresence, motion } from "framer-motion"
 
-import { Icon } from "@ambientui/ui/components/icon"
-import { cn } from "@ambientui/ui/lib/utils"
+import { Icon } from "@ambient-ui/ui/components/icon"
+import { cn } from "@ambient-ui/ui/lib/utils"
 
 import { useMotionTransition } from "./ambient-runtime"
 
