@@ -150,8 +150,9 @@ figma/                the code → Figma variable contract
   every design decision with its *why*.
 - [CLAUDE.md](CLAUDE.md) holds the hard rules an AI works under in this repo.
 
-The `/ds` reference links to them on GitHub rather than re-rendering them, so
-there is one copy of each and no chance of a stale mirror. The registry is
+The site renders them at ambientui.ai/docs from the released
+`@ambient-ui/docs` snapshots, so what you read is what the build ran under —
+GitHub keeps the history. The registry is
 generated from the same component docs, so a component is installable
 *because* it is documented. Install one and its when-to-use prints in your
 terminal.
