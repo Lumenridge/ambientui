@@ -27,25 +27,38 @@ import { readCatalog } from "./extract-catalog.mjs"
 import { fileURLToPath } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+// The default is the Cloudflare Pages project's own subdomain — real the
+// moment a Pages project named `ambientui-registry` exists on this repo.
+// A custom domain later is: add it in Pages, change this one line (or set
+// the env var), rebuild.
 const HOST =
-  process.env.AMBIENTUI_REGISTRY_HOST ?? "https://lumenridge.github.io/ambientui"
+  process.env.AMBIENTUI_REGISTRY_HOST ?? "https://ambientui-registry.pages.dev"
 const url = (name) => `${HOST}/r/${name}.json`
 const STAGE = ".registry"
 
 /**
- * --scrub <dir>: post-process the `shadcn build` output. The build inlines
- * each file's CONTENT but keeps its `path` verbatim — which is the staging
- * directory. `.registry/...` is this repo's internal layout, meaningless to
- * a consumer and one more thing that could be mistaken for a fetchable URL.
- * The published artifact names the real source instead.
+ * --finalize <publishDir>: post-process the `shadcn build` output into a
+ * deployable static site.
+ *
+ * Scrub first: the build inlines each file's CONTENT but keeps its `path`
+ * verbatim — which is the staging directory. `.registry/...` is this repo's
+ * internal layout, meaningless to a consumer and one more thing that could
+ * be mistaken for a fetchable URL. The published artifact names the real
+ * source instead.
+ *
+ * Then the publish dir gets its own front matter: `_headers` (Cloudflare
+ * Pages) opens CORS on /r/* — `npx shadcn add` fetches cross-origin — and a
+ * one-page index says what this host is, because a bare 404 at the root of
+ * an install URL reads as a dead service.
  */
-const scrubAt = process.argv.indexOf("--scrub")
-if (scrubAt !== -1) {
-  const dir = resolve(
+const finalizeAt = process.argv.indexOf("--finalize")
+if (finalizeAt !== -1) {
+  const publishDir = resolve(
     dirname(fileURLToPath(import.meta.url)),
     "..",
-    process.argv[scrubAt + 1] ?? ""
+    process.argv[finalizeAt + 1] ?? ""
   )
+  const dir = resolve(publishDir, "r")
   let scrubbed = 0
   for (const f of readdirSync(dir).filter((f) => f.endsWith(".json"))) {
     const p = resolve(dir, f)
@@ -61,7 +74,30 @@ if (scrubAt !== -1) {
     }
     writeFileSync(p, JSON.stringify(doc, null, 2) + "\n")
   }
-  console.log(`✔ scrubbed ${scrubbed} staging paths from ${process.argv[scrubAt + 1]}`)
+
+  writeFileSync(
+    resolve(publishDir, "_headers"),
+    "/r/*\n  Access-Control-Allow-Origin: *\n  Cache-Control: public, max-age=300\n"
+  )
+  writeFileSync(
+    resolve(publishDir, "index.html"),
+    `<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ambientui registry</title>
+<style>body{font:16px/1.6 system-ui;max-width:40rem;margin:4rem auto;padding:0 1.5rem;color:#111}code{background:#f3f3f3;padding:.1em .35em;border-radius:4px}@media(prefers-color-scheme:dark){body{background:#111;color:#eee}code{background:#222}}</style>
+<h1>ambientui registry</h1>
+<p>The shadcn registry for <a href="https://github.com/Lumenridge/ambientui">ambientui</a> —
+an AI layer that inherits your design system. Register it once:</p>
+<p><code>npx shadcn registry add @ambientui=${HOST}/r/{name}.json</code></p>
+<p>Then take a door:</p>
+<p><code>npx shadcn add @ambientui/ambient-layer</code></p>
+<p>The index of everything installable is <a href="/r/registry.json">/r/registry.json</a>.</p>
+`
+  )
+  console.log(
+    `✔ finalized ${process.argv[finalizeAt + 1]} — ${scrubbed} staging paths scrubbed, _headers + index.html written`
+  )
   process.exit(0)
 }
 

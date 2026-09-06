@@ -11,7 +11,7 @@
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
-    "registry:build": "node scripts/build-registry.mjs && shadcn build --output apps/site/public/r && node scripts/build-registry.mjs --scrub apps/site/public/r",
+    "registry:build": "node scripts/build-registry.mjs && shadcn build --output registry-dist/r && node scripts/build-registry.mjs --finalize registry-dist",
     "catalog:check": "node scripts/check-catalog.mjs",
  "catalog:lib:check": "node scripts/extract-catalog.mjs",
  "css:lib:check": "node scripts/check-css-surface-lib.mjs",

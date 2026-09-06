@@ -170,12 +170,12 @@ log("· building the registry against the local host")
 run("node", ["scripts/build-registry.mjs"], ROOT, {
   AMBIENTUI_REGISTRY_HOST: HOST,
 })
-run("npx", ["shadcn", "build", "--output", "apps/site/public/r"], ROOT, {
+run("npx", ["shadcn", "build", "--output", "registry-dist/r"], ROOT, {
   AMBIENTUI_REGISTRY_HOST: HOST,
 })
 const registry = JSON.parse(readFileSync(resolve(ROOT, "registry.json"), "utf8"))
 
-const server = serve(resolve(ROOT, "apps/site/public"))
+const server = serve(resolve(ROOT, "registry-dist"))
 waitForServer()
 const scratch = mkdtempSync(join(tmpdir(), "ambientui-verify-"))
 const app = join(scratch, "consumer")
@@ -237,7 +237,8 @@ try {
   // put the registry back on its published host, or the next commit ships
   // JSON that points at localhost
   run("node", ["scripts/build-registry.mjs"], ROOT)
-  run("npx", ["shadcn", "build", "--output", "apps/site/public/r"], ROOT)
+  run("npx", ["shadcn", "build", "--output", "registry-dist/r"], ROOT)
+  run("node", ["scripts/build-registry.mjs", "--finalize", "registry-dist"], ROOT)
   if (has("keep")) log(`· scratch kept at ${app}`)
   else rmSync(scratch, { recursive: true, force: true })
 }

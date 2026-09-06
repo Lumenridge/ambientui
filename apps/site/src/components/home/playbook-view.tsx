@@ -35,6 +35,7 @@ import {
   SECTIONS,
   type SectionSlot,
 } from "@/components/home/architecture-content"
+import { REGISTRY_HOST } from "@/lib/registry-facts"
 import { SYSTEM_DOC_META } from "@/lib/system-docs.meta"
 import { asset } from "@/lib/asset"
 import { docUrl } from "@/lib/site"
@@ -866,7 +867,7 @@ export function PlaybookView() {
             </div>
             <CommandLine
               className="mt-6"
-              command="npx shadcn add https://lumenridge.github.io/ambientui/r/ambient-layer.json"
+              command={`npx shadcn add ${REGISTRY_HOST}/r/ambient-layer.json`}
             />
           </Reveal>
         </header>
@@ -980,7 +981,7 @@ export function PlaybookView() {
               </p>
               <CommandLine
                 className="mt-4"
-                command="npx shadcn add https://lumenridge.github.io/ambientui/r/ambient-layer.json"
+                command={`npx shadcn add ${REGISTRY_HOST}/r/ambient-layer.json`}
               />
               <div className="mt-4 flex items-center gap-2">
                 <Button
