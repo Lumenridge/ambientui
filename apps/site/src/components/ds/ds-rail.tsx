@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation"
 import { Icon, type IconName } from "@ambientui/ui/components/icon"
 import { cn } from "@ambientui/ui/lib/utils"
 
-import { AMBIENT_COMPONENTS, SHADCN_DEFAULT_COMPONENTS } from "@/lib/catalog"
+import { AMBIENT_COMPONENTS, SHADCN_DEFAULT_COMPONENTS } from "@ambientui/docs/catalog"
 import { SYSTEM_DOC_META } from "@/lib/system-docs.meta"
 import { docUrl } from "@/lib/site"
 

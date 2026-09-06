@@ -32,14 +32,27 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
  * learned the hard way: `orb.tsx` read `window.innerWidth` in its render
  * body and took down the first export build of a demo route.
  */
-const ROOTS = [
+const ALL_ROOTS = [
   "apps/site/src",
   "apps/site/app",
   "packages/ambient/src",
+  "packages/docs/src",
   "packages/foundation/src",
   "packages/patterns/src",
   "packages/ui/src",
 ]
+
+// --scope packages|app narrows the walk so each half of the split gate
+// checks only the tree it owns; no flag checks everything, as before.
+const scope = process.argv
+  .find((a) => a.startsWith("--scope="))
+  ?.split("=")[1]
+const ROOTS =
+  scope === "packages"
+    ? ALL_ROOTS.filter((r) => r.startsWith("packages/"))
+    : scope === "app"
+      ? ALL_ROOTS.filter((r) => r.startsWith("apps/"))
+      : ALL_ROOTS
 
 /**
  * Files whose browser reads are deliberate and unreachable from a

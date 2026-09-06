@@ -91,7 +91,7 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    sets no value. Discard remounts rail state (`generation`), so throwing
    away edits works for playground props too.
 10. **Every vocabulary component is documented** in
-   `apps/site/src/lib/catalog.ts` (summary, behavior, when to use,
+   `packages/docs/src/catalog.ts` (summary, behavior, when to use,
    when not to) with its stories and playground in
    `apps/site/src/components/ds/stories.tsx`, keyed by the same id. Undocumented
    components don't exist as far as the AI vocabulary is concerned, and a
@@ -147,7 +147,7 @@ skill before any `use_figma` write.
 - Sections/routing: `src/nav.ts` + path mapping in `App.tsx` (`/`, `/ds`).
   The palette's Jump-to is **supplied** to `AssistantProvider` as `navItems` —
   the layer never imports the app's route table.
-- Component registry: prose in `apps/site/src/lib/catalog.ts`
+- Component registry: prose in `packages/docs/src/catalog.ts`
   (serializable, React-free — the registry build and any static page read it),
   demos in `apps/site/src/components/ds/stories.tsx`, joined by
   `apps/site/src/components/ds/entries.ts`; the `/ds` page renders the join and

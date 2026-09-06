@@ -22,7 +22,7 @@ import { resolve, dirname } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-const TARGET = resolve(ROOT, "apps/site/src/lib/catalog.ts")
+const TARGET = resolve(ROOT, "packages/docs/src/catalog.ts")
 
 const DATA_KEYS = ["id", "name", "group", "description", "behavior", "whenToUse", "whenNotToUse"]
 const ARRAY_KEYS = new Set(["behavior", "whenToUse", "whenNotToUse"])

@@ -1,0 +1,52 @@
+{
+  "name": "@ambientui/docs",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "The system's account of itself — the component catalog, the governing documents, and the built registry index, shipped as a versioned package so the site (or any consumer) renders the release it depends on.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./catalog": {
+      "types": "./dist/catalog.d.ts",
+      "import": "./dist/catalog.js"
+    },
+    "./content/*": "./content/*",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "prebuild": "node scripts/copy-content.mjs",
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit",
+    "build": "tsup"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10",
+    "@types/node": "^24",
+    "eslint": "^10",
+    "globals": "^17",
+    "tsup": "^8.5.1",
+    "typescript": "~6",
+    "typescript-eslint": "^8"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lumenridge/ambientui.git",
+    "directory": "packages/docs"
+  },
+  "homepage": "https://github.com/Lumenridge/ambientui",
+  "bugs": "https://github.com/Lumenridge/ambientui/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "content",
+    "src"
+  ],
+  "sideEffects": false
+}

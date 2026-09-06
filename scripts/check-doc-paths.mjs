@@ -15,6 +15,11 @@
  *
  * DESIGN.md's §12 decision log is excluded on purpose: it is a historical
  * record, and history legitimately names files that no longer exist.
+ *
+ * CROSS-REPO CITATIONS wear a repo prefix — `site:src/components/reveal.tsx`
+ * names a file in the website's repo. The prefix stops CHECKABLE from
+ * matching, so they are skipped here by construction; the site repo's copy
+ * of this checker is where they get validated against a real tree.
  */
 import { readFileSync, existsSync, lstatSync, readdirSync } from "node:fs"
 import { resolve, dirname, join } from "node:path"

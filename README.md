@@ -124,6 +124,8 @@ and will not touch it.
 packages/ambient      the ambient layer            → npm: ambientui
 packages/foundation   the configuration engine     → @ambientui/foundation
 packages/ui           the product primitives       → @ambientui/ui
+packages/patterns     promoted product patterns    → @ambientui/patterns
+packages/docs         the catalog + governing docs → @ambientui/docs
 apps/site             the website: docs, /ds reference, and the demos
 docs/                 the reader-facing guides, including registry vs npm
 scripts/              the registry build and every drift check the gate runs

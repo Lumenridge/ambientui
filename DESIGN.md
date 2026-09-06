@@ -175,7 +175,7 @@ unrelated to the base theme is a rule violation.
 
 **The icon library is a Foundation choice** — Lucide, Tabler, HugeIcons,
 Phosphor, or Remix. Components name icons **semantically** through
-`<Icon name="…" />` (`apps/site/src/components/icon.tsx`); the configured
+`<Icon name="…" />` (`site:src/components/icon.tsx`); the configured
 library draws them everywhere. A new icon name must be mapped in every
 library or it doesn't exist. Standard sizes 14/15/16 in controls,
 `strokeWidth={1.8}` where the library supports it. No direct library
@@ -208,7 +208,7 @@ documented live at /ds → Motion.
   `foundation-context.tsx`. One-off keyframes in component files and raw
   spring configs are governance events.
 - Simple motion still lives in **CSS first**: keyframes in
-  `apps/site/src/styles/theme.css` (`ambient-shimmer`) and Tailwind `transition-*`
+  `site:src/styles/theme.css` (`ambient-shimmer`) and Tailwind `transition-*`
   utilities. Framer Motion (sanctioned, §12) is for what CSS can't express:
   interruptible/gestural animation, layout and presence transitions,
   springs — timed through the motion roles above.
@@ -224,9 +224,9 @@ documented live at /ds → Motion.
 
 ## 6. Component inventory — the two vocabularies
 
-The vocabulary is documented in `apps/site/src/lib/catalog.ts` (the
-prose) with its live demos in `apps/site/src/components/ds/stories.tsx`, joined
-by `apps/site/src/components/ds/entries.ts` and rendered at `/ds`. **A rule is written once, where it lives** — this file names
+The vocabulary is documented in `packages/docs/src/catalog.ts` (the
+prose) with its live demos in `site:src/components/ds/stories.tsx`, joined
+by `site:src/components/ds/entries.ts` and rendered at `/ds`. **A rule is written once, where it lives** — this file names
 the components and their contracts' locations; the registry holds per-component
 behavior, usage, and constraints. A rule written twice will disagree with itself.
 
@@ -760,7 +760,7 @@ rules, or states. ambientui does not have it yet; building it is logged debt.
   vocabulary once the Spacing page and Foundation stop being its only consumers.
 - **`Reveal` scroll-entrance wrapper** — PROMOTED 2026-08-27: the overview
   became the second page wanting scroll-staged sections, tripping exactly
-  the condition named here. Now `apps/site/src/components/reveal.tsx`
+  the condition named here. Now `site:src/components/reveal.tsx`
   (app-shared; vocabulary promotion is the next trigger, on a consumer
   outside this app).
 - **`DocDownload` row** (Playbook) — a Button handing over a governing file as
@@ -770,7 +770,7 @@ rules, or states. ambientui does not have it yet; building it is logged debt.
   corner ticks and a mono uppercase tag; the article's device for framing a
   live demo as a blueprint. Kept local; promote if docs pages or /ds stories
   want the same "this part is a specimen" framing.
-- **Schematic kit** (`apps/site/src/components/home/schematic-kit.tsx`) —
+- **Schematic kit** (`site:src/components/home/schematic-kit.tsx`) —
   eight SVG line-work primitives (nodes, fan curves, waypoints, leader
   annotations) for presentation diagrams, all strokes semantic roles.
   PRESENTATION-ONLY by explicit charter: not vocabulary, no /ds entry, and

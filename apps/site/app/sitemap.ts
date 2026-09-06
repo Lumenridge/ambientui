@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next"
 
-import { AMBIENT_COMPONENTS, SHADCN_DEFAULT_COMPONENTS } from "@/lib/catalog"
+import { AMBIENT_COMPONENTS, SHADCN_DEFAULT_COMPONENTS } from "@ambientui/docs/catalog"
 import { SITE_URL } from "@/lib/site"
 
 // `output: export` has no server, so these must be declared static:
