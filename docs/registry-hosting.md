@@ -1,17 +1,17 @@
 # Where the registry lives
 
 The install commands this project prints (`npx shadcn add @ambientui/…`)
-fetch JSON from one host. That host is a **Cloudflare Pages project on this
-repo**, separate from the website — component installs must not depend on
+fetch JSON from one host. That host is a **Cloudflare Worker on this
+repo** (`wrangler.jsonc`, serving static assets), separate from the website — component installs must not depend on
 the site's deploys, and after the site moves to its own repo they cannot.
 
 ## The one variable
 
 Every URL in the published registry is built from `AMBIENTUI_REGISTRY_HOST`
-(`scripts/build-registry.mjs`). The default is the Pages project's own
-subdomain, `https://ambientui-registry.pages.dev`. Moving to a custom domain
-later is: add the domain to the Pages project, change that one default (or
-set the env var in the Pages build), run `npm run registry:build`, commit.
+(`scripts/build-registry.mjs`). The default is `https://registry.ambientui.ai`,
+a subdomain of the product's own domain, attached to the Worker. Moving hosts
+again is: attach the new domain, change that one default (or set the env
+var), run `npm run registry:build`, commit.
 
 ## The artifact
 
@@ -27,19 +27,18 @@ registry-dist/
 `registry.json` at the repo root stays the committed, gate-checked source
 the artifact is expanded from.
 
-## The Pages project (one-time setup)
+## The Worker (one-time setup)
 
-Create a Cloudflare Pages project named **`ambientui-registry`** connected
-to this repo:
+Create a Cloudflare Workers project from the Git integration, connected to
+this repo:
 
-- **Build command:** `npm ci && npm run build && npm run registry:build`
-- **Build output directory:** `registry-dist`
-- **Environment:** none required (the default host is this project's own
-  subdomain; set `AMBIENTUI_REGISTRY_HOST` only when a custom domain takes
-  over)
-
-The project name matters: it is what makes `ambientui-registry.pages.dev` —
-the default host baked into the committed registry — resolve.
+- **Project name:** `ambientui-registry` (must match `wrangler.jsonc`)
+- **Build command:** `npm run build && npm run registry:build`
+- **Deploy command:** `npx wrangler deploy` (reads `wrangler.jsonc`, which
+  points at `registry-dist/`)
+- Then attach the custom domain **`registry.ambientui.ai`** on the Worker
+  (Settings → Domains & Routes → Custom domain) — that is the host baked
+  into the committed registry, so commands do not work until it resolves.
 
 ## How we know it works
 

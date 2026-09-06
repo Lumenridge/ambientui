@@ -27,12 +27,11 @@ import { readCatalog } from "./extract-catalog.mjs"
 import { fileURLToPath } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-// The default is the Cloudflare Pages project's own subdomain — real the
-// moment a Pages project named `ambientui-registry` exists on this repo.
-// A custom domain later is: add it in Pages, change this one line (or set
-// the env var), rebuild.
+// The registry's public address: a subdomain of the product's own domain,
+// served by the `ambientui-registry` Worker (wrangler.jsonc). Changing hosts
+// again is: change this one line (or set the env var), rebuild, commit.
 const HOST =
-  process.env.AMBIENTUI_REGISTRY_HOST ?? "https://ambientui-registry.pages.dev"
+  process.env.AMBIENTUI_REGISTRY_HOST ?? "https://registry.ambientui.ai"
 const url = (name) => `${HOST}/r/${name}.json`
 const STAGE = ".registry"
 
