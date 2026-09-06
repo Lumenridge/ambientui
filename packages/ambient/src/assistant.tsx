@@ -568,8 +568,12 @@ export function Assistant({
       // impure. The cascading render is the intended cost — one extra commit
       // when a surface hands over.
       /* eslint-disable react-hooks/set-state-in-effect */
-      if (seeded) {
-        if (consumeAutoSend()) send(seeded, consumeImmediate())
+      // null means nothing was handed over; "" is a REAL seed meaning
+      // "open clean". The truthy check conflated the two, so a surface
+      // could never ask for the at-rest state — the input kept whatever
+      // the last visit typed.
+      if (seeded !== null) {
+        if (seeded && consumeAutoSend()) send(seeded, consumeImmediate())
         else setInput(seeded)
       }
       /* eslint-enable react-hooks/set-state-in-effect */
