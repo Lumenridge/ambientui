@@ -1,0 +1,13 @@
+// The registry's deploy target — a Cloudflare Worker that serves the static
+// registry-dist/ output (built by `npm run registry:build`). The Cloudflare
+// Git integration runs the build command, then `npx wrangler deploy`, which
+// reads this file. _headers inside the assets directory still applies (CORS
+// for /r/*). The public address is the custom domain registry.ambientui.ai,
+// attached on the Worker under Settings → Domains & Routes.
+{
+  "name": "ambientui-registry",
+  "compatibility_date": "2026-09-06",
+  "assets": {
+    "directory": "./registry-dist"
+  }
+}

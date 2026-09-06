@@ -1,6 +1,6 @@
 ---
 name: site-voice
-description: The public site's writing voice for ambientui — the home page, the install section, section headings, page metadata, and any prose a stranger reads before they have decided to care. Use when writing or revising copy on apps/site, when a page reads as insider language, or when explaining an architectural idea to someone who has never heard of it.
+description: The public site's writing voice for ambientui — the home page, the install section, section headings, page metadata, and any prose a stranger reads before they have decided to care. Use when writing or revising copy in the site repo (Lumenridge/ambientui-site), when a page reads as insider language, or when explaining an architectural idea to someone who has never heard of it.
 ---
 
 # Site Voice
@@ -12,7 +12,7 @@ heard the words "ambient layer" or "design architecture" in their life.
 
 This is a different job from [product-copy](../product-copy/SKILL.md), which
 writes strings inside a product for someone already using it. Use this
-skill for `apps/site` prose — including the architecture page, whose
+skill for the site repo’s prose — including the architecture page, whose
 argument now lives in `architecture-content.ts` rather than in a markdown
 file. Use product-copy for UI strings and the component vocabulary.
 
