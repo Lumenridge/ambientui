@@ -24,7 +24,7 @@ Or take the layer on its own:
 npx shadcn add https://registry.ambientui.ai/r/ambient-layer.json
 ```
 
-[See it running](https://ambientui.ai)
+[See it running](https://ambientui.ai) - and the guides: [getting started](https://ambientui.ai/getting-started), [installation](https://ambientui.ai/installation), [the agent skill](https://ambientui.ai/skill).
 
 ---
 
@@ -80,7 +80,7 @@ system doing its job: an AI working here cannot invent a colour, because there
 is nowhere to put one. That is the whole argument, and the reason the
 assistant can be trusted to build.
 
-The long version is the [architecture page](https://ambientui.ai/architecture).
+The long version is the [design philosophy](https://ambientui.ai/manifesto).
 The rules it produced are [DESIGN.md](DESIGN.md).
 
 ## What you can take
