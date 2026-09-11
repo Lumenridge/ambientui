@@ -24,7 +24,16 @@ Or take the layer on its own:
 npx shadcn add https://registry.ambientui.ai/r/ambient-layer.json
 ```
 
-[See it running](https://ambientui.ai) - and the guides: [getting started](https://ambientui.ai/getting-started), [installation](https://ambientui.ai/installation), [the agent skill](https://ambientui.ai/skill).
+Then wire the stylesheet it shipped into your global CSS, after the
+Tailwind import - it is the layer's material, and the surfaces render
+transparent without it:
+
+```css
+@import "tailwindcss";
+@import "./styles/ambient.css";
+```
+
+[See it running](https://ambientui.ai) - and the guides: [getting started](https://ambientui.ai/getting-started), [installation](https://ambientui.ai/installation), [the agent skill](https://ambientui.ai/skill), [the governing documents](https://ambientui.ai/docs).
 
 ---
 

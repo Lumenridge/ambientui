@@ -1,5 +1,11 @@
 # @ambient-ui/docs
 
+## 0.1.13
+
+### Patch Changes
+
+- READMEs say the wiring out loud: the registry route lands styles/ambient.css and styles/foundation.css, and both are imported into the consumer's globals after the Tailwind import, as shipped, never rebuilt by hand. The root README links the rendered governing documents at ambientui.ai/docs.
+
 ## 0.1.12
 
 ### Patch Changes

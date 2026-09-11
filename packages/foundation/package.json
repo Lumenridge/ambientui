@@ -1,6 +1,6 @@
 {
   "name": "@ambient-ui/foundation",
-  "version": "0.1.9",
+  "version": "0.1.13",
   "private": false,
   "type": "module",
   "description": "The Foundation engine \u2014 the design system's configuration space, compiled to CSS variables at runtime.",
@@ -58,7 +58,7 @@
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19",
-    "ambientui": "^0.1.3",
+    "ambientui": "^0.1.13",
     "@ambient-ui/ui": "^0.1.3"
   },
   "peerDependenciesMeta": {

@@ -25,6 +25,15 @@ See it running at [ambientui.ai](https://ambientui.ai).
 npx shadcn add https://registry.ambientui.ai/r/ambient-layer.json
 ```
 
+This lands the components plus `styles/ambient.css`, the layer's
+material. Import it in your global stylesheet after the Tailwind
+import (the surfaces render transparent without it):
+
+```css
+@import "tailwindcss";
+@import "./styles/ambient.css";
+```
+
 **As this package** (you get fixes by bumping a version, and you cannot
 change the inside):
 

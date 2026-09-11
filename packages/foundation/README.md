@@ -37,6 +37,10 @@ runtime or render it into your globals at build time; the provider is one
 way to use it, not the only one.
 
 Explore every dimension live at [ambientui.ai/ds](https://ambientui.ai/ds).
-Prefer source you own? `npx shadcn add https://registry.ambientui.ai/r/foundation.json`.
+Prefer source you own? `npx shadcn add https://registry.ambientui.ai/r/foundation.json`
+- that route also lands `styles/foundation.css`, the bridge that routes
+Tailwind's radius, transition and color utilities through the Foundation's
+variables; import it in your globals after the Tailwind import, as shipped,
+never rebuilt by hand.
 
 MIT (c) Lumenridge

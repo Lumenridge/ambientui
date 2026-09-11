@@ -1,6 +1,6 @@
 {
   "name": "ambientui",
-  "version": "0.1.4",
+  "version": "0.1.13",
   "private": false,
   "type": "module",
   "description": "The ambient layer \u2014 an AI assistant surface that lives above a product rather than inside its component tree.",
