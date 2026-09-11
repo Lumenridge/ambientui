@@ -1,5 +1,11 @@
 # @ambient-ui/foundation
 
+## 0.1.8
+
+### Patch Changes
+
+- Remix Icon becomes the default icon library. The five libraries remain equal choices on the Foundation page; only the out-of-the-box pick changes.
+
 ## 0.1.7
 
 ### Patch Changes

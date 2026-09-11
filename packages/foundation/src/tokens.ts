@@ -454,7 +454,9 @@ export const DEFAULT_FOUNDATION: FoundationConfig = {
   spacingGrid: "default",
   scaling: 100,
   roles: {},
-  icons: "hugeicons",
+  // remix by default (owner's call, 2026-09-11); the five libraries stay
+  // equal choices on the Foundation page
+  icons: "remix",
   font: "geist",
   orb: {
     useAccent: true,
