@@ -102,6 +102,7 @@ you own.
 |---|---|---|
 | **A design system to build inside** | The Foundation: the short menu of values everything else reads from. You can take this on its own, with no assistant attached. | `npx shadcn add @ambientui/foundation` |
 | **The rules your AI works under** | The rules your AI reads before it writes anything, and three reviewer roles it can take on. This is the part nobody else ships. | `npx shadcn add @ambientui/governance` |
+| **The whole journey, as a skill** | The guided setup installed into your repo, with the constitution (DESIGN.md) beside it - the logic that turns a screenshot into a configuration. | `npx shadcn add @ambientui/start` |
 
 Register the namespace once and the commands stay short:
 
