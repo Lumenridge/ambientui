@@ -1,5 +1,11 @@
 # @ambient-ui/docs
 
+## 0.1.11
+
+### Patch Changes
+
+- start.md: wire the shipped stylesheets explicitly (import foundation.css and ambient.css into globals after tailwindcss), keep orb assets in the framework's static directory, and end every message to the owner with their next action in bold at the bottom.
+
 ## 0.1.10
 
 ### Patch Changes

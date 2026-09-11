@@ -15,6 +15,12 @@ and end up pressing Cmd-K inside their own product.
 Do the steps in this order. The order is the point: tools first, taste
 second, build third, and the reveal last.
 
+**How to end every message.** Whatever you just did or found, finish each
+message to the person with their next action — one line, **bold**, at the
+very bottom, nothing after it. A next step buried in the middle of a long
+answer gets lost; the person should be able to read only your last line
+and know what to do.
+
 ## 1. Find out what you are walking into (mandatory)
 
 Look at the project before you install anything. Two situations, two
@@ -84,6 +90,31 @@ system's configuration engine) under `lib/foundation/` and
 `components/foundation-provider.tsx`, and the complete ambient layer under
 `components/ambient/`. The person owns every line. Do not npm-install
 `ambientui` as well; the two routes conflict in one repo.
+
+**Wire the shipped CSS — do this now, and never reconstruct it by hand.**
+The doors also landed two stylesheets: `styles/foundation.css` (the bridge
+that routes Tailwind's radius, transition and color utilities through the
+Foundation's variables) and `styles/ambient.css` (the layer's material).
+Import both in the project's global stylesheet, AFTER the
+`@import "tailwindcss";` line:
+
+```css
+@import "tailwindcss";
+@import "./styles/foundation.css";
+@import "./styles/ambient.css";
+```
+
+Adjust the relative paths to wherever the files landed next to that
+stylesheet. Do not rewrite or approximate what is inside them — a
+hand-reconstructed bridge is exactly how radius ends up as
+`calc(var(--radius) * 0.6)` instead of the Foundation's radius window,
+and how transitions and status colors silently stop following the
+configuration. The shipped files ARE the propagation contract.
+
+The layer's orb artwork installed into the project's `public/` directory
+(files named `orb-*.svg` and friends). If your framework serves static
+assets from somewhere else, move them there — the orb renders blank
+without them.
 
 **Then read the rulebook — this is mandatory, not optional.** The `start`
 door installed the constitution beside this skill: the file named

@@ -114,27 +114,27 @@
         {
           "path": "packages/ambient/assets/orb-circle.svg",
           "type": "registry:file",
-          "target": "public/orb-circle.svg"
+          "target": "~/public/orb-circle.svg"
         },
         {
           "path": "packages/ambient/assets/orb-rect.svg",
           "type": "registry:file",
-          "target": "public/orb-rect.svg"
+          "target": "~/public/orb-rect.svg"
         },
         {
           "path": "packages/ambient/assets/orb-rect-wide.svg",
           "type": "registry:file",
-          "target": "public/orb-rect-wide.svg"
+          "target": "~/public/orb-rect-wide.svg"
         },
         {
           "path": "packages/ambient/assets/orb-rect-tall.svg",
           "type": "registry:file",
-          "target": "public/orb-rect-tall.svg"
+          "target": "~/public/orb-rect-tall.svg"
         },
         {
           "path": "packages/ambient/assets/orb-rect-banner.svg",
           "type": "registry:file",
-          "target": "public/orb-rect-banner.svg"
+          "target": "~/public/orb-rect-banner.svg"
         }
       ],
       "docs": "These land in public/ and are loaded by URL at runtime. If your app is served from a subpath, pass that base to the layer (assetBase on the runtime, or FoundationProvider's assetBase prop) — a root-absolute URL resolves against the domain, not your app."

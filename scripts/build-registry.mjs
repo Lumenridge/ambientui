@@ -478,7 +478,7 @@ const items = [
     files: ORB_SHAPES.map((f) => ({
       path: `packages/ambient/assets/${f}`,
       type: "registry:file",
-      target: `public/${f}`,
+      target: `~/public/${f}`,
     })),
     docs: "These land in public/ and are loaded by URL at runtime. If your app is served from a subpath, pass that base to the layer (assetBase on the runtime, or FoundationProvider's assetBase prop) — a root-absolute URL resolves against the domain, not your app.",
   },
