@@ -1,5 +1,11 @@
 # @ambient-ui/foundation
 
+## 0.1.9
+
+### Patch Changes
+
+- The saved theme is adopted in a pre-paint layout effect instead of the first render's initializer. The hydrating render now matches the server's default-theme HTML, ending the hydration failure every visitor with a saved theme hit on every page load - and the theme still lands before the browser paints, so the no-flash guarantee holds.
+
 ## 0.1.8
 
 ### Patch Changes

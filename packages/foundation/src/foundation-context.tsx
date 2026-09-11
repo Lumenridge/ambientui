@@ -73,12 +73,17 @@ const FoundationContext = React.createContext<FoundationContextValue | null>(
 )
 
 /**
- * The saved theme, read once at startup.
+ * The saved theme, adopted once at startup — BEFORE PAINT, AFTER HYDRATION.
  *
- * This used to hydrate from an effect, which meant the first paint used the
- * DEFAULTS and then re-rendered into the user's theme — a flash of the wrong
- * accent on every load. A lazy initializer reads it before the first render
- * instead; storage is an external store, and this is a read, not a sync.
+ * Three designs have lived here, and the third is the one that keeps both
+ * guarantees. A plain effect adopted the theme after paint — a flash of
+ * the default accent on every load. A lazy initializer read storage during
+ * the first render — no flash, but the hydrating render no longer matched
+ * the server's default-theme HTML, and every visitor with a saved theme
+ * got a hydration failure on every page. The layout effect below is the
+ * synthesis: the first render agrees with the server, and the saved theme
+ * lands before the browser paints, so neither the flash nor the mismatch
+ * exists.
  */
 function readSaved(): FoundationConfig {
   // No storage during a prerender. The try/catch below would swallow that
@@ -96,15 +101,28 @@ function readSaved(): FoundationConfig {
   return DEFAULT_FOUNDATION
 }
 
+// layout effects warn during a server render; on the server the fallback
+// never runs anyway, so the swap is inert there
+const useIsoLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect
+
 export function FoundationProvider({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [config, setConfigState] = React.useState<FoundationConfig>(readSaved)
+  const [config, setConfigState] =
+    React.useState<FoundationConfig>(DEFAULT_FOUNDATION)
   // The last saved theme. Edits apply live but only persist on save();
   // reloading without saving returns to this.
-  const [saved, setSaved] = React.useState<FoundationConfig>(readSaved)
+  const [saved, setSaved] =
+    React.useState<FoundationConfig>(DEFAULT_FOUNDATION)
+  // pre-paint adoption — see the note above readSaved
+  useIsoLayoutEffect(() => {
+    const s = readSaved()
+    setConfigState(s)
+    setSaved(s)
+  }, [])
   // Rail-local edits (playground props) live in their own components, so the
   // config alone cannot tell us they happened — this flag carries them.
   const [touched, setTouched] = React.useState(false)
