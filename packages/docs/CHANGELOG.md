@@ -1,5 +1,11 @@
 # @ambient-ui/docs
 
+## 0.1.10
+
+### Patch Changes
+
+- start.md installs the whole thing: step 2 now takes four doors - start (the skill with the constitution DESIGN.md beside it, mandatory reading before any UI), governance (the working rules, adapted to the host repo as part of setup), foundation and ambient-layer - and a mandatory propagation check gates the reveal: every control on the /ds page must visibly re-theme everything built, or the literal that broke it gets found and fixed first.
+
 ## 0.1.6
 
 ### Patch Changes

@@ -569,15 +569,26 @@ const items = [
     type: "registry:file",
     title: "From nothing to Cmd-K",
     description:
-      "The guided setup, written for the AI agent doing the work: install the system, ask the owner for one inspiration reference, express it as Foundation configuration, build the product, and end with the spotlight open. Installs as a skill, so the repo itself carries the guidance.",
+      "The guided setup, written for the AI agent doing the work: install the system, ask the owner for one inspiration reference, express it as Foundation configuration, build the product, and end with the spotlight open. Installs as a skill WITH the constitution beside it - DESIGN.md is the logic the journey runs on (a reference is a request for a configuration; every dimension derives from tokens), and a setup that skips it produces screens whose borders and corners do not follow the theme.",
     files: [
       {
         path: "docs/start.md",
         type: "registry:file",
         target: "~/.claude/skills/ambientui-start/SKILL.md",
       },
+      // THE CONSTITUTION RIDES WITH THE SKILL (owner's strict guideline,
+      // 2026-09-12): the guide's steps only work because DESIGN.md
+      // defines them - the reference->configuration procedure and the
+      // propagation rules. Shipping the skill without it produced setups
+      // where the docs' logic never reached the agent, and the built
+      // product's borders did not re-theme.
+      {
+        path: "DESIGN.md",
+        type: "registry:file",
+        target: "~/.claude/skills/ambientui-start/DESIGN.md",
+      },
     ],
-    docs: "Also readable without installing anything: tell your agent to read https://ambientui.ai/start.md and set the project up. The installed copy makes the guidance part of the repo, so any future session finds it.",
+    docs: "Also readable without installing anything: tell your agent to read https://ambientui.ai/start.md and set the project up. The installed copy makes the guidance part of the repo, so any future session finds it - and DESIGN.md lands beside the skill, because the journey's rules live there.",
   },
   {
     name: "governance",

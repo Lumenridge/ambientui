@@ -58,20 +58,44 @@ works the same way from here.
 
 ## 2. Install the system
 
-Register the registry once, then take the two doors (ambient-layer only,
-if that was the answer in step 1):
+Register the registry once, then take the doors (ambient-layer only, if
+that was the answer in step 1). The `start` door is how THIS guide and
+its rulebook land in the repo — install it even if you are reading this
+from the web, so every future session finds both:
 
 ```bash
 npx shadcn@latest registry add "@ambientui=https://registry.ambientui.ai/r/{name}.json"
+npx shadcn@latest add @ambientui/start
+npx shadcn@latest add @ambientui/governance
 npx shadcn@latest add @ambientui/foundation
 npx shadcn@latest add @ambientui/ambient-layer
 ```
+
+The `governance` door lands the working rules: a `CLAUDE.md` at the repo
+root — the hard rules an AI follows in a governed codebase — and three
+reviewer skills (design-system manager, product-design manager, copy).
+They are written for the ambientui repo itself, so adapt them now, as
+part of setup: rewrite their file paths and repo references to THIS
+project, keep the rules. From then on they are the rules you work under
+here too.
 
 This lands real source files in the project: the Foundation (the design
 system's configuration engine) under `lib/foundation/` and
 `components/foundation-provider.tsx`, and the complete ambient layer under
 `components/ambient/`. The person owns every line. Do not npm-install
 `ambientui` as well; the two routes conflict in one repo.
+
+**Then read the rulebook — this is mandatory, not optional.** The `start`
+door installed the constitution beside this skill: the file named
+DESIGN.md, in the same folder as this SKILL.md. It is the logic every later
+step runs on: how a screenshot is read as a CONFIGURATION rather than
+copied as styling, and the propagation rules that make one saved value
+restyle every component — colors through semantic roles, spacing through
+the grid, corners through the radius window, borders and surfaces from
+the gray family. Read it before you write any UI. A setup built without
+it produces screens where changing the theme moves some things and not
+others — borders that stay put while buttons re-theme — which defeats
+the entire point of the architecture.
 
 Mount both providers at the app root now, before building anything:
 
@@ -142,6 +166,18 @@ the app already has a `/ds` route, use `/foundation` instead (then
 will make the product theirs after you hand it over, and both user tests
 of this journey taught the same lesson: if the Foundation is not a page
 they can open, it does not exist to them.
+
+**Then run the propagation check — mandatory before the reveal.** On
+the `/ds` page, change the accent, then the gray family, then the
+radius, then the spacing, and watch YOUR OWN screens each time. Every
+border, corner, surface, gap and piece of text must follow. Anything
+that does not move is a literal you wrote — a hex value, a raw border
+color, a typed pixel — and it is a bug: find it, replace it with the
+token (DESIGN.md names the right one for each dimension), and check
+again. Do not hand the project over until every control on the page
+visibly re-themes everything you built. The architecture's whole claim
+is one configuration, everything follows; a screen that half-follows
+disproves it in front of the person you built it for.
 
 Then take them there. When you hand the project over, walk the owner
 through the page in a few sentences: what each control governs, that
