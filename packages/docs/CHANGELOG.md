@@ -1,5 +1,11 @@
 # @ambient-ui/docs
 
+## 0.1.6
+
+### Patch Changes
+
+- start.md gains two mandatory behaviors: an existing product UI gets one question before anything installs (the ambient layer only, or the full design architecture), and the from-scratch path must build the /ds Foundation settings page (checking the route for conflicts) and walk the owner through it at handover. The going-deeper link follows the argument to ambientui.ai/manifesto.
+
 ## 0.1.5
 
 ### Patch Changes
