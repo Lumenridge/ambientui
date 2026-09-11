@@ -12,6 +12,21 @@
       ],
       "port": 5174,
       "autoPort": true
+    },
+    {
+      "name": "repro",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "/private/tmp/claude-501/-Users-dada-iCloud-Drive--Archive--Documents-Lumenridge-ambientai/9cc8d54c-fa7e-4892-8894-7ae82f7700f2/scratchpad/repro",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5199",
+        "--strictPort"
+      ],
+      "port": 5199
     }
   ]
 }

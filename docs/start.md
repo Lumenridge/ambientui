@@ -116,6 +116,22 @@ The layer's orb artwork installed into the project's `public/` directory
 assets from somewhere else, move them there — the orb renders blank
 without them.
 
+**Verify the install actually landed — three checks, before mounting
+anything.** The shadcn CLI fails quietly when a project's alias is not
+configured everywhere it looks:
+
+1. No literal `@` directory exists at the repo root. If one appeared, the
+   CLI could not resolve the `@/` alias and wrote real files into a folder
+   named `@` — add `"paths": { "@/*": ["./src/*"] }` to EVERY tsconfig the
+   project has (the root one included, not just `tsconfig.app.json`), move
+   the folder's contents into `src/`, and re-run the failed door.
+2. `lib/utils.ts` and the ui components the layer composes (button, input,
+   skeleton, sidebar) exist under the source tree. A missing one is an
+   unresolvable import, and the assistant crashes the moment it opens.
+3. The dev server starts with zero console errors before you press Cmd-K
+   yourself. Press it. If it crashes, fix it now — never hand this
+   failure to the person.
+
 **Then read the rulebook — this is mandatory, not optional.** The `start`
 door installed the constitution beside this skill: the file named
 DESIGN.md, in the same folder as this SKILL.md. It is the logic every later
@@ -237,5 +253,8 @@ belongs to them.
   https://registry.ambientui.ai/r/registry.json
 - The rules an AI works under in a governed codebase:
   `npx shadcn add @ambientui/governance`
+- Every governing document, rendered on the site from the shipped
+  release — the constitution at https://ambientui.ai/docs/design, the
+  index of all of them at https://ambientui.ai/docs
 - The full argument for why the system is shaped this way:
   https://ambientui.ai/manifesto

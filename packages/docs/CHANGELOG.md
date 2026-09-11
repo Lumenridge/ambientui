@@ -1,5 +1,11 @@
 # @ambient-ui/docs
 
+## 0.1.12
+
+### Patch Changes
+
+- start.md: verify the install landed before mounting (no literal `@` directory from a failed alias resolution, lib/utils and the ui deps present, Cmd-K pressed by the agent before handover), and link the rendered governing documents at ambientui.ai/docs.
+
 ## 0.1.11
 
 ### Patch Changes
