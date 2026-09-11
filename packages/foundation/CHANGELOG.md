@@ -1,5 +1,11 @@
 # @ambient-ui/foundation
 
+## 0.1.7
+
+### Patch Changes
+
+- The compiled theme now derives --ambient-accent and --ambient-accent-wash from the configured accent (rule 5: ambient tokens default to values derived from the base theme). The layer's surfaces and the orb's accent-linked heat ramp retheme with the accent instead of staying the static blue.
+
 ## 0.1.3
 
 ### Patch Changes

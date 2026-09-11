@@ -619,9 +619,22 @@ export function compileFoundationCss(config: FoundationConfig): string {
       )
     light.push(`--motion-ease: ${character.ease};`)
   }
+  // THE AMBIENT LAYER FOLLOWS THE ACCENT (rule 5: every --ambient-* token
+  // derives from the base theme). ambient.css ships static blue defaults
+  // for a host with no Foundation; here the saved accent overrides them,
+  // so the layer's surfaces — and the orb's accent-linked heat ramp,
+  // which reads --ambient-accent — retheme with everything else. The
+  // static defaults are blue-600 (light) and a lifted blue (dark); the
+  // derivation mirrors that shape on whatever hue is configured.
+  light.push(
+    `--ambient-accent: var(--color-${accentFamily}-600);`,
+    `--ambient-accent-wash: color-mix(in oklab, var(--color-${accentFamily}-500) 10%, transparent);`
+  )
   const dark: string[] = [
     `--primary-foreground: ${accent.dark.primaryForeground};`,
     `--sidebar-primary-foreground: ${accent.dark.primaryForeground};`,
+    `--ambient-accent: var(--color-${accentFamily}-400);`,
+    `--ambient-accent-wash: color-mix(in oklab, var(--color-${accentFamily}-500) 16%, transparent);`,
   ]
 
   // THE ROLE MAP: every semantic token resolves to a configured palette
