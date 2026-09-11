@@ -15,12 +15,37 @@ and end up pressing Cmd-K inside their own product.
 Do the steps in this order. The order is the point: tools first, taste
 second, build third, and the reveal last.
 
-## 1. Make sure there is a project
+## 1. Find out what you are walking into (mandatory)
 
-If you are already inside a React project with Tailwind CSS v4, continue.
+Look at the project before you install anything. Two situations, two
+different journeys — and the fork below is not optional:
 
-If not, scaffold one first and say so briefly. A Vite + React + TypeScript
-app with Tailwind v4 and shadcn initialised is the reference environment:
+**An existing product UI.** The person already has screens they built and
+styled. You MUST ask them one question before installing anything, and
+wait for the answer:
+
+> Do you want the ambient layer only — the assistant living above your
+> existing screens, which stay exactly as they are — or the full design
+> architecture, where the Foundation also governs your tokens, spacing,
+> radius and motion from one configuration?
+
+- **Ambient layer only:** install just the `@ambientui/ambient-layer`
+  door in step 2, mount `AssistantProvider` + `Assistant`, and skip the
+  taste question — the layer derives sensible defaults and their product
+  keeps its own styling. Steps 3 and 4 do not apply.
+- **The design architecture:** run the whole journey below. Be explicit
+  that saving the Foundation will restyle their existing components that
+  consume its tokens, and migrate gently — never rewrite screens they
+  did not ask you to touch.
+
+**From scratch.** No product yet: scaffold the reference environment
+(next section), then run the whole journey — including the `/ds` page in
+step 5, which is mandatory on this path.
+
+## Scaffolding, when there is no project
+
+A Vite + React + TypeScript app with Tailwind v4 and shadcn initialised
+is the reference environment:
 
 ```bash
 npm create vite@latest . -- --template react-ts
@@ -33,7 +58,8 @@ works the same way from here.
 
 ## 2. Install the system
 
-Register the registry once, then take the two doors:
+Register the registry once, then take the two doors (ambient-layer only,
+if that was the answer in step 1):
 
 ```bash
 npx shadcn@latest registry add "@ambientui=https://registry.ambientui.ai/r/{name}.json"
@@ -106,13 +132,21 @@ Give each page a context line for the assistant while you build it: call
 person is. It is one call per page and it is what makes the assistant feel
 aware later.
 
-Also build one page the person did not ask for: a `/foundation` settings
-page, composed on the installed FoundationProvider, where every value from
-step 4 is a control — accent, gray, radius, spacing, type scaling, motion.
-This is where they will make the product theirs after you hand it over,
-and both user tests of this journey taught the same lesson: if the
-Foundation is not a page they can open, it does not exist to them. Mention
-the page when you finish.
+Also build one page the person did not ask for — this is mandatory on
+the from-scratch path, and strongly recommended when an existing product
+adopted the full architecture: a `/ds` page, composed on the installed
+FoundationProvider, where every value from step 4 is a control — accent,
+gray, radius, spacing, type scaling, motion. Check the route first: if
+the app already has a `/ds` route, use `/foundation` instead (then
+`/design-system`), and say which you picked and why. This is where they
+will make the product theirs after you hand it over, and both user tests
+of this journey taught the same lesson: if the Foundation is not a page
+they can open, it does not exist to them.
+
+Then take them there. When you hand the project over, walk the owner
+through the page in a few sentences: what each control governs, that
+every change propagates to every component, and that Save is what
+persists it. Do not just mention the page exists — explain it.
 
 ## 6. The reveal
 
