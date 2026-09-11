@@ -171,4 +171,4 @@ belongs to them.
 - The rules an AI works under in a governed codebase:
   `npx shadcn add @ambientui/governance`
 - The full argument for why the system is shaped this way:
-  https://ambientui.ai/architecture
+  https://ambientui.ai/manifesto
