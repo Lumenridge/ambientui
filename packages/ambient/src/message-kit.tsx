@@ -23,11 +23,14 @@ import {
 } from "./kit-vocabulary"
 
 /**
- * How long the thinking state holds at minimum. Work that appears to finish
- * instantly reads as a lookup; this is a real wait, so the counter measuring
- * it stays a measurement rather than a decoration.
+ * How long the thinking state holds at minimum, when a trace does not carry
+ * its own duration. Work that appears to finish instantly reads as a lookup —
+ * but a fixed long hold reads as a stall (15s made every answer, however
+ * small, "think" for fifteen seconds; owner's call, 2026-09-15). Four seconds
+ * is a real beat, and a block that knows its own cost declares `seconds` and
+ * is held to THAT instead.
  */
-export const THINKING_FLOOR_MS = 15_000
+export const THINKING_FLOOR_MS = 4_000
 
 /**
  * THE MESSAGE KIT — the objects a conversation is made of once an answer
@@ -404,11 +407,11 @@ export function ReasoningPanel({
   // the trace arrives the way it was produced: a beat of nothing, then a
   // step, then the next
   const { shown, pending, working: counting } = useStagedReveal(steps.length, {
-    // THINKING TAKES TIME. The steps land at their own pace, but the panel
-    // holds the thinking state to a floor — an answer that appears to think
-    // for two seconds and then knows everything is not what the work looked
-    // like. The floor is a real wait, so the counter still measures it.
-    minDuration: THINKING_FLOOR_MS,
+    // THINKING TAKES ITS OWN TIME. A trace that declares `seconds` is held
+    // to exactly that — the scenario's estimate of its work is the wait the
+    // user sees, so a small explain settles in ~4s and a five-file fix earns
+    // its twelve. The floor only catches blocks that don't say.
+    minDuration: seconds ? seconds * 1000 : THINKING_FLOOR_MS,
     enabled: staged,
     // long enough to be a real wait, and paced so a step can be READ before
     // the next one lands rather than three arriving on top of each other

@@ -151,7 +151,7 @@ function fixScenario(file: string): KitResponse {
     evidence: [
       {
         kind: "reasoning",
-        seconds: 4,
+        seconds: 7,
         steps: [
           {
             title: "Reading the selection",
@@ -337,7 +337,7 @@ function fixAllScenario(): KitResponse {
     evidence: [
       {
         kind: "reasoning",
-        seconds: 9,
+        seconds: 12,
         steps: [
           {
             title: "Grouping before fixing",
@@ -741,7 +741,7 @@ function threadListScenario(): KitResponse {
       },
       {
         kind: "reasoning",
-        seconds: 3,
+        seconds: 6,
         steps: [
           {
             title: "Tracing the loop",
