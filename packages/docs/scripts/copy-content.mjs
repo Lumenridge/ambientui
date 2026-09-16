@@ -11,6 +11,13 @@
  * each document by its repo path (`docs/motion-spec.md`), and a consumer
  * resolves `content/<that path>` — one mapping, no second table.
  *
+ * THE REVIEWER SKILLS SHIP TOO (owner's call, 2026-09-16, reversing
+ * 2026-08-30). ds-manager, product-design-manager and product-copy were held
+ * back as "how we brief an assistant in this repo". They are more than that:
+ * they are the three review roles the governance layer promises, and a
+ * consumer who installs @ambientui/governance gets them — so the release's
+ * account of itself carries them as well, at their mirrored paths.
+ *
  * registry.json rides along: it is the committed, gate-checked index of what
  * the registry ships, and the site derives printed counts and install
  * commands from it. Shipping it here means the site reads the version it was
@@ -32,6 +39,10 @@ const FILES = [
   "docs/start.md",
   "docs/ambient-shell-spec.md",
   "figma/figma-sync.md",
+  ".claude/skills/ds-manager/SKILL.md",
+  ".claude/skills/product-design-manager/SKILL.md",
+  ".claude/skills/product-copy/SKILL.md",
+  ".claude/skills/product-copy/REFERENCE.md",
   "registry.json",
 ]
 
