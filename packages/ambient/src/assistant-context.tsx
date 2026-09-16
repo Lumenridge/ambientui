@@ -3,6 +3,8 @@
 
 import * as React from "react"
 
+import type { KitResponse } from "./response-kit"
+
 import type { IconName } from "@ambient-ui/ui/components/icon"
 
 import type { OrbState } from "./orb-character"
@@ -60,6 +62,19 @@ export type PageIntel = {
   /** Section headings, when the page's own words are more useful. */
   suggestLabel?: string
   jumpLabel?: string
+  /**
+   * THE PAGE ANSWERS FOR ITS OWN MATERIAL. The built-in composer knows a
+   * code workspace; a CRM, a docs page or a dashboard knows things it does
+   * not. A page that can answer returns a KitResponse — the same grammar
+   * the composer emits, so it renders through the same pipeline, states and
+   * all — and returns null for anything it cannot, which falls back to the
+   * composer. This is also the seam a model wires into: the layer asks the
+   * page, never the other way round.
+   */
+  respond?: (
+    question: string,
+    context: { pageChip: ContextChip | null; chips: ContextChip[] }
+  ) => KitResponse | null | undefined
 }
 
 /**

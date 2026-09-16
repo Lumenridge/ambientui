@@ -480,6 +480,12 @@ export function Assistant({
    * states run exactly as they do for a first answer, because from the
    * layer's point of view it IS one.
    */
+  // the page answers first when it can (PageIntel.respond); the composer
+  // covers everything it declines
+  const answerFor = (question: string) =>
+    pageIntel?.respond?.(question, { pageChip, chips }) ??
+    composeResponse(question, pageChip, chips)
+
   const regenerate = (id: number) => {
     if (busyRef.current) return
     beginWork()
@@ -493,7 +499,7 @@ export function Assistant({
                 settled: false,
                 kits: [
                   ...msg.kits,
-                  composeResponse(msg.prompt ?? msg.text, pageChip, chips),
+                  answerFor(msg.prompt ?? msg.text),
                 ],
               }
             : msg
@@ -530,7 +536,7 @@ export function Assistant({
     // beat (quick ask), so composing waits only a frame
     composeTimer.current = window.setTimeout(
       () => {
-        const kit = composeResponse(text, pageChip, chips)
+        const kit = answerFor(text)
         pendingEffect.current = kit.effect ?? null
         setMessages((m) => [
           ...m,
