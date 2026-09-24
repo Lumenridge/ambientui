@@ -13,7 +13,7 @@
  *
  * NO "use client" HERE. A barrel that declares it would drag every module
  * behind it across the boundary in a Next App Router app, including the
- * pure ones (stage-queue, compose-response, kit-vocabulary). Each module
+ * pure ones (stage-queue, compose-response, responder, kit-vocabulary). Each module
  * carries its own directive, which is where the truth about it lives.
  */
 
@@ -37,5 +37,8 @@ export * from "./tool-kit"
 export * from "./knowledge-kit"
 export * from "./kit-vocabulary"
 export * from "./compose-response"
+export * from "./responder"
+export * from "./mock-responder"
+export * from "./mock-data"
 export * from "./stage-queue"
 export * from "./use-staged-reveal"

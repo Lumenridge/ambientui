@@ -241,8 +241,23 @@ the answer keeps every version reachable (`1 / 3`), and only the newest
 branch streams. Message actions on a settled answer: copy, approve,
 reject (mutually exclusive pair), regenerate.
 
-The model seam: a `composeResponse` function produces the block objects. A
-real model replaces that FUNCTION; nothing ever replaces the objects.
+The model seam: an `AssistantResponder` produces the block objects
+(`responder.ts`). It takes the question, the page chip and the attached
+chips, and an `AbortSignal`, and returns a `KitResponse`, `null` ("not
+mine"), or a Promise of either. Three are asked in order, and the first
+answer wins: the page's `PageIntel.respond`, the host's
+`<AssistantProvider respond>`, and the mock (`mock-responder.ts`), which
+serves the canned `composeResponse` scenarios after a realistic delay. A
+real model or backend is a responder; nothing ever replaces the objects.
+
+The turn runner owns time and failure, so a responder does not have to.
+The character thinks until the answer arrives, held to a floor (1100 ms on
+send, 900 ms on regenerate, one frame for a quick ask that already showed
+its beat). Stop, a newer turn, or unmount aborts the signal, and a late
+answer is dropped. A rejected turn renders `ErrorState` with Retry in the
+transcript, and the queue waits instead of draining into the same failure.
+The mock fails when asked to ("simulate an error") or at a `failRate`, so
+the failure state can be walked on purpose.
 
 ---
 
@@ -265,9 +280,10 @@ motion hooks. A host with a theming engine implements that interface; a
 host without one gets the defaults. The hook never throws.
 
 **Optional wiring, in order of value**: `navItems` + `onNavigate` (the
-palette's Jump-to), `setPageChip` per page, `setPageIntel` for live
-suggestions, `setCommands` for palette actions, right-click →
-`explain`/`addChip` on things worth attaching.
+palette's Jump-to), `respond` on the provider (the host's backend; the
+mock answers without it), `setPageChip` per page, `setPageIntel` for live
+suggestions and page-level `respond`, `setCommands` for palette actions,
+right-click → `explain`/`addChip` on things worth attaching.
 
 **Dependency boundary**: the layer imports the UI package and npm — never
 app code. Keep that rule in the port or the shell stops being liftable.

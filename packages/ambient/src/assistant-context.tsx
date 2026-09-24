@@ -3,7 +3,7 @@
 
 import * as React from "react"
 
-import type { KitResponse } from "./response-kit"
+import type { AssistantResponder } from "./responder"
 
 import type { IconName } from "@ambient-ui/ui/components/icon"
 
@@ -68,13 +68,11 @@ export type PageIntel = {
    * not. A page that can answer returns a KitResponse — the same grammar
    * the composer emits, so it renders through the same pipeline, states and
    * all — and returns null for anything it cannot, which falls back to the
-   * composer. This is also the seam a model wires into: the layer asks the
-   * page, never the other way round.
+   * provider's responder, then the mock. It may return a Promise: a page
+   * backed by an API awaits it, and the signal ends the request with the
+   * turn. The layer asks the page, never the other way round.
    */
-  respond?: (
-    question: string,
-    context: { pageChip: ContextChip | null; chips: ContextChip[] }
-  ) => KitResponse | null | undefined
+  respond?: AssistantResponder
 }
 
 /**
@@ -150,6 +148,11 @@ type AssistantState = {
   /** Navigate the app shell to a section (wired by App). */
   navigate?: (sectionId: string) => void
   /**
+   * The app-wide responder — the host's backend or model. Asked after the
+   * page's own `respond`, before the mock. Absent, the mock answers.
+   */
+  respond?: AssistantResponder
+  /**
    * The last workspace effect a settled answer announced. Surfaces that own
    * product state subscribe and decide what it means; the layer only relays.
    */
@@ -163,10 +166,13 @@ export function AssistantProvider({
   children,
   onNavigate,
   navItems = [],
+  respond,
 }: {
   children: React.ReactNode
   onNavigate?: (sectionId: string) => void
   navItems?: NavItem[]
+  /** Where questions go. See AssistantResponder; omit it and the mock answers. */
+  respond?: AssistantResponder
 }) {
   const [mode, setMode] = React.useState<AssistantMode>("line")
   const [pageChip, setPageChip] = React.useState<ContextChip | null>(null)
@@ -250,10 +256,11 @@ export function AssistantProvider({
       setOrbState,
       navigate: onNavigate,
       navItems,
+      respond,
       workspaceEffect,
       announceEffect,
     }),
-    [mode, pageChip, pageIntel, commands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeImmediate, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, workspaceEffect]
+    [mode, pageChip, pageIntel, commands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeImmediate, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, respond, workspaceEffect]
   )
 
   return (

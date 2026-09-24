@@ -76,8 +76,10 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    (line · panel · dock · spotlight · history),
    drag-as-mode-switch, page context via `setPageChip` (and what the page
    knows via `setPageIntel`), and the response kit (v0, `response-kit.tsx`)
-   fills the `send()` seam with composed answer objects — a model replaces
-   `composeResponse`, never the objects. **One character per surface**: the
+   fills the `send()` seam with composed answer objects — answers come from
+   an `AssistantResponder` (`responder.ts`: page → provider → mock, may be
+   async), and a model is a responder that replaces the mock's
+   `composeResponse` fixtures, never the objects. **One character per surface**: the
    orb/OrbCharacter mark belongs in the row where the user speaks to the
    assistant (composer mark, quick-ask pill) and in the resting orb — never
    in headers, footers, navigation or product chrome. **An answer arrives in order**:

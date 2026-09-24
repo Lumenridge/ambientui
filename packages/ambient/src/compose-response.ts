@@ -2,12 +2,16 @@ import type { ContextChip } from "./assistant-context"
 import type { KitBlock, KitResponse } from "./response-kit"
 
 /**
- * THE MODEL SEAM — now a SCENARIO ROUTER.
+ * THE MOCK'S JUDGEMENT — a SCENARIO ROUTER.
  *
- * Everything downstream of this function is real: the streaming, the staged
- * evidence, the states, the objects an answer is made of. Only the judgement
- * is canned. Wiring a model in replaces THIS FILE and nothing else — it emits
- * the same `KitResponse` grammar, and every surface keeps rendering it.
+ * These are fixtures. The assistant never calls this directly: it asks its
+ * responders (responder.ts), and when no page or host answers, the mock
+ * backend (mock-responder.ts) serves this router's answer after a realistic
+ * delay, abortable and able to fail. Everything downstream is real: the
+ * streaming, the staged evidence, the states, the objects an answer is made
+ * of. Wiring a model in means passing a responder, not editing this file —
+ * it emits the same `KitResponse` grammar, and every surface keeps
+ * rendering it.
  *
  * What the router demonstrates is the thesis of the dev-tool simulation:
  * AN ANSWER'S SHAPE FOLLOWS ITS INTENT AND ITS CONTEXT, and scenarios CHAIN.
@@ -944,7 +948,7 @@ function dbErrorScenario(): KitResponse {
 
 /* -------------------------------- router -------------------------------- */
 
-/** v0 composer: canned judgement over a real grammar. A model replaces this file. */
+/** The mock's canned judgement over a real grammar. A responder replaces it. */
 export function composeResponse(
   question: string,
   pageChip: ContextChip | null,
