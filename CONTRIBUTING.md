@@ -2,7 +2,8 @@
 
 ambientui is a governed codebase. The rules are not conventions to absorb
 over time; they are written down, and a gate enforces most of them. Read
-[DESIGN.md](DESIGN.md) before touching UI. It is the constitution: the
+[DESIGN.md](DESIGN.md) before touching UI, and [DECISION-LOG.md](DECISION-LOG.md)
+before changing the system. It is the constitution: the
 tokens, the two vocabularies, the ambient layer contract, and a decision
 log that explains why things are the way they are.
 
@@ -59,7 +60,7 @@ the result.
 A new token, a new component, a new pattern: these are governance events,
 not patches. Open an issue describing the need and the surfaces that want
 it. If it lands, the change updates `tokens/tokens.json`, the registry,
-and the DESIGN.md decision log together. A pull request that changes
+and [DECISION-LOG.md](DECISION-LOG.md) together. A pull request that changes
 system behavior without a decision log row is incomplete.
 
 ## Pull requests

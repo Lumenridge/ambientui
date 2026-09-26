@@ -549,8 +549,8 @@ export function ResponseBlock({
       {/* NO AUTHOR MARK. The message does not sign itself: the identity
           lives in the SHELL — the orb, the live border, the heat field — so
           every answer stamping its own orb repeated the shell's signature
-          once per message. Alignment alone says who is speaking (DESIGN.md
-          §12, 2026-08-22). */}
+          once per message. Alignment alone says who is speaking
+          (DECISION-LOG.md, 2026-08-22). */}
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         {/* what it DID — above the answer, because it is what the answer
             rests on. Collapsed by default; never hidden. */}

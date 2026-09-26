@@ -2,8 +2,11 @@
 
 The source of truth for design decisions is [DESIGN.md](DESIGN.md). Read it before
 any UI work — it defines the tokens, the two vocabularies, the ambient layer
-contract, and the governance flow. **You (the AI) work inside that governance
-layer: you select from the system, you do not invent outside it.** That is the
+contract, and the governance flow. Then read [DECISION-LOG.md](DECISION-LOG.md)
+in full before changing the system: DESIGN.md holds the rules, the log holds
+the reasoning behind them (DESIGN.md §12 says why that matters). **You (the
+AI) work inside that governance layer: you select from the system, you do not
+invent outside it.** That is the
 product's thesis applied to its own construction.
 
 ## Commands
@@ -111,7 +114,7 @@ When a request produces UI that doesn't match existing patterns — a new compon
 shape, a new layout structure, a divergent interaction — STOP and ask the user:
 *"This looks like a new pattern — should it become part of the design system?"*
 On yes: implement in the proper vocabulary, document in the registry, update
-DESIGN.md (§6/§13) and the decision log (§12). On no: rebuild with existing
+DESIGN.md (§6/§13) and the decision log ([DECISION-LOG.md](DECISION-LOG.md)). On no: rebuild with existing
 patterns. Use the `ds-manager` skill for system impact and
 `product-design-manager` for UX judgment.
 

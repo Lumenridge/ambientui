@@ -64,7 +64,7 @@ export function ShimmerPlaceholder({
  * The assistant's mark: the real OrbCharacter — one shader instance per
  * surface mark, riding the live ambient state. (The CSS OrbGlyph remains
  * for incidental marks: the footer brand and settled transcript entries,
- * where a context per row would stack up — DESIGN.md §12.)
+ * where a context per row would stack up — DECISION-LOG.md.)
  */
 export function AssistantMark({ size }: { size: number }) {
   const runtime = useAmbientRuntime()
