@@ -1,4 +1,4 @@
-import { composeResponse } from "./compose-response"
+import type { KitResponse } from "./response-kit"
 import {
   wait,
   type AskContext,
@@ -12,10 +12,15 @@ import {
  *
  * The layer ships no model and needs none to be demonstrated, but it must
  * never be built around a backend that answers instantly and never fails.
- * This wraps any synchronous fixture (by default the scenario router in
- * compose-response.ts) in the behaviour of a network: it takes time, it
- * can be abandoned mid-flight, and it sometimes fails. Swapping it for a
- * real responder then changes what answers, not how the layer behaves.
+ * This wraps any synchronous fixture in the behaviour of a network: it takes
+ * time, it can be abandoned mid-flight, and it sometimes fails. Swapping it
+ * for a real responder then changes what answers, not how the layer behaves.
+ *
+ * THE LAYER SHIPS NO SAMPLE ANSWERS OF ITS OWN. Answers belong to the product
+ * they are about: setup writes each page's sample answers next to the page
+ * (start.md), and a host's demo passes its own scenarios here. Without them,
+ * the mock says plainly that nothing has been set up to answer — a canned
+ * answer about some other product is worse than an honest placeholder.
  *
  * A host picks which one runs; the layer never reads an environment flag:
  *
@@ -24,7 +29,7 @@ import {
  *     : createMockResponder({ respond: myFixtures })
  */
 export type MockResponderOptions = {
-  /** The canned judgement. Defaults to the dev-tool scenario router. */
+  /** The canned judgement. Defaults to the placeholder below. */
   respond?: (question: string, context: AskContext) => ResponderResult
   /** How long an answer takes, in ms: fixed, or a [min, max] range. */
   latency?: number | [number, number]
@@ -41,9 +46,27 @@ export type MockResponderOptions = {
 const ASKS_FOR_FAILURE =
   /simulate (an? )?(error|failure|outage)|fail on purpose/i
 
+/**
+ * What the mock says when no page and no host has taught it anything. It
+ * names the two places answers come from, because the person reading it is
+ * almost always the developer who has not wired them yet.
+ */
+export function placeholderResponse(
+  _question: string,
+  { pageChip }: AskContext
+): KitResponse {
+  const ground = pageChip?.label ?? "this page"
+  return {
+    text:
+      `There are no sample answers for ${ground} yet, and no backend is connected. ` +
+      `A page adds its own with \`setPageIntel({ respond })\`; a backend connects through ` +
+      `\`<AssistantProvider respond>\`.`,
+    refs: pageChip ? [{ label: pageChip.label, icon: "document" }] : [],
+  }
+}
+
 export function createMockResponder({
-  respond = (question, { pageChip, chips }) =>
-    composeResponse(question, pageChip, chips),
+  respond = placeholderResponse,
   latency = [300, 800],
   failRate = 0,
   failWith = "The assistant is unreachable right now.",
@@ -58,5 +81,5 @@ export function createMockResponder({
   }
 }
 
-/** The default: the scenario router over a plausible network. */
+/** The default: the placeholder over a plausible network. */
 export const mockResponder: AssistantResponder = createMockResponder()

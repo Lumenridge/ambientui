@@ -38,7 +38,9 @@ wait for the answer:
 - **Ambient layer only:** install just the `@ambientui/ambient-layer`
   door in step 2, mount `AssistantProvider` + `Assistant`, and skip the
   taste question — the layer derives sensible defaults and their product
-  keeps its own styling. Steps 3 and 4 do not apply.
+  keeps its own styling. Steps 3 and 4 do not apply. The sample answers
+  in step 5 still do: the assistant answers either way, and it should
+  answer about THIS product.
 - **The design architecture:** run the whole journey below. Be explicit
   that saving the Foundation will restyle their existing components that
   consume its tokens, and migrate gently — never rewrite screens they
@@ -148,7 +150,7 @@ Mount both providers at the app root now, before building anything:
 
 ```tsx
 <FoundationProvider>
-  <AssistantProvider navItems={NAV} onNavigate={goTo}>
+  <AssistantProvider navItems={NAV} onNavigate={goTo} respond={responder}>
     <App />
     <Assistant />
   </AssistantProvider>
@@ -156,6 +158,28 @@ Mount both providers at the app root now, before building anything:
 ```
 
 `navItems` is the app's own route list; wire `onNavigate` to its router.
+`responder` is the one switch between sample answers and a real backend.
+Create it now in `lib/assistant/responder.ts`, mock first, so the real
+client cannot be reached while the flag is on:
+
+```ts
+import { createMockResponder, type AssistantResponder } from "@/components/ambient"
+
+// SAMPLE ANSWERS until a backend exists. Set VITE_ASSISTANT_MOCK=false
+// (or your framework's public env equivalent) to route questions to `live`.
+const isMock = import.meta.env.VITE_ASSISTANT_MOCK !== "false"
+
+const live: AssistantResponder = async () => {
+  throw new Error("The assistant's backend is not connected yet.")
+}
+
+export const responder: AssistantResponder = isMock
+  ? createMockResponder()
+  : live
+```
+
+The mock answers pages' own sample answers (step 5) and says plainly when
+a question has none. Adjust the import to where the layer landed.
 Confirm the app still runs before moving on. Fix anything that broke; the
 person should never see this step fail.
 
@@ -203,6 +227,41 @@ Give each page a context line for the assistant while you build it: call
 person is. It is one call per page and it is what makes the assistant feel
 aware later.
 
+**Then teach the assistant this product — sample answers, mandatory.** The
+layer ships no answers of its own; without them, Cmd-K in their product
+answers with a placeholder. You write them the way you wrote the screens:
+from the product's real material.
+
+1. **Read what the page works with**: the types, the API client, the
+   records it lists, the actions it offers. The answers use those names
+   and shapes, never another product's.
+2. **Next to each page, write `mock.ts`** with 3–5 questions a person on
+   that page would really ask, each answered as a `KitResponse` — prose,
+   `evidence` (a records query as a `tool` block, a `search`, a short
+   `reasoning`), `artifacts` where the answer produces something, `refs`
+   to the records it used, and `followUps` that lead to the page's other
+   answers. Match questions loosely (a regex per intent) and return `null`
+   for anything else, so off-topic questions fall through honestly.
+3. **Register it with the page's intel**, and make every suggestion one of
+   its questions — a suggested question that lands on the placeholder is
+   a broken promise:
+
+   ```tsx
+   setPageIntel({ respond: itemsRespond, suggestions: ITEMS_ASKS })
+   ```
+4. **Stay inside the product.** Answers only describe what the app can
+   actually show or do. Mark each file at the top as sample answers and
+   name the flag that turns them off. Grammar only — no styling, no
+   colours, no markup inside the answers.
+
+Cap it: 3–5 answers per page, for at most 5 pages — the ones the person
+will open first. Past that, write one app-wide set on the provider's
+responder instead (`createMockResponder({ respond })`), and say so.
+
+Each sample answer is also the contract the backend will meet: when the
+engineer connects one, `live` returns the same `KitResponse` shape from a
+`fetch`, and nothing on screen changes.
+
 Also build one page the person did not ask for — this is mandatory on
 the from-scratch path, and strongly recommended when an existing product
 adopted the full architecture: a `/ds` page, composed on the installed
@@ -230,6 +289,16 @@ Then take them there. When you hand the project over, walk the owner
 through the page in a few sentences: what each control governs, that
 every change propagates to every component, and that Save is what
 persists it. Do not just mention the page exists — explain it.
+
+**Check the sample answers too — mandatory before the reveal.** Open each
+page that has them, ask every suggested question, and confirm each one
+gets its sample answer, not the placeholder. Ask "simulate an error" once
+and confirm the error state appears with Retry. Then tell the person what
+you wrote, in one line, and how to get more:
+
+> I've added 14 sample answers across 4 pages (Items, Users, Settings,
+> Dashboard). They're mock data behind `VITE_ASSISTANT_MOCK`. If you want
+> sample answers for more pages, or different questions, ask me to add them.
 
 ## 6. The reveal
 

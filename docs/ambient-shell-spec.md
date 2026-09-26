@@ -247,8 +247,11 @@ chips, and an `AbortSignal`, and returns a `KitResponse`, `null` ("not
 mine"), or a Promise of either. Three are asked in order, and the first
 answer wins: the page's `PageIntel.respond`, the host's
 `<AssistantProvider respond>`, and the mock (`mock-responder.ts`), which
-serves the canned `composeResponse` scenarios after a realistic delay. A
-real model or backend is a responder; nothing ever replaces the objects.
+answers after a realistic delay. The layer ships no sample answers: the
+mock's default is a placeholder that says none are set up. Sample answers
+belong to the product they describe, written per page at setup
+(`start.md`) and served with `createMockResponder({ respond })`. A real
+model or backend is a responder; nothing ever replaces the objects.
 
 The turn runner owns time and failure, so a responder does not have to.
 The character thinks until the answer arrives, held to a floor (1100 ms on

@@ -211,11 +211,6 @@
           "target": "components/ambient/attach-menu.tsx"
         },
         {
-          "path": ".registry/packages/ambient/src/compose-response.ts",
-          "type": "registry:lib",
-          "target": "components/ambient/compose-response.ts"
-        },
-        {
           "path": ".registry/packages/ambient/src/composer.tsx",
           "type": "registry:component",
           "target": "components/ambient/composer.tsx"

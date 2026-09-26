@@ -2,10 +2,10 @@
  * THE MOCK DATA — what the layer shows before a host has told it anything.
  *
  * These used to sit inline in assistant.tsx, mixed in with the component. They
- * are fixtures for the dev-tool demo, the same material compose-response.ts
- * answers from, so they live beside the mock backend instead. A page replaces
- * the suggestions and recents through PageIntel; nothing here is a default a
- * product should ship with.
+ * are demo fixtures, so they live beside the mock backend instead. A page
+ * replaces the suggestions and recents through PageIntel, and setup writes
+ * those per page (start.md); nothing here is a default a product should ship
+ * with.
  */
 
 /** Questions offered before the page has said what is worth asking. */
