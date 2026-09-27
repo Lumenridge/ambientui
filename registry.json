@@ -247,6 +247,11 @@
           "target": "components/ambient/orb.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -566,6 +571,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -663,6 +673,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -764,6 +779,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -861,6 +881,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -962,6 +987,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -1061,6 +1091,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -1158,6 +1193,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -1264,6 +1304,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -1361,6 +1406,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -1462,6 +1512,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -1559,6 +1614,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -1660,6 +1720,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -1757,6 +1822,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -1858,6 +1928,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -1955,6 +2030,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -2056,6 +2136,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -2153,6 +2238,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -2254,6 +2344,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -2351,6 +2446,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -2452,6 +2552,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -2549,6 +2654,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -2650,6 +2760,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -2747,6 +2862,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",
@@ -2848,6 +2968,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -2947,6 +3072,11 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/responder.ts",
           "type": "registry:lib",
           "target": "components/ambient/responder.ts"
@@ -3044,6 +3174,11 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
         },
         {
           "path": ".registry/packages/ambient/src/responder.ts",

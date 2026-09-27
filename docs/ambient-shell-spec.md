@@ -241,13 +241,13 @@ the answer keeps every version reachable (`1 / 3`), and only the newest
 branch streams. Message actions on a settled answer: copy, approve,
 reject (mutually exclusive pair), regenerate.
 
-The model seam is the host's assistant API (`responder.ts`). The layer
+The model seam is the host's Ambient API (`responder.ts`). The layer
 makes no requests: the host passes `<AssistantProvider api>` an object
-built with `createAssistantApi({ ask, suggestions?, recents? })`, and the
+built with `createAmbientApi({ ask, suggestions?, recents? })`, and the
 layer calls it. `ask` receives the question, the conversation so far
 (`history`, `conversationId`), the page chip and the attached chips, and an
-`AbortSignal`. It resolves to a `KitResponse`, or streams `AskEvent`s that
-the layer assembles as they arrive (SSE through `eventsFromSSE`; any other
+`AbortSignal`. It resolves to an `AmbientAnswer`, or streams `AmbientAnswerEvent`s that
+the layer assembles as they arrive (SSE through `answerEventsFromSSE`; any other
 transport through a small adapter).
 Every request and response is parsed against the layer's zod schemas
 (typed against the kits' own interfaces, so the two cannot drift); a
@@ -257,7 +257,7 @@ in the host's API layer. The layer cannot tell and ships no answers of
 its own; without an API, every question fails saying none is connected.
 A real model or backend replaces the host's stubs; nothing ever replaces
 the objects. Which tools fit behind the API, with examples, and what the
-contract does not cover yet: [assistant-api.md](assistant-api.md).
+contract does not cover yet: [ambient-api.md](ambient-api.md).
 
 The turn adds no time of its own. The character thinks from send until
 the API answers; Stop, a newer turn, or unmount aborts the signal, and a
@@ -288,7 +288,7 @@ motion hooks. A host with a theming engine implements that interface; a
 host without one gets the defaults. The hook never throws.
 
 **Optional wiring, in order of value**: `navItems` + `onNavigate` (the
-palette's Jump-to), `api` on the provider (the host's assistant API;
+palette's Jump-to), `api` on the provider (the host's Ambient API;
 without it every question fails saying so), `setPageChip` per page,
 `setPageIntel` for live suggestions only the page knows, `setCommands`
 for palette actions,

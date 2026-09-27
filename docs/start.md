@@ -150,7 +150,7 @@ Mount both providers at the app root now, before building anything:
 
 ```tsx
 <FoundationProvider>
-  <AssistantProvider navItems={NAV} onNavigate={goTo} api={assistantApi}>
+  <AssistantProvider navItems={NAV} onNavigate={goTo} api={ambientApi}>
     <App />
     <Assistant />
   </AssistantProvider>
@@ -171,7 +171,7 @@ endpoints are declared, how base URLs, auth headers and errors are
 handled, how env flags are read, and whether it already has a mock or
 stub mode. The assistant's endpoints join that the way any other
 feature's would: same client, same conventions, same stub mechanism if
-there is one. Wrap them with `createAssistantApi`, which checks every
+there is one. Wrap them with `createAmbientApi`, which checks every
 request and response against the layer's zod schemas, so a malformed
 reply shows the failure state instead of breaking the page.
 
@@ -179,14 +179,14 @@ If the project has no API layer yet, this shape works — one file for
 every request the assistant makes, stubs by default:
 
 ```ts
-// lib/assistant/api.ts — every request the assistant makes goes through here.
-import { createAssistantApi } from "@/components/ambient/responder"
+// lib/ambient/api.ts — every request the assistant makes goes through here.
+import { createAmbientApi } from "@/components/ambient/responder"
 
 import { stubs } from "./stubs"
 
-// STUBS until the backend exists. Set VITE_ASSISTANT_STUBS=false (or the
+// STUBS until the backend exists. Set VITE_AMBIENT_STUBS=false (or the
 // framework's public env equivalent) to send every request to the server.
-const USE_STUBS = import.meta.env.VITE_ASSISTANT_STUBS !== "false"
+const USE_STUBS = import.meta.env.VITE_AMBIENT_STUBS !== "false"
 
 const post =
   (path: string) =>
@@ -201,10 +201,10 @@ const post =
     return res.json()
   }
 
-export const assistantApi = createAssistantApi(
+export const ambientApi = createAmbientApi(
   USE_STUBS
     ? stubs
-    : { ask: post("/assistant/ask"), suggestions: post("/assistant/suggestions") }
+    : { ask: post("/ambient/ask"), suggestions: post("/ambient/suggestions") }
 )
 ```
 
@@ -213,9 +213,9 @@ the assistant's requests go through one place, the stub-or-server
 decision is made there (the layer must never know which it is talking
 to), and stubs are the default until a backend exists. Adjust the import
 to where the layer landed. A backend that streams returns
-`eventsFromSSE(response)` from `ask` instead of JSON. If the project
+`answerEventsFromSSE(response)` from `ask` instead of JSON. If the project
 already uses an LLM harness or an AI SDK,
-[assistant-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/assistant-api.md)
+[ambient-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/ambient-api.md)
 shows how it fits behind the API, and which tools don't.
 Confirm the app still runs before moving on. Fix anything that broke; the
 person should never see this step fail.
@@ -274,7 +274,7 @@ has them; otherwise use the shape below.
    records it lists, the actions it offers. The answers use those names
    and shapes, never another product's.
 2. **For each page, write 3–5 questions** a person on that page would
-   really ask, each answered as a `KitResponse` — prose, `evidence` (a
+   really ask, each answered as an `AmbientAnswer` — prose, `evidence` (a
    records query as a `tool` block, a `search`, a short `reasoning`),
    `artifacts` where the answer produces something, `refs` to the records
    it used, and `followUps` that lead to the page's other answers. Match
@@ -289,9 +289,9 @@ has them; otherwise use the shape below.
    error state can be seen before a real outage shows it:
 
    ```ts
-   // lib/assistant/stubs/index.ts — SAMPLE ANSWERS, not a backend.
-   // Turned off by VITE_ASSISTANT_STUBS=false (see lib/assistant/api.ts).
-   import type { AssistantApiHandlers } from "@/components/ambient/responder"
+   // lib/ambient/stubs/index.ts — SAMPLE ANSWERS, not a backend.
+   // Turned off by VITE_AMBIENT_STUBS=false (see lib/ambient/api.ts).
+   import type { AmbientApiHandlers } from "@/components/ambient/responder"
 
    import { items } from "./items"
    import { users } from "./users"
@@ -309,7 +309,7 @@ has them; otherwise use the shape below.
        })
      })
 
-   export const stubs: AssistantApiHandlers = {
+   export const stubs: AmbientApiHandlers = {
      ask: async ({ question, pageChip }, { signal }) => {
        if (/simulate (an )?error/i.test(question)) {
          await settle(null, signal)
@@ -331,7 +331,7 @@ Cap it: 3–5 answers per page, for at most 5 pages — the ones the person
 will open first. Past that, the fallback covers the rest, and you say so.
 
 Each stub is also the contract the backend will meet: when the engineer
-connects one, the server returns the same `KitResponse` JSON (a pydantic
+connects one, the server returns the same `AmbientAnswer` JSON (a pydantic
 model or zod schema on the server can mirror the layer's), the flag
 flips, and nothing on screen changes.
 
@@ -370,8 +370,8 @@ confirm the error state appears with Retry. Then tell the person what you
 wrote, in one line, and how to get more:
 
 > I've added 14 sample answers across 4 pages (Items, Users, Settings,
-> Dashboard). They're stubs behind `VITE_ASSISTANT_STUBS`, served from
-> `lib/assistant/api.ts`. If you want sample answers for more pages, or
+> Dashboard). They're stubs behind `VITE_AMBIENT_STUBS`, served from
+> `lib/ambient/api.ts`. If you want sample answers for more pages, or
 > different questions, ask me to add them.
 
 ## 6. The reveal

@@ -80,7 +80,7 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    drag-as-mode-switch, page context via `setPageChip` (and what the page
    knows via `setPageIntel`), and the response kit (v0, `response-kit.tsx`)
    fills the `send()` seam with composed answer objects — answers come from
-   the host's assistant API (`responder.ts` is the contract: zod-checked
+   the host's Ambient API (`responder.ts` is the contract: zod-checked
    `ask`/`suggestions`/`recents`, passed to `<AssistantProvider api>`). The
    layer makes no requests and never knows whether it is talking to a
    server or stubs; that is the host's API layer's call, and a model

@@ -36,7 +36,7 @@ import {
   MessageBranches,
   StreamingText,
   UserMessage,
-  type KitResponse,
+  type AmbientAnswer,
 } from "./response-kit"
 import {
   AttachmentChip,
@@ -45,12 +45,8 @@ import {
   FollowUpSuggestions,
   type MessageAttachment,
 } from "./message-kit"
-import {
-  applyAskEvent,
-  EMPTY_RESPONSE,
-  failureDetail,
-  type HistoryTurn,
-} from "./responder"
+import { applyAnswerEvent, EMPTY_ANSWER, failureDetail } from "./responder"
+import type { AmbientTurn } from "./responder-schemas"
 import { AssistantOrb } from "./orb"
 import { Composer } from "./composer"
 import { Icon, type IconName } from "@ambient-ui/ui/components/icon"
@@ -77,7 +73,7 @@ type Msg = {
    * object: regenerating APPENDS a version rather than overwriting, so the
    * answer the user may have preferred is still reachable (MessageBranches).
    */
-  kits?: KitResponse[]
+  kits?: AmbientAnswer[]
   /** The question that produced this answer, so it can be asked again. */
   prompt?: string
   /**
@@ -110,8 +106,8 @@ const newConversationId = () =>
  * An answer counts as the version currently newest; a turn that failed
  * before saying anything is left out, because nothing was said.
  */
-const historyOf = (list: Msg[]): HistoryTurn[] =>
-  list.flatMap((msg): HistoryTurn[] =>
+const historyOf = (list: Msg[]): AmbientTurn[] =>
+  list.flatMap((msg): AmbientTurn[] =>
     msg.role === "user"
       ? [{ role: "user", text: msg.text }]
       : msg.kits?.length
@@ -535,14 +531,14 @@ export function Assistant({
     setMessages((m) =>
       m.map((msg) => (msg.arriving ? { ...msg, ...patch(msg) } : msg))
     )
-  const withKit = (kit: KitResponse) => (msg: Msg): Partial<Msg> => ({
+  const withKit = (kit: AmbientAnswer) => (msg: Msg): Partial<Msg> => ({
     kits: msg.kits ? [...msg.kits.slice(0, -1), kit] : [kit],
   })
 
   const runTurn = (
     question: string,
-    history: HistoryTurn[],
-    start: (kit: KitResponse) => void,
+    history: AmbientTurn[],
+    start: (kit: AmbientAnswer) => void,
     fail: (detail: string) => void
   ) => {
     turnRef.current?.abort()
@@ -558,7 +554,7 @@ export function Assistant({
       setOrbState("still")
     }
     void (async () => {
-      let kit: KitResponse | null = null
+      let kit: AmbientAnswer | null = null
       try {
         const events = api.ask(
           { question, conversationId, history, pageChip, chips },
@@ -567,7 +563,7 @@ export function Assistant({
         for await (const event of events) {
           if (!current()) return
           const first = kit === null
-          kit = applyAskEvent(kit ?? EMPTY_RESPONSE, event)
+          kit = applyAnswerEvent(kit ?? EMPTY_ANSWER, event)
           pendingEffect.current = kit.effect ?? null
           // NOT "answer" here — the block has only been composed; its
           // evidence still has to run. ResponseBlock announces the handover.
@@ -615,7 +611,7 @@ export function Assistant({
   }
 
   /** A fresh answer to `question`, landing as a new assistant message. */
-  const answer = (question: string, history: HistoryTurn[]) =>
+  const answer = (question: string, history: AmbientTurn[]) =>
     runTurn(
       question,
       history,
@@ -1154,7 +1150,7 @@ export function Assistant({
           : [
               ...recentChats.map((r) => ({
                 id: `recent-${r.text}`,
-                section: "Recent chats",
+                section: "AmbientRecent chats",
                 label: r.text,
                 trailing: r.when,
                 iconKind: "recent" as const,
