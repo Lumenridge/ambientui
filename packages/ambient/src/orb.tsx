@@ -58,7 +58,7 @@ export function AssistantOrb() {
     orbState,
     setOrbState,
     seedPrompt,
-    pageIntel,
+    suggestions,
   } = useAssistant()
   const runtime = useAmbientRuntime()
   const microT = useMotionTransition("micro")
@@ -82,32 +82,21 @@ export function AssistantOrb() {
   }
   const closeQuick = () => {
     if (closeTimer.current) window.clearTimeout(closeTimer.current)
-    if (askingRef.current) return
     setQuick(false)
     setQuickInput("")
     setOrbState("still")
   }
-  const [asking, setAsking] = React.useState(false)
-  const askingRef = React.useRef(false)
-  // read from pointer handlers subscribed once; refreshed after commit
-  React.useEffect(() => {
-    askingRef.current = asking
-  })
   const sendQuick = (override?: string) => {
     const text = (override ?? quickInput).trim()
-    if (!text || asking) return
-    // The pill holds the thinking beat itself — the question stays where it
-    // was asked, the character churns in place — and hands over to the panel
-    // at the moment there is an answer to hold.
-    setAsking(true)
-    setOrbState("thinking")
-    window.setTimeout(() => {
-      seedPrompt(text, true, true)
-      setMode("panel")
-      setQuickInput("")
-      setQuick(false)
-      setAsking(false)
-    }, 1100)
+    if (!text) return
+    // The question moves to the panel at once, where the character thinks
+    // for exactly as long as the host's API takes to answer. The pill used
+    // to hold a fixed beat of its own first; with a real request behind the
+    // answer, a second, invented wait only delays it.
+    seedPrompt(text, true)
+    setMode("panel")
+    setQuickInput("")
+    setQuick(false)
   }
   const [drag, setDrag] = React.useState<{ x: number; y: number; moved: boolean } | null>(null)
   // Ref mirror so pointerup never reads a stale closure (fast flicks, synthetic events)
@@ -380,32 +369,26 @@ export function AssistantOrb() {
                 transition={{ ...spring, opacity: microT }}
                 onPointerDown={(e) => e.stopPropagation()}
               >
-                {asking ? (
-                  <span className="text-muted-foreground min-w-0 flex-1 truncate text-sm">
-                    {quickInput}
-                  </span>
-                ) : (
-                  // THE ONE COMPOSER, quick variant: the pill supplies the
-                  // glass and the height, this supplies everything touched
-                  <Composer
-                    variant="quick"
-                    inputRef={quickRef}
-                    value={quickInput}
-                    onChange={setQuickInput}
-                    onSend={() => sendQuick()}
-                    onEscape={closeQuick}
-                    placeholder="Ask ambientui…"
-                    // what this page thinks is worth doing next; Tab runs it
-                    suggestion={pageIntel?.suggestions?.[0]}
-                    onAcceptSuggestion={() => {
-                      const next = pageIntel?.suggestions?.[0]
-                      if (next) {
-                        setQuickInput(next)
-                        sendQuick(next)
-                      }
-                    }}
-                  />
-                )}
+                {/* THE ONE COMPOSER, quick variant: the pill supplies the
+                    glass and the height, this supplies everything touched */}
+                <Composer
+                  variant="quick"
+                  inputRef={quickRef}
+                  value={quickInput}
+                  onChange={setQuickInput}
+                  onSend={() => sendQuick()}
+                  onEscape={closeQuick}
+                  placeholder="Ask ambientui…"
+                  // what this page thinks is worth doing next; Tab runs it
+                  suggestion={suggestions[0]}
+                  onAcceptSuggestion={() => {
+                    const next = suggestions[0]
+                    if (next) {
+                      setQuickInput(next)
+                      sendQuick(next)
+                    }
+                  }}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -415,7 +398,7 @@ export function AssistantOrb() {
               control in there would make it two. This sits alongside, on the
               side the pill did not take, and only while the pill is open. */}
           <AnimatePresence>
-            {quick && !drag?.moved && !asking && (
+            {quick && !drag?.moved && (
               <motion.button
                 key="quick-history"
                 type="button"
