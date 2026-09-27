@@ -212,8 +212,10 @@ Whatever shape the project's own API layer gives it, keep three things:
 the assistant's requests go through one place, the stub-or-server
 decision is made there (the layer must never know which it is talking
 to), and stubs are the default until a backend exists. Adjust the import
-to where the layer landed. If the project already uses an LLM harness or
-an AI SDK, [assistant-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/assistant-api.md)
+to where the layer landed. A backend that streams returns
+`eventsFromSSE(response)` from `ask` instead of JSON. If the project
+already uses an LLM harness or an AI SDK,
+[assistant-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/assistant-api.md)
 shows how it fits behind the API, and which tools don't.
 Confirm the app still runs before moving on. Fix anything that broke; the
 person should never see this step fail.
@@ -278,7 +280,7 @@ has them; otherwise use the shape below.
    it used, and `followUps` that lead to the page's other answers. Match
    questions loosely, one pattern per intent.
 3. **Route by page.** The page's `setPageChip` id travels with every
-   request, so the stubs hand each question to that page's answers, and
+   request (with the conversation's `history`, which stubs can ignore), so the stubs hand each question to that page's answers, and
    `suggestions` returns that page's questions — every suggestion then has
    an answer. Anything unmatched gets one honest fallback answer: there is
    no sample answer for that yet.

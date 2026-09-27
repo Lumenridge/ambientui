@@ -29,11 +29,18 @@ export function StreamingText({
   text,
   live = true,
   charsPerSecond,
+  complete = true,
   onSettled,
   className,
 }: {
   text: string
   live?: boolean
+  /**
+   * Whether `text` is all there is. False while an answer is still streaming
+   * in: the write head catches up with what has arrived and waits there,
+   * and nothing settles until the rest of the text is known.
+   */
+  complete?: boolean
   /**
    * Override the runtime pace (streamCharsPerSecond). The
    * default reads as deliberate writing, not a printer.
@@ -64,13 +71,13 @@ export function StreamingText({
       Math.floor(((t - startRef.current) / 1000) * cps)
     )
     setShown(next)
-    if (next >= text.length) {
+    if (next >= text.length && complete) {
       settledRef.current = true
       window.setTimeout(() => onSettledRef.current?.(), 400)
     }
   })
 
-  const done = shown >= text.length
+  const done = shown >= text.length && complete
 
   return (
     <span className={className}>

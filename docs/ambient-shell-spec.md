@@ -244,8 +244,11 @@ reject (mutually exclusive pair), regenerate.
 The model seam is the host's assistant API (`responder.ts`). The layer
 makes no requests: the host passes `<AssistantProvider api>` an object
 built with `createAssistantApi({ ask, suggestions?, recents? })`, and the
-layer calls it. `ask` receives the question, the page chip and the
-attached chips, and an `AbortSignal`, and resolves to a `KitResponse`.
+layer calls it. `ask` receives the question, the conversation so far
+(`history`, `conversationId`), the page chip and the attached chips, and an
+`AbortSignal`. It resolves to a `KitResponse`, or streams `AskEvent`s that
+the layer assembles as they arrive (SSE through `eventsFromSSE`; any other
+transport through a small adapter).
 Every request and response is parsed against the layer's zod schemas
 (typed against the kits' own interfaces, so the two cannot drift); a
 reply that does not match fails the turn with the reason. Where the

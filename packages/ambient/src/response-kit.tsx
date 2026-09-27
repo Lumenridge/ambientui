@@ -312,6 +312,7 @@ export function MessageBranches({
   branches,
   variant,
   live = true,
+  arriving = false,
   onSettled,
   onAnswerStart,
   onRegenerate,
@@ -322,6 +323,8 @@ export function MessageBranches({
   variant?: MessageVariant
   /** Whether the newest branch is still arriving. */
   live?: boolean
+  /** Whether the API is still streaming the newest branch in. */
+  arriving?: boolean
   onSettled?: () => void
   /** The evidence finished and the prose is starting. */
   onAnswerStart?: () => void
@@ -352,6 +355,7 @@ export function MessageBranches({
         variant={variant}
         // only the newest branch is still being written
         live={live && isNewest}
+        arriving={arriving && isNewest}
         onSettled={onSettled}
         onAnswerStart={onAnswerStart}
         onRegenerate={onRegenerate}
@@ -487,10 +491,16 @@ export function ResponseBlock({
   onRegenerate,
   onFollowUp,
   live = true,
+  arriving = false,
   variant,
   className,
 }: {
   response: KitResponse
+  /**
+   * The API is still streaming this answer in. Blocks and prose appear as
+   * they arrive; nothing settles until the stream ends.
+   */
+  arriving?: boolean
   onSettled?: () => void
   /**
    * The evidence is done and the prose is starting. The shell holds its
@@ -526,15 +536,24 @@ export function ResponseBlock({
   // explaining the work cannot precede the work. See stage-queue.ts.
   const { queue, settled: evidenceSettled } = useStageQueue(evidence.length)
   const evidenceDone = !live || evidence.length === 0 || evidenceSettled
+  // A STREAM MAY NOT HAVE SENT ITS EVIDENCE YET. While it is arriving, the
+  // prose waits for its first words as well as for the evidence before it;
+  // once the prose has started it stays mounted, even if a late block
+  // arrives, because a StreamingText that remounts starts over.
+  const proseReady =
+    evidenceDone && (!arriving || response.text.length > 0)
+  const [proseStarted, setProseStarted] = React.useState(proseReady)
+  if (proseReady && !proseStarted) setProseStarted(true)
+  const showProse = proseStarted || proseReady
   // announced once — a ref, not state: this latch changes nothing on screen,
   // and setState in an effect would cascade a render for a notification
   const announcedRef = React.useRef(false)
   React.useEffect(() => {
-    if (evidenceDone && live && !announcedRef.current) {
+    if (showProse && live && !announcedRef.current) {
       announcedRef.current = true
       onAnswerStart?.()
     }
-  }, [evidenceDone, live, onAnswerStart])
+  }, [showProse, live, onAnswerStart])
   return (
     <div
       className={cn(
@@ -562,11 +581,12 @@ export function ResponseBlock({
         {/* the prose does not exist until the work behind it is done — not
             merely hidden, because a StreamingText that is mounted has already
             started */}
-        {evidenceDone && (
+        {showProse && (
           <div className="min-w-0">
             <StreamingText
               text={response.text}
               live={live}
+              complete={!arriving}
               className="block text-sm leading-relaxed"
               onSettled={() => {
                 setDone(true)

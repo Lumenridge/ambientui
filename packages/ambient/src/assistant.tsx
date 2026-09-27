@@ -45,7 +45,12 @@ import {
   FollowUpSuggestions,
   type MessageAttachment,
 } from "./message-kit"
-import { failureDetail } from "./responder"
+import {
+  applyAskEvent,
+  EMPTY_RESPONSE,
+  failureDetail,
+  type HistoryTurn,
+} from "./responder"
 import { AssistantOrb } from "./orb"
 import { Composer } from "./composer"
 import { Icon, type IconName } from "@ambient-ui/ui/components/icon"
@@ -87,7 +92,32 @@ type Msg = {
    * regenerate failed, and the earlier versions are still worth keeping).
    */
   failed?: string
+  /**
+   * The API is still sending this answer (a stream). The prose may catch up
+   * with what has arrived, but it does not settle until this clears.
+   */
+  arriving?: boolean
 }
+
+/** A conversation's identity for the API: stable until it is cleared. */
+const newConversationId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+
+/**
+ * The conversation as the API is told it: every turn, in order, as text.
+ * An answer counts as the version currently newest; a turn that failed
+ * before saying anything is left out, because nothing was said.
+ */
+const historyOf = (list: Msg[]): HistoryTurn[] =>
+  list.flatMap((msg): HistoryTurn[] =>
+    msg.role === "user"
+      ? [{ role: "user", text: msg.text }]
+      : msg.kits?.length
+        ? [{ role: "assistant", text: msg.kits[msg.kits.length - 1]!.text }]
+        : []
+  )
 
 /**
  * Ids are derived from the list itself, never from a shared counter: a
@@ -399,8 +429,10 @@ export function Assistant({
     }
   }, [asking, mode])
 
+  const [conversationId, setConversationId] = React.useState(newConversationId)
   const clearConversation = () => {
     setMessages([])
+    setConversationId(newConversationId())
   }
 
   // AI activation while typing: the moment the input reads as a question
@@ -486,15 +518,31 @@ export function Assistant({
 
   /**
    * ONE TURN, HOWEVER IT WAS ASKED. Send, regenerate and retry all come
-   * through here: the question and what the person is looking at go to the
-   * host's API, and the character thinks for exactly as long as the API
-   * takes. The layer adds no wait of its own and never learns whether the
-   * API is a server or stubs. Only the newest turn may land: an answer
-   * arriving after Stop, or after another turn replaced it, is dropped.
+   * through here: the question, the conversation so far and what the person
+   * is looking at go to the host's API, and the character thinks for exactly
+   * as long as the API takes. The layer adds no wait of its own and never
+   * learns whether the API is a server or stubs.
+   *
+   * The answer arrives as events — one, for an API that answers whole; many,
+   * for one that streams. The first event puts the answer on screen (`start`);
+   * each later one updates it in place, and the prose follows what has
+   * arrived. Only the newest turn may land: an answer arriving after Stop,
+   * or after another turn replaced it, is dropped.
    */
+  const updateArriving = (
+    patch: (msg: Msg) => Partial<Msg>
+  ) =>
+    setMessages((m) =>
+      m.map((msg) => (msg.arriving ? { ...msg, ...patch(msg) } : msg))
+    )
+  const withKit = (kit: KitResponse) => (msg: Msg): Partial<Msg> => ({
+    kits: msg.kits ? [...msg.kits.slice(0, -1), kit] : [kit],
+  })
+
   const runTurn = (
     question: string,
-    land: (kit: KitResponse) => void,
+    history: HistoryTurn[],
+    start: (kit: KitResponse) => void,
     fail: (detail: string) => void
   ) => {
     turnRef.current?.abort()
@@ -502,27 +550,52 @@ export function Assistant({
     turnRef.current = turn
     beginWork()
     setOrbState("thinking")
-    api.ask({ question, pageChip, chips }, { signal: turn.signal }).then(
-      (kit) => {
-        if (turnRef.current !== turn) return
+    const current = () => turnRef.current === turn
+    const endWork = () => {
+      turnRef.current = null
+      busyRef.current = false
+      setBusy(false)
+      setOrbState("still")
+    }
+    void (async () => {
+      let kit: KitResponse | null = null
+      try {
+        const events = api.ask(
+          { question, conversationId, history, pageChip, chips },
+          { signal: turn.signal }
+        )
+        for await (const event of events) {
+          if (!current()) return
+          const first = kit === null
+          kit = applyAskEvent(kit ?? EMPTY_RESPONSE, event)
+          pendingEffect.current = kit.effect ?? null
+          // NOT "answer" here — the block has only been composed; its
+          // evidence still has to run. ResponseBlock announces the handover.
+          if (first) start(kit)
+          else updateArriving(withKit(kit))
+        }
+        if (!current()) return
+        if (!kit) {
+          endWork()
+          fail("The assistant sent an empty answer.")
+          return
+        }
         turnRef.current = null
-        pendingEffect.current = kit.effect ?? null
-        land(kit)
-        // NOT "answer" here — the block has only been composed; its evidence
-        // still has to run. ResponseBlock announces the real handover.
-      },
-      (error: unknown) => {
-        if (turnRef.current !== turn || turn.signal.aborted) return
-        turnRef.current = null
-        fail(failureDetail(error))
+        // the stream has ended: the prose may now finish and settle
+        updateArriving((msg) => ({ ...withKit(kit!)(msg), arriving: false }))
+      } catch (error) {
+        if (!current() || turn.signal.aborted) return
         // a failed turn ends the work but does NOT drain the queue: the next
         // instruction probably meets the same failure, so the person sees
         // this one first and decides — retry, or send the next deliberately
-        busyRef.current = false
-        setBusy(false)
-        setOrbState("still")
+        endWork()
+        const detail = failureDetail(error)
+        if (kit)
+          // it failed partway: what arrived stays, finished, with the reason
+          updateArriving(() => ({ arriving: false, settled: true, failed: detail }))
+        else fail(detail)
       }
-    )
+    })()
   }
 
   /** Mark a message failed, keeping whatever versions it already has. */
@@ -531,10 +604,21 @@ export function Assistant({
       m.map((msg) => (msg.id === id ? { ...msg, failed: detail } : msg))
     )
 
+  /** The conversation before the question that produced message `id`. */
+  const historyBefore = (id: number) => {
+    const before = messages.slice(
+      0,
+      Math.max(0, messages.findIndex((msg) => msg.id === id))
+    )
+    if (before[before.length - 1]?.role === "user") before.pop()
+    return historyOf(before)
+  }
+
   /** A fresh answer to `question`, landing as a new assistant message. */
-  const answer = (question: string) =>
+  const answer = (question: string, history: HistoryTurn[]) =>
     runTurn(
       question,
+      history,
       (kit) => {
         // a fresh answer is always the last message; an earlier regenerate
         // that was stopped mid-stream no longer owns the live slot
@@ -547,6 +631,7 @@ export function Assistant({
             text: kit.text,
             kits: [kit],
             prompt: question,
+            arriving: true,
           },
         ])
       },
@@ -574,6 +659,7 @@ export function Assistant({
     if (!target?.kits) return
     runTurn(
       target.prompt ?? target.text,
+      historyBefore(id),
       (kit) => {
         setRegeneratingId(id)
         setMessages((m) =>
@@ -583,6 +669,7 @@ export function Assistant({
                   ...msg,
                   settled: false,
                   failed: undefined,
+                  arriving: true,
                   kits: [...msg.kits, kit],
                 }
               : msg
@@ -609,8 +696,9 @@ export function Assistant({
       regenerate(id)
       return
     }
+    const history = historyBefore(id)
     setMessages((m) => m.filter((msg) => msg.id !== id))
-    answer(target.prompt ?? target.text)
+    answer(target.prompt ?? target.text, history)
   }
 
   const send = (textOverride?: string) => {
@@ -631,8 +719,9 @@ export function Assistant({
     if (mode === "line") setMode("panel")
     // THE RESPONSE KIT: page context + question → a composed answer object,
     // driving the real ambient pipeline — thinking while the API works,
-    // answer while streaming, still on settle
-    answer(text)
+    // answer while streaming, still on settle. The history is the
+    // conversation BEFORE this question: `messages` has not taken it yet.
+    answer(text, historyOf(messages))
   }
   /**
    * Focus the input when a surface opens, and drain any prompt handed over by
@@ -677,6 +766,8 @@ export function Assistant({
   const stop = () => {
     turnRef.current?.abort()
     turnRef.current = null
+    // a stream stopped partway ends where it is: what arrived was said
+    updateArriving(() => ({ arriving: false }))
     busyRef.current = false
     setBusy(false)
     setOrbState("still")
@@ -776,6 +867,7 @@ export function Assistant({
               {m.kits && (
                 <MessageBranches
                   branches={m.kits}
+                  arriving={m.arriving}
                   live={
                     !m.settled &&
                     m.id ===
