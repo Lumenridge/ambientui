@@ -50,11 +50,22 @@ The trade-off between the two is written up at
 import { AssistantProvider, Assistant } from "ambientui"
 import "ambientui/styles/ambient.css"
 
-<AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>
+<AssistantProvider
+  api={ambientApi}
+  navItems={NAV}
+  onNavigate={(id) => router.push(id)}
+>
   {children}
   <Assistant />
 </AssistantProvider>
 ```
+
+`api` is where questions go. The layer never makes a request itself: build
+the object with `createAmbientApi` in your own API layer, answer from stubs
+until your backend exists, and point it at the server when it does.
+Answers can arrive whole or streamed, and every one is validated before it
+renders. The contract and examples:
+[ambient-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/ambient-api.md).
 
 It needs no other providers. With none it falls back to sane defaults;
 supply your own design system by wrapping it in `AmbientRuntimeProvider`
