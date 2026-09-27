@@ -253,7 +253,8 @@ requests go — the host's server, a model it runs, or stubs — is decided
 in the host's API layer. The layer cannot tell and ships no answers of
 its own; without an API, every question fails saying none is connected.
 A real model or backend replaces the host's stubs; nothing ever replaces
-the objects.
+the objects. Which tools fit behind the API, with examples, and what the
+contract does not cover yet: [assistant-api.md](assistant-api.md).
 
 The turn adds no time of its own. The character thinks from send until
 the API answers; Stop, a newer turn, or unmount aborts the signal, and a
