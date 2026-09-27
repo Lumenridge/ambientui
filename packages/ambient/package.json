@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10",
+    "@paper-design/shaders-react": "^0.0.80",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
