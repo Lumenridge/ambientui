@@ -43,9 +43,9 @@ import {
  * THE RESPONSE KIT (v0) — the assistant's answers are composed OBJECTS,
  * not paragraphs. This first cut exists to make the ambient pipeline real
  * end-to-end: send → thinking → a streamed answer block → settle. The
- * composition comes from a responder (responder.ts) — the page's sample
- * answers, the host's backend, or the mock's placeholder; wiring a model in
- * replaces the responder, never the objects. Object inventory and references live in
+ * composition comes from the host's assistant API (responder.ts), which
+ * the layer calls and validates but never implements; wiring a model in
+ * replaces what the host's API does, never the objects. Object inventory and references live in
  * notes/response-kit-inspiration.md; each object ships documented in /ds.
  */
 

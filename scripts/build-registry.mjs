@@ -281,6 +281,7 @@ const NPM_FOR = [
   [/@paper-design\/shaders-react/, "@paper-design/shaders-react"],
   [/@hugeicons\/react/, "@hugeicons/react"],
   [/@hugeicons\/core-free-icons/, "@hugeicons/core-free-icons"],
+  [/from "zod"/, "zod"],
 ]
 function npmDeps(files) {
   const deps = new Set()
@@ -519,6 +520,7 @@ const items = [
       "@paper-design/shaders-react",
       "@hugeicons/react",
       "@hugeicons/core-free-icons",
+      "zod",
     ],
     registryDependencies: [
       url("ambient-styles"),

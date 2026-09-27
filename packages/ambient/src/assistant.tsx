@@ -45,9 +45,7 @@ import {
   FollowUpSuggestions,
   type MessageAttachment,
 } from "./message-kit"
-import { MOCK_ATTACHMENT, MOCK_RECENTS, MOCK_SUGGESTIONS } from "./mock-data"
-import { mockResponder } from "./mock-responder"
-import { failureDetail, resolveResponse, wait } from "./responder"
+import { failureDetail } from "./responder"
 import { AssistantOrb } from "./orb"
 import { Composer } from "./composer"
 import { Icon, type IconName } from "@ambient-ui/ui/components/icon"
@@ -98,6 +96,14 @@ type Msg = {
  * the transcript and replay every settled answer's stream.
  */
 const nextId = (m: Msg[]) => (m.length ? m[m.length - 1]!.id + 1 : 1)
+
+/**
+ * What the `+` attaches. A real file picker belongs to the host product, not
+ * to the layer — the layer's job is to hold what it is given — so this stands
+ * in for one until a host supplies the gesture.
+ */
+const SAMPLE_ATTACHMENT =
+  'TypeError: Cannot read properties of undefined (reading "draft")\n    at Composer (composer.tsx:9:14)\n    at renderWithHooks (react-dom.js:14985:18)'
 
 /** What each command family is called when it is being counted. */
 const HINT_NOUNS: Record<string, string> = {
@@ -191,9 +197,10 @@ export function Assistant({
     seedVersion,
     consumeSeededPrompt,
     consumeAutoSend,
-    consumeImmediate,
     navigate,
-    respond,
+    api,
+    suggestions,
+    recents: recentChats,
     announceEffect,
   } = useAssistant()
 
@@ -479,15 +486,14 @@ export function Assistant({
 
   /**
    * ONE TURN, HOWEVER IT WAS ASKED. Send, regenerate and retry all come
-   * through here: the responders are asked in order — the page for its own
-   * material, then the host's backend, then the mock — while the character
-   * thinks. The floor keeps a fast answer from reading as a lookup; a slow
-   * one simply thinks for longer. Only the newest turn may land: an answer
+   * through here: the question and what the person is looking at go to the
+   * host's API, and the character thinks for exactly as long as the API
+   * takes. The layer adds no wait of its own and never learns whether the
+   * API is a server or stubs. Only the newest turn may land: an answer
    * arriving after Stop, or after another turn replaced it, is dropped.
    */
   const runTurn = (
     question: string,
-    floorMs: number,
     land: (kit: KitResponse) => void,
     fail: (detail: string) => void
   ) => {
@@ -496,16 +502,8 @@ export function Assistant({
     turnRef.current = turn
     beginWork()
     setOrbState("thinking")
-    Promise.all([
-      resolveResponse(
-        [pageIntel?.respond, respond, mockResponder],
-        question,
-        { pageChip, chips },
-        { signal: turn.signal }
-      ),
-      wait(floorMs, turn.signal),
-    ]).then(
-      ([kit]) => {
+    api.ask({ question, pageChip, chips }, { signal: turn.signal }).then(
+      (kit) => {
         if (turnRef.current !== turn) return
         turnRef.current = null
         pendingEffect.current = kit.effect ?? null
@@ -534,10 +532,9 @@ export function Assistant({
     )
 
   /** A fresh answer to `question`, landing as a new assistant message. */
-  const answer = (question: string, floorMs: number) =>
+  const answer = (question: string) =>
     runTurn(
       question,
-      floorMs,
       (kit) => {
         // a fresh answer is always the last message; an earlier regenerate
         // that was stopped mid-stream no longer owns the live slot
@@ -577,7 +574,6 @@ export function Assistant({
     if (!target?.kits) return
     runTurn(
       target.prompt ?? target.text,
-      900,
       (kit) => {
         setRegeneratingId(id)
         setMessages((m) =>
@@ -614,10 +610,10 @@ export function Assistant({
       return
     }
     setMessages((m) => m.filter((msg) => msg.id !== id))
-    answer(target.prompt ?? target.text, 900)
+    answer(target.prompt ?? target.text)
   }
 
-  const send = (textOverride?: string, immediate = false) => {
+  const send = (textOverride?: string) => {
     const text = (
       typeof textOverride === "string" ? textOverride : input
     ).trim()
@@ -634,12 +630,9 @@ export function Assistant({
     setMessages((m) => [...m, { id: nextId(m), role: "user", text }])
     if (mode === "line") setMode("panel")
     // THE RESPONSE KIT: page context + question → a composed answer object,
-    // driving the real ambient pipeline — thinking while the responder
-    // works, answer while streaming, still on settle. A model replaces the
-    // mock; the objects and states stay.
-    // `immediate`: the surface that sent this already showed the thinking
-    // beat (quick ask), so the floor is only a frame
-    answer(text, immediate ? 60 : 1100)
+    // driving the real ambient pipeline — thinking while the API works,
+    // answer while streaming, still on settle
+    answer(text)
   }
   /**
    * Focus the input when a surface opens, and drain any prompt handed over by
@@ -666,7 +659,7 @@ export function Assistant({
       // could never ask for the at-rest state — the input kept whatever
       // the last visit typed.
       if (seeded !== null) {
-        if (seeded && consumeAutoSend()) send(seeded, consumeImmediate())
+        if (seeded && consumeAutoSend()) send(seeded)
         else setInput(seeded)
       }
       /* eslint-enable react-hooks/set-state-in-effect */
@@ -769,7 +762,7 @@ export function Assistant({
               : "I can see the page you are on. Right-click anything — a row, a control, a value — to attach it as context."}
           </p>
           <FollowUpSuggestions
-            suggestions={pageIntel?.suggestions ?? MOCK_SUGGESTIONS}
+            suggestions={suggestions}
             onPick={(text) => send(text)}
           />
         </div>
@@ -932,7 +925,7 @@ export function Assistant({
             onSend={send}
             onStop={stop}
             busy={busy}
-                onAttach={() => attachText(MOCK_ATTACHMENT)}
+                onAttach={() => attachText(SAMPLE_ATTACHMENT)}
             onPasteText={attachText}
             placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
           />
@@ -1067,7 +1060,7 @@ export function Assistant({
         : q
           ? [askItem, ...groupedCommands, ...navItems(queryMatches)]
           : [
-              ...(pageIntel?.recents ?? MOCK_RECENTS).map((r) => ({
+              ...recentChats.map((r) => ({
                 id: `recent-${r.text}`,
                 section: "Recent chats",
                 label: r.text,
@@ -1075,7 +1068,7 @@ export function Assistant({
                 iconKind: "recent" as const,
                 run: () => send(r.text),
               })),
-              ...(pageIntel?.suggestions ?? MOCK_SUGGESTIONS).map((p) => ({
+              ...suggestions.map((p) => ({
                 id: `prompt-${p}`,
                 section: pageIntel?.suggestLabel ?? "Suggested for this page",
                 label: p,
@@ -1385,7 +1378,7 @@ export function Assistant({
     // list showed only past questions, so the session actually on screen —
     // the one that might still be running — was the one thing missing from
     // the history of it.
-    const past = pageIntel?.recents ?? MOCK_RECENTS
+    const past = recentChats
     const live = messages.find((m) => m.role === "user")?.text
     const recents =
       live && !past.some((r) => r.text === live)
@@ -1562,7 +1555,7 @@ export function Assistant({
                 onSend={send}
                 onStop={stop}
                 busy={busy}
-                onAttach={() => attachText(MOCK_ATTACHMENT)}
+                onAttach={() => attachText(SAMPLE_ATTACHMENT)}
                 onPasteText={attachText}
                 placeholder={
                   busy ? "Queue another instruction…" : "Ask a follow-up…"

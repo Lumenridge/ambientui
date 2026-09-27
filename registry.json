@@ -173,7 +173,8 @@
         "framer-motion",
         "@paper-design/shaders-react",
         "@hugeicons/react",
-        "@hugeicons/core-free-icons"
+        "@hugeicons/core-free-icons",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -234,16 +235,6 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
-        },
-        {
-          "path": ".registry/packages/ambient/src/mock-data.ts",
-          "type": "registry:lib",
-          "target": "components/ambient/mock-data.ts"
-        },
-        {
-          "path": ".registry/packages/ambient/src/mock-responder.ts",
-          "type": "registry:lib",
-          "target": "components/ambient/mock-responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -526,7 +517,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -624,7 +616,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -722,7 +715,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -820,7 +814,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -918,7 +913,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1016,7 +1012,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1114,7 +1111,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1212,7 +1210,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1315,7 +1314,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1413,7 +1413,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1511,7 +1512,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1609,7 +1611,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1707,7 +1710,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1805,7 +1809,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1903,7 +1908,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2001,7 +2007,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2099,7 +2106,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2197,7 +2205,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2295,7 +2304,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2393,7 +2403,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2491,7 +2502,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2589,7 +2601,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2687,7 +2700,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2785,7 +2799,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2883,7 +2898,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2981,7 +2997,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",

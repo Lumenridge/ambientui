@@ -241,26 +241,27 @@ the answer keeps every version reachable (`1 / 3`), and only the newest
 branch streams. Message actions on a settled answer: copy, approve,
 reject (mutually exclusive pair), regenerate.
 
-The model seam: an `AssistantResponder` produces the block objects
-(`responder.ts`). It takes the question, the page chip and the attached
-chips, and an `AbortSignal`, and returns a `KitResponse`, `null` ("not
-mine"), or a Promise of either. Three are asked in order, and the first
-answer wins: the page's `PageIntel.respond`, the host's
-`<AssistantProvider respond>`, and the mock (`mock-responder.ts`), which
-answers after a realistic delay. The layer ships no sample answers: the
-mock's default is a placeholder that says none are set up. Sample answers
-belong to the product they describe, written per page at setup
-(`start.md`) and served with `createMockResponder({ respond })`. A real
-model or backend is a responder; nothing ever replaces the objects.
+The model seam is the host's assistant API (`responder.ts`). The layer
+makes no requests: the host passes `<AssistantProvider api>` an object
+built with `createAssistantApi({ ask, suggestions?, recents? })`, and the
+layer calls it. `ask` receives the question, the page chip and the
+attached chips, and an `AbortSignal`, and resolves to a `KitResponse`.
+Every request and response is parsed against the layer's zod schemas
+(typed against the kits' own interfaces, so the two cannot drift); a
+reply that does not match fails the turn with the reason. Where the
+requests go — the host's server, a model it runs, or stubs — is decided
+in the host's API layer. The layer cannot tell and ships no answers of
+its own; without an API, every question fails saying none is connected.
+A real model or backend replaces the host's stubs; nothing ever replaces
+the objects.
 
-The turn runner owns time and failure, so a responder does not have to.
-The character thinks until the answer arrives, held to a floor (1100 ms on
-send, 900 ms on regenerate, one frame for a quick ask that already showed
-its beat). Stop, a newer turn, or unmount aborts the signal, and a late
-answer is dropped. A rejected turn renders `ErrorState` with Retry in the
-transcript, and the queue waits instead of draining into the same failure.
-The mock fails when asked to ("simulate an error") or at a `failRate`, so
-the failure state can be walked on purpose.
+The turn adds no time of its own. The character thinks from send until
+the API answers; Stop, a newer turn, or unmount aborts the signal, and a
+late answer is dropped. A rejected turn renders `ErrorState` with Retry
+in the transcript, and the queue waits instead of draining into the same
+failure. Suggestions and recents come from the same API, per page; a
+page can still announce its own list through `setPageIntel` for state
+only it knows (a live problem inventory), and that wins.
 
 ---
 
@@ -283,9 +284,10 @@ motion hooks. A host with a theming engine implements that interface; a
 host without one gets the defaults. The hook never throws.
 
 **Optional wiring, in order of value**: `navItems` + `onNavigate` (the
-palette's Jump-to), `respond` on the provider (the host's backend; the
-mock answers without it), `setPageChip` per page, `setPageIntel` for live
-suggestions and page-level `respond`, `setCommands` for palette actions,
+palette's Jump-to), `api` on the provider (the host's assistant API;
+without it every question fails saying so), `setPageChip` per page,
+`setPageIntel` for live suggestions only the page knows, `setCommands`
+for palette actions,
 right-click → `explain`/`addChip` on things worth attaching.
 
 **Dependency boundary**: the layer imports the UI package and npm — never

@@ -77,9 +77,11 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    drag-as-mode-switch, page context via `setPageChip` (and what the page
    knows via `setPageIntel`), and the response kit (v0, `response-kit.tsx`)
    fills the `send()` seam with composed answer objects — answers come from
-   an `AssistantResponder` (`responder.ts`: page → provider → mock, may be
-   async); sample answers belong to the product they describe, never to the
-   layer, and a model is a responder that replaces them, never the objects. **One character per surface**: the
+   the host's assistant API (`responder.ts` is the contract: zod-checked
+   `ask`/`suggestions`/`recents`, passed to `<AssistantProvider api>`). The
+   layer makes no requests and never knows whether it is talking to a
+   server or stubs; that is the host's API layer's call, and a model
+   replaces the host's stubs, never the objects. **One character per surface**: the
    orb/OrbCharacter mark belongs in the row where the user speaks to the
    assistant (composer mark, quick-ask pill) and in the resting orb — never
    in headers, footers, navigation or product chrome. **An answer arrives in order**:
