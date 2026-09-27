@@ -212,7 +212,9 @@ Whatever shape the project's own API layer gives it, keep three things:
 the assistant's requests go through one place, the stub-or-server
 decision is made there (the layer must never know which it is talking
 to), and stubs are the default until a backend exists. Adjust the import
-to where the layer landed.
+to where the layer landed. If the project already uses an LLM harness or
+an AI SDK, [assistant-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/assistant-api.md)
+shows how it fits behind the API, and which tools don't.
 Confirm the app still runs before moving on. Fix anything that broke; the
 person should never see this step fail.
 

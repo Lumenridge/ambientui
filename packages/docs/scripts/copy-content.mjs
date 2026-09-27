@@ -38,6 +38,7 @@ const FILES = [
   "docs/motion-spec.md",
   "docs/start.md",
   "docs/ambient-shell-spec.md",
+  "docs/assistant-api.md",
   "figma/figma-sync.md",
   ".claude/skills/ds-manager/SKILL.md",
   ".claude/skills/product-design-manager/SKILL.md",
