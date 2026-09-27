@@ -1150,7 +1150,7 @@ export function Assistant({
           : [
               ...recentChats.map((r) => ({
                 id: `recent-${r.text}`,
-                section: "AmbientRecent chats",
+                section: "Recent chats",
                 label: r.text,
                 trailing: r.when,
                 iconKind: "recent" as const,
