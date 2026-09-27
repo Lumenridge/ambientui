@@ -43,12 +43,13 @@ import {
  * THE RESPONSE KIT (v0) — the assistant's answers are composed OBJECTS,
  * not paragraphs. This first cut exists to make the ambient pipeline real
  * end-to-end: send → thinking → a streamed answer block → settle. The
- * composition is canned (composeResponse); wiring a model in replaces the
- * composer, never the objects. Object inventory and references live in
+ * composition comes from the host's Ambient API (responder.ts), which
+ * the layer calls and validates but never implements; wiring a model in
+ * replaces what the host's API does, never the objects. Object inventory and references live in
  * notes/response-kit-inspiration.md; each object ships documented in /ds.
  */
 
-export interface KitReference {
+export interface AmbientReference {
   label: string
   /**
    * A source MARK, in a fixed precedence: logo, then icon, then nothing.
@@ -74,7 +75,7 @@ export interface KitReference {
  * the whole grammar — every member maps to one documented component, and a
  * model wiring in emits these rather than markdown.
  */
-export type KitBlock =
+export type AmbientBlock =
   | { kind: "reasoning"; steps: ReasoningStep[]; seconds?: number }
   | { kind: "parallel"; summary: string; calls: ParallelCall[] }
   | {
@@ -91,21 +92,21 @@ export type KitBlock =
   | { kind: "failure"; tool: string; target?: string; error: string; attempt?: number; attempts?: number }
   | { kind: "report"; title: string; sections: ReportSection[]; sourcesRead?: number }
 
-export interface KitResponse {
+export interface AmbientAnswer {
   text: string
-  refs: KitReference[]
+  refs: AmbientReference[]
   /**
    * What the assistant DID, rendered above the answer — reasoning, tool
    * calls, searches. Evidence comes first because it is what the answer
    * rests on; the reader can collapse it, but never has to go looking.
    */
-  evidence?: KitBlock[]
+  evidence?: AmbientBlock[]
   /**
    * What the answer PRODUCED — a diff to review, a test run, the session
    * summary. Below the prose, because these are consequences of the answer
    * rather than support for it.
    */
-  artifacts?: KitBlock[]
+  artifacts?: AmbientBlock[]
   /** Offered next turns; the surface decides what picking one does. */
   followUps?: string[]
   /**
@@ -126,7 +127,7 @@ export interface KitResponse {
  */
 // keyed by logo at the call site, so a changed logo mounts a fresh mark
 // rather than resetting this one's state from an effect
-function RefMark({ reference }: { reference: KitReference }) {
+function RefMark({ reference }: { reference: AmbientReference }) {
   const [failed, setFailed] = React.useState(false)
 
   if (reference.logo && !failed) {
@@ -171,7 +172,7 @@ function RefMark({ reference }: { reference: KitReference }) {
  * document, and an unmarked reference still reads as one list. A chip with an
  * href is a link and says so on hover; one without stays inert text.
  */
-export function ReferenceChips({ refs }: { refs: KitReference[] }) {
+export function ReferenceChips({ refs }: { refs: AmbientReference[] }) {
   if (refs.length === 0) return null
   return (
     <div className="mt-3">
@@ -272,7 +273,7 @@ export function MessagePair({
   className,
 }: {
   question: string
-  response?: KitResponse
+  response?: AmbientAnswer
   variant?: MessageVariant
   live?: boolean
   onSettled?: () => void
@@ -311,16 +312,19 @@ export function MessageBranches({
   branches,
   variant,
   live = true,
+  arriving = false,
   onSettled,
   onAnswerStart,
   onRegenerate,
   onFollowUp,
   className,
 }: {
-  branches: KitResponse[]
+  branches: AmbientAnswer[]
   variant?: MessageVariant
   /** Whether the newest branch is still arriving. */
   live?: boolean
+  /** Whether the API is still streaming the newest branch in. */
+  arriving?: boolean
   onSettled?: () => void
   /** The evidence finished and the prose is starting. */
   onAnswerStart?: () => void
@@ -351,6 +355,7 @@ export function MessageBranches({
         variant={variant}
         // only the newest branch is still being written
         live={live && isNewest}
+        arriving={arriving && isNewest}
         onSettled={onSettled}
         onAnswerStart={onAnswerStart}
         onRegenerate={onRegenerate}
@@ -395,11 +400,11 @@ export function MessageBranches({
  * emits blocks; this is where they become UI, and it is the only place that
  * decides what a `kind` looks like. No surface renders a block itself.
  */
-function KitBlockView({
+function AmbientBlockView({
   block,
   staged = true,
 }: {
-  block: KitBlock
+  block: AmbientBlock
   /** False for a settled message: history is written, not replayed. */
   staged?: boolean
 }) {
@@ -486,10 +491,16 @@ export function ResponseBlock({
   onRegenerate,
   onFollowUp,
   live = true,
+  arriving = false,
   variant,
   className,
 }: {
-  response: KitResponse
+  response: AmbientAnswer
+  /**
+   * The API is still streaming this answer in. Blocks and prose appear as
+   * they arrive; nothing settles until the stream ends.
+   */
+  arriving?: boolean
   onSettled?: () => void
   /**
    * The evidence is done and the prose is starting. The shell holds its
@@ -525,15 +536,24 @@ export function ResponseBlock({
   // explaining the work cannot precede the work. See stage-queue.ts.
   const { queue, settled: evidenceSettled } = useStageQueue(evidence.length)
   const evidenceDone = !live || evidence.length === 0 || evidenceSettled
+  // A STREAM MAY NOT HAVE SENT ITS EVIDENCE YET. While it is arriving, the
+  // prose waits for its first words as well as for the evidence before it;
+  // once the prose has started it stays mounted, even if a late block
+  // arrives, because a StreamingText that remounts starts over.
+  const proseReady =
+    evidenceDone && (!arriving || response.text.length > 0)
+  const [proseStarted, setProseStarted] = React.useState(proseReady)
+  if (proseReady && !proseStarted) setProseStarted(true)
+  const showProse = proseStarted || proseReady
   // announced once — a ref, not state: this latch changes nothing on screen,
   // and setState in an effect would cascade a render for a notification
   const announcedRef = React.useRef(false)
   React.useEffect(() => {
-    if (evidenceDone && live && !announcedRef.current) {
+    if (showProse && live && !announcedRef.current) {
       announcedRef.current = true
       onAnswerStart?.()
     }
-  }, [evidenceDone, live, onAnswerStart])
+  }, [showProse, live, onAnswerStart])
   return (
     <div
       className={cn(
@@ -555,17 +575,18 @@ export function ResponseBlock({
             rests on. Collapsed by default; never hidden. */}
         <StageQueueContext.Provider value={queue}>
           {evidence.map((b, i) => (
-            <KitBlockView key={`e${i}`} block={b} staged={live} />
+            <AmbientBlockView key={`e${i}`} block={b} staged={live} />
           ))}
         </StageQueueContext.Provider>
         {/* the prose does not exist until the work behind it is done — not
             merely hidden, because a StreamingText that is mounted has already
             started */}
-        {evidenceDone && (
+        {showProse && (
           <div className="min-w-0">
             <StreamingText
               text={response.text}
               live={live}
+              complete={!arriving}
               className="block text-sm leading-relaxed"
               onSettled={() => {
                 setDone(true)
@@ -579,7 +600,7 @@ export function ResponseBlock({
             a diff never arrives before the sentence explaining it */}
         {done &&
           artifacts.map((b, i) => (
-            <KitBlockView key={`a${i}`} block={b} staged={live} />
+            <AmbientBlockView key={`a${i}`} block={b} staged={live} />
           ))}
         {done && (onRegenerate || onFollowUp) && (
           <div className="flex flex-col gap-1">

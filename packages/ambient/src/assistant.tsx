@@ -36,15 +36,17 @@ import {
   MessageBranches,
   StreamingText,
   UserMessage,
-  type KitResponse,
+  type AmbientAnswer,
 } from "./response-kit"
 import {
   AttachmentChip,
   ChipSlider,
+  ErrorState,
   FollowUpSuggestions,
   type MessageAttachment,
 } from "./message-kit"
-import { composeResponse } from "./compose-response"
+import { applyAnswerEvent, EMPTY_ANSWER, failureDetail } from "./responder"
+import type { AmbientTurn } from "./responder-schemas"
 import { AssistantOrb } from "./orb"
 import { Composer } from "./composer"
 import { Icon, type IconName } from "@ambient-ui/ui/components/icon"
@@ -71,7 +73,7 @@ type Msg = {
    * object: regenerating APPENDS a version rather than overwriting, so the
    * answer the user may have preferred is still reachable (MessageBranches).
    */
-  kits?: KitResponse[]
+  kits?: AmbientAnswer[]
   /** The question that produced this answer, so it can be asked again. */
   prompt?: string
   /**
@@ -80,7 +82,38 @@ type Msg = {
    * message would perform its stream again. An answer is said once.
    */
   settled?: boolean
+  /**
+   * The turn failed, and this is what went wrong. An assistant message can
+   * carry this alone (the first answer never arrived) or beside its kits (a
+   * regenerate failed, and the earlier versions are still worth keeping).
+   */
+  failed?: string
+  /**
+   * The API is still sending this answer (a stream). The prose may catch up
+   * with what has arrived, but it does not settle until this clears.
+   */
+  arriving?: boolean
 }
+
+/** A conversation's identity for the API: stable until it is cleared. */
+const newConversationId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+
+/**
+ * The conversation as the API is told it: every turn, in order, as text.
+ * An answer counts as the version currently newest; a turn that failed
+ * before saying anything is left out, because nothing was said.
+ */
+const historyOf = (list: Msg[]): AmbientTurn[] =>
+  list.flatMap((msg): AmbientTurn[] =>
+    msg.role === "user"
+      ? [{ role: "user", text: msg.text }]
+      : msg.kits?.length
+        ? [{ role: "assistant", text: msg.kits[msg.kits.length - 1]!.text }]
+        : []
+  )
 
 /**
  * Ids are derived from the list itself, never from a shared counter: a
@@ -98,24 +131,12 @@ const nextId = (m: Msg[]) => (m.length ? m[m.length - 1]!.id + 1 : 1)
 const SAMPLE_ATTACHMENT =
   'TypeError: Cannot read properties of undefined (reading "draft")\n    at Composer (composer.tsx:9:14)\n    at renderWithHooks (react-dom.js:14985:18)'
 
-const RECENT_CHATS = [
-  { text: "Which components lack vocabulary docs?", when: "2h ago" },
-  { text: "Show every surface using ad-hoc colors", when: "Yesterday" },
-  { text: "Draft usage rules for the new table density", when: "Mon" },
-]
-
 /** What each command family is called when it is being counted. */
 const HINT_NOUNS: Record<string, string> = {
   Components: "component",
   Documentation: "document",
   Demos: "demo",
 }
-
-const SUGGESTED_PROMPTS = [
-  "Summarize what's on this canvas",
-  "Which vocabulary components fit a pipeline view?",
-  "Compose a dashboard from existing components",
-]
 
 type PaletteItem = {
   id: string
@@ -202,8 +223,10 @@ export function Assistant({
     seedVersion,
     consumeSeededPrompt,
     consumeAutoSend,
-    consumeImmediate,
     navigate,
+    api,
+    suggestions,
+    recents: recentChats,
     announceEffect,
   } = useAssistant()
 
@@ -402,8 +425,10 @@ export function Assistant({
     }
   }, [asking, mode])
 
+  const [conversationId, setConversationId] = React.useState(newConversationId)
   const clearConversation = () => {
     setMessages([])
+    setConversationId(newConversationId())
   }
 
   // AI activation while typing: the moment the input reads as a question
@@ -413,7 +438,19 @@ export function Assistant({
   // busy must also RENDER (the composer's orb yields to Stop), so the ref
   // gains a state twin; the ref stays for handlers that must not re-bind
   const [busy, setBusy] = React.useState(false)
-  const composeTimer = React.useRef<number | null>(null)
+  // the turn in flight: aborting it is how Stop, a newer turn, and unmount
+  // all tell the responder its answer is no longer wanted
+  const turnRef = React.useRef<AbortController | null>(null)
+  /**
+   * The answer being said, when it is not the last message. Regenerate can
+   * target any answer, and one above a later message — a failed turn, say —
+   * used to be neither live nor settled: its branch never streamed, never
+   * announced settle, and the layer stayed busy for good.
+   */
+  const [regeneratingId, setRegeneratingId] = React.useState<number | null>(
+    null
+  )
+  React.useEffect(() => () => turnRef.current?.abort(), [])
   // the settled answer's workspace effect, relayed to whichever surface owns
   // the product state — the layer never learns what "fix-composer" means
   const pendingEffect = React.useRef<string | null>(null)
@@ -476,41 +513,191 @@ export function Assistant({
   }, [input, mode, setOrbState])
 
   /**
+   * ONE TURN, HOWEVER IT WAS ASKED. Send, regenerate and retry all come
+   * through here: the question, the conversation so far and what the person
+   * is looking at go to the host's API, and the character thinks for exactly
+   * as long as the API takes. The layer adds no wait of its own and never
+   * learns whether the API is a server or stubs.
+   *
+   * The answer arrives as events — one, for an API that answers whole; many,
+   * for one that streams. The first event puts the answer on screen (`start`);
+   * each later one updates it in place, and the prose follows what has
+   * arrived. Only the newest turn may land: an answer arriving after Stop,
+   * or after another turn replaced it, is dropped.
+   */
+  const updateArriving = (
+    patch: (msg: Msg) => Partial<Msg>
+  ) =>
+    setMessages((m) =>
+      m.map((msg) => (msg.arriving ? { ...msg, ...patch(msg) } : msg))
+    )
+  const withKit = (kit: AmbientAnswer) => (msg: Msg): Partial<Msg> => ({
+    kits: msg.kits ? [...msg.kits.slice(0, -1), kit] : [kit],
+  })
+
+  const runTurn = (
+    question: string,
+    history: AmbientTurn[],
+    start: (kit: AmbientAnswer) => void,
+    fail: (detail: string) => void
+  ) => {
+    turnRef.current?.abort()
+    const turn = new AbortController()
+    turnRef.current = turn
+    beginWork()
+    setOrbState("thinking")
+    const current = () => turnRef.current === turn
+    const endWork = () => {
+      turnRef.current = null
+      busyRef.current = false
+      setBusy(false)
+      setOrbState("still")
+    }
+    void (async () => {
+      let kit: AmbientAnswer | null = null
+      try {
+        const events = api.ask(
+          { question, conversationId, history, pageChip, chips },
+          { signal: turn.signal }
+        )
+        for await (const event of events) {
+          if (!current()) return
+          const first = kit === null
+          kit = applyAnswerEvent(kit ?? EMPTY_ANSWER, event)
+          pendingEffect.current = kit.effect ?? null
+          // NOT "answer" here — the block has only been composed; its
+          // evidence still has to run. ResponseBlock announces the handover.
+          if (first) start(kit)
+          else updateArriving(withKit(kit))
+        }
+        if (!current()) return
+        if (!kit) {
+          endWork()
+          fail("The assistant sent an empty answer.")
+          return
+        }
+        turnRef.current = null
+        // the stream has ended: the prose may now finish and settle
+        updateArriving((msg) => ({ ...withKit(kit!)(msg), arriving: false }))
+      } catch (error) {
+        if (!current() || turn.signal.aborted) return
+        // a failed turn ends the work but does NOT drain the queue: the next
+        // instruction probably meets the same failure, so the person sees
+        // this one first and decides — retry, or send the next deliberately
+        endWork()
+        const detail = failureDetail(error)
+        if (kit)
+          // it failed partway: what arrived stays, finished, with the reason
+          updateArriving(() => ({ arriving: false, settled: true, failed: detail }))
+        else fail(detail)
+      }
+    })()
+  }
+
+  /** Mark a message failed, keeping whatever versions it already has. */
+  const failMessage = (id: number) => (detail: string) =>
+    setMessages((m) =>
+      m.map((msg) => (msg.id === id ? { ...msg, failed: detail } : msg))
+    )
+
+  /** The conversation before the question that produced message `id`. */
+  const historyBefore = (id: number) => {
+    const before = messages.slice(
+      0,
+      Math.max(0, messages.findIndex((msg) => msg.id === id))
+    )
+    if (before[before.length - 1]?.role === "user") before.pop()
+    return historyOf(before)
+  }
+
+  /** A fresh answer to `question`, landing as a new assistant message. */
+  const answer = (question: string, history: AmbientTurn[]) =>
+    runTurn(
+      question,
+      history,
+      (kit) => {
+        // a fresh answer is always the last message; an earlier regenerate
+        // that was stopped mid-stream no longer owns the live slot
+        setRegeneratingId(null)
+        setMessages((m) => [
+          ...m,
+          {
+            id: nextId(m),
+            role: "assistant",
+            text: kit.text,
+            kits: [kit],
+            prompt: question,
+            arriving: true,
+          },
+        ])
+      },
+      (detail) =>
+        setMessages((m) => [
+          ...m,
+          {
+            id: nextId(m),
+            role: "assistant",
+            text: "",
+            prompt: question,
+            failed: detail,
+          },
+        ])
+    )
+
+  /**
    * REGENERATE — compose the same question again and keep both. The ambient
    * states run exactly as they do for a first answer, because from the
    * layer's point of view it IS one.
    */
-  // the page answers first when it can (PageIntel.respond); the composer
-  // covers everything it declines
-  const answerFor = (question: string) =>
-    pageIntel?.respond?.(question, { pageChip, chips }) ??
-    composeResponse(question, pageChip, chips)
-
   const regenerate = (id: number) => {
     if (busyRef.current) return
-    beginWork()
-    setOrbState("thinking")
-    composeTimer.current = window.setTimeout(() => {
-      setMessages((m) =>
-        m.map((msg) =>
-          msg.id === id && msg.kits
-            ? {
-                ...msg,
-                settled: false,
-                kits: [
-                  ...msg.kits,
-                  answerFor(msg.prompt ?? msg.text),
-                ],
-              }
-            : msg
+    const target = messages.find((msg) => msg.id === id)
+    if (!target?.kits) return
+    runTurn(
+      target.prompt ?? target.text,
+      historyBefore(id),
+      (kit) => {
+        setRegeneratingId(id)
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === id && msg.kits
+              ? {
+                  ...msg,
+                  settled: false,
+                  failed: undefined,
+                  arriving: true,
+                  kits: [...msg.kits, kit],
+                }
+              : msg
+          )
         )
-      )
-      // NOT "answer" here — the block has only been composed; its evidence
-      // still has to run. ResponseBlock announces the real handover.
-    }, 900)
+      },
+      failMessage(id)
+    )
   }
 
-  const send = (textOverride?: string, immediate = false) => {
+  /**
+   * RETRY — a failed turn asks again. A message with earlier versions
+   * regenerates in place; one that never got an answer is replaced by the
+   * next attempt, so a failure does not stay in the transcript once fixed.
+   */
+  const retry = (id: number) => {
+    if (busyRef.current) return
+    const target = messages.find((msg) => msg.id === id)
+    if (!target) return
+    if (target.kits) {
+      setMessages((m) =>
+        m.map((msg) => (msg.id === id ? { ...msg, failed: undefined } : msg))
+      )
+      regenerate(id)
+      return
+    }
+    const history = historyBefore(id)
+    setMessages((m) => m.filter((msg) => msg.id !== id))
+    answer(target.prompt ?? target.text, history)
+  }
+
+  const send = (textOverride?: string) => {
     const text = (
       typeof textOverride === "string" ? textOverride : input
     ).trim()
@@ -526,33 +713,11 @@ export function Assistant({
     setRunningPrompt(text)
     setMessages((m) => [...m, { id: nextId(m), role: "user", text }])
     if (mode === "line") setMode("panel")
-    // THE RESPONSE KIT (v0): page context + question → a composed answer
-    // object, driving the real ambient pipeline — thinking while composing,
-    // answer while streaming, still on settle. A model replaces
-    // composeResponse; the objects and states stay.
-    beginWork()
-    setOrbState("thinking")
-    // `immediate`: the surface that sent this already showed the thinking
-    // beat (quick ask), so composing waits only a frame
-    composeTimer.current = window.setTimeout(
-      () => {
-        const kit = answerFor(text)
-        pendingEffect.current = kit.effect ?? null
-        setMessages((m) => [
-          ...m,
-          {
-            id: nextId(m),
-            role: "assistant",
-            text: kit.text,
-            kits: [kit],
-            prompt: text,
-          },
-        ])
-        // the character keeps thinking until the prose starts — see
-        // onAnswerStart on the transcript's MessageBranches
-      },
-      immediate ? 60 : 1100
-    )
+    // THE RESPONSE KIT: page context + question → a composed answer object,
+    // driving the real ambient pipeline — thinking while the API works,
+    // answer while streaming, still on settle. The history is the
+    // conversation BEFORE this question: `messages` has not taken it yet.
+    answer(text, historyOf(messages))
   }
   /**
    * Focus the input when a surface opens, and drain any prompt handed over by
@@ -579,7 +744,7 @@ export function Assistant({
       // could never ask for the at-rest state — the input kept whatever
       // the last visit typed.
       if (seeded !== null) {
-        if (seeded && consumeAutoSend()) send(seeded, consumeImmediate())
+        if (seeded && consumeAutoSend()) send(seeded)
         else setInput(seeded)
       }
       /* eslint-enable react-hooks/set-state-in-effect */
@@ -589,15 +754,16 @@ export function Assistant({
   }, [mode, seedVersion, consumeSeededPrompt])
 
   /**
-   * STOP — the composer's other meaning. Composing: the pending timer is
-   * cancelled and nothing was said. Streaming: the stream settles where it
-   * is; what has arrived stays, because it was already said.
+   * STOP — the composer's other meaning. Composing: the turn is aborted,
+   * the responder's request with it, and nothing was said. Streaming: the
+   * stream settles where it is; what has arrived stays, because it was
+   * already said.
    */
   const stop = () => {
-    if (composeTimer.current !== null) {
-      window.clearTimeout(composeTimer.current)
-      composeTimer.current = null
-    }
+    turnRef.current?.abort()
+    turnRef.current = null
+    // a stream stopped partway ends where it is: what arrived was said
+    updateArriving(() => ({ arriving: false }))
     busyRef.current = false
     setBusy(false)
     setOrbState("still")
@@ -625,11 +791,14 @@ export function Assistant({
     // settled instead of replaying the stream
     setMessages((m) =>
       m.map((msg, i) =>
-        i === m.length - 1 && msg.role === "assistant"
+        (regeneratingId !== null
+          ? msg.id === regeneratingId
+          : i === m.length - 1) && msg.role === "assistant"
           ? { ...msg, settled: true }
           : msg
       )
     )
+    setRegeneratingId(null)
     if (pendingEffect.current) {
       announceEffect(pendingEffect.current)
       pendingEffect.current = null
@@ -680,7 +849,7 @@ export function Assistant({
               : "I can see the page you are on. Right-click anything — a row, a control, a value — to attach it as context."}
           </p>
           <FollowUpSuggestions
-            suggestions={pageIntel?.suggestions ?? SUGGESTED_PROMPTS}
+            suggestions={suggestions}
             onPick={(text) => send(text)}
           />
         </div>
@@ -689,18 +858,33 @@ export function Assistant({
         {messages.map((m) =>
           m.role === "user" ? (
             <UserMessage key={m.id} text={m.text} />
-          ) : m.kits ? (
-            <MessageBranches
-              key={m.id}
-              branches={m.kits}
-              live={!m.settled && m.id === messages[messages.length - 1]?.id}
-              onSettled={settleResponse}
-              // the work is not over when the answer was composed — it is
-              // over when the answer starts being said
-              onAnswerStart={() => setOrbState("answer")}
-              onRegenerate={() => regenerate(m.id)}
-              onFollowUp={(text) => send(text)}
-            />
+          ) : m.kits || m.failed ? (
+            <React.Fragment key={m.id}>
+              {m.kits && (
+                <MessageBranches
+                  branches={m.kits}
+                  arriving={m.arriving}
+                  live={
+                    !m.settled &&
+                    m.id ===
+                      (regeneratingId ?? messages[messages.length - 1]?.id)
+                  }
+                  onSettled={settleResponse}
+                  // the work is not over when the answer was composed — it
+                  // is over when the answer starts being said
+                  onAnswerStart={() => setOrbState("answer")}
+                  onRegenerate={() => regenerate(m.id)}
+                  onFollowUp={(text) => send(text)}
+                />
+              )}
+              {m.failed && (
+                <ErrorState
+                  title="Couldn't answer"
+                  detail={m.failed}
+                  onRetry={busy ? undefined : () => retry(m.id)}
+                />
+              )}
+            </React.Fragment>
           ) : (
             <StreamingText
               key={m.id}
@@ -964,7 +1148,7 @@ export function Assistant({
         : q
           ? [askItem, ...groupedCommands, ...navItems(queryMatches)]
           : [
-              ...(pageIntel?.recents ?? RECENT_CHATS).map((r) => ({
+              ...recentChats.map((r) => ({
                 id: `recent-${r.text}`,
                 section: "Recent chats",
                 label: r.text,
@@ -972,7 +1156,7 @@ export function Assistant({
                 iconKind: "recent" as const,
                 run: () => send(r.text),
               })),
-              ...(pageIntel?.suggestions ?? SUGGESTED_PROMPTS).map((p) => ({
+              ...suggestions.map((p) => ({
                 id: `prompt-${p}`,
                 section: pageIntel?.suggestLabel ?? "Suggested for this page",
                 label: p,
@@ -1282,7 +1466,7 @@ export function Assistant({
     // list showed only past questions, so the session actually on screen —
     // the one that might still be running — was the one thing missing from
     // the history of it.
-    const past = pageIntel?.recents ?? RECENT_CHATS
+    const past = recentChats
     const live = messages.find((m) => m.role === "user")?.text
     const recents =
       live && !past.some((r) => r.text === live)

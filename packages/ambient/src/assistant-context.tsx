@@ -3,7 +3,8 @@
 
 import * as React from "react"
 
-import type { KitResponse } from "./response-kit"
+import { disconnectedAmbientApi, type AmbientApi } from "./responder"
+import type { AmbientRecent } from "./responder-schemas"
 
 import type { IconName } from "@ambient-ui/ui/components/icon"
 
@@ -62,19 +63,6 @@ export type PageIntel = {
   /** Section headings, when the page's own words are more useful. */
   suggestLabel?: string
   jumpLabel?: string
-  /**
-   * THE PAGE ANSWERS FOR ITS OWN MATERIAL. The built-in composer knows a
-   * code workspace; a CRM, a docs page or a dashboard knows things it does
-   * not. A page that can answer returns a KitResponse — the same grammar
-   * the composer emits, so it renders through the same pipeline, states and
-   * all — and returns null for anything it cannot, which falls back to the
-   * composer. This is also the seam a model wires into: the layer asks the
-   * page, never the other way round.
-   */
-  respond?: (
-    question: string,
-    context: { pageChip: ContextChip | null; chips: ContextChip[] }
-  ) => KitResponse | null | undefined
 }
 
 /**
@@ -133,15 +121,10 @@ type AssistantState = {
   explain: (c: ContextChip) => void
   seedVersion: number
   consumeSeededPrompt: () => string | null
-  /**
-   * Hand a prompt to the next surface. autoSend asks it on arrival;
-   * immediate skips the thinking beat, for a surface that already showed it.
-   */
-  seedPrompt: (text: string, autoSend?: boolean, immediate?: boolean) => void
+  /** Hand a prompt to the next surface. autoSend asks it on arrival. */
+  seedPrompt: (text: string, autoSend?: boolean) => void
   /** True once, if the pending seed should be sent rather than typed. */
   consumeAutoSend: () => boolean
-  /** True once, if the pending seed should compose without the thinking beat. */
-  consumeImmediate: () => boolean
   orbAnchor: OrbAnchor
   setOrbAnchor: (a: OrbAnchor) => void
   /** The orb character's state — driven by the response pipeline. */
@@ -149,6 +132,20 @@ type AssistantState = {
   setOrbState: (s: OrbState) => void
   /** Navigate the app shell to a section (wired by App). */
   navigate?: (sectionId: string) => void
+  /**
+   * The host's Ambient API (see responder.ts): where every question,
+   * suggestion list and recent-chat list comes from. Without one, every
+   * question fails with the reason — the layer never answers on its own.
+   */
+  api: AmbientApi
+  /**
+   * What to offer asking here: the page's own live list when it announced
+   * one (state only the page knows), otherwise the API's suggestions for
+   * this page. Empty while loading, and when neither has any.
+   */
+  suggestions: string[]
+  /** The working history: the page's, otherwise the API's. */
+  recents: AmbientRecent[]
   /**
    * The last workspace effect a settled answer announced. Surfaces that own
    * product state subscribe and decide what it means; the layer only relays.
@@ -163,10 +160,13 @@ export function AssistantProvider({
   children,
   onNavigate,
   navItems = [],
+  api,
 }: {
   children: React.ReactNode
   onNavigate?: (sectionId: string) => void
   navItems?: NavItem[]
+  /** Where questions go: the host's API, built with createAmbientApi. */
+  api?: AmbientApi
 }) {
   const [mode, setMode] = React.useState<AssistantMode>("line")
   const [pageChip, setPageChip] = React.useState<ContextChip | null>(null)
@@ -178,6 +178,37 @@ export function AssistantProvider({
   const [orbAnchor, setOrbAnchor] = React.useState<OrbAnchor>("bc")
   const [orbState, setOrbState] = React.useState<OrbState>("still")
   const seededRef = React.useRef<string | null>(null)
+
+  // THE API IS ASKED, NOT IMPORTED. Suggestions follow the page (keyed on
+  // what the chip says, not on the object, which pages recreate freely);
+  // recents are asked once per API. A failed list is an empty list: the
+  // palette still works, it just has nothing to offer.
+  const connected = api ?? disconnectedAmbientApi
+  const chipKey = pageChip ? `${pageChip.id}\u0000${pageChip.label}` : ""
+  const chipRef = React.useRef(pageChip)
+  React.useEffect(() => {
+    chipRef.current = pageChip
+  })
+  const [apiSuggestions, setApiSuggestions] = React.useState<string[]>([])
+  React.useEffect(() => {
+    const request = new AbortController()
+    connected
+      .suggestions({ pageChip: chipRef.current }, { signal: request.signal })
+      .then(setApiSuggestions, () => {
+        if (!request.signal.aborted) setApiSuggestions([])
+      })
+    return () => request.abort()
+  }, [connected, chipKey])
+  const [apiRecents, setApiRecents] = React.useState<AmbientRecent[]>([])
+  React.useEffect(() => {
+    const request = new AbortController()
+    connected.recents({ signal: request.signal }).then(setApiRecents, () => {
+      if (!request.signal.aborted) setApiRecents([])
+    })
+    return () => request.abort()
+  }, [connected])
+  const suggestions = pageIntel?.suggestions ?? apiSuggestions
+  const recents = pageIntel?.recents ?? apiRecents
 
   const addChip = React.useCallback((c: ContextChip) => {
     setChips((prev) => (prev.some((p) => p.id === c.id) ? prev : [...prev, c]))
@@ -204,12 +235,10 @@ export function AssistantProvider({
   }, [])
 
   const autoSendRef = React.useRef(false)
-  const immediateRef = React.useRef(false)
   const seedPrompt = React.useCallback(
-    (text: string, autoSend = false, immediate = false) => {
+    (text: string, autoSend = false) => {
       seededRef.current = text
       autoSendRef.current = autoSend
-      immediateRef.current = immediate
       setSeedVersion((v) => v + 1)
     },
     []
@@ -218,11 +247,6 @@ export function AssistantProvider({
     const a = autoSendRef.current
     autoSendRef.current = false
     return a
-  }, [])
-  const consumeImmediate = React.useCallback(() => {
-    const i = immediateRef.current
-    immediateRef.current = false
-    return i
   }, [])
 
   const value = React.useMemo(
@@ -242,7 +266,6 @@ export function AssistantProvider({
       seedVersion,
       seedPrompt,
       consumeAutoSend,
-      consumeImmediate,
       consumeSeededPrompt,
       orbAnchor,
       setOrbAnchor,
@@ -250,10 +273,13 @@ export function AssistantProvider({
       setOrbState,
       navigate: onNavigate,
       navItems,
+      api: connected,
+      suggestions,
+      recents,
       workspaceEffect,
       announceEffect,
     }),
-    [mode, pageChip, pageIntel, commands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeImmediate, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, workspaceEffect]
+    [mode, pageChip, pageIntel, commands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, connected, suggestions, recents, workspaceEffect]
   )
 
   return (

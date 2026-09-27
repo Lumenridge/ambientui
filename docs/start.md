@@ -38,7 +38,9 @@ wait for the answer:
 - **Ambient layer only:** install just the `@ambientui/ambient-layer`
   door in step 2, mount `AssistantProvider` + `Assistant`, and skip the
   taste question — the layer derives sensible defaults and their product
-  keeps its own styling. Steps 3 and 4 do not apply.
+  keeps its own styling. Steps 3 and 4 do not apply. The assistant's API
+  (step 2) and its stubs (step 5) still do: the assistant answers either
+  way, and it should answer about THIS product.
 - **The design architecture:** run the whole journey below. Be explicit
   that saving the Foundation will restyle their existing components that
   consume its tokens, and migrate gently — never rewrite screens they
@@ -148,7 +150,7 @@ Mount both providers at the app root now, before building anything:
 
 ```tsx
 <FoundationProvider>
-  <AssistantProvider navItems={NAV} onNavigate={goTo}>
+  <AssistantProvider navItems={NAV} onNavigate={goTo} api={ambientApi}>
     <App />
     <Assistant />
   </AssistantProvider>
@@ -156,6 +158,65 @@ Mount both providers at the app root now, before building anything:
 ```
 
 `navItems` is the app's own route list; wire `onNavigate` to its router.
+
+`api` is where the assistant's requests go. The layer never makes a
+request of its own: it calls the functions it is given, validates what
+comes back against its contract, and renders it. The requests go to THIS
+product's server, never to ambientui.
+
+**Fit the assistant into the API layer the project already has.** Before
+writing anything, look at how the app talks to its backend: its HTTP
+client (a fetch wrapper, an axios instance, a generated client), where
+endpoints are declared, how base URLs, auth headers and errors are
+handled, how env flags are read, and whether it already has a mock or
+stub mode. The assistant's endpoints join that the way any other
+feature's would: same client, same conventions, same stub mechanism if
+there is one. Wrap them with `createAmbientApi`, which checks every
+request and response against the layer's zod schemas, so a malformed
+reply shows the failure state instead of breaking the page.
+
+If the project has no API layer yet, this shape works — one file for
+every request the assistant makes, stubs by default:
+
+```ts
+// lib/ambient/api.ts — every request the assistant makes goes through here.
+import { createAmbientApi } from "@/components/ambient/responder"
+
+import { stubs } from "./stubs"
+
+// STUBS until the backend exists. Set VITE_AMBIENT_STUBS=false (or the
+// framework's public env equivalent) to send every request to the server.
+const USE_STUBS = import.meta.env.VITE_AMBIENT_STUBS !== "false"
+
+const post =
+  (path: string) =>
+  async (body: unknown, { signal }: { signal: AbortSignal }) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    })
+    if (!res.ok) throw new Error(`The assistant request failed (${res.status}).`)
+    return res.json()
+  }
+
+export const ambientApi = createAmbientApi(
+  USE_STUBS
+    ? stubs
+    : { ask: post("/ambient/ask"), suggestions: post("/ambient/suggestions") }
+)
+```
+
+Whatever shape the project's own API layer gives it, keep three things:
+the assistant's requests go through one place, the stub-or-server
+decision is made there (the layer must never know which it is talking
+to), and stubs are the default until a backend exists. Adjust the import
+to where the layer landed. A backend that streams returns
+`answerEventsFromSSE(response)` from `ask` instead of JSON. If the project
+already uses an LLM harness or an AI SDK,
+[ambient-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/ambient-api.md)
+shows how it fits behind the API, and which tools don't.
 Confirm the app still runs before moving on. Fix anything that broke; the
 person should never see this step fail.
 
@@ -203,6 +264,77 @@ Give each page a context line for the assistant while you build it: call
 person is. It is one call per page and it is what makes the assistant feel
 aware later.
 
+**Then seed the assistant's stubs — mandatory.** The layer ships no
+answers of its own. Until a backend exists, the stubs are what the
+assistant says, so write them the way you wrote the screens: from the
+product's real material. Follow the project's own mock conventions if it
+has them; otherwise use the shape below.
+
+1. **Read what each page works with**: the types, the API client, the
+   records it lists, the actions it offers. The answers use those names
+   and shapes, never another product's.
+2. **For each page, write 3–5 questions** a person on that page would
+   really ask, each answered as an `AmbientAnswer` — prose, `evidence` (a
+   records query as a `tool` block, a `search`, a short `reasoning`),
+   `artifacts` where the answer produces something, `refs` to the records
+   it used, and `followUps` that lead to the page's other answers. Match
+   questions loosely, one pattern per intent.
+3. **Route by page.** The page's `setPageChip` id travels with every
+   request (with the conversation's `history`, which stubs can ignore), so the stubs hand each question to that page's answers, and
+   `suggestions` returns that page's questions — every suggestion then has
+   an answer. Anything unmatched gets one honest fallback answer: there is
+   no sample answer for that yet.
+4. **Behave like the network.** About 400 ms per request, honour the
+   `AbortSignal`, and fail when asked to "simulate an error", so the
+   error state can be seen before a real outage shows it:
+
+   ```ts
+   // lib/ambient/stubs/index.ts — SAMPLE ANSWERS, not a backend.
+   // Turned off by VITE_AMBIENT_STUBS=false (see lib/ambient/api.ts).
+   import type { AmbientApiHandlers } from "@/components/ambient/responder"
+
+   import { items } from "./items"
+   import { users } from "./users"
+   import { FALLBACK } from "./fallback"
+
+   const PAGES = { items, users } // keyed by each page's setPageChip id
+   const LATENCY_MS = 400
+
+   const settle = <T,>(value: T, signal: AbortSignal) =>
+     new Promise<T>((resolve, reject) => {
+       const timer = setTimeout(() => resolve(value), LATENCY_MS)
+       signal.addEventListener("abort", () => {
+         clearTimeout(timer)
+         reject(signal.reason)
+       })
+     })
+
+   export const stubs: AmbientApiHandlers = {
+     ask: async ({ question, pageChip }, { signal }) => {
+       if (/simulate (an )?error/i.test(question)) {
+         await settle(null, signal)
+         throw new Error("The assistant is unreachable right now.")
+       }
+       const page = PAGES[pageChip?.id as keyof typeof PAGES]
+       return settle(page?.answer(question) ?? FALLBACK, signal)
+     },
+     suggestions: async ({ pageChip }, { signal }) =>
+       settle(PAGES[pageChip?.id as keyof typeof PAGES]?.asks ?? [], signal),
+   }
+   ```
+5. **Stay inside the product.** Answers only describe what the app can
+   actually show or do. Grammar only — no styling, no colours, no markup
+   inside the answers. Keep reasoning short: a `reasoning` block holds the
+   answer for its `seconds` (four when omitted), so declare 1 on stubs.
+
+Cap it: 3–5 answers per page, for at most 5 pages — the ones the person
+will open first. Past that, the fallback covers the rest, and you say so.
+
+Each stub is also the contract the backend will meet: when the engineer
+connects one, the server returns the same `AmbientAnswer` JSON (a pydantic
+model or zod schema on the server can mirror the layer's), the flag
+flips, and nothing on screen changes.
+
 Also build one page the person did not ask for — this is mandatory on
 the from-scratch path, and strongly recommended when an existing product
 adopted the full architecture: a `/ds` page, composed on the installed
@@ -230,6 +362,17 @@ Then take them there. When you hand the project over, walk the owner
 through the page in a few sentences: what each control governs, that
 every change propagates to every component, and that Save is what
 persists it. Do not just mention the page exists — explain it.
+
+**Check the stubs too — mandatory before the reveal.** Open each page
+that has them, ask every suggested question, and confirm each one gets
+its own answer, not the fallback. Ask "simulate an error" once and
+confirm the error state appears with Retry. Then tell the person what you
+wrote, in one line, and how to get more:
+
+> I've added 14 sample answers across 4 pages (Items, Users, Settings,
+> Dashboard). They're stubs behind `VITE_AMBIENT_STUBS`, served from
+> `lib/ambient/api.ts`. If you want sample answers for more pages, or
+> different questions, ask me to add them.
 
 ## 6. The reveal
 

@@ -173,7 +173,8 @@
         "framer-motion",
         "@paper-design/shaders-react",
         "@hugeicons/react",
-        "@hugeicons/core-free-icons"
+        "@hugeicons/core-free-icons",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -211,11 +212,6 @@
           "target": "components/ambient/attach-menu.tsx"
         },
         {
-          "path": ".registry/packages/ambient/src/compose-response.ts",
-          "type": "registry:lib",
-          "target": "components/ambient/compose-response.ts"
-        },
-        {
           "path": ".registry/packages/ambient/src/composer.tsx",
           "type": "registry:component",
           "target": "components/ambient/composer.tsx"
@@ -249,6 +245,16 @@
           "path": ".registry/packages/ambient/src/orb.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -516,7 +522,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -562,6 +569,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -609,7 +626,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -655,6 +673,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -702,7 +730,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -748,6 +777,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -795,7 +834,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -841,6 +881,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -888,7 +938,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -934,6 +985,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -981,7 +1042,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1027,6 +1089,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -1074,7 +1146,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1122,6 +1195,16 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/response-kit.tsx"
@@ -1167,7 +1250,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1220,6 +1304,16 @@
           "target": "components/ambient/orb-character.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/response-kit.tsx"
@@ -1265,7 +1359,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1311,6 +1406,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -1358,7 +1463,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1404,6 +1510,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -1451,7 +1567,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1497,6 +1614,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -1544,7 +1671,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1590,6 +1718,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -1637,7 +1775,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1683,6 +1822,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -1730,7 +1879,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1776,6 +1926,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -1823,7 +1983,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1869,6 +2030,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -1916,7 +2087,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -1962,6 +2134,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2009,7 +2191,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2055,6 +2238,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2102,7 +2295,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2148,6 +2342,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2195,7 +2399,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2241,6 +2446,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2288,7 +2503,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2334,6 +2550,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2381,7 +2607,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2427,6 +2654,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2474,7 +2711,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2520,6 +2758,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2567,7 +2815,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2613,6 +2862,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2660,7 +2919,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2706,6 +2966,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2753,7 +3023,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2799,6 +3070,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
@@ -2846,7 +3127,8 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@paper-design/shaders-react",
-        "framer-motion"
+        "framer-motion",
+        "zod"
       ],
       "registryDependencies": [
         "https://registry.ambientui.ai/r/ambient-styles.json",
@@ -2892,6 +3174,16 @@
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
         },
         {
           "path": ".registry/packages/ambient/src/response-kit.tsx",
