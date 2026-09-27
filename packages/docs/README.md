@@ -10,7 +10,8 @@ Two things ship here:
   to use, when not to. No React, no imports; a Node script can read it as
   easily as a page can render it.
 - **Content snapshots** (`@ambient-ui/docs/content/*`): the governing
-  documents (DESIGN.md, the specs, the Figma contract), the three
+  documents (DESIGN.md, the specs, the Ambient API guide, the Figma
+  contract), the three
   reviewer skills (`ds-manager`, `product-design-manager`, `product-copy`)
   and the registry index, copied from the repository at build time, so a consumer renders
   the release it depends on rather than whatever the repo's HEAD says.

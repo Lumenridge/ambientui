@@ -33,6 +33,19 @@ transparent without it:
 @import "./styles/ambient.css";
 ```
 
+Then give it somewhere to send questions. The layer never calls a server
+itself: you hand it one API object, and it calls that.
+
+```tsx
+<AssistantProvider api={ambientApi}>
+  <App />
+  <Assistant />
+</AssistantProvider>
+```
+
+Until you have a backend, `ambientApi` answers from stubs; see
+[Connect your backend](#connect-your-backend).
+
 [See it running](https://ambientui.ai) - and the guides: [getting started](https://ambientui.ai/getting-started), [installation](https://ambientui.ai/installation), [the agent skill](https://ambientui.ai/skill), [the governing documents](https://ambientui.ai/docs).
 
 ---
@@ -92,6 +105,40 @@ assistant can be trusted to build.
 The long version is the [design philosophy](https://ambientui.ai/manifesto).
 The rules it produced are [DESIGN.md](DESIGN.md).
 
+## Connect your backend
+
+The assistant answers questions, but it never makes a request of its own.
+Your app builds one object with `createAmbientApi` and passes it to
+`<AssistantProvider api>`. What sits behind it is yours: your HTTP client,
+your server, your model, your auth.
+
+```ts
+// lib/ambient/api.ts: every request the assistant makes
+import { createAmbientApi } from "@/components/ambient/responder"
+
+export const ambientApi = createAmbientApi({
+  ask: (question, { signal }) =>
+    http.post("/ambient/ask", question, { signal }).then((r) => r.data),
+})
+```
+
+- **Stubs first.** Until the backend exists, `ask` answers from stub data
+  written for your own pages. The setup guide seeds them, and one flag
+  (`VITE_AMBIENT_STUBS`) switches to the real server. Nothing on screen
+  changes when it does.
+- **Checked at the boundary.** Every request and answer is validated
+  against the layer's schemas, so a malformed reply shows a clear error
+  instead of breaking the page.
+- **Whole or streamed.** `ask` can return a complete answer (REST) or stream
+  it in pieces (server-sent events today, with room for other transports).
+  Every question carries the conversation so far.
+- **Works with the tools you already use.** fetch, axios, TanStack Query,
+  and on the server the Vercel AI SDK, the OpenAI and Anthropic SDKs, or
+  LangChain.
+
+The contract, examples and what it doesn't do yet:
+[docs/ambient-api.md](docs/ambient-api.md).
+
 ## What you can take
 
 Two tracks. The first gives you things that render; the second gives you the
@@ -127,9 +174,11 @@ ships inside the layer rather than on its own. The counts come from
 Every command above is executed against a scratch project by
 `npm run verify:install` before it is allowed on the site or in this table.
 
-The layer runs with **no providers at all**. It falls back to sane defaults and
-binds to a full design system when you give it one.
+The layer renders with **no providers at all**. It falls back to sane
+defaults and binds to a full design system when you give it one.
 `packages/ambient/dev/index.html` is the proof, and it is a test we keep.
+Answers are the one thing it can't invent: without an API, a question says
+none is connected.
 
 Prefer a versioned dependency to owned source? `npm i ambientui`, and
 `@ambient-ui/foundation` for the configuration engine on its own. The docs
@@ -159,6 +208,8 @@ figma/                the code → Figma variable contract
   vocabularies, the ambient layer contract, and a dated decision log recording
   every design decision with its *why*.
 - [CLAUDE.md](CLAUDE.md) holds the hard rules an AI works under in this repo.
+- [docs/ambient-api.md](docs/ambient-api.md) is the contract between the
+  assistant and your backend.
 
 The site renders them at ambientui.ai/docs from the released
 `@ambient-ui/docs` snapshots, so what you read is what the build ran under —
