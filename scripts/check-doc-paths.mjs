@@ -13,8 +13,8 @@
  * fragments ("src/styles/globals.css", stated relative to a package under
  * discussion) and globs are not checkable and are skipped.
  *
- * DESIGN.md's §12 decision log is excluded on purpose: it is a historical
- * record, and history legitimately names files that no longer exist.
+ * DECISION-LOG.md is not in the set on purpose: it is a historical record,
+ * and history legitimately names files that no longer exist.
  *
  * CROSS-REPO CITATIONS wear a repo prefix — `site:src/components/reveal.tsx`
  * names a file in the website's repo. The prefix stops CHECKABLE from
@@ -62,12 +62,7 @@ for (const doc of DOCS) {
     misses.push(`${doc} → (the document itself is missing)`)
     continue
   }
-  let body = readFileSync(full, "utf8")
-  if (doc === "DESIGN.md") {
-    const [head, rest] = body.split("## 12. Decision log")
-    const tail = rest?.split(/\n## 13\./)[1] ?? ""
-    body = head + tail
-  }
+  const body = readFileSync(full, "utf8")
   for (const match of body.matchAll(CLAIM)) {
     const path = match[1].replace(/[.,]+$/, "")
     if (!CHECKABLE.test(path)) continue
@@ -81,7 +76,7 @@ if (misses.length > 0) {
   for (const m of [...new Set(misses)]) console.error(`    ${m}`)
   console.error(
     "  Fix the prose (or the tree) — a doc that names a missing file is\n" +
-      "  drift, and the decision log (§12) is where moved history belongs."
+      "  drift, and DECISION-LOG.md is where moved history belongs."
   )
   process.exit(1)
 }

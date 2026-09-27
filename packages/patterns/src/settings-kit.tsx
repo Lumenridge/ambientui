@@ -13,7 +13,7 @@ import {
 } from "@ambient-ui/foundation"
 
 /**
- * The settings-page pattern (promoted through governance, DESIGN.md §12):
+ * The settings-page pattern (promoted through governance, DECISION-LOG.md):
  * a large page title, sentence-case section headings, and cards of rows —
  * each row a title + description on the left with its control on the
  * right, or a full-width control zone underneath for pickers that need

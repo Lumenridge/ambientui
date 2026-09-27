@@ -54,7 +54,7 @@ scaling) — or into a governance proposal if the config can't reach it.
 - **Promote** when: ≥2 plausible surfaces need it, it can be expressed with
   existing tokens, and it has a clear one-line usage rule. Then: implement in
   the proper vocabulary, add a registry entry (+ playground if it has props),
-  update DESIGN.md §6, log in §12.
+  update DESIGN.md §6, log in DECISION-LOG.md.
 - **Keep local** (rare, time-boxed) when: single surface, still token-compliant.
   Record it in DESIGN.md §13 Pattern watchlist for later triage.
 - **Reject** when: an existing pattern already solves the job, or it needs
@@ -81,8 +81,8 @@ Verify visually at `/ds` in light AND dark.
 
 1. Update `tokens/tokens.json` and its implementations
    (foundation-context / globals.css) together — they must not diverge.
-2. Update the registry (`catalog.ts` + `stories.tsx`) and DESIGN.md (inventory, decision log
-   with date + why).
+2. Update the registry (`catalog.ts` + `stories.tsx`) and DESIGN.md (inventory), plus a DECISION-LOG.md row
+   with date + why.
 3. Ensure `/ds` reflects it live (new components need an entry, stories, and a
    playground where warranted).
 4. Offer a Figma push per [figma/figma-sync.md](../../../figma/figma-sync.md)

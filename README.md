@@ -205,8 +205,9 @@ figma/                the code → Figma variable contract
 **The governing documents are the control surface**, not a description of one:
 
 - [DESIGN.md](DESIGN.md) is the constitution: token rules, the two
-  vocabularies, the ambient layer contract, and a dated decision log recording
-  every design decision with its *why*.
+  vocabularies, the ambient layer contract.
+- [DECISION-LOG.md](DECISION-LOG.md) is the dated record of every design
+  decision with its *why* — how the constitution got to be what it is.
 - [CLAUDE.md](CLAUDE.md) holds the hard rules an AI works under in this repo.
 - [docs/ambient-api.md](docs/ambient-api.md) is the contract between the
   assistant and your backend.

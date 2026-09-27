@@ -33,6 +33,7 @@ const CONTENT = resolve(HERE, "../content")
 
 const FILES = [
   "DESIGN.md",
+  "DECISION-LOG.md",
   "README.md",
   "CLAUDE.md",
   "docs/motion-spec.md",
