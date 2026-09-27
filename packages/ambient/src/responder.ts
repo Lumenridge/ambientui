@@ -1,19 +1,18 @@
-import { z } from "zod"
+import type { z } from "zod"
 
-import type { IconName } from "@ambient-ui/ui/components/icon"
-
-import type { ContextChip } from "./assistant-context"
-import type {
-  DiffHunk,
-  DiffLine,
-  FileStat,
-  ParallelCall,
-  TimelineStep,
-} from "./tool-kit"
-import type { KitBlock, KitReference, KitResponse } from "./response-kit"
-import type { ReasoningStep } from "./message-kit"
-import type { ReportSection, SearchSource } from "./knowledge-kit"
-
+import type { AmbientAnswer } from "./response-kit"
+import {
+  ambientAnswerEventSchema,
+  ambientAnswerSchema,
+  ambientQuestionSchema,
+  ambientRecentsSchema,
+  ambientSuggestionsInputSchema,
+  ambientSuggestionsSchema,
+  type AmbientAnswerEvent,
+  type AmbientQuestion,
+  type AmbientRecent,
+  type AmbientSuggestionsInput,
+} from "./responder-schemas"
 /**
  * THE ASSISTANT API — the contract between the layer and the host's server.
  *
@@ -24,229 +23,35 @@ import type { ReportSection, SearchSource } from "./knowledge-kit"
  * tell, and must not need to.
  *
  * What the layer owns is the boundary. Every request and every response is
- * parsed against the schemas below before anything renders, so a backend
+ * parsed against the schemas in responder-schemas.ts before anything renders, so a backend
  * that returns the wrong shape produces the failure state with its reason,
  * not a crash three components deep. The schemas are typed against the
  * kits' own interfaces, so the grammar and its validation cannot drift.
  *
- * `createAssistantApi` is the one way in: pass it the host's functions and
+ * `createAmbientApi` is the one way in: pass it the host's functions and
  * hand the result to the provider.
  *
  * AN ANSWER CAN ARRIVE WHOLE OR AS A STREAM. `ask` may resolve to a finished
- * KitResponse (a REST endpoint) or return an async iterable of AskEvents
+ * AmbientAnswer (a REST endpoint) or return an async iterable of AmbientAnswerEvents
  * (text deltas, evidence and artifact blocks, refs, follow-ups). The layer
  * only ever sees the iterable, so any transport that can become one fits:
- * server-sent events today (`eventsFromSSE`), and a WebSocket, a WebRTC data
+ * server-sent events today (`answerEventsFromSSE`), and a WebSocket, a WebRTC data
  * channel or a gRPC stream later, each needing only its own small adapter.
  *
- *   export const assistantApi = createAssistantApi({
- *     ask: (input, { signal }) => http.post("/assistant/ask", input, { signal }),
- *     suggestions: (input, { signal }) => http.post("/assistant/suggestions", input, { signal }),
- *     recents: ({ signal }) => http.get("/assistant/recents", { signal }),
+ *   export const ambientApi = createAmbientApi({
+ *     ask: (input, { signal }) => http.post("/ambient/ask", input, { signal }),
+ *     suggestions: (input, { signal }) => http.post("/ambient/suggestions", input, { signal }),
+ *     recents: ({ signal }) => http.get("/ambient/recents", { signal }),
  *   })
  */
 
-/* ------------------------------- schemas -------------------------------- */
-
-// Icon names are the host's own vocabulary, drawn by its configured library;
-// the boundary checks the shape, the Icon component resolves the name.
-const iconName = z.string() as unknown as z.ZodType<IconName>
-
-const contextChip: z.ZodType<ContextChip> = z.object({
-  id: z.string(),
-  label: z.string(),
-  kind: z.enum([
-    "page",
-    "control",
-    "target",
-    "cell",
-    "file",
-    "symbol",
-    "selection",
-  ]),
-  icon: iconName.optional(),
-})
-
-const reference: z.ZodType<KitReference> = z.object({
-  label: z.string(),
-  icon: iconName.optional(),
-  logo: z.string().optional(),
-  href: z.string().optional(),
-})
-
-const reasoningStep: z.ZodType<ReasoningStep> = z.object({
-  title: z.string(),
-  detail: z.string().optional(),
-})
-
-const parallelCall: z.ZodType<ParallelCall> = z.object({
-  tool: z.string(),
-  target: z.string().optional(),
-  status: z.enum(["running", "done", "failed"]).optional(),
-  duration: z.string().optional(),
-})
-
-const searchSource: z.ZodType<SearchSource> = z.object({
-  title: z.string(),
-  domain: z.string(),
-  href: z.string().optional(),
-  logo: z.string().optional(),
-})
-
-const diffLine: z.ZodType<DiffLine> = z.object({
-  sign: z.enum([" ", "+", "-"]),
-  text: z.string(),
-})
-
-const diffHunk: z.ZodType<DiffHunk> = z.object({
-  header: z.string().optional(),
-  lines: z.array(diffLine),
-})
-
-const timelineStep: z.ZodType<TimelineStep> = z.object({
-  verb: z.string(),
-  target: z.string().optional(),
-  icon: iconName.optional(),
-})
-
-const fileStat: z.ZodType<FileStat> = z.object({
-  path: z.string(),
-  added: z.number().optional(),
-  removed: z.number().optional(),
-})
-
-const reportSection: z.ZodType<ReportSection> = z.object({
-  title: z.string(),
-  body: z.string().optional(),
-  status: z.enum(["done", "running", "pending"]).optional(),
-  sources: z.number().optional(),
-})
-
-export const kitBlockSchema: z.ZodType<KitBlock> = z.discriminatedUnion(
-  "kind",
-  [
-    z.object({
-      kind: z.literal("reasoning"),
-      steps: z.array(reasoningStep),
-      seconds: z.number().optional(),
-    }),
-    z.object({
-      kind: z.literal("parallel"),
-      summary: z.string(),
-      calls: z.array(parallelCall),
-    }),
-    z.object({
-      kind: z.literal("tool"),
-      verb: z.string(),
-      request: z.string().optional(),
-      result: z.string().optional(),
-    }),
-    z.object({
-      kind: z.literal("search"),
-      query: z.string(),
-      sources: z.array(searchSource),
-    }),
-    z.object({
-      kind: z.literal("diff"),
-      path: z.string(),
-      lines: z.array(diffLine),
-    }),
-    z.object({
-      kind: z.literal("review"),
-      path: z.string(),
-      hunks: z.array(diffHunk),
-    }),
-    z.object({
-      kind: z.literal("terminal"),
-      command: z.string(),
-      lines: z.array(z.string()),
-      exitCode: z.number().optional(),
-    }),
-    z.object({
-      kind: z.literal("timeline"),
-      steps: z.array(timelineStep),
-      files: z.array(fileStat).optional(),
-    }),
-    z.object({
-      kind: z.literal("failure"),
-      tool: z.string(),
-      target: z.string().optional(),
-      error: z.string(),
-      attempt: z.number().optional(),
-      attempts: z.number().optional(),
-    }),
-    z.object({
-      kind: z.literal("report"),
-      title: z.string(),
-      sections: z.array(reportSection),
-      sourcesRead: z.number().optional(),
-    }),
-  ]
-)
-
-export const kitResponseSchema: z.ZodType<KitResponse> = z.object({
-  text: z.string(),
-  refs: z.array(reference),
-  evidence: z.array(kitBlockSchema).optional(),
-  artifacts: z.array(kitBlockSchema).optional(),
-  followUps: z.array(z.string()).optional(),
-  effect: z.string().optional(),
-})
-
-/** One earlier turn of the conversation, as text. */
-export const historyTurnSchema = z.object({
-  role: z.enum(["user", "assistant"]),
-  text: z.string(),
-})
-export type HistoryTurn = z.infer<typeof historyTurnSchema>
-
-/**
- * What every question carries: the question, what the person is looking at,
- * and the conversation it belongs to. `history` is every earlier turn in
- * order (answers as their prose), so a stateless server can answer in
- * context; `conversationId` is stable until the conversation is cleared, so
- * a server that keeps its own threads can key on it instead.
- */
-export const askInputSchema = z.object({
-  question: z.string().min(1),
-  conversationId: z.string(),
-  history: z.array(historyTurnSchema),
-  pageChip: contextChip.nullable(),
-  chips: z.array(contextChip),
-})
-export type AskInput = z.infer<typeof askInputSchema>
-
-/** What the suggestions endpoint is told: where the person is. */
-export const suggestionsInputSchema = z.object({
-  pageChip: contextChip.nullable(),
-})
-export type SuggestionsInput = z.infer<typeof suggestionsInputSchema>
-
-export const suggestionsSchema = z.array(z.string())
-
-/**
- * One piece of a streamed answer. The layer assembles them into a
- * KitResponse in arrival order, so send evidence before the prose that rests
- * on it. `response` replaces everything so far with a complete answer (a
- * stream may end with one); `error` fails the turn with its message.
- */
-export const askEventSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("evidence"), block: kitBlockSchema }),
-  z.object({ type: z.literal("text"), delta: z.string() }),
-  z.object({ type: z.literal("artifact"), block: kitBlockSchema }),
-  z.object({ type: z.literal("refs"), refs: z.array(reference) }),
-  z.object({ type: z.literal("followUps"), followUps: z.array(z.string()) }),
-  z.object({ type: z.literal("effect"), effect: z.string() }),
-  z.object({ type: z.literal("response"), response: kitResponseSchema }),
-  z.object({ type: z.literal("error"), message: z.string() }),
-])
-export type AskEvent = z.infer<typeof askEventSchema>
+/* ------------------------------- answers -------------------------------- */
 
 /** The answer so far, with one more event applied. */
-export function applyAskEvent(
-  kit: KitResponse,
-  event: AskEvent
-): KitResponse {
+export function applyAnswerEvent(
+  kit: AmbientAnswer,
+  event: AmbientAnswerEvent
+): AmbientAnswer {
   switch (event.type) {
     case "evidence":
       return { ...kit, evidence: [...(kit.evidence ?? []), event.block] }
@@ -260,71 +65,67 @@ export function applyAskEvent(
       return { ...kit, followUps: event.followUps }
     case "effect":
       return { ...kit, effect: event.effect }
-    case "response":
-      return event.response
+    case "answer":
+      return event.answer
     case "error":
       return kit
   }
 }
 
 /** Where an answer starts before its first event. */
-export const EMPTY_RESPONSE: KitResponse = { text: "", refs: [] }
-
-export const recentSchema = z.object({ text: z.string(), when: z.string() })
-export const recentsSchema = z.array(recentSchema)
-export type Recent = z.infer<typeof recentSchema>
+export const EMPTY_ANSWER: AmbientAnswer = { text: "", refs: [] }
 
 /* -------------------------------- the api ------------------------------- */
 
-export type RequestOptions = { signal: AbortSignal }
+export type AmbientRequestOptions = { signal: AbortSignal }
 
 /**
  * What the host implements. Only `ask` is required; without `suggestions`
  * and `recents` the palette simply offers none (a page can still announce
  * its own through PageIntel, for state only the page knows).
  */
-export type AssistantApiHandlers = {
+export type AmbientApiHandlers = {
   /**
-   * Resolve to a finished KitResponse (REST), or return an async iterable of
-   * AskEvents (a stream). Either shape is validated before it renders.
+   * Resolve to a finished AmbientAnswer (REST), or return an async iterable of
+   * AmbientAnswerEvents (a stream). Either shape is validated before it renders.
    */
   ask: (
-    input: AskInput,
-    options: RequestOptions
+    input: AmbientQuestion,
+    options: AmbientRequestOptions
   ) => Promise<unknown> | AsyncIterable<unknown>
   suggestions?: (
-    input: SuggestionsInput,
-    options: RequestOptions
+    input: AmbientSuggestionsInput,
+    options: AmbientRequestOptions
   ) => Promise<unknown>
-  recents?: (options: RequestOptions) => Promise<unknown>
+  recents?: (options: AmbientRequestOptions) => Promise<unknown>
 }
 
 /**
  * What the layer calls: the same functions, validated on both sides. `ask`
- * is always a stream to the layer; a whole answer arrives as one `response`
+ * is always a stream to the layer; a whole answer arrives as one `answer`
  * event.
  */
-export type AssistantApi = {
-  ask: (input: AskInput, options: RequestOptions) => AsyncIterable<AskEvent>
+export type AmbientApi = {
+  ask: (input: AmbientQuestion, options: AmbientRequestOptions) => AsyncIterable<AmbientAnswerEvent>
   suggestions: (
-    input: SuggestionsInput,
-    options: RequestOptions
+    input: AmbientSuggestionsInput,
+    options: AmbientRequestOptions
   ) => Promise<string[]>
-  recents: (options: RequestOptions) => Promise<Recent[]>
+  recents: (options: AmbientRequestOptions) => Promise<AmbientRecent[]>
 }
 
 /**
  * A request that could not be answered: the handler threw, or what came
  * back does not match the contract. `message` is what the person reads.
  */
-export class AssistantApiError extends Error {
+export class AmbientApiError extends Error {
   constructor(
     message: string,
-    readonly endpoint: keyof AssistantApiHandlers,
+    readonly endpoint: keyof AmbientApiHandlers,
     readonly cause?: unknown
   ) {
     super(message)
-    this.name = "AssistantApiError"
+    this.name = "AmbientApiError"
   }
 }
 
@@ -333,13 +134,13 @@ const isAbort = (error: unknown, signal: AbortSignal) =>
   (error instanceof DOMException && error.name === "AbortError")
 
 function contractError(
-  endpoint: keyof AssistantApiHandlers,
+  endpoint: keyof AmbientApiHandlers,
   what: string,
   error: z.ZodError
 ) {
   const issue = error.issues[0]
   const where = issue?.path.length ? ` at ${issue.path.join(".")}` : ""
-  return new AssistantApiError(
+  return new AmbientApiError(
     `The ${what} did not match the assistant's contract${where}: ${issue?.message ?? "invalid shape"}.`,
     endpoint,
     error
@@ -347,7 +148,7 @@ function contractError(
 }
 
 async function call<T>(
-  endpoint: keyof AssistantApiHandlers,
+  endpoint: keyof AmbientApiHandlers,
   run: () => Promise<unknown>,
   schema: z.ZodType<T>,
   signal: AbortSignal
@@ -358,7 +159,7 @@ async function call<T>(
   } catch (error) {
     // an abort is not a failure: whoever aborted already knows
     if (isAbort(error, signal)) throw error
-    throw new AssistantApiError(failureDetail(error), endpoint, error)
+    throw new AmbientApiError(failureDetail(error), endpoint, error)
   }
   const parsed = schema.safeParse(raw)
   if (!parsed.success)
@@ -372,41 +173,41 @@ const isAsyncIterable = (value: unknown): value is AsyncIterable<unknown> =>
   Symbol.asyncIterator in value
 
 async function* askStream(
-  handler: AssistantApiHandlers["ask"],
-  input: AskInput,
-  options: RequestOptions
-): AsyncGenerator<AskEvent> {
+  handler: AmbientApiHandlers["ask"],
+  input: AmbientQuestion,
+  options: AmbientRequestOptions
+): AsyncGenerator<AmbientAnswerEvent> {
   let result: unknown
   try {
-    result = await handler(askInputSchema.parse(input), options)
+    result = await handler(ambientQuestionSchema.parse(input), options)
   } catch (error) {
     if (isAbort(error, options.signal)) throw error
-    throw new AssistantApiError(failureDetail(error), "ask", error)
+    throw new AmbientApiError(failureDetail(error), "ask", error)
   }
   if (!isAsyncIterable(result)) {
-    const parsed = kitResponseSchema.safeParse(result)
+    const parsed = ambientAnswerSchema.safeParse(result)
     if (!parsed.success) throw contractError("ask", "ask response", parsed.error)
-    yield { type: "response", response: parsed.data }
+    yield { type: "answer", answer: parsed.data }
     return
   }
   try {
     for await (const raw of result) {
-      const parsed = askEventSchema.safeParse(raw)
+      const parsed = ambientAnswerEventSchema.safeParse(raw)
       if (!parsed.success) throw contractError("ask", "ask event", parsed.error)
       if (parsed.data.type === "error")
-        throw new AssistantApiError(parsed.data.message, "ask")
+        throw new AmbientApiError(parsed.data.message, "ask")
       yield parsed.data
     }
   } catch (error) {
-    if (isAbort(error, options.signal) || error instanceof AssistantApiError)
+    if (isAbort(error, options.signal) || error instanceof AmbientApiError)
       throw error
-    throw new AssistantApiError(failureDetail(error), "ask", error)
+    throw new AmbientApiError(failureDetail(error), "ask", error)
   }
 }
 
-export function createAssistantApi(
-  handlers: AssistantApiHandlers
-): AssistantApi {
+export function createAmbientApi(
+  handlers: AmbientApiHandlers
+): AmbientApi {
   return {
     ask: (input, options) => askStream(handlers.ask, input, options),
     suggestions: (input, options) =>
@@ -415,10 +216,10 @@ export function createAssistantApi(
             "suggestions",
             () =>
               handlers.suggestions!(
-                suggestionsInputSchema.parse(input),
+                ambientSuggestionsInputSchema.parse(input),
                 options
               ),
-            suggestionsSchema,
+            ambientSuggestionsSchema,
             options.signal
           )
         : Promise.resolve([]),
@@ -427,7 +228,7 @@ export function createAssistantApi(
         ? call(
             "recents",
             () => handlers.recents!(options),
-            recentsSchema,
+            ambientRecentsSchema,
             options.signal
           )
         : Promise.resolve([]),
@@ -439,10 +240,10 @@ export function createAssistantApi(
  * fails with the reason, so the failure state says what is missing instead
  * of an answer pretending to be one.
  */
-export const disconnectedApi: AssistantApi = createAssistantApi({
+export const disconnectedAmbientApi: AmbientApi = createAmbientApi({
   ask: async () => {
     throw new Error(
-      "No assistant API is connected. Pass one to <AssistantProvider api>."
+      "No Ambient API is connected. Pass one to <AssistantProvider api>."
     )
   },
 })
@@ -450,20 +251,20 @@ export const disconnectedApi: AssistantApi = createAssistantApi({
 /* ------------------------------ transports ------------------------------ */
 
 /**
- * SERVER-SENT EVENTS → AskEvents. For a host whose `ask` endpoint streams
- * `text/event-stream`: each event's `data:` line is one AskEvent as JSON,
+ * SERVER-SENT EVENTS → AmbientAnswerEvents. For a host whose `ask` endpoint streams
+ * `text/event-stream`: each event's `data:` line is one AmbientAnswerEvent as JSON,
  * and `data: [DONE]` (or the end of the body) ends the answer.
  *
  *   ask: async (input, { signal }) =>
- *     eventsFromSSE(await fetch("/assistant/ask/stream", {
+ *     answerEventsFromSSE(await fetch("/ambient/ask/stream", {
  *       method: "POST", body: JSON.stringify(input), signal,
  *     }))
  *
  * Any other transport — a WebSocket, a WebRTC data channel, a gRPC stream —
  * needs only the same thing: turn its messages into an async iterable of
- * AskEvents. The layer does not change.
+ * AmbientAnswerEvents. The layer does not change.
  */
-export async function* eventsFromSSE(
+export async function* answerEventsFromSSE(
   response: Response
 ): AsyncGenerator<unknown> {
   if (!response.ok)

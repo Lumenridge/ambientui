@@ -3,7 +3,8 @@
 
 import * as React from "react"
 
-import { disconnectedApi, type AssistantApi, type Recent } from "./responder"
+import { disconnectedAmbientApi, type AmbientApi } from "./responder"
+import type { AmbientRecent } from "./responder-schemas"
 
 import type { IconName } from "@ambient-ui/ui/components/icon"
 
@@ -132,11 +133,11 @@ type AssistantState = {
   /** Navigate the app shell to a section (wired by App). */
   navigate?: (sectionId: string) => void
   /**
-   * The host's assistant API (see responder.ts): where every question,
+   * The host's Ambient API (see responder.ts): where every question,
    * suggestion list and recent-chat list comes from. Without one, every
    * question fails with the reason — the layer never answers on its own.
    */
-  api: AssistantApi
+  api: AmbientApi
   /**
    * What to offer asking here: the page's own live list when it announced
    * one (state only the page knows), otherwise the API's suggestions for
@@ -144,7 +145,7 @@ type AssistantState = {
    */
   suggestions: string[]
   /** The working history: the page's, otherwise the API's. */
-  recents: Recent[]
+  recents: AmbientRecent[]
   /**
    * The last workspace effect a settled answer announced. Surfaces that own
    * product state subscribe and decide what it means; the layer only relays.
@@ -164,8 +165,8 @@ export function AssistantProvider({
   children: React.ReactNode
   onNavigate?: (sectionId: string) => void
   navItems?: NavItem[]
-  /** Where questions go: the host's API, built with createAssistantApi. */
-  api?: AssistantApi
+  /** Where questions go: the host's API, built with createAmbientApi. */
+  api?: AmbientApi
 }) {
   const [mode, setMode] = React.useState<AssistantMode>("line")
   const [pageChip, setPageChip] = React.useState<ContextChip | null>(null)
@@ -182,7 +183,7 @@ export function AssistantProvider({
   // what the chip says, not on the object, which pages recreate freely);
   // recents are asked once per API. A failed list is an empty list: the
   // palette still works, it just has nothing to offer.
-  const connected = api ?? disconnectedApi
+  const connected = api ?? disconnectedAmbientApi
   const chipKey = pageChip ? `${pageChip.id}\u0000${pageChip.label}` : ""
   const chipRef = React.useRef(pageChip)
   React.useEffect(() => {
@@ -198,7 +199,7 @@ export function AssistantProvider({
       })
     return () => request.abort()
   }, [connected, chipKey])
-  const [apiRecents, setApiRecents] = React.useState<Recent[]>([])
+  const [apiRecents, setApiRecents] = React.useState<AmbientRecent[]>([])
   React.useEffect(() => {
     const request = new AbortController()
     connected.recents({ signal: request.signal }).then(setApiRecents, () => {
