@@ -108,8 +108,17 @@ const useIsoLayoutEffect =
 
 export function FoundationProvider({
   children,
+  remoteFonts = true,
 }: {
   children: React.ReactNode
+  /**
+   * Load a selected Google font from Google. False for a product that
+   * bundles its fonts itself or cannot reach a third party: offline-first
+   * apps, strict CSP or COEP headers (Actual already shipped Inter locally
+   * and runs offline, 2026-09-28). The family is still applied; the product
+   * supplies the files.
+   */
+  remoteFonts?: boolean
 }) {
   const [config, setConfigState] =
     React.useState<FoundationConfig>(DEFAULT_FOUNDATION)
@@ -143,7 +152,7 @@ export function FoundationProvider({
     const font = FONTS.find((f) => f.id === config.font)
     const linkId = "ambientui-google-font"
     let link = document.getElementById(linkId) as HTMLLinkElement | null
-    if (font?.google) {
+    if (font?.google && remoteFonts) {
       const href = `https://fonts.googleapis.com/css2?family=${font.google}&display=swap`
       if (!link) {
         link = document.createElement("link")
@@ -155,7 +164,7 @@ export function FoundationProvider({
     } else if (link) {
       link.remove()
     }
-  }, [config])
+  }, [config, remoteFonts])
 
   const value = React.useMemo<FoundationContextValue>(
     () => ({

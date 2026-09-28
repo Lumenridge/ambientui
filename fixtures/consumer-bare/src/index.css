@@ -1,0 +1,7 @@
+/* Tailwind v4 WITHOUT the global preflight: the ambient-base door supplies
+   ./styles/ambient-preflight.css, confined to the layer. The two lines that
+   need it are added by verify-install after the doors land (a fresh product
+   has no such file yet). */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);

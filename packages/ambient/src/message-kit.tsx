@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import { useAmbientMessages } from "./messages"
+
 import { AnimatePresence, motion } from "framer-motion"
 
 import { Button } from "@ambient-ui/ui/components/button"
@@ -79,6 +81,7 @@ export function MessageActions({
   text?: string
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [copied, setCopied] = React.useState(false)
   React.useEffect(() => {
     if (!copied) return
@@ -122,8 +125,8 @@ export function MessageActions({
       <Button
         size="icon-sm"
         variant="ghost"
-        aria-label={copied ? "Copied" : "Copy"}
-        title={copied ? "Copied" : "Copy"}
+        aria-label={copied ? t.copied : t.copy}
+        title={copied ? t.copied : t.copy}
         onClick={copy}
         className={cn(
           "text-muted-foreground hover:text-foreground",
@@ -158,7 +161,7 @@ export function MessageActions({
 export function FollowUpSuggestions({
   suggestions,
   onPick,
-  label = "Ask more",
+  label: labelProp,
   className,
 }: {
   suggestions: string[]
@@ -167,6 +170,8 @@ export function FollowUpSuggestions({
   label?: string | null
   className?: string
 }) {
+  const t = useAmbientMessages()
+  const label = labelProp === undefined ? t.askMore : labelProp
   const transition = useMotionTransition("control")
   if (suggestions.length === 0) return null
 
@@ -223,7 +228,7 @@ export function ErrorState({
   title = "Generation stopped",
   detail,
   onRetry,
-  retryLabel = "Retry",
+  retryLabel,
   className,
 }: {
   title?: string
@@ -232,6 +237,7 @@ export function ErrorState({
   retryLabel?: string
   className?: string
 }) {
+  const t = useAmbientMessages()
   return (
     <div
       role="alert"
@@ -255,7 +261,7 @@ export function ErrorState({
           className="text-destructive hover:text-destructive shrink-0 hover:bg-(--destructive-wash)"
         >
           <Icon name="replay" size={13} />
-          {retryLabel}
+          {retryLabel ?? t.retry}
         </Button>
       )}
     </div>
@@ -298,6 +304,7 @@ export function MessageQueue({
   onCancel?: (id: string) => void
   className?: string
 }) {
+  const t = useAmbientMessages()
   const transition = useMotionTransition("control")
   if (!running && queued.length === 0) return null
   return (
@@ -340,7 +347,7 @@ export function MessageQueue({
                     size="icon-sm"
                     variant="ghost"
                     aria-label={`Send "${q.text}" now, interrupting the running turn`}
-                    title="Send now — interrupts the running turn"
+                    title={t.sendNow}
                     onClick={() => onInterrupt(q.id)}
                     className="text-muted-foreground hover:text-foreground shrink-0"
                   >
@@ -402,26 +409,38 @@ export function ReasoningPanel({
   staged?: boolean
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [open, setOpen] = React.useState(defaultOpen ?? running)
   const transition = useMotionTransition("surface")
   // the trace arrives the way it was produced: a beat of nothing, then a
   // step, then the next
+  // A DECLARED DURATION IS A CEILING TOO. The reveal's own pacing (a 2.6s
+  // beat, then 1.5s a step) ran past a short declaration, so a stub that
+  // declared one second read "Thought for 4s" (tududi, Excalidraw). With
+  // `seconds`, the beat and the steps are fitted inside it.
+  const budget = seconds ? seconds * 1000 : undefined
+  const delay = budget ? Math.min(2600, budget * 0.35) : 2600
+  const interval =
+    budget && steps.length > 0
+      ? Math.min(1500, (budget - delay) / steps.length)
+      : 1500
   const { shown, pending, working: counting } = useStagedReveal(steps.length, {
     // THINKING TAKES ITS OWN TIME. A trace that declares `seconds` is held
     // to exactly that — the scenario's estimate of its work is the wait the
     // user sees, so a small explain settles in ~4s and a five-file fix earns
     // its twelve. The floor only catches blocks that don't say.
-    minDuration: seconds ? seconds * 1000 : THINKING_FLOOR_MS,
+    minDuration: budget ?? THINKING_FLOOR_MS,
     enabled: staged,
     // long enough to be a real wait, and paced so a step can be READ before
     // the next one lands rather than three arriving on top of each other
-    delay: 2600,
-    interval: 1500,
+    delay,
+    interval,
   })
   const working = staged && (pending || shown < steps.length)
   const elapsed = useElapsedSeconds(counting)
-  // the settled summary quotes the time it ACTUALLY took, not a prop
-  const took = staged ? Math.max(1, elapsed) : seconds
+  // the settled summary quotes the declared time when there is one (the
+  // pacing now fits inside it), else the time it actually took
+  const took = seconds ?? (staged ? Math.max(1, elapsed) : undefined)
   // A run that starts opens the trace; finishing collapses it back — adjusted
   // DURING render on the transition, not from an effect, so the panel never
   // paints in the stale state first. (react.dev: adjusting state when a prop
@@ -442,10 +461,10 @@ export function ReasoningPanel({
       >
         <span className={cn(working && "ambient-shimmer")}>
           {running || working
-            ? `Thinking… ${elapsed}s`
+            ? t.thinkingFor(elapsed)
             : took !== undefined
-              ? `Thought for ${took}s`
-              : "Reasoning"}
+              ? t.thoughtFor(took)
+              : t.reasoning}
         </span>
         <Icon name={open ? "chevron-down" : "chevron-right"} size={13} />
       </button>
@@ -509,7 +528,7 @@ export function ReasoningEffort({
   onChange,
   spent,
   budget,
-  label = "Thinking",
+  label: labelProp,
   defaultOpen = false,
   className,
 }: {
@@ -523,6 +542,8 @@ export function ReasoningEffort({
   defaultOpen?: boolean
   className?: string
 }) {
+  const t = useAmbientMessages()
+  const label = labelProp ?? t.thinking
   const [open, setOpen] = React.useState(defaultOpen)
   const transition = useMotionTransition("surface")
   const ratio =
@@ -654,6 +675,7 @@ export function MessageAttachments({
   compact?: boolean
   className?: string
 }) {
+  const t = useAmbientMessages()
   if (attachments.length === 0) return null
 
   if (compact) {
@@ -722,7 +744,7 @@ export function MessageAttachments({
                 size="icon-xs"
                 variant="ghost"
                 aria-label={`Remove ${a.name}`}
-                title="Remove"
+                title={t.remove}
                 onClick={(e) => {
                   e.stopPropagation()
                   onRemove(a.id)
@@ -842,6 +864,7 @@ export function AttachmentChip({
   attachment: MessageAttachment
   onRemove?: (id: string) => void
 }) {
+  const t = useAmbientMessages()
   return (
     <span
       title={`${a.name}${a.meta ? ` · ${a.meta}` : ""}`}
@@ -857,7 +880,7 @@ export function AttachmentChip({
           size="icon-xs"
           variant="ghost"
           aria-label={`Remove ${a.name}`}
-          title="Remove"
+          title={t.remove}
           onClick={() => onRemove(a.id)}
           className="text-muted-foreground hover:text-foreground size-[22px] shrink-0 rounded-md bg-accent"
         >
@@ -954,6 +977,7 @@ export function QuoteReply({
   onAction?: (action: QuoteAction, selection: string) => void
   className?: string
 }) {
+  const t = useAmbientMessages()
   const hostRef = React.useRef<HTMLDivElement | null>(null)
   const frameRef = React.useRef<number | null>(null)
   const [selection, setSelection] = React.useState("")
@@ -1136,7 +1160,7 @@ export function QuoteReply({
                   <Button
                     size="icon-sm"
                     variant="ghost"
-                    aria-label="Try again"
+                    aria-label={t.tryAgain}
                     onClick={() => run(action, prompt || undefined)}
                     className="shrink-0 rounded-full"
                   >
@@ -1158,7 +1182,7 @@ export function QuoteReply({
                       value={prompt}
                       onPointerDown={(e) => e.stopPropagation()}
                       onChange={(e) => setPrompt(e.target.value)}
-                      aria-label="Describe edits"
+                      aria-label={t.describeEdits}
                       placeholder="Describe edits"
                       className="placeholder:text-muted-foreground h-7 w-32 bg-transparent ps-2.5 pe-1 text-xs outline-none"
                     />
@@ -1166,7 +1190,7 @@ export function QuoteReply({
                   {prompt.trim() ? (
                     <Button
                       size="icon-sm"
-                      aria-label="Send edit instruction"
+                      aria-label={t.sendEdit}
                       onClick={() => run("prompt", prompt.trim())}
                       className="shrink-0 rounded-full"
                     >
@@ -1263,6 +1287,7 @@ export function FeedbackDialog({
   onDismiss?: () => void
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [reasons, setReasons] = React.useState<string[]>([])
   const [note, setNote] = React.useState("")
   const toggle = (r: string) =>
@@ -1271,7 +1296,7 @@ export function FeedbackDialog({
   return (
     <div
       role="group"
-      aria-label="What went wrong?"
+      aria-label={t.whatWentWrong}
       className={cn(
         "border-border bg-card flex w-full max-w-sm flex-col gap-3 rounded-xl border p-3 shadow-xs",
         className
@@ -1281,7 +1306,7 @@ export function FeedbackDialog({
         <span className="bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-lg">
           <Icon name="thumbs-down" size={14} />
         </span>
-        <span className="flex-1 text-sm font-medium">What went wrong?</span>
+        <span className="flex-1 text-sm font-medium">{t.whatWentWrong}</span>
         <span className="text-muted-foreground font-mono text-xs">
           optional
         </span>
@@ -1308,8 +1333,8 @@ export function FeedbackDialog({
       <Input
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Anything else?"
-        aria-label="Anything else?"
+        placeholder={t.anythingElse}
+        aria-label={t.anythingElse}
       />
       <div className="flex items-center justify-end gap-1.5">
         {onDismiss && (

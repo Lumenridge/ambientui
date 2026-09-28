@@ -19,6 +19,17 @@ fiction. This document is the drift boundary.
   component vocabulary with playgrounds and docs.
 - Change process: see **Governance** (§10).
 
+**Reading this in a project that installed ambientui?** The paths above are
+the ambientui repo's. In your project the same things are: the token values
+in `lib/foundation/tokens.ts` (full path only), the bridge and material in
+`styles/foundation.css` and `styles/ambient.css`, the layer under
+`components/ambient/`, and the icons in `components/ui/icon.tsx`. There is no
+`/ds` site unless you built the page start.md describes. On the **ambient
+layer only** path, the Foundation is not installed: §2's propagation rules,
+§3's type scale and §8's layer contract still hold for anything you build
+inside the layer; the sections that configure the Foundation (§9, §10) do
+not apply.
+
 ---
 
 ## 1. Principles

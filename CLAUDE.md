@@ -16,13 +16,18 @@ construction.
   demos) lives in its own repo, `Lumenridge/ambientui-site`, and consumes
   these packages as versioned dependencies.
 - `npm run typecheck` / `npm run build` / `npm run lint`
-- `npm run gate` — all three plus the drift checks (registry, vendored CSS,
+- `npm run gate` — all three plus the drift checks (registry, the Tailwind v3
+  door's completeness, vendored CSS,
   governing-doc path claims, the library's own CSS surface). A
   `.githooks/pre-commit` runs it, so a failing gate blocks the commit
   (`--no-verify` to bypass deliberately). If hooks are not firing, run
   `git config core.hooksPath .githooks`.
+- `packages/cli` is `@ambient-ui/cli`, the install pipeline start.md runs
+  (doctor, plan, begin, install, verify, end, uninstall); its tests are
+  `node --test packages/cli/test/`.
 - `npm run verify:install` — every registry door installed for real into a
-  scratch project; `npm run registry:build` — the deployable registry
+  scratch project (three fixtures: shadcn on Tailwind v4, on v3, and a
+  product with neither); `npm run registry:build` — the deployable registry
   (`registry-dist/`, published by the `ambientui-registry` Cloudflare Pages
   project; see `docs/registry-hosting.md`).
 

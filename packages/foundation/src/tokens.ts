@@ -228,9 +228,9 @@ export const ROLE_DEFS: RoleDef[] = [
   { token: "--background", label: "Page background", description: "The ground every screen sits on; everything else stacks above it.", source: "gray", light: "white", dark: "950" },
   { token: "--foreground", label: "Primary text", description: "Headings and body copy everywhere — cards, popovers, and the sidebar inherit it.", source: "gray", light: "950", dark: "50", aliases: ["--card-foreground", "--popover-foreground", "--sidebar-foreground"] },
   { token: "--card", label: "Raised surface", description: "The face of anything lifted off the page — cards, popovers, menus, sheets.", source: "gray", light: "white", dark: "900", aliases: ["--popover"] },
-  { token: "--muted", label: "Quiet fill", description: "The soft wash behind hover and selected states, subtle chips, and secondary surfaces.", source: "gray", light: "100", dark: "800", aliases: ["--accent", "--sidebar-accent"] },
+  { token: "--muted", label: "Quiet fill", description: "The soft wash behind hover and selected states, subtle chips, and secondary surfaces.", source: "gray", light: "100", dark: "800", aliases: ["--accent", "--sidebar-accent", "--secondary"] },
   { token: "--muted-foreground", label: "Secondary text", description: "Supporting copy — descriptions, captions, placeholders, section labels.", source: "gray", light: "500", dark: "400" },
-  { token: "--accent-foreground", label: "Text on quiet fill", description: "Text sitting on the quiet fill — a hovered menu item's label, a selected row's text.", source: "gray", light: "900", dark: "100", aliases: ["--sidebar-accent-foreground"] },
+  { token: "--accent-foreground", label: "Text on quiet fill", description: "Text sitting on the quiet fill — a hovered menu item's label, a selected row's text.", source: "gray", light: "900", dark: "100", aliases: ["--sidebar-accent-foreground", "--secondary-foreground"] },
   { token: "--border", label: "Hairline border", description: "Every hairline — card edges, dividers, table rules.", source: "gray", light: "200", dark: "800", aliases: ["--sidebar-border"] },
   { token: "--input", label: "Field border", description: "Form-control borders at rest — inputs, selects, checkboxes.", source: "gray", light: "200", dark: "700" },
   { token: "--sidebar", label: "Sidebar ground", description: "The navigation rail's tint, and the shell behind the inset content card.", source: "gray", light: "50", dark: "900" },
@@ -652,9 +652,14 @@ export function compileFoundationCss(config: FoundationConfig): string {
 
   const scaling = SCALINGS.find((s) => s.pct === config.scaling) ?? SCALINGS[2]
 
+  // THE ROOT SIZE ONLY WHEN IT IS A DECISION. `html { font-size }` rescales
+  // every rem on the page, including an existing product's own screens that
+  // the Foundation does not otherwise govern (Actual: 24 rem values moved,
+  // 2026-09-28). At 100% it is the browser default, so it is not written,
+  // and a product's own root size is left alone.
   return [
     `:root { ${light.join(" ")} }`,
     `.dark { ${dark.join(" ")} }`,
-    `html { font-size: ${scaling.base}px; }`,
+    ...(scaling.pct === 100 ? [] : [`html { font-size: ${scaling.base}px; }`]),
   ].join("\n")
 }

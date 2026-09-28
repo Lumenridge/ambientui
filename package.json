@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
-    "gate": "npm run catalog:check && npm run prerender:check && npm run registry:check && npm run vendor:check && npm run docs:check && turbo typecheck lint build && npm run roots:check && npm run tokens:check && npm run css:check",
+    "gate": "npm run catalog:check && npm run prerender:check && npm run registry:check && npm run tw3:check && npm run vendor:check && npm run docs:check && turbo typecheck lint build && npm run roots:check && npm run tokens:check && npm run css:check",
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
@@ -13,6 +13,7 @@
     "prerender:check": "node scripts/check-prerender.mjs",
     "css:check": "node scripts/check-css-surface-lib.mjs",
     "registry:check": "node scripts/build-registry.mjs --check",
+    "tw3:check": "node scripts/check-tailwind3.mjs",
     "vendor:check": "node scripts/check-vendored-css.mjs",
     "roots:check": "node scripts/check-package-roots.mjs",
     "tokens:check": "node scripts/check-tokens-json.mjs",
@@ -24,8 +25,11 @@
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
     "@tailwindcss/cli": "^4.3.3",
+    "postcss": "^8.5.28",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
+    "tailwindcss-animate": "^1.0.7",
+    "tailwindcss-v3": "npm:tailwindcss@^3.4.19",
     "turbo": "^2.9.18",
     "typescript": "~6"
   },

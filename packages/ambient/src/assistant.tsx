@@ -31,7 +31,13 @@ import {
   useMotionTransition,
 } from "./ambient-runtime"
 
-import { useAssistant, type ContextChip } from "./assistant-context"
+import {
+  matchesHotkey,
+  useAssistant,
+  type ContextChip,
+  type NavItem,
+} from "./assistant-context"
+import { useAmbientMessages } from "./messages"
 import {
   MessageBranches,
   StreamingText,
@@ -131,11 +137,30 @@ const nextId = (m: Msg[]) => (m.length ? m[m.length - 1]!.id + 1 : 1)
 const SAMPLE_ATTACHMENT =
   'TypeError: Cannot read properties of undefined (reading "draft")\n    at Composer (composer.tsx:9:14)\n    at renderWithHooks (react-dom.js:14985:18)'
 
-/** What each command family is called when it is being counted. */
+/**
+ * What each of ambientui's own command families is called when counted. A
+ * host's families name their own noun on the command (AmbientCommand.noun);
+ * these stay as the fallback for the site's registrations.
+ */
 const HINT_NOUNS: Record<string, string> = {
   Components: "component",
   Documentation: "document",
   Demos: "demo",
+}
+
+/** "mod+k" → the keycaps to draw, for this platform. */
+function hotkeyCaps(hotkey: string) {
+  const mac =
+    typeof navigator !== "undefined" && /mac|iphone|ipad/i.test(navigator.platform)
+  return hotkey.split("+").map((part) => {
+    const p = part.toLowerCase()
+    if (p === "mod") return mac ? "⌘" : "Ctrl"
+    if (p === "meta") return "⌘"
+    if (p === "ctrl") return "Ctrl"
+    if (p === "shift") return "⇧"
+    if (p === "alt") return mac ? "⌥" : "Alt"
+    return part.toUpperCase()
+  })
 }
 
 type PaletteItem = {
@@ -228,10 +253,24 @@ export function Assistant({
     suggestions,
     recents: recentChats,
     announceEffect,
+    hotkey,
+    yieldHotkey,
+    zIndex,
+    dark,
+    messages: t,
   } = useAssistant()
 
   const [input, setInput] = React.useState("")
   const [messages, setMessages] = React.useState<Msg[]>([])
+  /**
+   * THE SPOTLIGHT SEARCHES FIRST. With a conversation open, the spotlight
+   * used to BE the conversation: the hotkey showed the transcript and
+   * anything typed was queued as a follow-up, so the product's command
+   * palette was gone until the chat was cleared (Actual, where the
+   * spotlight had taken over the app's own ⌘K). The hotkey now opens search
+   * every time, with the conversation one row away.
+   */
+  const [searchOver, setSearchOver] = React.useState(false)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const panelRef = React.useRef<HTMLDivElement>(null)
@@ -377,24 +416,36 @@ export function Assistant({
     }
   }, [panelDrag, setMode])
 
-  // Global shortcuts: ⌘K toggles the palette; Esc clears the query, then closes
+  // Global shortcuts: the hotkey toggles the palette; Esc clears the query,
+  // then closes.
+  //
+  // THE CAPTURE PHASE, and the host's say. A bubble-phase listener on
+  // window hears the key LAST, so a host that handles ⌘K itself and stops
+  // propagation (Excalidraw's "Add link") swallowed it and the palette
+  // never opened. Capture hears it first; `yieldHotkey` is how the host
+  // takes a keystroke back.
   React.useEffect(() => {
     if (!hotkeys) return
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if (hotkey && matchesHotkey(e, hotkey)) {
+        if (yieldHotkey?.(e)) return
         e.preventDefault()
-        setMode(
-          mode === "spotlight"
-            ? messages.length > 0
-              ? "panel"
-              : "line"
-            : "spotlight"
-        )
+        e.stopPropagation()
+        if (mode === "spotlight") {
+          setInput("")
+          setSearchOver(false)
+          setMode(messages.length > 0 ? "panel" : "line")
+        } else {
+          setInput("")
+          setSearchOver(messages.length > 0)
+          setMode("spotlight")
+        }
       } else if (e.key === "Escape") {
         if (mode === "spotlight" && input !== "") {
           setInput("")
           return
         }
+        if (mode === "spotlight") setSearchOver(false)
         // history closes all the way to rest: it is a full-screen surface,
         // and dropping from it into a floating panel leaves two things open
         // when the user asked to put one away
@@ -405,9 +456,9 @@ export function Assistant({
         setMode(mode === "spotlight" && messages.length > 0 ? "panel" : "line")
       }
     }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [hotkeys, mode, messages.length, input, setMode])
+    window.addEventListener("keydown", onKey, true)
+    return () => window.removeEventListener("keydown", onKey, true)
+  }, [hotkeys, hotkey, yieldHotkey, mode, messages.length, input, setMode])
 
   React.useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
@@ -423,7 +474,7 @@ export function Assistant({
     if (mode === "spotlight") {
       requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }))
     }
-  }, [asking, mode])
+  }, [asking, mode, searchOver])
 
   const [conversationId, setConversationId] = React.useState(newConversationId)
   const clearConversation = () => {
@@ -702,6 +753,8 @@ export function Assistant({
       typeof textOverride === "string" ? textOverride : input
     ).trim()
     if (!text) return
+    // asking anything from search brings the conversation back on top
+    setSearchOver(false)
     if (busyRef.current) {
       // the agent is mid-run: the new instruction stacks behind it
       setInput("")
@@ -841,7 +894,7 @@ export function Assistant({
               hand-rolls its own list is a second component nobody maintains */}
           <AssistantMark size={44} />
           <h3 className="mt-3 text-base font-semibold">
-            {pageChip ? "Ask about this page" : "Ask about ambientui"}
+            {pageChip ? t.askAboutPage : t.askAboutProduct}
           </h3>
           <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
             {pageChip
@@ -879,7 +932,7 @@ export function Assistant({
               )}
               {m.failed && (
                 <ErrorState
-                  title="Couldn't answer"
+                  title={t.couldNotAnswer}
                   detail={m.failed}
                   onRetry={busy ? undefined : () => retry(m.id)}
                 />
@@ -973,10 +1026,10 @@ export function Assistant({
             />
           </span>
           <div className="ms-auto flex items-center gap-1 text-muted-foreground">
-            <HeaderBtn label="History" onClick={() => setMode("history")}>
+            <HeaderBtn label={t.history} onClick={() => setMode("history")}>
               <Icon name="history" size={15} />
             </HeaderBtn>
-            <HeaderBtn label="Minimize" onClick={() => setMode("line")}>
+            <HeaderBtn label={t.minimize} onClick={() => setMode("line")}>
               <HugeiconsIcon icon={Cancel01Icon} size={15} strokeWidth={1.8} />
             </HeaderBtn>
           </div>
@@ -1015,7 +1068,7 @@ export function Assistant({
             busy={busy}
                 onAttach={() => attachText(SAMPLE_ATTACHMENT)}
             onPasteText={attachText}
-            placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
+            placeholder={busy ? t.queuePlaceholder : t.followUpPlaceholder}
           />
         </div>
       </div>
@@ -1025,21 +1078,36 @@ export function Assistant({
   if (mode === "spotlight") {
     const q = input.trim()
     // the page's own invitation, or the app-wide one
-    const askLine =
-      pageIntel?.askPlaceholder ?? "Search or ask a question in ambientui…"
+    const askLine = pageIntel?.askPlaceholder ?? t.askPlaceholder
     const question = looksLikeQuestion(input)
+    // the conversation stays behind the search until asked for (see
+    // searchOver); the transcript shows only when search is not on top
+    const transcriptView = asking && !searchOver
 
+    // EVERY WAY OUT OF THE PALETTE LEAVES IT CLOSED AND EMPTY. A command or
+    // a jump used to run with the palette still in spotlight mode (so the
+    // next hotkey CLOSED it, and read as doing nothing), and a jump kept its
+    // query (so the next search was appended to it: "reportsschedules",
+    // sent to the assistant as a question). Actual, 2026-09-28.
+    const leave = () => {
+      setInput("")
+      setSearchOver(false)
+      setMode("line")
+    }
     const goNav = (id: string) => {
       navigate?.(id)
-      setMode("line")
+      leave()
     }
     const askItem: PaletteItem = {
       id: "ask",
       section: "",
-      label: "Ask ambientui",
+      label: t.askAction,
       desc: `“${q}”`,
       iconKind: "ask",
-      run: () => send(),
+      run: () => {
+        setSearchOver(false)
+        send()
+      },
     }
     // The page's own workspace wins over the app's routes: inside the dev
     // tool, "Jump to" opens files. Both shapes collapse to the same item.
@@ -1047,35 +1115,39 @@ export function Assistant({
       id: string
       label: string
       desc?: string
-      icon?: typeof SparklesIcon
+      icon?: NavItem["icon"]
       go: () => void
     }[] = pageIntel?.jumps
       ? pageIntel.jumps.map((j) => ({
           id: j.id,
           label: j.label,
           desc: j.desc,
-          icon: SourceCodeIcon,
+          icon: j.icon ?? (SourceCodeIcon as NavItem["icon"]),
           go: () => {
             pageIntel.onJump?.(j.id)
-            setMode("line")
+            leave()
           },
         }))
       : navTargets.map((s) => ({
           id: s.id,
           label: s.label,
           desc: s.desc,
-          icon: s.icon as typeof SparklesIcon | undefined,
+          icon: s.icon,
           go: () => goNav(s.id),
         }))
     const navItems = (list: typeof jumpTargets): PaletteItem[] =>
-      list.map((t) => ({
-        id: `nav-${t.id}`,
-        section: pageIntel?.jumpLabel ?? "Jump to",
-        label: t.label,
-        desc: t.desc,
+      list.map((j) => ({
+        id: `nav-${j.id}`,
+        section: pageIntel?.jumpLabel ?? t.jumpTo,
+        label: j.label,
+        desc: j.desc,
         iconKind: "nav" as const,
-        navIcon: t.icon,
-        run: t.go,
+        // a NAME goes through <Icon>, like every icon in the system; an icon
+        // object is the legacy HugeIcons form
+        ...(typeof j.icon === "string"
+          ? { iconName: j.icon }
+          : { navIcon: j.icon as typeof SparklesIcon | undefined }),
+        run: j.go,
       }))
     // The matching sections, kept as DATA: every palette item carries a `run`
     // closure, so anything derived from the item list drags those closures
@@ -1128,8 +1200,8 @@ export function Assistant({
           iconKind: "command" as const,
           iconName: c.icon,
           run: () => {
+            leave()
             c.run()
-            setInput("")
           },
         }))
     )
@@ -1138,7 +1210,19 @@ export function Assistant({
     // mid-render reads as a mutable box, and hiding the same branches behind
     // a call reads as passing one around. What the palette shows is a pure
     // function of the query — so it is written as one.
-    const paletteItems: PaletteItem[] = asking
+    const backItem: PaletteItem[] = searchOver
+      ? [
+          {
+            id: "back-to-conversation",
+            section: "",
+            label: t.backToConversation,
+            desc: sessionTitle,
+            iconKind: "recent" as const,
+            run: () => setSearchOver(false),
+          },
+        ]
+      : []
+    const paletteItems: PaletteItem[] = transcriptView
       ? []
       : question
         ? // asking leads, but whatever matched still follows: the phrasing
@@ -1148,9 +1232,10 @@ export function Assistant({
         : q
           ? [askItem, ...groupedCommands, ...navItems(queryMatches)]
           : [
+              ...backItem,
               ...recentChats.map((r) => ({
                 id: `recent-${r.text}`,
-                section: "Recent chats",
+                section: t.recentChats,
                 label: r.text,
                 trailing: r.when,
                 iconKind: "recent" as const,
@@ -1158,16 +1243,16 @@ export function Assistant({
               })),
               ...suggestions.map((p) => ({
                 id: `prompt-${p}`,
-                section: pageIntel?.suggestLabel ?? "Suggested for this page",
+                section: pageIntel?.suggestLabel ?? t.suggestedForPage,
                 label: p,
                 iconKind: "prompt" as const,
                 run: () => send(p),
               })),
               {
                 id: "open-chat",
-                section: pageIntel?.suggestLabel ?? "Suggested for this page",
+                section: pageIntel?.suggestLabel ?? t.suggestedForPage,
                 // the surface has a name, and it is the panel (DESIGN.md §8)
-                label: "Open the panel with this context",
+                label: t.openPanelWithContext,
                 desc: pageChip?.label,
                 iconKind: "avatar" as const,
                 run: () => setMode("panel"),
@@ -1183,7 +1268,10 @@ export function Assistant({
                   desc: c.desc,
                   iconKind: "command" as const,
                   iconName: c.icon,
-                  run: c.run,
+                  run: () => {
+                    leave()
+                    c.run()
+                  },
                 })),
               ...navItems(jumpTargets),
             ]
@@ -1202,11 +1290,16 @@ export function Assistant({
           .map((c) => c.section)
       ),
     ].map((sec) => {
-      const n = commands.filter((c) => c.section === sec).length
+      const inSection = commands.filter((c) => c.section === sec)
+      const n = inSection.length
       // a section NAME is a heading, not a countable noun — "10
-      // documentation" is what happens when you lowercase one and hope
-      const noun = HINT_NOUNS[sec] ?? sec.toLowerCase()
-      return `${n} ${noun}${n === 1 ? "" : "s"}`
+      // documentation" is what happens when you lowercase one and hope. The
+      // registering host names its own noun; ours are in HINT_NOUNS.
+      const declared = inSection.find((c) => c.noun)?.noun
+      const noun = declared ?? HINT_NOUNS[sec] ?? sec.toLowerCase()
+      return declared || HINT_NOUNS[sec]
+        ? `${n} ${noun}${n === 1 ? "" : "s"}`
+        : `${n} ${noun}`
     })
 
     const onPaletteKeyDown = (e: React.KeyboardEvent) => {
@@ -1221,7 +1314,10 @@ export function Assistant({
         e.preventDefault()
         if (paletteItems.length)
           paletteItems[Math.min(selIdx, paletteItems.length - 1)]?.run()
-        else send()
+        else {
+          setSearchOver(false)
+          send()
+        }
       } else if (e.key === "Backspace" && input === "" && chips.length > 0) {
         removeChip(chips[chips.length - 1].id)
       }
@@ -1229,6 +1325,7 @@ export function Assistant({
     surfaceEl = (
       <motion.div
         key="spotlight"
+        data-ambient-surface="spotlight"
         // a glass-tinted scrim: the product dims behind a translucent veil
         // (the scrim token, a background-derived wash) so the palette reads
         // as the hero of the moment; the layer still catches outside clicks
@@ -1237,7 +1334,10 @@ export function Assistant({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: microT }}
         transition={microT}
-        onClick={() => setMode(messages.length ? "panel" : "line")}
+        onClick={() => {
+          setSearchOver(false)
+          setMode(messages.length ? "panel" : "line")
+        }}
       >
         {/* fraction spacers, not vh margins: the overlay is the containing
             block, so the palette holds its 9% head-margin inside a framed
@@ -1254,11 +1354,12 @@ export function Assistant({
           <div
             className="ambient-glass ambient-live-border relative flex max-h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-(--glass-border) shadow-[0_32px_100px_-16px_rgba(0,0,0,0.6),0_8px_32px_-12px_rgba(0,0,0,0.4)]"
             data-orb-state={orbState}
+            data-ambient-panel
           >
             {renderField()}
             <div className="relative flex min-h-0 flex-col">
               {/* search / ask input — hidden in answer mode (follow-up bar takes over) */}
-              {!asking && (
+              {!transcriptView && (
                 <>
                   <div className="border-b border-(--glass-border) px-4 py-2">
                     <div className={AI_FORM_ROW}>
@@ -1266,6 +1367,7 @@ export function Assistant({
                       <div className="relative min-w-0 flex-1">
                         <input
                           ref={inputRef}
+                          data-ambient-input
                           value={input}
                           onChange={(e) => setInput(e.target.value)}
                           onKeyDown={onPaletteKeyDown}
@@ -1298,7 +1400,7 @@ export function Assistant({
                 </>
               )}
 
-              {asking ? (
+              {transcriptView ? (
                 <>
                   <div className="flex items-center gap-2 border-b border-border px-4 py-2">
                     {/* the session's subject, not a character and not the
@@ -1314,16 +1416,16 @@ export function Assistant({
                     </span>
                     <div className="ms-auto flex items-center gap-1 text-muted-foreground">
                       <HeaderBtn
-                        label="History"
+                        label={t.history}
                         onClick={() => setMode("history")}
                       >
                         <Icon name="history" size={14} />
                       </HeaderBtn>
-                      <HeaderBtn label="Dock it" onClick={() => setMode("dock")}>
+                      <HeaderBtn label={t.dockIt} onClick={() => setMode("dock")}>
                         <Icon name="sidebar" size={14} />
                       </HeaderBtn>
                       <HeaderBtn
-                        label="Open in chat window"
+                        label={t.openInChatWindow}
                         onClick={() => setMode("panel")}
                       >
                         <HugeiconsIcon
@@ -1333,7 +1435,7 @@ export function Assistant({
                         />
                       </HeaderBtn>
                       <HeaderBtn
-                        label="Back to search"
+                        label={t.backToSearch}
                         onClick={clearConversation}
                       >
                         <HugeiconsIcon
@@ -1377,7 +1479,7 @@ export function Assistant({
                       onStop={stop}
                       busy={busy}
                       onPasteText={attachText}
-                      placeholder={busy ? "Queue another instruction…" : "Ask a follow-up…"}
+                      placeholder={busy ? t.queuePlaceholder : t.followUpPlaceholder}
                     />
                   </div>
                 </>
@@ -1389,15 +1491,15 @@ export function Assistant({
                   footer={
                     question ? (
                       <p className="px-2 pt-2 pb-1 text-[12px] text-muted-foreground">
-                        Answers are grounded in the attached context.
+                        {t.groundedFootnote}
                       </p>
                     ) : q && queryMatches.length === 0 ? (
                       <p className="text-muted-foreground px-2 py-3 text-sm">
-                        No pages match — ↵ asks ambientui instead.
+                        {t.noMatches}
                       </p>
                     ) : !q && hint.length > 0 ? (
                       <p className="text-muted-foreground px-2 pt-3 pb-1 text-sm">
-                        Start typing to search {hint.join(", ")}.
+                        {t.startTypingHint(hint.join(", "))}
                       </p>
                     ) : null
                   }
@@ -1408,15 +1510,21 @@ export function Assistant({
                 {/* no character down here either: the palette already
                     carries one in the row you type into, and a second mark on
                     the same surface is the shell signing itself twice */}
-                <span className="flex items-center gap-2">ambientui</span>
+                <span className="flex items-center gap-2">{t.footerName}</span>
                 <span className="ms-auto flex items-center gap-1.5">
-                  Select <PaletteKey>↵</PaletteKey>
+                  {t.select} <PaletteKey>↵</PaletteKey>
                 </span>
-                <span className="h-3.5 w-px bg-(--glass-border)" />
-                <span className="flex items-center gap-1.5">
-                  Toggle <PaletteKey>⌘</PaletteKey>
-                  <PaletteKey>K</PaletteKey>
-                </span>
+                {hotkey && (
+                  <>
+                    <span className="h-3.5 w-px bg-(--glass-border)" />
+                    <span className="flex items-center gap-1.5">
+                      {t.toggle}
+                      {hotkeyCaps(hotkey).map((cap) => (
+                        <PaletteKey key={cap}>{cap}</PaletteKey>
+                      ))}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -1429,6 +1537,7 @@ export function Assistant({
     surfaceEl = (
       <motion.div
         key="dock"
+        data-ambient-surface="dock"
         data-orb-state={orbState}
         // inset on the spacing grid (2 = 8px at the default unit) and
         // rounded: the dock is a surface the layer put there, not a pane
@@ -1494,6 +1603,7 @@ export function Assistant({
     surfaceEl = (
       <motion.div
         key="history"
+        data-ambient-surface="history"
         data-orb-state={orbState}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -1510,7 +1620,7 @@ export function Assistant({
             per mode kept alive). */}
         <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
-          <span className="text-sm font-medium">History</span>
+          <span className="text-sm font-medium">{t.history}</span>
           <span className="text-muted-foreground font-mono text-xs">
             {recents.length} conversation{recents.length === 1 ? "" : "s"}
           </span>
@@ -1518,7 +1628,7 @@ export function Assistant({
             {/* keep the conversation, put the record away — the panel to
                 float it, the dock to park it beside the work */}
             <HeaderBtn
-              label="Open in chat window"
+              label={t.openInChatWindow}
               onClick={() => setMode("panel")}
             >
               <HugeiconsIcon
@@ -1527,10 +1637,10 @@ export function Assistant({
                 strokeWidth={1.8}
               />
             </HeaderBtn>
-            <HeaderBtn label="Dock it" onClick={() => setMode("dock")}>
+            <HeaderBtn label={t.dockIt} onClick={() => setMode("dock")}>
               <Icon name="sidebar" size={15} />
             </HeaderBtn>
-            <HeaderBtn label="Close history" onClick={() => setMode("line")}>
+            <HeaderBtn label={t.closeHistory} onClick={() => setMode("line")}>
               <HugeiconsIcon icon={Cancel01Icon} size={15} strokeWidth={1.8} />
             </HeaderBtn>
           </div>
@@ -1645,9 +1755,7 @@ export function Assistant({
                 busy={busy}
                 onAttach={() => attachText(SAMPLE_ATTACHMENT)}
                 onPasteText={attachText}
-                placeholder={
-                  busy ? "Queue another instruction…" : "Ask a follow-up…"
-                }
+                placeholder={busy ? t.queuePlaceholder : t.followUpPlaceholder}
               />
               </div>
             </div>
@@ -1664,6 +1772,7 @@ export function Assistant({
     surfaceEl = (
       <motion.div
         key="panel"
+        data-ambient-surface="panel"
         ref={panelRef}
         data-orb-state={orbState}
         initial={{ opacity: 0, y: 12, scale: 0.98 }}
@@ -1683,8 +1792,25 @@ export function Assistant({
     )
   }
 
+  /**
+   * THE LAYER'S ONE ROOT. `data-ambient-root` is how anything outside —
+   * the install's verify step, a host's own tests — finds the layer
+   * without knowing its markup. `ambient-scope` is where a scoped preflight
+   * applies (ambient-base, for products not built on Tailwind), so the
+   * product's own screens are never reset. `dark` mirrors a theme the host
+   * keeps somewhere other than `<html>`. With a `zIndex` the root becomes a
+   * stacking context at that level; without one it is layout-neutral.
+   */
   return (
-    <>
+    <div
+      data-ambient-root=""
+      className={cn("ambient-scope", dark && "dark")}
+      style={
+        zIndex === undefined
+          ? { display: "contents" }
+          : { position: "relative", zIndex }
+      }
+    >
       {/* zero-size fixed probe: its offsetParent IS the containing block
           (the frame when embedded, the viewport otherwise) */}
       <div ref={frameProbeRef} aria-hidden className="fixed" />
@@ -1693,7 +1819,7 @@ export function Assistant({
       {mode === "line" && <AssistantOrb />}
       {mode === "panel" && panelDrag && <SnapZones hot={hotZone} />}
       <AnimatePresence>{surfaceEl}</AnimatePresence>
-    </>
+    </div>
   )
 }
 
@@ -1857,6 +1983,7 @@ function PaletteList({
 }
 
 function SnapZones({ hot }: { hot: "dock" | "spotlight" | null }) {
+  const t = useAmbientMessages()
   const zone = (active: boolean) =>
     cn(
       // glass: translucent fill + backdrop blur keeps the labels readable over content
@@ -1868,7 +1995,7 @@ function SnapZones({ hot }: { hot: "dock" | "spotlight" | null }) {
   return (
     <>
       <div className={cn(zone(hot === "dock"), "inset-y-2 right-2 w-28")}>
-        Dock
+        {t.snapDock}
       </div>
       <div
         className={cn(
@@ -1876,7 +2003,7 @@ function SnapZones({ hot }: { hot: "dock" | "spotlight" | null }) {
           "top-2 left-1/2 h-28 w-[640px] max-w-[80vw] -translate-x-1/2"
         )}
       >
-        Spotlight
+        {t.snapSpotlight}
       </div>
     </>
   )
@@ -1942,6 +2069,7 @@ function ContextRow({
   attachments?: MessageAttachment[]
   onRemoveAttachment?: (id: string) => void
 }) {
+  const t = useAmbientMessages()
   if (!pageChip && chips.length === 0 && attachments.length === 0) return null
   return (
     <ChipSlider
@@ -1957,12 +2085,12 @@ function ContextRow({
         ) : (
           <button
             type="button"
-            title="Attach this page as context"
+            title={t.attachPageTitle}
             onClick={() => onTogglePage(true)}
             className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-border bg-popover py-1 ps-1.5 pe-2.5 text-[12.5px] font-medium transition-colors hover:bg-(--wash-strong)"
           >
             <IconTile icon="document" />
-            Attach context
+            {t.attachContext}
             <span className="text-muted-foreground">
               <HugeiconsIcon icon={PlusSignIcon} size={13} strokeWidth={1.8} />
             </span>

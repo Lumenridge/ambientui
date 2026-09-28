@@ -19,8 +19,29 @@
  *   --positive  is an ambientui token
  *   --spacing   is Tailwind v4's, absent if the grid is not configured
  *
- * Requires Tailwind v4. Import it after tailwindcss and after your token block.
+ * This file is plain CSS and compiles under Tailwind v3 or v4; it is the
+ * layer's COMPONENTS that are written in v4 classes (the registry publishes a
+ * v3 rewrite of them as `ambient-layer-tw3`). Projects whose shadcn tokens are
+ * HSL triplets take `ambient-styles-hsl`, the same file with each role read
+ * through hsl(). Import it after tailwindcss and after your token block.
  */
+
+/* THE LAYER'S FLOOR — values the components read that are NOT standard
+   shadcn, declared at zero specificity. The Foundation, a host's own token
+   block, or a registry cssVars entry (all plain :root) override every one.
+   Without them, the ambient-layer-only path (no Foundation) ran with no
+   motion roles, so every CSS transition snapped, and `text-(--positive)`
+   resolved to nothing (Invoify, 2026-09-28). The motion values are the
+   runtime's own defaults (ambient-runtime.tsx), stated once more here because
+   CSS cannot read them from JavaScript. */
+:where(:root) {
+  --positive: oklch(0.596 0.145 163.225);
+  --motion-micro: 120ms;
+  --motion-control: 180ms;
+  --motion-surface: 240ms;
+  --motion-page: 320ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
 
 /* THE LAYER'S OWN KNOBS — the four values an adopter is expected to retune.
    --ambient-blur lived in packages/ui globals.css, which is the primitives
@@ -119,6 +140,19 @@
   );
   background-size: calc(var(--spacing, 0.25rem) * 8) calc(var(--spacing, 0.25rem) * 8);
   background-position: center;
+}
+
+/* THE SCROLL STRIP'S HIDDEN BAR — the attachment strip scrolls sideways with
+   no visible bar. `no-scrollbar` is a utility from shadcn's v4 stylesheet
+   (shadcn/tailwind.css), which a host may not import and a Tailwind v3 host
+   cannot. The layer declares the one it uses so it depends on neither; where
+   shadcn's also exists, the two are identical. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* THE LIVE BORDER — the orb's states projected onto an AI surface's

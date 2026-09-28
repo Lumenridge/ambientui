@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import { useAmbientMessages } from "./messages"
+
 import { AnimatePresence, motion } from "framer-motion"
 
 import { Button } from "@ambient-ui/ui/components/button"
@@ -34,10 +36,11 @@ import { useElapsedSeconds, useStagedReveal } from "./use-staged-reveal"
 export type ToolStatus = "running" | "done" | "failed"
 
 function StatusMark({ status }: { status: ToolStatus }) {
+  const t = useAmbientMessages()
   if (status === "running")
     return (
       <span
-        aria-label="Running"
+        aria-label={t.running}
         className="border-muted-foreground/30 border-t-primary size-3.5 shrink-0 animate-spin rounded-full border-2"
       />
     )
