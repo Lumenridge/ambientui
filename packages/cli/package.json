@@ -27,5 +27,9 @@
     "type": "git",
     "url": "git+https://github.com/Lumenridge/ambientui.git",
     "directory": "packages/cli"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://ambientui.ai"
 }
