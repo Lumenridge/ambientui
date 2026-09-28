@@ -9,7 +9,7 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
-import { blockers, buildPlan, envFlagFor, iconLibraryFor, questions, resolveAnswers, unusedIconPackages } from "../src/plan.mjs"
+import { applyOverrides, blockers, buildPlan, decisions, envFlagFor, iconLibraryFor, parseOverride, resolveAnswers, unusedIconPackages } from "../src/plan.mjs"
 
 const ROLES = ["background", "foreground", "card", "card-foreground", "popover", "popover-foreground", "primary", "primary-foreground", "secondary", "secondary-foreground", "muted", "muted-foreground", "accent", "accent-foreground", "destructive", "border", "input", "ring"]
 
@@ -155,10 +155,10 @@ describe("doors and css — the four dialects", () => {
     assert.equal(p.css.mode, "v3-entry-import")
     assert.equal(p.css.entryFile, "src/main.tsx")
     assert.deepEqual(p.css.lines, ['import "./styles/ambient.css"'])
-    // the path question is replaced by an info line
-    const q = questions(pr, {})
-    assert.ok(!q.questions.some((x) => x.id === "path"))
-    assert.match(q.infos[0].message, /Tailwind v3/)
+    // the path is decided, not asked, and says why
+    const d = decisions(pr, {}).find((x) => x.id === "path")
+    assert.equal(d.chosen, "layer")
+    assert.match(d.why, /Tailwind v3/)
   })
 
   it("Tailwind v3 with the full path requested: a blocker, and the plan stays layer-only", () => {
@@ -220,13 +220,14 @@ describe("hotkey", () => {
     },
   }
 
-  it("an existing ⌘K owner raises the question, defaulting to coexist (mod+j)", () => {
+  it("an existing ⌘K owner is decided, not asked: coexist on mod+j, alternatives recorded", () => {
     const pr = profile(owned)
-    const q = questions(pr, {}).questions.find((x) => x.id === "hotkey")
+    const q = decisions(pr, {}).find((x) => x.id === "hotkey")
     assert.ok(q)
-    assert.deepEqual(q.options.map((o) => o.value), ["takeover", "coexist", "yield", "off"])
-    assert.equal(q.default, "coexist")
-    assert.match(q.prompt, /CommandBar\.tsx:152/)
+    assert.deepEqual(q.options.map((o) => o.value).sort(), ["coexist", "off", "takeover", "yield"])
+    assert.equal(q.chosen, "coexist")
+    assert.equal(q.source, "doctor")
+    assert.match(q.why, /CommandBar\.tsx:152/)
     assert.equal(buildPlan(pr, {}).provider.hotkey, "mod+j")
   })
 
@@ -245,7 +246,7 @@ describe("hotkey", () => {
   })
 
   it("no owner: no question, mod+k", () => {
-    assert.ok(!questions(profile(), {}).questions.some((x) => x.id === "hotkey"))
+    assert.ok(!decisions(profile(), {}).some((x) => x.id === "hotkey"))
     assert.equal(buildPlan(profile(), {}).provider.hotkey, "mod+k")
   })
 })
@@ -310,7 +311,7 @@ describe("provider props", () => {
     const p = buildPlan(pr, {})
     assert.equal(p.provider.dark.mirror, "container-class")
     assert.match(p.provider.dark.signal, /theme--dark @ src\/App\.tsx:9/)
-    assert.ok(questions(pr, {}).questions.find((q) => q.id === "theme").informational)
+    assert.equal(decisions(pr, {}).find((q) => q.id === "theme").chosen, "mirror")
   })
 
   it("a PWA precache limit lazy-loads the Assistant", () => {
@@ -348,16 +349,17 @@ describe("monorepo", () => {
 })
 
 describe("blockers and purity", () => {
-  it("no React, React 17, and no git are hard stops", () => {
+  it("no React and React 17 are hard stops; no git is a step the agent takes, not a stop", () => {
     assert.ok(blockers(profile({ react: null })).some((b) => b.id === "no-react"))
     assert.ok(blockers(profile({ react: { version: "17.0.2", major: 17 } })).some((b) => b.id === "react-too-old"))
-    const ng = blockers(profile({ git: { isRepo: false } }))
-    assert.ok(ng.some((b) => b.id === "not-git" && /git init/.test(b.fix)))
+    const pr = profile({ git: { isRepo: false } })
+    assert.deepEqual(blockers(pr), [])
+    assert.ok(buildPlan(pr, {}).requiredSteps.some((r) => r.id === "git-init"))
   })
 
-  it("governance: asked when CLAUDE.md exists, installed beside it with one pointer line", () => {
+  it("governance: decided when CLAUDE.md exists, installed beside it with one pointer line", () => {
     const pr = profile({ agent: { claudeMd: true } })
-    assert.equal(questions(pr, {}).questions.find((q) => q.id === "governance").default, "yes")
+    assert.equal(decisions(pr, {}).find((q) => q.id === "governance").chosen, "yes")
     const p = buildPlan(pr, {})
     assert.ok(p.doors.includes("governance"))
     assert.equal(p.governance.rules, ".claude/ambientui/CLAUDE.md")
@@ -461,5 +463,35 @@ describe("adaptations — the doors stay generic, the landed files fit the produ
     assert.ok(!buildPlan(profile(), { path: "layer" }).adapt.some((a) => a.id === "orb-assets"))
     const ex = buildPlan(profile({ staticDir: "../public" }), { path: "layer" })
     assert.equal(ex.adapt.find((a) => a.id === "orb-assets").to, "../public")
+  })
+})
+
+describe("the agent's corrections and the owner's choices", () => {
+  it("--set overrides a planned value, keeps the reason, and parses JSON values", () => {
+    const o = parseOverride("provider.zIndex=2999", "CaptureHost sits at 10100; the modal guess was wrong")
+    assert.equal(o.value, 2999)
+    const p = applyOverrides(buildPlan(profile(), {}), [o, parseOverride("mount.file=src/Layout.tsx", "App renders before the router")])
+    assert.equal(p.provider.zIndex, 2999)
+    assert.equal(p.mount.file, "src/Layout.tsx")
+    assert.equal(p.overrides.length, 2)
+  })
+  it("an owner's explicit choice beats the doctor's decision, and says so", () => {
+    const d = decisions(profile({ hotkeys: { conflict: true, owners: [{ kind: "dependency", name: "cmdk" }] } }), { hotkey: "takeover" }).find((x) => x.id === "hotkey")
+    assert.equal(d.chosen, "takeover")
+    assert.equal(d.source, "owner")
+  })
+})
+
+describe("AMBIENTUI-NOTES.md", () => {
+  it("says happy path when nothing strayed, and recommends a considered reinstall when something did", async () => {
+    const { notesMarkdown } = await import("../src/notes.mjs")
+    const plan = buildPlan(profile(), {})
+    const happy = notesMarkdown({ plan, notes: [], productName: "Shop" })
+    assert.match(happy, /happy path/)
+    assert.doesNotMatch(happy, /We recommend you try it, then uninstall/)
+    const off = notesMarkdown({ plan, notes: [{ kind: "manual", text: "wired the transport by hand: the app has no fetch helper" }], productName: "Shop" })
+    assert.match(off, /judgement calls/)
+    assert.match(off, /## Done by hand\n\n- wired the transport by hand/)
+    assert.match(off, /We recommend you try it, then uninstall it/)
   })
 })

@@ -26,16 +26,17 @@ import { begin } from "../src/commands/begin.mjs"
 import { doctor } from "../src/commands/doctor.mjs"
 import { end } from "../src/commands/end.mjs"
 import { install } from "../src/commands/install.mjs"
+import { note } from "../src/commands/note.mjs"
 import { plan } from "../src/commands/plan.mjs"
 import { uninstall } from "../src/commands/uninstall.mjs"
 import { verify } from "../src/commands/verify.mjs"
 import { createOutput } from "../src/output.mjs"
 import { CliError } from "../src/util.mjs"
 
-const COMMANDS = { doctor, plan, begin, install, adapt, end, verify, uninstall }
+const COMMANDS = { doctor, plan, begin, install, adapt, note, end, verify, uninstall }
 
 /** Flags that take a value; everything else is boolean. */
-const VALUED = new Set(["cwd", "url", "path", "hotkey", "look", "governance", "theme", "timeout"])
+const VALUED = new Set(["cwd", "url", "path", "hotkey", "look", "governance", "theme", "timeout", "set", "because", "kind"])
 
 export function parseArgs(argv) {
   const opts = { _: [] }
@@ -64,8 +65,12 @@ const HELP = `ambientui — install the ambient layer into a React product
 Usage: ambientui <command> [--cwd <dir>] [--json]
 
   doctor [--baseline] [--url <devServerUrl>] [--timeout <s>]
-  plan [--path layer|full] [--hotkey takeover|coexist|yield|off]
+  plan [--set key=value --because "…"]        correct the plan after reviewing the survey
+       [--path layer|full] [--hotkey takeover|coexist|yield|off]
        [--look current|reference] [--governance yes|no] [--theme mirror|light]
+                                              (an owner's own choices, for a reinstall)
+  note "<what and why>" [--kind judgement|manual|unavailable]
+                                              record a judgement call for AMBIENTUI-NOTES.md
   begin [--allow-dirty]
   install [--timeout <s>]
   adapt                re-apply the plan's per-product changes to the installed files

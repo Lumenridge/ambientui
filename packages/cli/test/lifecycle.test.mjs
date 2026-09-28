@@ -128,12 +128,13 @@ describe("the install lifecycle", () => {
     const o = sink()
     assert.equal(await end({ cwd: dir, commit: true }, o), 0)
     const m = readState(dir, "manifest.json")
-    assert.deepEqual(m.files.added, ["src/components/ambient/assistant.tsx", "src/styles/ambient.css", "static/orb-circle.svg"])
+    assert.deepEqual(m.files.added, ["AMBIENTUI-NOTES.md", "src/components/ambient/assistant.tsx", "src/styles/ambient.css", "static/orb-circle.svg"])
+    assert.match(readFileSync(join(dir, "AMBIENTUI-NOTES.md"), "utf8"), /# ambientui in this project/)
     assert.equal(m.commitTrailer, "Ambientui-Install: 1")
     const msg = git("log", "-1", "--format=%B")
     assert.match(msg, /Ambientui-Install: 1/)
     const changed = git("show", "--name-only", "--format=", "HEAD").trim().split("\n").sort()
-    assert.deepEqual(changed, [".ambientui/.gitignore", ".ambientui/manifest.json", ".ambientui/plan.json", ".ambientui/profile.json", "src/components/ambient/assistant.tsx", "src/styles/ambient.css", "static/orb-circle.svg"].sort())
+    assert.deepEqual(changed, [".ambientui/.gitignore", ".ambientui/manifest.json", ".ambientui/plan.json", ".ambientui/profile.json", "AMBIENTUI-NOTES.md", "src/components/ambient/assistant.tsx", "src/styles/ambient.css", "static/orb-circle.svg"].sort())
   })
 
   it("uninstall reverts the install commit", async () => {

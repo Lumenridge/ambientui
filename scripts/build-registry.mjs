@@ -801,6 +801,13 @@ const items = [
         type: "registry:file",
         target: "~/.claude/skills/ambientui-start/DESIGN.md",
       },
+      // the agent's review of the survey (step 1): the doctor's fixed checks
+      // are heuristics, and this is how they are checked against the code
+      {
+        path: "docs/doctor.md",
+        type: "registry:file",
+        target: "~/.claude/skills/ambientui-start/doctor.md",
+      },
     ],
     docs: "Also readable without installing anything: tell your agent to read https://ambientui.ai/start.md and set the project up. The installed copy makes the guidance part of the repo, so any future session finds it - and DESIGN.md lands beside the skill, because the journey's rules live there.",
   },

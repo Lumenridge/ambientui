@@ -9,8 +9,9 @@ You are an AI coding agent, and this guide is addressed to you. A person has
 asked you to set their project up with ambientui: an AI assistant layer that
 lives above their product, plus the design system that lets you build inside
 their rules. Your job is to run this whole journey and to make it feel like
-one fluid move. The person should type one sentence, answer a question or
-two, and end up pressing Cmd-K inside their own product.
+one fluid move. The person should type one sentence and end up pressing
+Cmd-K inside their own product, having seen ambientui work before deciding
+anything about it.
 
 Do the steps in this order. The order is the point: survey first, install
 from a plan, build, prove it, and the reveal last.
@@ -44,40 +45,49 @@ later blamed on the install. If the dev server is running, add
 `--url http://localhost:<port>`: it records how the product's screens look
 now, and step 6 proves they did not change.
 
-Then read its report, and act on it in this order:
+Then act on its report, in this order. **Ask the person nothing.** The
+doctor DECIDES everything it can, taking the best case the survey supports,
+and every decision lands in the developer notes at the end with its
+alternatives. The person's job is to see the layer working; choosing
+differently comes after, with a reinstall.
 
-1. **Blockers** stop the install. The common one: the project is not a git
-   repository, or has uncommitted work. The install is one commit and
-   uninstalling is reverting it, so ask the person to commit or stash
-   first, and wait.
-2. **Questions** go to the person, all in one message, each with the
-   doctor's default and its one-line reason. Ask only what it lists. The
-   questions you may see:
-   - **Layer only, or the full design architecture** — only for an existing
-     product that can take both. The ambient layer only puts the assistant
-     above their screens, which stay exactly as they are. The full
-     architecture also lets the Foundation govern their tokens, spacing,
-     radius and motion from one configuration, and saving it restyles the
-     components that consume those tokens. On Tailwind v3 the doctor has
-     already chosen the layer only, because the Foundation needs Tailwind
-     v4; say that in one line instead of asking.
-   - **The hotkey**, when the product already owns ⌘K. Take it over (the
-     doctor lists what the product's own palette does, and all of it must
-     keep working), use another key, share it (the product keeps ⌘K where
-     its own handler applies), or none.
-   - **The look** (full path): keep the product's current look, or give a
-     reference.
-   - **Governance**, when the project already has a CLAUDE.md or AGENTS.md.
-3. Record the answers, which regenerates the plan:
+1. **Blockers** stop the install: no React, or React older than 18. If the
+   tree has uncommitted work, stop too, and ask the person to commit or
+   stash it: the install is one commit that uninstall reverts, and their
+   own work must not be inside it. (No git at all is not a stop: the plan
+   lists `git init` as a required step, and you run it.)
+2. **Decisions** are listed with their reasons: the path (the ambient layer
+   only for an existing product, so none of its screens change; the full
+   architecture for a new one), the hotkey when the product already owns
+   ⌘K (the assistant takes ⌘J and the product keeps ⌘K), the look, the
+   rules, the theme. Tell the person in one short paragraph what you are
+   about to do, as information, not as a question.
+3. **Review the survey against the code — mandatory.** The doctor's checks
+   are fixed patterns; you can read the code. Follow `doctor.md` (beside
+   this file): confirm every low-confidence fact the plan depends on, look
+   for what no fixed check can see, and correct the plan where it is wrong:
 
    ```bash
-   npx -y @ambient-ui/cli plan --path layer --hotkey coexist
+   npx -y @ambient-ui/cli plan --set provider.zIndex=2999 --because "the product's modals sit at 3000"
    ```
 
+**Beyond the plan, by hand.** Where the tooling cannot do something (a
+transport it could not wire, a mount point it could not find, a pattern of
+the product's nothing here fits), take the closest workable path yourself
+rather than stopping, keep it inside the install, and record it as you go:
+
+```bash
+npx -y @ambient-ui/cli note "Mounted in src/Shell.tsx: App renders outside the router" --kind judgement
+```
+
+Kinds: `judgement` (a choice between workable options), `manual` (done by
+hand), `unavailable` (the product lacked something; say what you did
+instead). The notes are how the owner learns where the install left the
+happy path.
+
 **From scratch.** No product yet: scaffold the reference environment (next
-section), then run the doctor on it. It will ask nothing, and plan the full
-journey, including the `/ds` page in step 5, which is mandatory on this
-path.
+section), then run the doctor on it. It plans the full journey, including
+the `/ds` page in step 5, which is mandatory on this path.
 
 ## Scaffolding, when there is no project
 
@@ -258,22 +268,23 @@ one place, the stub-or-server decision is made there, and stubs are the
 default until a backend exists. Confirm the app still runs before moving
 on.
 
-## 3. Ask for the taste (full architecture only)
+## 3. Find the taste (full architecture only)
 
-Now, and not before, ask the person ONE question. For an existing product,
-the first option is the look it already has:
+Do not stop to ask for it. The plan's `look` decision says where it comes
+from:
 
-> Should the system keep the look your product has now, or do you want a
-> new feel? For a new one, show me something: a screenshot of a product
-> you admire, a link, or a few words like "calm, dense, gray-on-gray".
+- **current** (an existing product, or one with a DESIGN.md): find the
+  product's own design record (a DESIGN.md, a theme file, its CSS
+  variables; the doctor names what it found) and read it as the reference.
+- **reference** (a new project): use whatever the person said about the
+  look in their request ("calm, dense, gray-on-gray", a product they
+  named). If they said nothing, start from the Foundation's defaults, and
+  note it (`--kind unavailable`): the `/ds` page is where they will make it
+  theirs.
 
-Wait for the answer. To keep the current look, find the product's own
-design record (a DESIGN.md, a theme file, its CSS variables; the doctor
-names what it found) and read it the same way you would read a reference.
-Otherwise read the reference like a designer: which gray family, how
-saturated the accent is and what it is reserved for, how tight the
-corners are, how dense the spacing feels, whether the type runs compact or
-generous.
+Read the reference like a designer: which gray family, how saturated the
+accent is and what it is reserved for, how tight the corners are, how
+dense the spacing feels, whether the type runs compact or generous.
 
 ## 4. Express the taste as configuration, never as styling
 
@@ -459,8 +470,13 @@ Close the install:
 npx -y @ambient-ui/cli end
 ```
 
-It lists every file the install added or changed since `begin`, and
-writes `.ambientui/manifest.json`. Show the person the list in one line
+It writes `AMBIENTUI-NOTES.md` into the app: what was installed, every
+decision the doctor made with its alternatives, your corrections and notes,
+and anything verify could not prove. When the install left the happy path,
+the file recommends the owner try the layer, then uninstall and reinstall
+with the right options chosen on purpose. Then it lists every file the
+install added or changed since `begin`, and writes
+`.ambientui/manifest.json`. Show the person the list in one line
 ("41 files added, 6 changed, 7 packages added"), ask before committing,
 and on a yes:
 
@@ -471,9 +487,10 @@ npx -y @ambient-ui/cli end --commit
 That is ONE commit, marked `Ambientui-Install: 1`, and it is what makes the
 install removable later.
 
-Then the reveal. Do not describe the ambient layer. Show it: tell the
-person the app is running, give them the URL, and say the hotkey the plan
-chose:
+Then the reveal. If the notes list judgement calls, say so first, in one
+line, and point at `AMBIENTUI-NOTES.md`. Then do not describe the ambient
+layer. Show it: tell the person the app is running, give them the URL, and
+say the hotkey the plan chose:
 
 > Press Cmd-K.
 

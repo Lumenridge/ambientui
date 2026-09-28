@@ -48,9 +48,6 @@ export function blockers(profile, answers = {}) {
   } else if (profile.react.major < 18) {
     out.push({ id: "react-too-old", message: `React ${profile.react.version} — the layer needs React 18 or newer.`, fix: "Upgrade React to 18+ first, as its own change." })
   }
-  if (!profile.git?.isRepo) {
-    out.push({ id: "not-git", message: "Not a git repository.", fix: "run `git init` and commit first (install and uninstall are git commits)" })
-  }
   if (tailwindMajor(profile) === 3 && answers.path === "full") {
     out.push({ id: "full-on-tw3", message: "The full design architecture needs Tailwind v4; this project is on Tailwind v3.", fix: "Use `--path layer` (the ambient layer only). Upgrading Tailwind is a separate project that rewrites existing screens." })
   }
@@ -58,120 +55,152 @@ export function blockers(profile, answers = {}) {
 }
 
 /**
- * THE QUESTIONS FOR THE OWNER — only those that apply, each with a default
- * so the plan is complete before anyone answers. `infos` are the lines that
- * replace a question when the answer is forced.
+ * THE DECISIONS — made for the owner, never asked.
+ *
+ * The first installs stopped to ask the owner questions only the survey
+ * could really answer, and a person trying ambientui for the first time
+ * cannot weigh "coexist or yield" before they have seen the layer. So the
+ * doctor DECIDES: each decision takes the best case the survey supports —
+ * the one that changes the least of the product, and still shows the layer
+ * working — records why, and lists the alternatives. `end` writes every
+ * decision into AMBIENTUI-NOTES.md, so the owner who wants another choice
+ * uninstalls and reinstalls with it (`ambientui plan --hotkey takeover`).
+ *
+ * `given` is that manual reinstall: an explicit answer overrides the
+ * decision and is recorded as the owner's.
  */
-export function questions(profile, answers = {}) {
-  const qs = []
-  const infos = []
+export function decisions(profile, given = {}) {
+  const out = []
   const tw = tailwindMajor(profile)
   const existing = isExistingProduct(profile)
-
-  if (tw === 3) {
-    infos.push({
-      id: "path",
-      message:
-        "Tailwind v3: the path is the ambient layer only. The design architecture needs v4, and upgrading rewrites the product's existing screens.",
-    })
-  } else if (existing) {
-    qs.push({
-      id: "path",
-      prompt:
-        "The ambient layer only — the assistant living above your existing screens, which stay exactly as they are — or the full design architecture, where the Foundation also governs your tokens, spacing, radius and motion?",
-      options: [
-        { value: "layer", label: "ambient layer only" },
-        { value: "full", label: "full design architecture" },
-      ],
-      default: "layer",
-      why: "The full path restyles existing components that consume its tokens; the layer path changes nothing on the product's own screens.",
-    })
+  const decide = (d) => {
+    const chosen = given[d.id] ?? d.chosen
+    out.push({ ...d, chosen, source: given[d.id] != null ? "owner" : "doctor" })
   }
+
+  decide({
+    id: "path",
+    chosen: tw === 3 || existing ? "layer" : "full",
+    options: [
+      { value: "layer", label: "the ambient layer only: the assistant above the product's screens, which stay exactly as they are" },
+      { value: "full", label: "the full design architecture: the Foundation also governs tokens, spacing, radius and motion" },
+    ],
+    why:
+      tw === 3
+        ? "Tailwind v3: the Foundation needs v4, and upgrading rewrites the product's existing screens."
+        : existing
+          ? "An existing product: the layer shows ambientui without changing a single screen of it. The full architecture restyles components, which is a decision to make after seeing the layer."
+          : "A new project: nothing to preserve, so the whole system goes in.",
+  })
 
   const hk = profile.hotkeys
   if (hk?.conflict) {
-    const at = hk.owners
-      .filter((o) => o.file && o.line)
-      .slice(0, 3)
-      .map((o) => `${o.file}:${o.line}`)
+    const at = hk.owners.filter((o) => o.file && o.line).slice(0, 3).map((o) => `${o.file}:${o.line}`)
     const dep = hk.owners.find((o) => o.kind === "dependency")
-    qs.push({
+    decide({
       id: "hotkey",
-      prompt: `This product already uses ⌘K / Ctrl+K${dep ? ` (${dep.name})` : ""}${at.length ? ` at ${at.join(", ")}` : ""}. How should the assistant share it?`,
+      chosen: "coexist",
       options: [
-        { value: "takeover", label: "the assistant owns ⌘K; the existing palette's features are re-registered as commands" },
-        { value: "coexist", label: "the assistant uses ⌘J (or another free combo); the existing ⌘K stays" },
-        { value: "yield", label: "the assistant owns ⌘K except when the product's own binding applies (a yieldHotkey function)" },
+        { value: "coexist", label: "the assistant uses ⌘J; the product keeps ⌘K" },
+        { value: "takeover", label: "the assistant owns ⌘K; everything the product's palette offered is re-registered as commands" },
+        { value: "yield", label: "the assistant owns ⌘K except where the product's own binding applies (a yieldHotkey function)" },
         { value: "off", label: "no hotkey; the orb only" },
       ],
-      default: "coexist",
-      why: "Two owners of one chord means both open at once, or one never opens — and the owner decides which is theirs.",
+      why: `The product already uses ⌘K${dep ? ` (${dep.name})` : ""}${at.length ? ` at ${at.join(", ")}` : ""}. A second key leaves everything the product does untouched.`,
     })
   }
 
-  const path = resolvePath(profile, answers)
-  if (path === "full") {
+  if (resolvePath(profile, given) === "full") {
     const hasDesign = Boolean(profile.agent?.designMd)
-    qs.push({
+    decide({
       id: "look",
-      prompt: "Keep the product's current look, or give a reference (a screenshot, a link, a few words) for the Foundation to express?",
+      chosen: existing || hasDesign ? "current" : "reference",
       options: [
         { value: "current", label: "keep the product's current look" },
-        { value: "reference", label: "give a reference" },
+        { value: "reference", label: "express a reference (a screenshot, a link, a few words)" },
       ],
-      default: hasDesign ? "current" : "reference",
-      why: hasDesign ? "A DESIGN.md already states this product's look." : "The Foundation is configured from a reference; without one it starts from defaults.",
+      why: existing || hasDesign
+        ? "The product already has a look; the Foundation starts from it."
+        : "A new project: the look comes from whatever the person described in their request, else the Foundation's defaults.",
     })
   }
 
   if (profile.agent?.claudeMd || profile.agent?.agentsMd) {
-    const existingFile = profile.agent.claudeMd ? "CLAUDE.md" : "AGENTS.md"
-    qs.push({
+    const file = profile.agent.claudeMd ? "CLAUDE.md" : "AGENTS.md"
+    decide({
       id: "governance",
-      prompt: `Install ambientui's working rules as .claude/ambientui/CLAUDE.md and add one pointer line to your ${existingFile}?`,
+      chosen: "yes",
       options: [
-        { value: "yes", label: `install, plus one line in ${existingFile}` },
+        { value: "yes", label: `ambientui's rules in .claude/ambientui/CLAUDE.md, with one pointer line in ${file}` },
         { value: "no", label: "skip the rules" },
       ],
-      default: "yes",
-      why: `Your ${existingFile} stays yours; the rules live beside it and one line points at them.`,
+      why: `${file} stays the product's; the rules sit beside it, one line points at them, and the revert removes both.`,
     })
   }
 
   const dm = profile.darkMode
   if (dm && dm.mechanism !== "html-class") {
     const sig = dm.signal ? `${dm.signal.note}${dm.signal.file ? ` (${dm.signal.file}:${dm.signal.line})` : ""}` : "no dark mode found"
-    qs.push({
+    decide({
       id: "theme",
-      informational: true,
-      prompt: `Dark mode here is ${dm.mechanism === "none" ? "absent" : `a ${dm.mechanism}`}: ${sig}. Mirror the product's theme with the \`dark\` prop?`,
+      chosen: "mirror",
       options: [
-        { value: "mirror", label: "mirror the product's theme with the `dark` prop" },
+        { value: "mirror", label: "mirror the product's theme through the `dark` prop" },
         { value: "light", label: "always light" },
       ],
-      default: "mirror",
-      why: "The layer follows `.dark` on <html> by itself; any other signal must be passed in, or the glass stays light on a dark screen.",
+      why: `Dark mode here is ${dm.mechanism === "none" ? "absent" : `a ${dm.mechanism}`}: ${sig}. The layer follows \`.dark\` on <html> by itself; anything else must be passed in, or the glass stays light on a dark screen.`,
     })
   }
-  return { questions: qs, infos }
+  return out
 }
 
-function resolvePath(profile, answers) {
-  const tw = tailwindMajor(profile)
-  if (tw === 3) return "layer"
-  if (answers.path === "full" || answers.path === "layer") return answers.path
+function resolvePath(profile, given) {
+  if (tailwindMajor(profile) === 3) return "layer"
+  if (given.path === "full" || given.path === "layer") return given.path
   return isExistingProduct(profile) ? "layer" : "full"
 }
 
-/** Answers with every applicable default filled in. */
-export function resolveAnswers(profile, answers = {}) {
-  const { questions: qs } = questions(profile, answers)
-  const out = { path: resolvePath(profile, answers) }
-  for (const q of qs) {
-    if (q.id === "path") continue
-    out[q.id] = answers[q.id] ?? q.default
-  }
+/** The decisions as plain answers (`{ path, hotkey, … }`). */
+export function resolveAnswers(profile, given = {}) {
+  const out = { path: resolvePath(profile, given) }
+  for (const d of decisions(profile, given)) if (d.id !== "path") out[d.id] = d.chosen
   return out
+}
+
+/**
+ * THE AGENT'S CORRECTIONS. The survey is heuristics; the agent reviews it
+ * against the code (docs/doctor.md) and corrects the plan where it is wrong
+ * — `ambientui plan --set provider.zIndex=2999 --because "…"`. Each
+ * override is a dotted path and a value (JSON when it parses), kept in
+ * plan.json and re-applied every time the plan is rebuilt, so a later
+ * doctor run cannot silently undo a correction.
+ */
+export function applyOverrides(plan, overrides = []) {
+  for (const o of overrides) {
+    const keys = o.key.split(".")
+    let at = plan
+    for (const k of keys.slice(0, -1)) {
+      if (at[k] == null || typeof at[k] !== "object") at[k] = {}
+      at = at[k]
+    }
+    at[keys[keys.length - 1]] = o.value
+  }
+  plan.overrides = overrides
+  return plan
+}
+
+export function parseOverride(spec, because) {
+  const eq = spec.indexOf("=")
+  if (eq < 1) throw new Error(`--set needs key=value (got "${spec}")`)
+  const key = spec.slice(0, eq).trim()
+  const raw = spec.slice(eq + 1)
+  let value = raw
+  try {
+    value = JSON.parse(raw)
+  } catch {
+    // a bare string
+  }
+  return { key, value, because: because ?? null, at: new Date().toISOString() }
 }
 
 /* --------------------------------- pieces --------------------------------- */
@@ -658,6 +687,7 @@ export function buildPlan(profile, answers = {}, { registry = DEFAULT_REGISTRY }
   return {
     path: a.path,
     answers: a,
+    decisions: decisions(profile, answers),
     appDir,
     appDirFromRoot: cwd,
     srcRoot,

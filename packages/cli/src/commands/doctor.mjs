@@ -2,9 +2,11 @@
  * `ambientui doctor` — SURVEY, THEN PLAN, THEN SAY WHAT IS IN THE WAY.
  *
  * Read-only on the host (it writes only `.ambientui/`). The output is three
- * lists in a fixed order — facts, blockers, questions — and the plan built
- * from default answers, so an agent can proceed the moment the owner has
- * answered, and a person can see at a glance what the agent believes.
+ * lists in a fixed order — facts, blockers, decisions — and the plan built
+ * from them. Nothing is asked: every decision is the best case the survey
+ * supports, with its reason and its alternatives, and lands in
+ * AMBIENTUI-NOTES.md at the end. The agent then reviews the survey against
+ * the code (docs/doctor.md) and corrects the plan where it is wrong.
  *
  * `--baseline` runs the host's own typecheck/lint/test/build ONCE, before
  * anything is installed, so `verify` can tell a failure the install caused
@@ -16,7 +18,7 @@ import { join } from "node:path"
 
 import { load, openBrowser, snapshotStyles } from "../browser.mjs"
 import { evidenceFor, formatEvidence } from "../survey/confidence.mjs"
-import { buildPlan, blockers as blockersOf, questions as questionsOf } from "../plan.mjs"
+import { applyOverrides, buildPlan, blockers as blockersOf } from "../plan.mjs"
 import { survey } from "../survey/index.mjs"
 import { readState, run, statePath, tail, writeState } from "../util.mjs"
 
@@ -102,18 +104,21 @@ export async function doctor(opts, out) {
 
   writeState(root, "profile.json", profile)
 
-  // Answers persist in plan.json; doctor re-plans with them.
+  // An owner's explicit choices and the agent's corrections persist in
+  // plan.json; doctor re-plans with both, so neither is silently undone.
   let answers = {}
+  let overrides = []
   try {
-    answers = readState(root, "plan.json")?.given ?? {}
+    const prev = readState(root, "plan.json")
+    answers = prev?.given ?? {}
+    overrides = prev?.overrides ?? []
   } catch {
     answers = {}
   }
-  const plan = buildPlan(profile, answers, { registry: registryFromEnv() })
+  const plan = applyOverrides(buildPlan(profile, answers, { registry: registryFromEnv() }), overrides)
   writeState(root, "plan.json", { ...plan, given: answers })
 
   const bl = blockersOf(profile, answers)
-  const { questions, infos } = questionsOf(profile, answers)
   printFacts(profile, out)
   if (urlResult?.skipped) out.warn(`SKIPPED style baseline: ${urlResult.reason}. Run: ${urlResult.hint}`)
   else if (urlResult) out.ok(`style baseline: ${urlResult.elements} elements → ${urlResult.file}`)
@@ -122,25 +127,13 @@ export async function doctor(opts, out) {
   if (!bl.length) out.ok("none")
   for (const b of bl) out.fail(`${b.message} → ${b.fix}`)
 
-  out.head("QUESTIONS for the owner")
-  if (!questions.length) out.ok("none")
-  for (const q of questions) {
-    out.ask(`[${q.id}] ${q.prompt}`)
-    for (const o of q.options) out.info(`${o.value === q.default ? "(default) " : ""}${o.value}: ${o.label}`)
-  }
-  for (const i of infos) out.warn(i.message)
-
+  printDecisions(plan, out)
   printPlanSummary(plan, out)
 
   const next = bl.length
     ? `fix the blockers above, then run \`ambientui doctor\` again`
-    : questions.filter((q) => !q.informational).length
-      ? `ask the owner the questions above, then run \`ambientui plan ${questions
-          .filter((q) => !q.informational)
-          .map((q) => `--${q.id} <answer>`)
-          .join(" ")}\``
-      : "ambientui begin"
-  out.done({ profile, plan, blockers: bl, questions, infos, url: urlResult }, next)
+    : "review this survey against the code (doctor.md, beside start.md), correct the plan with `ambientui plan --set key=value --because \"…\"`, then `ambientui begin`"
+  out.done({ profile, plan, blockers: bl, decisions: plan.decisions, url: urlResult }, next)
   return 0
 }
 
@@ -223,6 +216,20 @@ export function printFacts(p, out) {
   say(out.ok, `scripts: ${sc.join(", ") || "none"}; dev port ${p.scripts.port ?? "?"}`, "scripts")
   if (p.existingInstall.present) say(out.warn, `an earlier ambientui install is present: ${p.existingInstall.paths.join(", ")}`, "existingInstall")
   if (p.baseline) for (const c of p.baseline.checks) (c.code === 0 ? out.ok : out.warn)(`baseline ${c.id}: exit ${c.timedOut ? "timeout" : c.code}  ← ${c.command}`)
+}
+
+/** The decisions made for the owner, each with its reason and alternatives. */
+export function printDecisions(plan, out) {
+  out.head("DECISIONS (made for the owner; all recorded in AMBIENTUI-NOTES.md)")
+  if (!plan.decisions?.length) out.ok("none needed")
+  for (const d of plan.decisions ?? []) {
+    const chosen = d.options.find((o) => o.value === d.chosen)
+    out.ok(`[${d.id}] ${d.chosen}${chosen ? `: ${chosen.label}` : ""}${d.source === "owner" ? " (the owner's choice)" : ""}`)
+    out.info(d.why)
+    const others = d.options.filter((o) => o.value !== d.chosen).map((o) => o.value)
+    if (others.length) out.info(`alternatives: ${others.join(", ")} — reinstall with \`ambientui plan --${d.id} <value>\``)
+  }
+  for (const o of plan.overrides ?? []) out.warn(`corrected by the agent: ${o.key} = ${JSON.stringify(o.value)}${o.because ? ` — ${o.because}` : ""}`)
 }
 
 export function printPlanSummary(plan, out) {

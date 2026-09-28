@@ -316,10 +316,11 @@ describe("a webpack app with a backend beside it and no @/ (tududi's shape)", ()
 })
 
 describe("no git", () => {
-  it("is a blocker with the git init instruction", () => {
+  it("is a required step the agent takes (git init), not a blocker", () => {
     const dir = project({ "package.json": { dependencies: { react: "^19.0.0" } }, "vite.config.ts": "" }, { git: false })
     const p = survey(dir)
     const plan = buildPlan(p, {})
-    assert.ok(plan.blockers.some((b) => b.id === "not-git" && /git init/.test(b.fix)))
+    assert.ok(!plan.blockers.some((b) => b.id === "not-git"))
+    assert.ok(plan.requiredSteps.some((r) => r.id === "git-init" && /git init/.test(r.command)))
   })
 })

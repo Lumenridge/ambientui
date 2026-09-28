@@ -10,7 +10,10 @@
  * `--commit` runs it. The agent asks the owner first: a commit on their
  * branch is theirs to approve.
  */
+import { writeFileSync } from "node:fs"
 import { join } from "node:path"
+
+import { notesMarkdown } from "../notes.mjs"
 
 import { changesSince, depsDiff, requireSession } from "../session.mjs"
 import { CliError, git, readState, rel, writeState } from "../util.mjs"
@@ -24,6 +27,24 @@ export async function end(opts, out) {
   const session = requireSession(root)
   const plan = readState(root, "plan.json")
   if (!plan) throw new CliError("No .ambientui/plan.json.", { next: "ambientui doctor" })
+  // THE DEVELOPER NOTES go in first, so they are part of what the install
+  // added, commit with it, and leave with the revert.
+  const notesFile = join(root, plan.appDirFromRoot ?? ".", "AMBIENTUI-NOTES.md")
+  let verifyResult = null
+  try {
+    verifyResult = readState(root, "verify.json")
+  } catch {
+    verifyResult = null
+  }
+  writeFileSync(
+    notesFile,
+    notesMarkdown({
+      plan,
+      notes: readState(root, "notes.json")?.notes ?? [],
+      verify: verifyResult,
+      productName: plan.provider?.productName,
+    })
+  )
   const ch = changesSince(root, session)
   const { top } = ch
   // Our state goes in by its own three names, not through the change list.
@@ -60,6 +81,7 @@ export async function end(opts, out) {
   // needs the manifest in the commit uninstall reverts.
   const files = [...added, ...modified, ...deleted]
   const state = [stateFromTop("manifest.json"), stateFromTop("plan.json"), stateFromTop("profile.json"), stateFromTop(".gitignore")]
+  if (readState(root, "notes.json")) state.push(stateFromTop("notes.json"))
   const cmd = `${files.length ? `git add -- ${files.map(q).join(" ")} && ` : ""}git add -f -- ${state.map(q).join(" ")} && git commit -m "Add the ambientui layer" -m "${TRAILER}"`
   const cd = rootFromTop === "." ? "" : `cd ${q(rel(root, top))} && `
 
@@ -75,6 +97,7 @@ export async function end(opts, out) {
   const ign = git(["check-ignore", "--no-index", "-q", "--", ".claude/skills/ambientui-start/SKILL.md"], top)
   if (ign.code === 0) out.warn(".claude/ is gitignored here: the start/governance files are not in this commit")
   out.info(`manifest: ${rel(root, join(root, ".ambientui/manifest.json"))}`)
+  out.info(`developer notes: ${rel(root, notesFile)} — tell the owner it is there`)
 
   if (opts.commit) {
     for (const args of [files.length ? ["add", "--", ...files] : null, ["add", "-f", "--", ...state]].filter(Boolean)) {
