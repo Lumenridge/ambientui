@@ -334,6 +334,50 @@ async function runtime(browser, url, root, plan, add) {
     else add("theme", "PASS", `glass ${t.a} ⇄ ${t.b}`)
   } else add("theme", "SKIPPED", "the product's dark mode is not .dark on <html>; check the `dark` prop by hand in both themes")
 
+  // RTL: a product with right-to-left locales (Invoify: ar, he; Excalidraw:
+  // ar, he, fa) renders the layer under dir="rtl". The floating surfaces keep
+  // their physical places (the dock is where the drag puts it); what must
+  // mirror is their CONTENT: the input's direction, each row's order, and
+  // nothing pushed off-screen.
+  if (plan.i18n?.rtl && mounted && hk) {
+    const before = await page.evaluate(() => {
+      const d = document.documentElement.getAttribute("dir")
+      document.documentElement.setAttribute("dir", "rtl")
+      return d
+    })
+    await page.keyboard.press(`${MOD}+${String(hk).split("+").pop()}`).catch(() => {})
+    await page.waitForSelector(SPOT, { state: "visible", timeout: 1500 }).catch(() => {})
+    const r = await page.evaluate(async ({ SPOT }) => {
+      const html = document.documentElement
+      await new Promise((res) => setTimeout(res, 150))
+      const panel = document.querySelector(`${SPOT} [data-ambient-panel]`) ?? document.querySelector(SPOT)
+      const input = document.querySelector("[data-ambient-input]")
+      const row = document.querySelector("[data-palette-item]")
+      const out = { open: Boolean(panel) }
+      if (panel) {
+        const b = panel.getBoundingClientRect()
+        out.inside = b.left >= 0 && b.right <= innerWidth + 1
+        out.overflow = html.scrollWidth > innerWidth + 1
+        out.dir = input ? getComputedStyle(input).direction : null
+        if (row && row.children.length >= 2) {
+          const [first, second] = [...row.children].map((c) => c.getBoundingClientRect().left)
+          out.mirrored = first > second
+        }
+      }
+      return out
+    }, { SPOT })
+    await page.keyboard.press("Escape").catch(() => {})
+    await page.keyboard.press("Escape").catch(() => {})
+    await page.evaluate((d) => {
+      if (d == null) document.documentElement.removeAttribute("dir")
+      else document.documentElement.setAttribute("dir", d)
+    }, before)
+    if (!r.open) add("rtl", "SKIPPED", "the spotlight was not open to check under dir=\"rtl\"")
+    else if (r.dir !== "rtl" || r.inside === false || r.overflow || r.mirrored === false)
+      add("rtl", "FAIL", `under dir="rtl": input direction ${r.dir}, inside viewport ${r.inside}, page overflow ${r.overflow}, rows mirrored ${r.mirrored}`)
+    else add("rtl", "PASS", `under dir="rtl" the spotlight's input and rows mirror, and it stays on screen`)
+  }
+
   // MOBILE: the orb must not cover fixed/sticky product UI.
   await page.setViewportSize({ width: 375, height: 812 })
   await page.reload({ waitUntil: "networkidle" }).catch(() => {})

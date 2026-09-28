@@ -5,7 +5,9 @@
  *   doctor     survey the host, write profile.json + plan.json, list blockers and questions
  *   plan       re-derive plan.json from the profile and the owner's answers
  *   begin      record the base commit the install is measured against
- *   install    run the plan's shadcn commands; restore the product's primitives
+ *   install    run the plan's shadcn commands; restore the product's primitives;
+ *              then adapt the landed files to this product
+ *   adapt      re-apply those adaptations on their own (idempotent)
  *   end        write the manifest; print (or --commit) the install commit
  *   verify     static and runtime checks, each PASS / FAIL / SKIPPED / PRE-EXISTING
  *   uninstall  git revert the install commit(s); list leftovers
@@ -19,6 +21,7 @@
 import { resolve } from "node:path"
 import { readFileSync } from "node:fs"
 
+import { adapt } from "../src/commands/adapt.mjs"
 import { begin } from "../src/commands/begin.mjs"
 import { doctor } from "../src/commands/doctor.mjs"
 import { end } from "../src/commands/end.mjs"
@@ -29,7 +32,7 @@ import { verify } from "../src/commands/verify.mjs"
 import { createOutput } from "../src/output.mjs"
 import { CliError } from "../src/util.mjs"
 
-const COMMANDS = { doctor, plan, begin, install, end, verify, uninstall }
+const COMMANDS = { doctor, plan, begin, install, adapt, end, verify, uninstall }
 
 /** Flags that take a value; everything else is boolean. */
 const VALUED = new Set(["cwd", "url", "path", "hotkey", "look", "governance", "theme", "timeout"])
@@ -65,6 +68,7 @@ Usage: ambientui <command> [--cwd <dir>] [--json]
        [--look current|reference] [--governance yes|no] [--theme mirror|light]
   begin [--allow-dirty]
   install [--timeout <s>]
+  adapt                re-apply the plan's per-product changes to the installed files
   end [--commit]
   verify [--url <devServerUrl>] [--static-only] [--no-scripts] [--timeout <s>]
   uninstall [--dry-run]

@@ -100,6 +100,13 @@ const DOORS = [
       "!min-h-0",
     ],
   },
+  // REACT 18 WITH ITS OWN TYPES (fixtures/consumer-react18). tududi and
+  // Invoify were on React 18, and the layer's types failed there (icon prop
+  // widths, a React 19-shaped ref). The layer and the tw3 door both compile
+  // here, and the layer is mounted so its classes are built.
+  { name: "ambient-layer", fixture: "consumer-react18", compile: true, mount: true },
+  { name: "icon-lucide", fixture: "consumer-react18", compile: true },
+
   // A PRODUCT WITHOUT TAILWIND'S RESET OR shadcn (fixtures/consumer-bare,
   // Excalidraw's shape). `ambient-base` must bring the helper and the roles,
   // and its preflight must reach the layer and nothing else: the built CSS

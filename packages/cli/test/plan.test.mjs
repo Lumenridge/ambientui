@@ -425,3 +425,41 @@ describe("one icon library on the layer-only path", () => {
     assert.ok(!p.doors.some((d) => d.startsWith("icon-")))
   })
 })
+
+describe("adaptations — the doors stay generic, the landed files fit the product", () => {
+  it("reads a colour as chromatic or neutral in every format a product writes", async () => {
+    const { isChromatic } = await import("../src/adapt.mjs")
+    assert.equal(isChromatic("oklch(0.546 0.245 262.881)"), true)
+    assert.equal(isChromatic("oklch(0.205 0 0)"), false)
+    assert.equal(isChromatic("221.2 83.2% 53.3%"), true)
+    assert.equal(isChromatic("0 0% 9%"), false)
+    assert.equal(isChromatic("#6965db"), true)
+    assert.equal(isChromatic("#171717"), false)
+    assert.equal(isChromatic("var(--color-purple-600)"), true)
+    assert.equal(isChromatic("var(--color-zinc-900)"), false)
+    assert.equal(isChromatic("var(--brand)"), null)
+  })
+  it("strips \"use client\" except in a React Server Components app", () => {
+    const vite = buildPlan(profile(), { path: "layer" })
+    assert.ok(vite.adapt.some((a) => a.id === "strip-use-client"))
+    const next = buildPlan(profile({ framework: { name: "next", router: "app", rsc: true } }), { path: "layer" })
+    assert.ok(!next.adapt.some((a) => a.id === "strip-use-client"))
+  })
+  it("points the accent at a chromatic primary, through hsl() for triplets", () => {
+    const blue = buildPlan(profile({ tokens: { primary: { file: "src/index.css", line: 9, value: "oklch(0.546 0.245 262.881)" } } }), { path: "layer" })
+    assert.equal(blue.adapt.find((a) => a.id === "accent").value, "var(--primary)")
+    const tw3 = buildPlan(profile({ tokens: { format: "hsl-triplet", primary: { file: "src/index.css", line: 9, value: "221.2 83.2% 53.3%" } } }), { path: "layer" })
+    assert.equal(tw3.adapt.find((a) => a.id === "accent").value, "hsl(var(--primary))")
+  })
+  it("keeps the blue for a neutral primary, and leaves the accent to the Foundation on the full path", () => {
+    const gray = buildPlan(profile({ tokens: { primary: { file: "src/index.css", line: 9, value: "oklch(0.205 0 0)" } } }), { path: "layer" })
+    assert.equal(gray.adapt.find((a) => a.id === "accent").skip, true)
+    const full = buildPlan(profile({ tokens: { primary: { file: "src/index.css", line: 9, value: "oklch(0.546 0.245 262.881)" } } }), { path: "full" })
+    assert.ok(!full.adapt.some((a) => a.id === "accent"))
+  })
+  it("moves the orb's artwork only when the product serves static files elsewhere", () => {
+    assert.ok(!buildPlan(profile(), { path: "layer" }).adapt.some((a) => a.id === "orb-assets"))
+    const ex = buildPlan(profile({ staticDir: "../public" }), { path: "layer" })
+    assert.equal(ex.adapt.find((a) => a.id === "orb-assets").to, "../public")
+  })
+})

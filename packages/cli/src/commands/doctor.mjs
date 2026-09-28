@@ -238,6 +238,12 @@ export function printPlanSummary(plan, out) {
   )
   out.ok(`mount: ${plan.mount.file ?? "?"}${plan.mount.lazy ? " (lazy)" : ""}`)
   out.ok(`transport: ${plan.transport.kind}`)
+  // ADAPT: what install changes in the landed files, for this product
+  for (const a of plan.adapt ?? []) {
+    const what =
+      a.id === "accent" && !a.skip ? `accent → ${a.value}` : a.id === "orb-assets" ? `orb artwork → ${a.to}/` : a.id
+    ;(a.skip ? out.info : out.ok)(`adapt: ${a.skip ? `${a.id} (kept as is)` : what} — ${a.why}${a.evidence ? `  ← ${a.evidence}` : ""}`)
+  }
   for (const e of plan.aliasEdits) out.warn(`alias: ${e.where} ${e.file ?? ""}${e.note ? ` — ${e.note}` : ""}`)
   for (const w of plan.warnings) out.warn(w)
 }

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
-    "gate": "npm run catalog:check && npm run prerender:check && npm run registry:check && npm run tw3:check && npm run vendor:check && npm run docs:check && turbo typecheck lint build && npm run roots:check && npm run tokens:check && npm run css:check",
+    "gate": "npm run catalog:check && npm run prerender:check && npm run registry:check && npm run tw3:check && npm run vendor:check && npm run docs:check && turbo typecheck lint build test && npm run roots:check && npm run tokens:check && npm run css:check",
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",

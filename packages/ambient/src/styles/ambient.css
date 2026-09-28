@@ -45,14 +45,18 @@
 
 /* THE LAYER'S OWN KNOBS — the four values an adopter is expected to retune.
    --ambient-blur lived in packages/ui globals.css, which is the primitives
-   package: an ambient token sitting there was a filing error, not a decision. */
-:root {
+   package: an ambient token sitting there was a filing error, not a decision.
+   Zero specificity, like the floor above: a product's own value always
+   wins, wherever this file lands in its cascade. At :root they beat the
+   product's own declarations whenever this file loaded later (a Tailwind v3
+   product imports it from the entry file, after its global stylesheet). */
+:where(:root) {
   --ambient-blur: 48px;
   --ambient-accent: #2563eb;
   --ambient-accent-wash: rgba(59, 130, 246, 0.1);
 }
 
-.dark {
+:where(.dark) {
   --ambient-accent: #4d9aff;
   --ambient-accent-wash: rgba(61, 130, 246, 0.16);
 }

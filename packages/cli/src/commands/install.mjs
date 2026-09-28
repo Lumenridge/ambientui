@@ -17,12 +17,16 @@
  *      the CSS entry). That is not undone — it may be wanted — but the diff
  *      is printed so the agent reviews it instead of committing it blind.
  *
- * Nothing else is applied. Wiring the CSS, the mount and the aliases is the
+ * Then the plan's ADAPTATIONS run on what landed (src/adapt.mjs): the doors
+ * are the same bytes for every product, and the few per-product changes
+ * (the "use client" directives, the accent, where the orb's artwork goes)
+ * are applied here. Wiring the CSS, the mount and the aliases is the
  * agent's job, from the plan, where the owner can see it happen.
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
 
+import { applyAdaptations } from "../adapt.mjs"
 import { requireSession, sha } from "../session.mjs"
 import { CliError, git, isDir, readState, rel, run, statePath, tail, walk, writeState } from "../util.mjs"
 
@@ -120,25 +124,6 @@ export async function install(opts, out) {
       }
     }
   }
-  // The orb's artwork lands in <app>/public (the registry's `~/public`
-  // target), but a product may serve static files from elsewhere
-  // (Excalidraw: `publicDir: "../public"`). Unmoved, the orb renders blank.
-  const staticAbs = resolve(appAbs, plan.staticDir ?? "public")
-  const landedPublic = join(appAbs, "public")
-  if (staticAbs !== landedPublic && isDir(landedPublic)) {
-    for (const f of walk(landedPublic, { maxFiles: 5000 }).files) {
-      if (!/\/orb-[\w-]+\.svg$/.test(f) || untrackedBefore.has(f) || !isNew(root, f, untrackedBefore)) continue
-      const to = join(staticAbs, rel(landedPublic, f))
-      if (existsSync(to)) {
-        conflicts.push(`${rel(root, f)} (exists at ${rel(root, to)})`)
-        continue
-      }
-      mkdirSync(dirname(to), { recursive: true })
-      renameSync(f, to)
-      moved.push(`${rel(root, f)} → ${rel(root, to)}`)
-    }
-  }
-
   // A literal `@` directory: the CLI could not resolve the alias.
   const at = join(appAbs, "@")
   if (isDir(at)) {
@@ -155,10 +140,19 @@ export async function install(opts, out) {
     if (!walk(at, { maxFiles: 1 }).files.length) rmSync(at, { recursive: true, force: true })
   }
 
+  // (2b) ADAPT the landed files to this product (src/adapt.mjs): the
+  // decisions were made by the plan, where the owner could see them.
+  const adapted = applyAdaptations({
+    root,
+    plan,
+    profile,
+    isNew: (f) => !untrackedBefore.has(f) && isNew(root, f, untrackedBefore),
+  })
+
   // Remember what was protected, by hash, for `verify`.
   const protectedHashes = {}
   for (const [f, s] of snap) if (s.origin === "host") protectedHashes[rel(root, f)] = sha(s.content)
-  writeState(root, "session.json", { ...session, install: { at: new Date().toISOString(), results, restored, moved, conflicts, protected: protectedHashes } })
+  writeState(root, "session.json", { ...session, install: { at: new Date().toISOString(), results, restored, moved, conflicts, adapted, protected: protectedHashes } })
 
   // (3) The config diff to review.
   const cfg = ["package.json", join(plan.appDirFromRoot ?? ".", "package.json"), "components.json", join(plan.appDirFromRoot ?? ".", "components.json"), profile.styling?.tailwind?.config, plan.css?.entry, plan.css?.entryFile]
@@ -177,6 +171,12 @@ export async function install(opts, out) {
     for (const m of moved.slice(0, 30)) out.info(m)
   }
   for (const c of conflicts) out.fail(`not moved, destination exists: ${c}`)
+  for (const a of adapted) {
+    if (a.skipped) out.info(`adapt ${a.id}: kept as is — ${a.why}`)
+    else if (a.changed.length) out.ok(`adapt ${a.id}: ${a.changed.length} file(s) — ${a.why}`)
+    else out.info(`adapt ${a.id}: nothing to change${a.note ? ` (${a.note})` : ""}`)
+    for (const c of a.conflicts) out.fail(`adapt ${a.id}: not moved, destination exists: ${c}`)
+  }
   if (diff.stdout.trim()) {
     out.head("CONFIG FILES TOUCHED — review `git diff` on each (the CLI reformats)")
     for (const l of diff.stdout.trim().split("\n")) out.info(l.trim())

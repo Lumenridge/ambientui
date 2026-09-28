@@ -14,6 +14,7 @@
  * run). Every other path in the plan is relative to the project root — the
  * directory doctor surveyed — unless it says otherwise.
  */
+import { adaptationsFor } from "./adapt.mjs"
 import { posix } from "node:path"
 
 export const DEFAULT_REGISTRY = "https://registry.ambientui.ai"
@@ -652,7 +653,6 @@ export function buildPlan(profile, answers = {}, { registry = DEFAULT_REGISTRY }
   if (profile.cnPackage || profile.shadcn?.cnPackage) warnings.push("The product depends on the `cn` npm package; the layer's `cn` comes from @/lib/utils (clsx + tailwind-merge). Do not swap one for the other.")
   if (profile.shadcn?.utils && !profile.shadcn.utils.definesCn && profile.shadcn.utils.file) warnings.push(`${profile.shadcn.utils.file} exists but does not export cn; the layer imports cn from it — add the export (install restores the file if shadcn replaces it).`)
   if (a.path === "full" && tw == null) warnings.push("The full path on a product with no Tailwind brings Tailwind's global preflight to every screen; migrate screens deliberately.")
-  if ((profile.staticDir ?? "public") !== "public") warnings.push(`Static assets are served from ${profile.staticDir}/; \`ambientui install\` moves the orb-*.svg files there from public/ (otherwise the orb renders blank).`)
   if (profile.git?.isRepo && !profile.git.clean) warnings.push(`The working tree has ${profile.git.dirtyCount} uncommitted change(s); \`ambientui begin\` refuses a dirty tree unless --allow-dirty.`)
 
   return {
@@ -669,6 +669,8 @@ export function buildPlan(profile, answers = {}, { registry = DEFAULT_REGISTRY }
     commands,
     css,
     staticDir: profile.staticDir ?? "public",
+    // what `install` changes in the landed files for THIS product (src/adapt.mjs)
+    adapt: adaptationsFor(profile, { srcRoot, staticDir: profile.staticDir ?? "public", path: a.path }),
     envFlag: envFlagFor(profile),
     aliasEdits,
     provider,

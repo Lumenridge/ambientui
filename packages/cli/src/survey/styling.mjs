@@ -286,6 +286,8 @@ export function detectTokens(ctx, css) {
     present,
     missing: ROLES.filter((r) => !found[r]),
     sample: found.popover ?? found[present[0]] ?? null,
+    // read by the plan's accent adaptation (src/adapt.mjs)
+    primary: found.primary ?? null,
     files: files.map((f) => ctx.rel(f)),
   }
 }

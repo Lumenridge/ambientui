@@ -88,11 +88,15 @@ describe("the install lifecycle", () => {
       ...rest,
       // the product serves static files from static/, not public/
       staticDir: "static",
+      adapt: [
+        { id: "strip-use-client", dir: "src/components/ambient", why: "vite" },
+        { id: "orb-assets", to: "static", why: "served from static/" },
+      ],
       commands: [
         {
           cwd: ".",
           door: "fake-layer",
-          run: "mkdir -p components/ambient styles && echo 'export const Assistant = 1' > components/ambient/assistant.tsx && echo '.ambient-glass{}' > styles/ambient.css && echo CLOBBERED > src/components/ui/button.tsx && mkdir -p public && echo '<svg/>' > public/orb-circle.svg",
+          run: "mkdir -p components/ambient styles && printf '\"use client\"\\n\\nexport const Assistant = 1\\n' > components/ambient/assistant.tsx && echo '.ambient-glass{}' > styles/ambient.css && echo CLOBBERED > src/components/ui/button.tsx && mkdir -p public && echo '<svg/>' > public/orb-circle.svg",
         },
       ],
     })
@@ -105,6 +109,7 @@ describe("the install lifecycle", () => {
     assert.ok(existsSync(join(dir, "src/styles/ambient.css")))
     assert.ok(!existsSync(join(dir, "components/ambient/assistant.tsx")))
     assert.ok(existsSync(join(dir, "static/orb-circle.svg")), "orb artwork moved to the served static dir")
+    assert.equal(readFileSync(join(dir, "src/components/ambient/assistant.tsx"), "utf8"), "export const Assistant = 1\n", '"use client" stripped')
     assert.ok(!existsSync(join(dir, "public/orb-circle.svg")))
   })
 

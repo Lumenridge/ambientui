@@ -111,7 +111,14 @@ format; a scoped base for a product not built on Tailwind; one icon library
 instead of five), non-interactively. It also protects the product: any of
 the product's own files the shadcn CLI overwrote (its button, its input,
 its `lib/utils.ts`) are put back, and files that landed outside the
-project's source root are moved into it. Read what it prints, then look at
+project's source root are moved into it. Then it ADAPTS what landed to
+this product, as the plan listed: it removes the `"use client"`
+directives unless the app uses React Server Components, points the
+assistant's accent at the product's own primary colour when that is a
+real colour, and moves the orb's artwork to wherever the product serves
+static files. The doors are the same for everyone; the adaptations are
+yours. If a door is ever re-added, `npx -y @ambient-ui/cli adapt` applies
+them again. Read what it prints, then look at
 `git diff` on the config files it names: the shadcn CLI reformats configs
 and drops comments, so restore anything that was the author's.
 
