@@ -236,6 +236,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.en.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.en.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/messages.ts",
           "type": "registry:lib",
           "target": "components/ambient/messages.ts"
@@ -405,6 +410,11 @@
           "path": ".registry/variants/tailwind-v3/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.en.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.en.ts"
         },
         {
           "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.ts",

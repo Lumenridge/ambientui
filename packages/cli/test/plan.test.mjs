@@ -495,3 +495,14 @@ describe("AMBIENTUI-NOTES.md", () => {
     assert.match(off, /We recommend you try it, then uninstall it/)
   })
 })
+
+describe("language", () => {
+  it("an i18n product gets its locale source and the catalog to copy; English-only products get neither", () => {
+    const p = buildPlan(profile({ i18n: { lib: "next-intl", locales: ["en", "de", "ar", "he"], count: 4, rtl: ["ar", "he"] } }), {})
+    assert.match(p.i18n.locale, /useLocale\(\)/)
+    assert.match(p.i18n.translate, /de, ar, he/)
+    assert.match(p.i18n.translate, /messages\.en\.ts/)
+    assert.ok(p.i18n.rtl)
+    assert.equal(buildPlan(profile(), {}).i18n, null)
+  })
+})

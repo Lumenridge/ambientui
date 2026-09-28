@@ -11,7 +11,8 @@ import type { IconName } from "@ambient-ui/ui/components/icon"
 import type { OrbState } from "./orb-character"
 import {
   AmbientMessagesProvider,
-  defaultAmbientMessages,
+  resolveAmbientMessages,
+  type AmbientCatalog,
   type AmbientMessages,
 } from "./messages"
 
@@ -116,6 +117,8 @@ export type AmbientCommand = {
    * ("8 accountss", Actual, 2026-09-28).
    */
   noun?: string
+  /** The plural, for languages where it is not the noun plus "s". */
+  nounPlural?: string
   run: () => void
 }
 
@@ -175,6 +178,8 @@ type AssistantState = {
   dark: boolean
   /** The chrome's words — see messages.ts. */
   messages: AmbientMessages
+  /** The person's language: the provider's `locale`, else `<html lang>`, else "en". */
+  locale: string
   /**
    * The host's Ambient API (see responder.ts): where every question,
    * suggestion list and recent-chat list comes from. Without one, every
@@ -214,6 +219,7 @@ export function AssistantProvider({
   api,
   productName,
   messages,
+  locale: localeProp,
   hotkey = "mod+k",
   yieldHotkey,
   zIndex,
@@ -231,8 +237,18 @@ export function AssistantProvider({
    * Never the library's name.
    */
   productName?: string
-  /** Any of the chrome's words, replaced — the host's translations. */
-  messages?: Partial<AmbientMessages>
+  /**
+   * The chrome's words in another language, or just different words: any
+   * subset of the catalog (messages.en.ts), each an ICU string. Missing
+   * keys fall back to English.
+   */
+  messages?: Partial<AmbientCatalog>
+  /**
+   * The person's language (BCP 47: "en", "ar", "pt-BR"). It picks the
+   * plural rules for `messages`, and it is sent with every question and
+   * suggestions request, so the host answers in it. Omitted: `<html lang>`.
+   */
+  locale?: string
   /**
    * The shortcut that opens the spotlight ("mod+k" by default), or false.
    * A host that already owns ⌘K passes another combination, or keeps ⌘K and
@@ -298,6 +314,12 @@ export function AssistantProvider({
   const [orbState, setOrbState] = React.useState<OrbState>("still")
   const seededRef = React.useRef<string | null>(null)
 
+  // the person's language: the host's word for it, else the document's
+  const locale =
+    localeProp ??
+    (typeof document !== "undefined" ? document.documentElement.lang || undefined : undefined) ??
+    "en"
+
   // THE API IS ASKED, NOT IMPORTED. Suggestions follow the page (keyed on
   // what the chip says, not on the object, which pages recreate freely);
   // recents are asked once per API. A failed list is an empty list: the
@@ -312,12 +334,12 @@ export function AssistantProvider({
   React.useEffect(() => {
     const request = new AbortController()
     connected
-      .suggestions({ pageChip: chipRef.current }, { signal: request.signal })
+      .suggestions({ pageChip: chipRef.current, locale }, { signal: request.signal })
       .then(setApiSuggestions, () => {
         if (!request.signal.aborted) setApiSuggestions([])
       })
     return () => request.abort()
-  }, [connected, chipKey])
+  }, [connected, chipKey, locale])
   const [apiRecents, setApiRecents] = React.useState<AmbientRecent[]>([])
   React.useEffect(() => {
     const request = new AbortController()
@@ -369,8 +391,8 @@ export function AssistantProvider({
   }, [])
 
   const words = React.useMemo(
-    () => ({ ...defaultAmbientMessages(productName), ...messages }),
-    [productName, messages]
+    () => resolveAmbientMessages({ messages, productName, locale }),
+    [messages, productName, locale]
   )
 
   const value = React.useMemo(
@@ -407,8 +429,9 @@ export function AssistantProvider({
       zIndex,
       dark,
       messages: words,
+      locale,
     }),
-    [mode, pageChip, pageIntel, commands, setCommands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, connected, suggestions, recents, workspaceEffect, hotkey, yieldHotkey, zIndex, dark, words]
+    [mode, pageChip, pageIntel, commands, setCommands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, connected, suggestions, recents, workspaceEffect, hotkey, yieldHotkey, zIndex, dark, words, locale]
   )
 
   return (

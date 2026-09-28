@@ -543,6 +543,40 @@ function lintFor(profile, srcRoot) {
   return { exclude: paths, targets }
 }
 
+/**
+ * THE LANGUAGE. The layer ships English only, as a catalog written to be
+ * copied (messages.en.ts: flat keys, ICU strings). For a product that
+ * translates, the plan says where its active locale comes from (so the
+ * plural rules and the questions follow it) and how the chrome gets the
+ * product's other languages. Translating is the agent's work, and every
+ * machine-translated locale is noted for the owner.
+ */
+const LOCALE_FROM = {
+  "react-i18next": 'const { i18n } = useTranslation(); <AssistantProvider locale={i18n.language} …>',
+  i18next: "<AssistantProvider locale={i18next.language} …>",
+  "next-i18next": 'const { i18n } = useTranslation(); <AssistantProvider locale={i18n.language} …>',
+  "next-intl": "const locale = useLocale(); <AssistantProvider locale={locale} …>",
+  "react-intl": "const { locale } = useIntl(); <AssistantProvider locale={locale} …>",
+  "@lingui/react": "const { i18n } = useLingui(); <AssistantProvider locale={i18n.locale} …>",
+  "@lingui/core": "<AssistantProvider locale={i18n.locale} …>",
+}
+
+function i18nFor(profile, srcRoot) {
+  const i = profile.i18n
+  const catalog = join(srcRoot, "components/ambient/messages.en.ts")
+  const others = (i.locales ?? []).filter((l) => !/^en([-_]|$)/i.test(l))
+  return {
+    lib: i.lib,
+    locales: i.locales ?? [],
+    catalog,
+    locale: LOCALE_FROM[i.lib] ?? "<AssistantProvider locale={the product's active locale} …> (else the layer reads <html lang>)",
+    translate: others.length
+      ? `For each of the product's other locales (${others.slice(0, 12).join(", ")}${others.length > 12 ? `, +${others.length - 12}` : ""}): copy ${catalog} to messages.<locale>.ts, or add its keys under an \`ambient\` namespace in the product's own locale files (ICU format, which ${i.lib === "custom" ? "most i18n libraries" : i.lib} reads); translate the values only, keeping keys, {placeholders} and plural syntax; pass the active locale's object as \`messages\`. Note every machine-translated locale: \`ambientui note "…" --kind judgement\`.`
+      : null,
+    rtl: i.rtl?.length ? `RTL locales present (${i.rtl.join(", ")}): verify checks the spotlight under dir="rtl"` : null,
+  }
+}
+
 /* ---------------------------------- plan ---------------------------------- */
 
 export function buildPlan(profile, answers = {}, { registry = DEFAULT_REGISTRY } = {}) {
@@ -654,15 +688,7 @@ export function buildPlan(profile, answers = {}, { registry = DEFAULT_REGISTRY }
         ? "vendored files keep kebab-case; tell the owner (the product's own files are PascalCase)"
         : "vendored files keep kebab-case; tell the owner",
   }
-  const i18n = profile.i18n
-    ? {
-        lib: profile.i18n.lib,
-        instruction: "pass `messages` to AssistantProvider with the host's translations",
-        rtl: profile.i18n.rtl?.length
-          ? `RTL locales present (${profile.i18n.rtl.join(", ")}): check the orb anchor and panel side mirror under dir="rtl"`
-          : null,
-      }
-    : null
+  const i18n = profile.i18n ? i18nFor(profile, srcRoot) : null
 
   // WARNINGS — true things the agent must keep in mind.
   if (a.path === "full" && !mount.lazy) warnings.push("The full path keeps all five icon libraries (the Foundation switches between them live; Remix is the heaviest); if bundle size matters, lazy-load Assistant (see mount.snippet shape).")

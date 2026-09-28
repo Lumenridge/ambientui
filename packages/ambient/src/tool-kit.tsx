@@ -46,7 +46,7 @@ function StatusMark({ status }: { status: ToolStatus }) {
     )
   return (
     <span
-      aria-label={status === "done" ? "Succeeded" : "Failed"}
+      aria-label={status === "done" ? t.succeeded : t.failed}
       className={cn(
         "shrink-0",
         status === "done" ? "text-(--positive)" : "text-destructive"
@@ -534,6 +534,7 @@ export function ReviewableDiff({
   staged?: boolean
   className?: string
 }) {
+  const t = useAmbientMessages()
   // undefined = undecided; the third state is the point of the component
   const [kept, setKept] = React.useState<Record<number, boolean | undefined>>({})
   const [applied, setApplied] = React.useState<number | null>(null)
@@ -629,7 +630,7 @@ export function ReviewableDiff({
               onApply?.(keptIndexes)
             }}
           >
-            {applied !== null ? "Applied" : `Apply ${keptIndexes.length}`}
+            {applied !== null ? t.applied : t.applyCount({ n: keptIndexes.length })}
           </Button>
         </div>
       )}
@@ -888,6 +889,7 @@ export function CodeRunner({
   staged?: boolean
   className?: string
 }) {
+  const t = useAmbientMessages()
   // pressing play IS a run: the output clears, the clock restarts, and the
   // result streams back in — the same arrival the first render performed
   const [runId, setRunId] = React.useState(0)
@@ -915,8 +917,8 @@ export function CodeRunner({
         <Button
           size="icon-sm"
           variant="ghost"
-          aria-label={live ? "Running" : "Run"}
-          title={live ? "Running" : "Run"}
+          aria-label={live ? t.running : t.run}
+          title={live ? t.running : t.run}
           disabled={live}
           onClick={() => {
             if (staged) setRunId((r) => r + 1)

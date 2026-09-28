@@ -258,6 +258,7 @@ export function Assistant({
     zIndex,
     dark,
     messages: t,
+    locale,
   } = useAssistant()
 
   const [input, setInput] = React.useState("")
@@ -530,15 +531,15 @@ export function Assistant({
   const [pasted, setPasted] = React.useState<MessageAttachment[]>([])
   const attachText = (text: string) => {
     const trimmed = text.trim()
-    const firstLine = trimmed.split("\n")[0]?.slice(0, 60) ?? "Pasted text"
+    const firstLine = trimmed.split("\n")[0]?.slice(0, 60) ?? t.pastedText
     const lines = trimmed.split("\n").length
     setPasted((a) => [
       ...a,
       {
         id: `paste-${a.length}-${trimmed.length}`,
-        name: firstLine || "Pasted text",
+        name: firstLine || t.pastedText,
         kind: "text" as const,
-        meta: `${lines} line${lines === 1 ? "" : "s"} · ${trimmed.length} chars`,
+        meta: t.pastedMeta({ lines, chars: trimmed.length }),
       },
     ])
   }
@@ -608,7 +609,7 @@ export function Assistant({
       let kit: AmbientAnswer | null = null
       try {
         const events = api.ask(
-          { question, conversationId, history, pageChip, chips },
+          { question, conversationId, history, pageChip, chips, locale },
           { signal: turn.signal }
         )
         for await (const event of events) {
@@ -624,7 +625,7 @@ export function Assistant({
         if (!current()) return
         if (!kit) {
           endWork()
-          fail("The assistant sent an empty answer.")
+          fail(t.emptyAnswer)
           return
         }
         turnRef.current = null
@@ -874,8 +875,8 @@ export function Assistant({
    */
   const firstAsk = messages.find((m) => m.role === "user")?.text
   const sessionTitle = busy
-    ? runningPrompt || firstAsk || "Working…"
-    : (firstAsk ?? "New chat")
+    ? runningPrompt || firstAsk || t.working
+    : (firstAsk ?? t.newChat)
 
   let surfaceEl: React.ReactNode = null
 
@@ -897,9 +898,7 @@ export function Assistant({
             {pageChip ? t.askAboutPage : t.askAboutProduct}
           </h3>
           <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-            {pageChip
-              ? `I can see ${pageChip.label} and what is open around it. Right-click anything — a line, a file, a control — to attach it as context.`
-              : "I can see the page you are on. Right-click anything — a row, a control, a value — to attach it as context."}
+            {pageChip ? t.canSeePage({ page: pageChip.label }) : t.canSeeProduct}
           </p>
           <FollowUpSuggestions
             suggestions={suggestions}
@@ -1295,11 +1294,14 @@ export function Assistant({
       // a section NAME is a heading, not a countable noun — "10
       // documentation" is what happens when you lowercase one and hope. The
       // registering host names its own noun; ours are in HINT_NOUNS.
-      const declared = inSection.find((c) => c.noun)?.noun
-      const noun = declared ?? HINT_NOUNS[sec] ?? sec.toLowerCase()
-      return declared || HINT_NOUNS[sec]
-        ? `${n} ${noun}${n === 1 ? "" : "s"}`
-        : `${n} ${noun}`
+      // The plural is the host's word when it gave one (a language whose
+      // plural is not noun + "s"); English falls back to adding the "s".
+      const declared = inSection.find((c) => c.noun)
+      const singular = declared?.noun ?? HINT_NOUNS[sec]
+      if (!singular) return t.sectionCount({ n, noun: sec.toLowerCase() })
+      const one = new Intl.PluralRules(locale).select(n) === "one"
+      const plural = declared?.nounPlural ?? `${singular}s`
+      return t.sectionCount({ n, noun: one ? singular : plural })
     })
 
     const onPaletteKeyDown = (e: React.KeyboardEvent) => {
@@ -1499,7 +1501,7 @@ export function Assistant({
                       </p>
                     ) : !q && hint.length > 0 ? (
                       <p className="text-muted-foreground px-2 pt-3 pb-1 text-sm">
-                        {t.startTypingHint(hint.join(", "))}
+                        {t.startTypingHint({ families: hint.join(", ") })}
                       </p>
                     ) : null
                   }
@@ -1622,7 +1624,7 @@ export function Assistant({
         <div className="border-(--glass-border) flex shrink-0 items-center gap-3 border-b px-4 py-3">
           <span className="text-sm font-medium">{t.history}</span>
           <span className="text-muted-foreground font-mono text-xs">
-            {recents.length} conversation{recents.length === 1 ? "" : "s"}
+            {t.conversations({ n: recents.length })}
           </span>
           <div className="ms-auto flex items-center gap-1 text-muted-foreground">
             {/* keep the conversation, put the record away — the panel to
@@ -1663,7 +1665,7 @@ export function Assistant({
                   <SidebarMenuItem>
                     <SidebarMenuButton onClick={clearConversation}>
                       <Icon name="plus" size={15} />
-                      <span>New chat</span>
+                      <span>{t.newChat}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>

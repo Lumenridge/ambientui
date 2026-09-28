@@ -72,6 +72,12 @@ shows.
 `useTheme` hook, a system-follow setting. If `provider.dark` is a mirror,
 find the exact value to pass.
 
+**Where the language comes from.** The survey finds the i18n library and
+the locale files. Check where the ACTIVE locale lives at runtime (a hook,
+a route segment like `app/[locale]/`, a store, `<html lang>`) and that the
+plan's `i18n.locale` line reads it from there; correct it if not. A
+custom loader with no library is common: find its `t` and its files.
+
 **Layering.** Sticky headers, toasts, modals, a cookie banner, an intercom
 widget: anything fixed or high in the z-index order. The survey guesses
 the modal layer from nearby words. Find the real values, and set

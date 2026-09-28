@@ -2,155 +2,134 @@
 
 import * as React from "react"
 
+import { ambientMessagesEn, type AmbientCatalog } from "./messages.en"
+
+export { ambientMessagesEn, type AmbientCatalog }
+
 /**
- * EVERY WORD THE LAYER SAYS ON ITS OWN BEHALF — the chrome's copy, in one
- * object the host can replace.
+ * EVERY WORD THE LAYER SAYS ON ITS OWN BEHALF, resolved for one product and
+ * one locale.
  *
- * The layer's words were written inline, in English, and several of them
- * named the LIBRARY: "Ask ambientui", "Open ambientui", a footer reading
- * "ambientui". Every install hit it (tududi, Actual, Invoify, Excalidraw,
- * 2026-09-27/28): the product's users were shown the name of a component
- * library they had never heard of, and a product with eighteen locales got
- * English chrome with no way to pass its translations in.
+ * The copy lives in a catalog (messages.en.ts): flat keys, ICU MessageFormat
+ * strings. It used to be written inline, in English, and several words named
+ * the LIBRARY ("Ask ambientui", a footer reading "ambientui"). Every install
+ * hit that (tududi, Actual, Invoify, Excalidraw), and a product with
+ * eighteen locales had no way to pass its translations in. Now:
  *
- * So the chrome reads its copy from here. `productName` fills the defaults,
- * and a host with its own i18n passes `messages` (any subset) to
- * AssistantProvider. The words INSIDE an answer are the host's, from its
- * API; these are only the layer's own.
+ *   <AssistantProvider productName="Invoify" locale="ar" messages={ambientMessagesAr}>
+ *
+ * `messages` may be any subset (missing keys fall back to English), and
+ * `locale` picks the plural rules and travels with every question, so the
+ * host's API can answer in the same language.
+ *
+ * The formatter is a small ICU subset — `{name}` and
+ * `{name, plural, =N {…} zero|one|two|few|many|other {…}}` with `#` — so
+ * the layer needs no i18n library, and a catalog is still one that
+ * i18next, next-intl and react-intl read unchanged.
  */
-export type AmbientMessages = {
-  /** The spotlight input's invitation when the page offers none. */
-  askPlaceholder: string
-  /** The row that sends what was typed as a question. */
-  askAction: string
-  /** The spotlight's empty-state line when no page matches. */
-  noMatches: string
-  /** The palette footer's name for what the user is talking to. */
-  footerName: string
-  /** The resting orb's accessible name. */
-  openOrb: string
-  /** The orb's quick-ask input. */
-  quickAskPlaceholder: string
-  /** The line surface's heading when a page announced itself / did not. */
-  askAboutPage: string
-  askAboutProduct: string
-  suggestedForPage: string
-  jumpTo: string
-  recentChats: string
-  openPanelWithContext: string
-  backToConversation: string
-  groundedFootnote: string
-  /** `hint` receives the counted families, already joined: "12 components, 3 demos". */
-  startTypingHint: (families: string) => string
-  followUpPlaceholder: string
-  queuePlaceholder: string
-  select: string
-  toggle: string
-  history: string
-  minimize: string
-  dockIt: string
-  openInChatWindow: string
-  backToSearch: string
-  closeHistory: string
-  attachContext: string
-  attachContextTitle: string
-  attachPageTitle: string
-  queueInstruction: string
-  queueTitle: string
-  stopAnswer: string
-  stop: string
-  send: string
-  couldNotAnswer: string
-  retry: string
-  copy: string
-  copied: string
-  askMore: string
-  thinking: string
-  /** `n` is whole seconds. */
-  thinkingFor: (n: number) => string
-  thoughtFor: (n: number) => string
-  reasoning: string
-  remove: string
-  sendNow: string
-  running: string
-  previousVersion: string
-  nextVersion: string
-  tryAgain: string
-  describeEdits: string
-  sendEdit: string
-  whatWentWrong: string
-  anythingElse: string
-  snapDock: string
-  snapSpotlight: string
+
+/** The keys that take values beyond `{product}`, and what they take. */
+type Params = {
+  startTypingHint: { families: string }
+  sectionCount: { n: number; noun: string }
+  canSeePage: { page: string }
+  pastedMeta: { lines: number; chars: number }
+  conversations: { n: number }
+  thinkingFor: { n: number }
+  thoughtFor: { n: number }
+  applyCount: { n: number }
 }
 
-/** The defaults, in English, naming the host's product rather than the library. */
-export function defaultAmbientMessages(productName = "the assistant"): AmbientMessages {
-  return {
-    askPlaceholder: `Search or ask a question in ${productName}…`,
-    askAction: `Ask ${productName}`,
-    noMatches: `No pages match — ↵ asks ${productName} instead.`,
-    footerName: productName,
-    openOrb: `Open ${productName}`,
-    quickAskPlaceholder: `Ask ${productName}…`,
-    askAboutPage: "Ask about this page",
-    askAboutProduct: `Ask about ${productName}`,
-    suggestedForPage: "Suggested for this page",
-    jumpTo: "Jump to",
-    recentChats: "Recent chats",
-    openPanelWithContext: "Open the panel with this context",
-    backToConversation: "Back to the conversation",
-    groundedFootnote: "Answers are grounded in the attached context.",
-    startTypingHint: (families) => `Start typing to search ${families}.`,
-    followUpPlaceholder: "Ask a follow-up…",
-    queuePlaceholder: "Queue another instruction…",
-    select: "Select",
-    toggle: "Toggle",
-    history: "History",
-    minimize: "Minimize",
-    dockIt: "Dock it",
-    openInChatWindow: "Open in chat window",
-    backToSearch: "Back to search",
-    closeHistory: "Close history",
-    attachContext: "Attach context",
-    attachContextTitle: "Attach a file, a selection, or paste text",
-    attachPageTitle: "Attach this page as context",
-    queueInstruction: "Queue this instruction",
-    queueTitle: "Queue — sends when the running turn finishes",
-    stopAnswer: "Stop the answer",
-    stop: "Stop",
-    send: "Send",
-    couldNotAnswer: "Couldn't answer",
-    retry: "Retry",
-    copy: "Copy",
-    copied: "Copied",
-    askMore: "Ask more",
-    thinking: "Thinking",
-    thinkingFor: (n) => `Thinking… ${n}s`,
-    thoughtFor: (n) => `Thought for ${n}s`,
-    reasoning: "Reasoning",
-    remove: "Remove",
-    sendNow: "Send now — interrupts the running turn",
-    running: "Running",
-    previousVersion: "Previous version",
-    nextVersion: "Next version",
-    tryAgain: "Try again",
-    describeEdits: "Describe edits",
-    sendEdit: "Send edit instruction",
-    whatWentWrong: "What went wrong?",
-    anythingElse: "Anything else?",
-    snapDock: "Dock",
-    snapSpotlight: "Spotlight",
+export type AmbientMessages = {
+  [K in keyof AmbientCatalog]: K extends keyof Params ? (values: Params[K]) => string : string
+}
+
+/* ------------------------------ the formatter ----------------------------- */
+
+/** The text inside the braces that open at `start`, braces balanced. */
+function block(t: string, start: number): [string, number] {
+  let depth = 0
+  for (let i = start; i < t.length; i++) {
+    if (t[i] === "{") depth++
+    else if (t[i] === "}" && --depth === 0) return [t.slice(start + 1, i), i + 1]
   }
+  return [t.slice(start + 1), t.length]
+}
+
+/** Format one ICU string: `{name}` and `{name, plural, …}` with `#`. */
+export function formatAmbientMessage(
+  template: string,
+  values: Record<string, string | number>,
+  locale = "en"
+): string {
+  let out = ""
+  let i = 0
+  while (i < template.length) {
+    if (template[i] !== "{") {
+      out += template[i++]
+      continue
+    }
+    const [inner, next] = block(template, i)
+    i = next
+    const [name, kind, ...rest] = inner.split(",").map((s) => s.trim())
+    const value = values[name!]
+    if (kind !== "plural") {
+      out += value ?? `{${name}}`
+      continue
+    }
+    // the options after "plural,": `one {…} other {…}` (braces balanced)
+    const body = inner.slice(inner.indexOf(",", inner.indexOf(",") + 1) + 1)
+    void rest
+    const options: Record<string, string> = {}
+    let j = 0
+    while (j < body.length) {
+      const m = /^\s*(=\d+|zero|one|two|few|many|other)\s*/.exec(body.slice(j))
+      if (!m) break
+      j += m[0].length
+      const [text, after] = block(body, j)
+      options[m[1]!] = text
+      j = after
+    }
+    const n = Number(value)
+    const chosen =
+      options[`=${n}`] ??
+      options[new Intl.PluralRules(locale).select(n)] ??
+      options.other ??
+      ""
+    out += formatAmbientMessage(chosen.replace(/#/g, String(n)), values, locale)
+  }
+  return out
+}
+
+/** A catalog resolved for one product and locale: strings, or functions of their values. */
+export function resolveAmbientMessages({
+  messages,
+  productName = "the assistant",
+  locale = "en",
+}: {
+  messages?: Partial<AmbientCatalog>
+  productName?: string
+  locale?: string
+} = {}): AmbientMessages {
+  const catalog: AmbientCatalog = { ...ambientMessagesEn, ...messages }
+  const out: Record<string, unknown> = {}
+  for (const [key, template] of Object.entries(catalog)) {
+    const params = /\{(?!product\b)\w+/.test(template)
+    out[key] = params
+      ? (values: Record<string, string | number>) =>
+          formatAmbientMessage(template, { product: productName, ...values }, locale)
+      : formatAmbientMessage(template, { product: productName }, locale)
+  }
+  return out as AmbientMessages
 }
 
 /**
  * A context of its own, NOT a field of the assistant context: the kits
  * (ReasoningPanel, ErrorState, Composer) render standalone — in the /ds
  * playground, in a host's own page — with no AssistantProvider above them,
- * and must still have words. With no provider they get the defaults.
+ * and must still have words. With no provider they get English.
  */
-const MessagesContext = React.createContext<AmbientMessages>(defaultAmbientMessages())
+const MessagesContext = React.createContext<AmbientMessages>(resolveAmbientMessages())
 
 export const AmbientMessagesProvider = MessagesContext.Provider
 

@@ -195,7 +195,7 @@ lists (`plan.provider`):
     zIndex={2999}              // only if planned: above the chrome, below modals
     defaultOrbAnchor="mr"      // only if planned: clear of a fixed bottom bar
     dark={isDark}              // only if the product's theme is not .dark on <html>
-    messages={translations}    // only for a product with its own i18n
+    locale={locale}            // only for a product with its own i18n: its active locale
   >
     <App />
     <Assistant />
@@ -206,6 +206,19 @@ lists (`plan.provider`):
 When the plan says so, load `Assistant` lazily and import the provider
 from `@/components/ambient/assistant-context`, not from the barrel: the
 barrel pulls the whole layer into whichever chunk imports it.
+
+**Language.** The layer's own words ship in English, as a catalog written
+to be copied: `components/ambient/messages.en.ts`, one key per string, in
+ICU MessageFormat (`{placeholders}`, `{n, plural, one {…} other {…}}`). For
+a product that translates (`plan.i18n`), wire its active locale into
+`locale` (the plan gives the line for its library) and, for each of its
+other locales, copy the catalog to `messages.<locale>.ts`, or add the keys
+under an `ambient` namespace in its own locale files. Translate the values
+only: keys, placeholders and plural syntax stay as they are. Pass the
+active locale's object as `messages`; missing keys fall back to English.
+Note each machine-translated locale (`ambientui note --kind judgement`).
+The locale also travels with every question and suggestions request, so
+the backend and the stubs can answer in it.
 
 `navItems` is where the palette's "Jump to" goes. Each takes an icon NAME
 (`icon: "home"`). For an existing product, do not add a call to every page:
@@ -345,7 +358,9 @@ has them; otherwise use the shape below.
    fallback answer: there is no sample answer for that yet.
 4. **Behave like the network.** About 400 ms per request, honour the
    `AbortSignal`, and fail when asked to "simulate an error", so the
-   error state can be seen before a real outage shows it:
+   error state can be seen before a real outage shows it. (Each request
+   also carries `locale`; a product that translates can key its sample
+   answers by it, or leave them in one language and note it.)
 
    ```ts
    // lib/ambient/stubs/index.ts — SAMPLE ANSWERS, not a backend.

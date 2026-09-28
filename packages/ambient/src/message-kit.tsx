@@ -135,10 +135,10 @@ export function MessageActions({
       >
         <Icon name={copied ? "check" : "copy"} size={13} />
       </Button>
-      {act("thumbs-up", "Good answer", () => onRate?.(rating === "up" ? null : "up"), rating === "up")}
-      {act("thumbs-down", "Bad answer", () => onRate?.(rating === "down" ? null : "down"), rating === "down")}
+      {act("thumbs-up", t.goodAnswer, () => onRate?.(rating === "up" ? null : "up"), rating === "up")}
+      {act("thumbs-down", t.badAnswer, () => onRate?.(rating === "down" ? null : "down"), rating === "down")}
       {onRegenerate && act("replay", "Regenerate", onRegenerate)}
-      {onMore && act("more", "More actions", onMore)}
+      {onMore && act("more", t.moreActions, onMore)}
     </div>
   )
 }
@@ -225,7 +225,7 @@ export function FollowUpSuggestions({
  * says what happened, and offers the single move that helps.
  */
 export function ErrorState({
-  title = "Generation stopped",
+  title,
   detail,
   onRetry,
   retryLabel,
@@ -250,7 +250,7 @@ export function ErrorState({
         <Icon name="alert" size={15} />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium">{title}</div>
+        <div className="text-sm font-medium">{title ?? t.generationStopped}</div>
         {detail && <p className="mt-0.5 text-sm opacity-80">{detail}</p>}
       </div>
       {onRetry && (
@@ -461,9 +461,9 @@ export function ReasoningPanel({
       >
         <span className={cn(working && "ambient-shimmer")}>
           {running || working
-            ? t.thinkingFor(elapsed)
+            ? t.thinkingFor({ n: elapsed })
             : took !== undefined
-              ? t.thoughtFor(took)
+              ? t.thoughtFor({ n: took })
               : t.reasoning}
         </span>
         <Icon name={open ? "chevron-down" : "chevron-right"} size={13} />
@@ -785,6 +785,7 @@ export function ChipSlider({
   deps?: number
   className?: string
 }) {
+  const t = useAmbientMessages()
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [edges, setEdges] = React.useState({ left: false, right: false })
 
@@ -823,7 +824,7 @@ export function ChipSlider({
       type="button"
       size="icon-xs"
       variant="ghost"
-      aria-label={dir === -1 ? "Scroll back" : "Scroll forward"}
+      aria-label={dir === -1 ? t.scrollBack : t.scrollForward}
       disabled={!shown}
       onClick={() => page(dir)}
       className={cn(
@@ -927,22 +928,25 @@ export type QuoteAction =
 
 type QuoteMode = "idle" | "thinking" | "streaming" | "result"
 
-const PRIMARY_ACTIONS: { id: QuoteAction; label: string; icon: IconName }[] = [
-  { id: "explain", label: "Explain", icon: "sparkles" },
-  { id: "improve", label: "Improve", icon: "edit" },
+// labels are catalog keys (messages.en.ts), resolved at render
+type Words = ReturnType<typeof useAmbientMessages>
+type WordKey = { [K in keyof Words]: Words[K] extends string ? K : never }[keyof Words]
+const PRIMARY_ACTIONS: { id: QuoteAction; label: WordKey; icon: IconName }[] = [
+  { id: "explain", label: "quoteExplain", icon: "sparkles" },
+  { id: "improve", label: "quoteImprove", icon: "edit" },
 ]
-const MORE_ACTIONS: { id: QuoteAction; label: string; icon: IconName }[] = [
-  { id: "shorten", label: "Shorten", icon: "scissors" },
-  { id: "tone", label: "Tone", icon: "smile" },
-  { id: "grammar", label: "Grammar", icon: "type" },
+const MORE_ACTIONS: { id: QuoteAction; label: WordKey; icon: IconName }[] = [
+  { id: "shorten", label: "quoteShorten", icon: "scissors" },
+  { id: "tone", label: "quoteTone", icon: "smile" },
+  { id: "grammar", label: "quoteGrammar", icon: "type" },
 ]
-const BUSY_LABEL: Record<QuoteAction, string> = {
-  explain: "Explaining",
-  improve: "Improving",
-  shorten: "Shortening",
-  tone: "Changing tone",
-  grammar: "Fixing grammar",
-  prompt: "Editing",
+const BUSY_LABEL: Record<QuoteAction, WordKey> = {
+  explain: "busyExplain",
+  improve: "busyImprove",
+  shorten: "busyShorten",
+  tone: "busyTone",
+  grammar: "busyGrammar",
+  prompt: "busyPrompt",
 }
 
 /**
@@ -1127,11 +1131,11 @@ export function QuoteReply({
                   <span className="border-muted-foreground/30 border-t-primary size-3 shrink-0 animate-spin rounded-full border-[1.5px]" />
                   {mode === "thinking" ? (
                     <span className="ambient-shimmer tabular-nums">
-                      {BUSY_LABEL[action]}… {elapsed}s
+                      {t[BUSY_LABEL[action]]}… {elapsed}s
                     </span>
                   ) : (
                     <span className="text-muted-foreground">
-                      {BUSY_LABEL[action]}…
+                      {t[BUSY_LABEL[action]]}…
                     </span>
                   )}
                 </span>
@@ -1183,7 +1187,7 @@ export function QuoteReply({
                       onPointerDown={(e) => e.stopPropagation()}
                       onChange={(e) => setPrompt(e.target.value)}
                       aria-label={t.describeEdits}
-                      placeholder="Describe edits"
+                      placeholder={t.describeEdits}
                       className="placeholder:text-muted-foreground h-7 w-32 bg-transparent ps-2.5 pe-1 text-xs outline-none"
                     />
                   </form>
@@ -1208,7 +1212,7 @@ export function QuoteReply({
                           className="shrink-0 rounded-full font-normal"
                         >
                           <Icon name={a.icon} size={12} />
-                          {a.label}
+                          {t[a.label]}
                         </Button>
                       ))}
                       {/* the long tail unfolds inside the pill, so the bar
@@ -1230,7 +1234,7 @@ export function QuoteReply({
                             className="shrink-0 rounded-full font-normal"
                           >
                             <Icon name={a.icon} size={12} />
-                            {a.label}
+                            {t[a.label]}
                           </Button>
                         ))}
                       </motion.div>
@@ -1238,7 +1242,7 @@ export function QuoteReply({
                       <Button
                         size="icon-sm"
                         variant="ghost"
-                        aria-label={expanded ? "Show fewer actions" : "Show more actions"}
+                        aria-label={expanded ? t.showFewerActions : t.showMoreActions}
                         aria-expanded={expanded}
                         onClick={() => setExpanded((v) => !v)}
                         className="shrink-0 rounded-full"
@@ -1407,14 +1411,14 @@ export type { ReasoningEffortLevel }
 
 export type ReviewStatus = "comment" | "change-requested" | "resolved"
 
-const REVIEW_STATUS: Record<ReviewStatus, { label: string; className: string }> = {
-  comment: { label: "Comment", className: "bg-muted text-muted-foreground" },
+const REVIEW_STATUS: Record<ReviewStatus, { label: WordKey; className: string }> = {
+  comment: { label: "reviewComment", className: "bg-muted text-muted-foreground" },
   "change-requested": {
-    label: "Change requested",
+    label: "reviewChangeRequested",
     className: "bg-(--destructive-wash) text-destructive",
   },
   resolved: {
-    label: "Resolved",
+    label: "reviewResolved",
     className: "bg-(--positive-wash) text-(--positive)",
   },
 }
@@ -1440,7 +1444,7 @@ export function ReviewComment({
   status = "comment",
   text,
   onReply,
-  replyPlaceholder = "Leave a reply…",
+  replyPlaceholder,
   className,
 }: {
   author: string
@@ -1452,6 +1456,7 @@ export function ReviewComment({
   replyPlaceholder?: string
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [reply, setReply] = React.useState("")
   const badge = REVIEW_STATUS[status]
   const send = () => {
@@ -1486,7 +1491,7 @@ export function ReviewComment({
             badge.className
           )}
         >
-          {badge.label}
+          {t[badge.label]}
         </span>
       </div>
       <p className="text-sm leading-relaxed">{text}</p>
@@ -1500,7 +1505,7 @@ export function ReviewComment({
           value={reply}
           onChange={setReply}
           onSend={send}
-          placeholder={replyPlaceholder}
+          placeholder={replyPlaceholder ?? t.leaveReply}
         />
       )}
     </div>

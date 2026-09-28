@@ -245,6 +245,10 @@ export function printPlanSummary(plan, out) {
   )
   out.ok(`mount: ${plan.mount.file ?? "?"}${plan.mount.lazy ? " (lazy)" : ""}`)
   out.ok(`transport: ${plan.transport.kind}`)
+  if (plan.i18n) {
+    out.ok(`language: ${plan.i18n.lib}, ${plan.i18n.locales.length} locale(s) — ${plan.i18n.locale}`)
+    if (plan.i18n.translate) out.info(plan.i18n.translate)
+  }
   // ADAPT: what install changes in the landed files, for this product
   for (const a of plan.adapt ?? []) {
     const what =
