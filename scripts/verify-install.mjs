@@ -413,7 +413,7 @@ try {
     if (fixture === "consumer" && !has("quick") && !failed.length) {
       log("· npm i ambientui — the versioned door")
       try {
-        run("npm", ["install", "ambientui@^0.1.0", "--no-audit", "--no-fund"], app)
+        run("npm", ["install", "ambientui@^0.2.0", "--no-audit", "--no-fund"], app)
         // resolve through the exports map, the way a consumer's import would —
         // ESM resolution deliberately: the package exports import-only, and a
         // CJS require.resolve is the wrong question to ask of it
