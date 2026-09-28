@@ -15,7 +15,7 @@ it runs the whole journey, from install to asking you for an inspiration
 screenshot to the moment it tells you to press Cmd-K:
 
 ```
-Read https://ambientui.ai/start.md and set this project up by following it.
+Read https://ambientui.ai/start.md and set this project up by following it. It will ask me for a design reference when it needs one. Run everything else on your own.
 ```
 
 Or take the layer on its own:
