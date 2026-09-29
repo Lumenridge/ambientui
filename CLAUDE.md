@@ -17,8 +17,8 @@ construction.
   these packages as versioned dependencies.
 - `npm run typecheck` / `npm run build` / `npm run lint`
 - `npm run gate` — all three, the tests (`packages/ambient/test` in Vitest,
-  `packages/cli/test` in node:test), plus the drift checks (registry, the Tailwind v3
-  door's completeness, vendored CSS,
+  `packages/cli/test` in node:test), plus the drift checks (registry, every
+  registry variant's own check, vendored CSS,
   governing-doc path claims, the library's own CSS surface). A
   `.githooks/pre-commit` runs it, so a failing gate blocks the commit
   (`--no-verify` to bypass deliberately). If hooks are not firing, run

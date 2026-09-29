@@ -20,21 +20,17 @@
  *   check      the gate script that proves the rewrite is complete
  *
  * ADDING A VARIANT is: write the module, add it here, list the items it
- * applies to in build-registry.mjs, and give it a gate check. Axes with only
- * a default today (primitives, icons) are declared so the next variant has a
- * place to land, not because anything consumes them yet.
+ * applies to in build-registry.mjs, and give it a gate check.
  */
 import { sourceToTailwind3 } from "./tailwind-v3.mjs"
 import { cssToHslTokens } from "./hsl-tokens.mjs"
+import { ICON_LIBRARIES } from "./icons.mjs"
 
 /**
  * PRIMITIVES THE v3 DOOR SHIPS ITSELF. The layer uses button sizes
- * (`icon-sm`, `icon-xs`) that only shadcn's v4 button has. Depending on
- * shadcn's `button` in a v3 project installs the v3 button, which lacks them
- * (tsc fails), or prompts to overwrite the product's own, which would
- * restyle every button in it (Invoify, 2026-09-28). So the v3 door carries
- * its own copy under components/ambient/ui/, rewritten like the rest, and
- * the product's button is never read or touched.
+ * (`icon-sm`, `icon-xs`) that only shadcn's v4 button has, so the v3 door
+ * carries its own copy under components/ambient/ui/ and never touches the
+ * product's button.
  */
 const BUNDLED_TW3 = ["button"]
 
@@ -56,9 +52,8 @@ export const AXES = {
         label: "Tailwind v3 (3.4+)",
         detect:
           "package.json has tailwindcss 3.x, and the CSS uses `@tailwind base/components/utilities` with a tailwind.config.{js,ts}",
-        // A v3 project's tokens are HSL triplets (shadcn's v3 format), so a
-        // role read inside an arbitrary value (`bg-[color-mix(…var(--x)…)]`)
-        // needs the same hsl() wrap as the stylesheet.
+        // v3 tokens are HSL triplets, so roles inside arbitrary values need
+        // the same hsl() wrap as the stylesheet.
         source: (text, file) =>
           bundlePrimitives(cssToHslTokens(sourceToTailwind3(text, file)), BUNDLED_TW3),
         bundles: BUNDLED_TW3,
@@ -83,20 +78,22 @@ export const AXES = {
       },
     },
   },
-  // Declared for the next variant. The layer composes shadcn's Radix-based
-  // button, input, skeleton and sidebar today; a Base UI or bundled-primitive
-  // variant lands here.
+  // Declared for a future Base UI or bundled-primitive variant.
   primitives: {
     question: "Which primitive library do the project's shadcn components use?",
     default: { id: "radix", label: "Radix (shadcn default)" },
     variants: {},
   },
-  // Declared for the next variant. `icon` ships all five libraries today; a
-  // single-library variant (chosen by what the host already uses) lands here.
+  // Declared for a future single-library icon variant.
   icons: {
     question: "Which icon library does the project use?",
     default: { id: "all", label: "all five, chosen at runtime" },
-    variants: {},
+    variants: Object.fromEntries(
+      Object.keys(ICON_LIBRARIES).map((lib) => [
+        lib,
+        { suffix: lib, label: `${lib} only`, check: "scripts/check-icons.mjs" },
+      ])
+    ),
   },
 }
 
