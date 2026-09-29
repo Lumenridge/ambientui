@@ -166,7 +166,7 @@ export function annotate(p, ctx) {
   grade("ai", p.ai.kind === "none" ? "medium" : p.ai.kind === "http-endpoint" ? "low" : "high", p.ai.kind === "http-endpoint" ? "inferred from env names or route strings only" : p.ai.kind === "none" ? "no SDK, provider, env or route found" : "dependency")
   const pn = p.product.candidates[0]
   const pick = p.evidence["product.name"]?.[0]?.note ?? ""
-  grade("product", /^(title|manifest|productName)/.test(pick) ? "medium" : "low", /^(title|manifest|productName)/.test(pick) ? pick : `from the package name${pn ? ` (${pn.value})` : ""}; ask the owner`)
+  grade("product", /^(title|manifest|productName)/.test(pick) ? "medium" : "low", /^(title|manifest|productName)/.test(pick) ? pick : `from the package name${pn ? ` (${pn.value})` : ""}; check the product's title or manifest`)
   grade("entry", p.entry.file ? (p.evidence["entry"]?.some((e) => e.note) ? "high" : "medium") : "low", p.entry.file ? "from the bundler's entry declaration or a conventional path" : "not found")
   grade("naming", p.naming.pascal + p.naming.kebab < 10 ? "low" : "high", `${p.naming.pascal} PascalCase vs ${p.naming.kebab} kebab-case files`)
   grade("staticDir", p.evidence.staticDir?.[0]?.file ? "high" : "medium", p.evidence.staticDir?.[0]?.file ? "publicDir in the bundler config" : "framework default")

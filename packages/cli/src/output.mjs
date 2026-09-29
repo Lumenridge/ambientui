@@ -3,7 +3,7 @@
  * the agent; otherwise the person gets short prefixed lines:
  *
  *   ✔  true / done / passed        ✗  false / failed / blocked
- *   !  worth attention             ?  a question for the owner
+ *   !  worth attention
  *
  * Every report ends with one "Next: …" command so the agent never has to
  * guess the next step.
@@ -15,7 +15,6 @@ export function createOutput({ json = false } = {}) {
     ok: (s) => lines.push(`✔ ${s}`),
     fail: (s) => lines.push(`✗ ${s}`),
     warn: (s) => lines.push(`! ${s}`),
-    ask: (s) => lines.push(`? ${s}`),
     info: (s) => lines.push(`  ${s}`),
     head: (s) => lines.push("", s),
     raw: (s) => lines.push(s),

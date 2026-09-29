@@ -64,25 +64,14 @@ differently comes after, with a reinstall.
 3. **Review the survey against the code — mandatory.** The doctor's checks
    are fixed patterns; you can read the code. Follow `doctor.md` (beside
    this file): confirm every low-confidence fact the plan depends on, look
-   for what no fixed check can see, and correct the plan where it is wrong:
-
-   ```bash
-   npx -y @ambient-ui/cli plan --set provider.zIndex=2999 --because "the product's modals sit at 3000"
-   ```
+   for what no fixed check can see, and correct the plan where it is wrong
+   (`plan --set … --because "…"`).
 
 **Beyond the plan, by hand.** Where the tooling cannot do something (a
 transport it could not wire, a mount point it could not find, a pattern of
 the product's nothing here fits), take the closest workable path yourself
-rather than stopping, keep it inside the install, and record it as you go:
-
-```bash
-npx -y @ambient-ui/cli note "Mounted in src/Shell.tsx: App renders outside the router" --kind judgement
-```
-
-Kinds: `judgement` (a choice between workable options), `manual` (done by
-hand), `unavailable` (the product lacked something; say what you did
-instead). The notes are how the owner learns where the install left the
-happy path.
+rather than stopping, keep it inside the install, and record it as you go
+with `ambientui note` (the kinds are in `doctor.md`).
 
 **From scratch.** No product yet: scaffold the reference environment (next
 section), then run the doctor on it. It plans the full journey, including
@@ -112,16 +101,10 @@ npx -y @ambient-ui/cli begin
 npx -y @ambient-ui/cli install
 ```
 
-`begin` records where the project stood. `install` runs the plan's
-commands non-interactively: it registers the registry and adds the doors
-the plan chose for this project's stack. It puts back any of the product's
-own files the shadcn CLI overwrote, moves files that landed outside the
-source root into it, and then applies the plan's adaptations to what
-landed (`plan.adapt`, each with its reason). If a door is ever re-added,
-`npx -y @ambient-ui/cli adapt` applies them again. Read what it prints,
-then look at `git diff` on the config files it names: the shadcn CLI
-reformats configs and drops comments, so restore anything that was the
-author's.
+`begin` records where the project stood; `install` adds the doors the plan
+chose. Read what it prints, then look at `git diff` on the config files it
+names: the shadcn CLI reformats configs and drops comments, so restore
+anything that was the author's.
 
 Then do what the plan says the CLI cannot do for you, each item as written
 there. **The plan is authoritative for this project's stack**: this guide
@@ -136,7 +119,7 @@ reasons, so a stack this guide never mentions still installs correctly.
 - **Lint and tests** (`plan.lint`, `plan.tests`): exclude the vendored
   folders from the product's lint autofix before you edit anything in
   them, and add the test mocks the plan names.
-- **Governance**, if the person said yes: the rules landed at
+- **Governance**, if the plan's governance decision is yes: the rules landed at
   `./.claude/ambientui/CLAUDE.md`. Add one line to the product's own
   CLAUDE.md pointing at it. Never replace their file.
 
@@ -181,14 +164,14 @@ When the plan says so, load `Assistant` lazily and import the provider
 from `@/components/ambient/assistant-context`, not from the barrel: the
 barrel pulls the whole layer into whichever chunk imports it.
 
-**Language.** The layer's own words ship in ten languages (en, zh, hi,
-es, fr, ar, pt, ru, ja, de) as catalogs in `components/ambient/`
-(`messages.<locale>.ts`: one key per string, ICU MessageFormat). For a
+**Language.** The layer's own words ship as catalogs in
+`components/ambient/` (`messages.<locale>.ts`: one key per string, ICU
+MessageFormat); `plan.i18n` says which ship and which do not. For a
 product that translates (`plan.i18n`), wire its active locale into
 `locale` (the plan gives the line for its library); the layer picks the
 matching catalog. For a locale that does not ship, copy
 `messages.en.ts` to `messages.<locale>.ts` and register it, as its header
-explains, and note it (`ambientui note --kind judgement`). The locale also
+explains. The locale also
 travels with every question and suggestions request, so the backend and
 the stubs can answer in it.
 
@@ -201,23 +184,18 @@ step, a mode of a single-canvas app, a tab with its own work. `PageIntel.jumps`
 lists the places inside it (the wizard's steps, the editor's dialogs), and
 `onJump` goes there.
 
-**Taking over the product's ⌘K** (when that was the answer): register
+**Taking over the product's ⌘K** (when the plan's hotkey is `takeover`): register
 everything the old palette offered as commands, with `useRegisterCommands`,
 which is safe to call on every render. Each command section can name its
 own noun (`noun: "account"`) for the palette's counts. Then update or remove
 the product's tests for the palette it replaced.
 
 **Connect the assistant to the backend the product already has**
-(`plan.transport`). The layer never makes a request of its own: it calls the
-functions it is given, validates what comes back, and renders it. The first
-rule is the product's own transport: the same client, the same base path,
-the same auth, the same mock mode as every other feature. Never a new server
-just for the assistant. [ambient-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/ambient-api.md)
-has the example for each kind the doctor reports: an HTTP client with
-session auth, a worker or IPC engine, an AI SDK route. Read the stub flag
-the way the plan says (`plan.envFlag`), not as `VITE_` unless the plan says
-`VITE_`. If the project has no API layer yet, this shape works, with the
-plan's flag in place of the Vite one:
+(`plan.transport`), following [ambient-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/ambient-api.md),
+which has the rule and an example for each kind the doctor reports. Read
+the stub flag exactly as `plan.envFlag` says. If the project has no API
+layer yet, this shape works, with the plan's flag in place of the one
+shown:
 
 ```ts
 // lib/ambient/api.ts — every request the assistant makes goes through here.
@@ -422,21 +400,6 @@ With the dev server running:
 npx -y @ambient-ui/cli verify --url http://localhost:<port>
 ```
 
-It checks what would otherwise fail silently, and fails loudly:
-
-- the typecheck, lint, tests and build, against the baseline from step 1
-  (anything that failed before and fails the same way is PRE-EXISTING);
-- that every installed file is inside the source root and none is
-  gitignored, and that the product's own primitives are unchanged;
-- that the material was wired: the built CSS carries the glass, and the
-  roles resolve to real colours;
-- in a browser: the layer mounted, the hotkey opens, closes and reopens
-  the spotlight five times, a query does not survive closing, the
-  spotlight is on top of the product's chrome, nothing re-renders in a
-  loop, no surface says "ambientui", the orb clears the product's fixed
-  UI at phone width, the layer follows the theme, and the product's own
-  screens did not change.
-
 Fix every FAIL and run it again until nothing fails. Never hand a FAIL to
 the person. If a check is SKIPPED (no browser available), say which, in one
 line; do not report it as passed.
@@ -459,9 +422,7 @@ npx -y @ambient-ui/cli end
 
 It writes `AMBIENTUI-NOTES.md` into the app: what was installed, every
 decision the doctor made with its alternatives, your corrections and notes,
-and anything verify could not prove. When the install left the happy path,
-the file recommends the owner try the layer, then uninstall and reinstall
-with the right options chosen on purpose. Then it lists every file the
+and anything verify could not prove. Then it lists every file the
 install added or changed since `begin`, and writes
 `.ambientui/manifest.json`. Show the person the list in one line
 ("41 files added, 6 changed, 7 packages added"), ask before committing,

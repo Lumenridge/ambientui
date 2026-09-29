@@ -84,7 +84,7 @@ const DOORS = [
     name: "ambient-layer-tw3",
     fixture: "consumer-tw3",
     compile: true,
-    // from the entry file, as start.md says: an @import after @tailwind is dropped
+    // from the entry file (plan.css, mode v3-entry-import)
     entryImports: ["./styles/ambient.css"],
     builtText: ["hsl(var(--popover))"],
     built: [
@@ -312,18 +312,8 @@ try {
     log(`· fixture ${fixture}`)
     cpSync(join(FIXTURES, fixture), app, { recursive: true })
 
-    /**
-     * THE NAMESPACE FORM IS WHAT WE PUBLISH, SO IT IS WHAT WE RUN.
-     *
-     * The site and the README print `npx shadcn add @ambientui/ambient-layer`,
-     * not a URL. Those are not the same command: the namespace only resolves
-     * because `components.json` maps `@ambientui` to a URL TEMPLATE, which is
-     * what `shadcn registry add` writes. Running the URL form here proved the
-     * item was fetchable and proved nothing about the line a visitor pastes.
-     *
-     * The fixture commits the mapping with a `{REGISTRY_HOST}` placeholder so
-     * a localhost port never gets baked into a checked-in file.
-     */
+    // Run the namespace form users paste; the fixture maps @ambientui
+    // through a {REGISTRY_HOST} placeholder, filled in here.
     const cj = join(app, "components.json")
     writeFileSync(
       cj,
@@ -392,13 +382,7 @@ try {
       }
     }
 
-    /**
-     * THE npm DOOR RUNS TOO. The site prints `npm i ambientui` beside the
-     * registry commands, and the same rule applies: a command is not printed
-     * until something has run it. This one needs the real npm registry, so it
-     * rides the full run (with the vite build), not --quick — the nightly
-     * exercises it against whatever npm is serving.
-     */
+    // The npm door: installs `ambientui` from npm, so full runs only.
     if (fixture === "consumer" && !has("quick") && !failed.length) {
       log("· npm i ambientui — the versioned door")
       try {

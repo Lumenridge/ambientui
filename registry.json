@@ -375,7 +375,7 @@
           "ambient-accent-wash": "rgba(61, 130, 246, 0.16)"
         }
       },
-      "docs": "Take this instead of ambient-styles when your tokens look like `--popover: 0 0% 100%`: ambient.css mixes the roles inside color-mix(), and a bare triplet there is not a colour, so every surface renders transparent with no error. On Tailwind v4, `@import \"./styles/ambient.css\";` after `@import \"tailwindcss\"`. On Tailwind v3, import it from your entry file on the line after your global stylesheet (`import \"./styles/ambient.css\"`): an @import after the `@tailwind` directives is invalid CSS, and Vite drops it with only a warning.",
+      "docs": "Take this instead of ambient-styles when your tokens look like `--popover: 0 0% 100%`: ambient.css mixes the roles inside color-mix(), and a bare triplet there is not a colour, so every surface renders transparent with no error. On Tailwind v4, `@import \"./styles/ambient.css\";` after `@import \"tailwindcss\"`. On Tailwind v3, import it from your entry file on the line after your global stylesheet (`import \"./styles/ambient.css\"`).",
       "meta": {
         "base": "ambient-styles",
         "variant": {
@@ -577,7 +577,7 @@
           "target": "components/ambient/ui/button.tsx"
         }
       ],
-      "docs": "For a project on Tailwind 3.4 or later that is not moving to v4. Import the material from your entry file, on the line after your global stylesheet (not with @import after the `@tailwind` directives, which Vite drops with only a warning):\n\n  import \"./index.css\"\n  import \"./styles/ambient.css\"\n\nThen mount it exactly as ambient-layer:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nYour tailwind.config must include the installed files in `content` (components/ambient/**) and map the standard shadcn colours as hsl(var(--x)), which `shadcn init` for v3 already does. The door ships its own button (components/ambient/ui/button.tsx) and never replaces yours. Layer only: the Foundation needs Tailwind v4.",
+      "docs": "For a project on Tailwind 3.4 or later that is not moving to v4. Import the material from your entry file, on the line after your global stylesheet:\n\n  import \"./index.css\"\n  import \"./styles/ambient.css\"\n\nThen mount it exactly as ambient-layer:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nYour tailwind.config must include the installed files in `content` (components/ambient/**) and map the standard shadcn colours as hsl(var(--x)), which `shadcn init` for v3 already does. The door ships its own button (components/ambient/ui/button.tsx) and never replaces yours. Layer only: the Foundation needs Tailwind v4.",
       "meta": {
         "base": "ambient-layer",
         "variant": {

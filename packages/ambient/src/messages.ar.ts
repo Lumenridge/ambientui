@@ -1,7 +1,6 @@
 /**
- * The layer's copy in Arabic. Machine-drafted from messages.en.ts;
- * have a native speaker review it before relying on it. The header of
- * messages.en.ts explains the format.
+ * The layer's copy in Arabic. Machine-drafted from messages.en.ts, whose
+ * header explains the format.
  */
 import type { AmbientCatalog } from "./messages.en"
 

@@ -27,8 +27,7 @@ construction.
   (doctor, plan, begin, install, verify, end, uninstall); its tests are
   `node --test packages/cli/test/`.
 - `npm run verify:install` — every registry door installed for real into a
-  scratch project (four fixtures: shadcn on Tailwind v4, on v3, on React 18,
-  and a product with neither); `npm run registry:build` — the deployable registry
+  scratch project (the fixtures in `fixtures/README.md`); `npm run registry:build` — the deployable registry
   (`registry-dist/`, published by the `ambientui-registry` Cloudflare Pages
   project; see `docs/registry-hosting.md`).
 

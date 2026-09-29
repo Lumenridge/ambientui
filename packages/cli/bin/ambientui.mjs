@@ -3,7 +3,7 @@
  * ambientui — THE INSTALL PIPELINE, AS COMMANDS.
  *
  *   doctor     survey the host, decide the plan (profile.json + plan.json)
- *   plan       re-derive plan.json from the profile and the owner's answers
+ *   plan       re-derive plan.json from the profile, explicit choices and corrections
  *   begin      record the base commit the install is measured against
  *   install    run the plan's shadcn commands; restore the product's primitives;
  *              then adapt the landed files to this product

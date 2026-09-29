@@ -528,12 +528,10 @@ function lintFor(profile, srcRoot) {
 }
 
 /**
- * THE LANGUAGE. The layer ships English only, as a catalog written to be
- * copied (messages.en.ts: flat keys, ICU strings). For a product that
- * translates, the plan says where its active locale comes from (so the
- * plural rules and the questions follow it) and how the chrome gets the
- * product's other languages. Translating is the agent's work, and every
- * machine-translated locale is noted for the owner.
+ * THE LANGUAGE. The layer ships catalogs for the locales in `shipped`
+ * (messages.<locale>.ts: flat keys, ICU strings). For a product that
+ * translates, the plan says where its active locale comes from and how the
+ * chrome gets any locale the layer does not ship.
  */
 const LOCALE_FROM = {
   "react-i18next": 'const { i18n } = useTranslation(); <AssistantProvider locale={i18n.language} …>',
@@ -557,7 +555,7 @@ function i18nFor(profile, srcRoot) {
     catalog,
     locale: LOCALE_FROM[i.lib] ?? "<AssistantProvider locale={the product's active locale} …> (else the layer reads <html lang>)",
     translate: others.length
-      ? `The layer ships ${shipped.join(", ")}. For the product's other locales (${others.slice(0, 12).join(", ")}${others.length > 12 ? `, +${others.length - 12}` : ""}): copy ${catalog} to messages.<locale>.ts, translate the values only (keys, {placeholders} and plural syntax stay), and register it in ambientCatalogs (messages.ts). Note every machine-translated locale: \`ambientui note "…" --kind judgement\`.`
+      ? `The layer ships ${shipped.join(", ")}. For the product's other locales (${others.slice(0, 12).join(", ")}${others.length > 12 ? `, +${others.length - 12}` : ""}): copy ${catalog} to messages.<locale>.ts, translate the values only (keys, {placeholders} and plural syntax stay), and register it in ambientCatalogs (messages.ts). Head each file you translate with "Machine-drafted from messages.en.ts."`
       : null,
     rtl: i.rtl?.length ? `RTL locales present (${i.rtl.join(", ")}): verify checks the spotlight under dir="rtl"` : null,
   }

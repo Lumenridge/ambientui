@@ -235,7 +235,7 @@ already has (its sync server, a user-supplied key), or stays on stubs.
 ```ts
 // lib/ambient/api.ts — a local engine reached through send(name, args)
 import { createAmbientApi } from "@/components/ambient/responder"
-import { send } from "loot-core/platform/client/fetch" // the product's own
+import { send } from "@/platform/engine" // the product's own
 
 export const ambientApi = createAmbientApi({
   ask: (input) => send("ambient-ask", input),
@@ -243,7 +243,7 @@ export const ambientApi = createAmbientApi({
 })
 
 // and inside the engine, beside its other handlers:
-// handlers["ambient-ask"] = async (input) => answerFromBudget(input)
+// handlers["ambient-ask"] = async (input) => answerFromData(input)
 ```
 
 `send` here takes no `AbortSignal`, so Stop ends the turn on screen while

@@ -178,7 +178,7 @@ async function v3(cls) {
       content: [{ raw: ` ${cls} `, extension: "html" }],
       corePlugins: { preflight: false },
       theme: { extend: V3_THEME },
-      // makes `duration-[var(--x)]` ambiguous: compile against the hard case
+      // as in fixtures/consumer-tw3 (see tailwind-v3.mjs PROPERTY_FOR)
       plugins: [animate],
     }),
   ]).process("@tailwind utilities;", { from: undefined })

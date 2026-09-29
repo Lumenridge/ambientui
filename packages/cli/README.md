@@ -5,7 +5,7 @@ The ambientui install pipeline as commands. An AI coding agent following
 
 ```bash
 npx @ambient-ui/cli doctor                 # survey → .ambientui/profile.json + plan.json
-npx @ambient-ui/cli plan --hotkey coexist  # re-plan with the owner's answers
+npx @ambient-ui/cli plan --hotkey off      # re-plan with an explicit choice, for a reinstall
 npx @ambient-ui/cli begin                  # record the base commit
 npx @ambient-ui/cli install                # run the plan's shadcn commands safely
 #   … wire the plan: CSS lines, mount, alias edits, env flag, transport …
@@ -15,12 +15,12 @@ npx @ambient-ui/cli uninstall              # git revert of that commit
 ```
 
 Every command takes `--cwd <dir>` and `--json`. Human output is one fact per
-line (`✔` `✗` `!` `?`) and ends with `Next: …`.
+line (`✔` `✗` `!`) and ends with `Next: …`.
 
 | command | what it does |
 | --- | --- |
-| `doctor [--baseline] [--url <u>]` | Surveys the host read-only: app package, package manager, Tailwind version, token format, aliases, env prefix, ⌘K owners, z-index scale, i18n, network layer, AI engine and more — each fact with evidence (file:line or package) and a confidence grade. Prints blockers, questions for the owner, and the plan. `--baseline` runs the host's typecheck/lint/test/build once; `--url` snapshots computed styles of the running app. |
-| `plan [--path] [--hotkey] [--look] [--governance] [--theme]` | Re-derives `plan.json` from the profile and the answers. The adapter is a pure function in `src/plan.mjs`. |
+| `doctor [--baseline] [--url <u>]` | Surveys the host read-only: app package, package manager, Tailwind version, token format, aliases, env prefix, ⌘K owners, z-index scale, i18n, network layer, AI engine and more — each fact with evidence (file:line or package) and a confidence grade. Prints blockers, decisions, and the plan. `--baseline` runs the host's typecheck/lint/test/build once; `--url` snapshots computed styles of the running app. |
+| `plan [--path] [--hotkey] [--look] [--governance] [--theme] [--set k=v --because "…"]` | Re-derives `plan.json` from the profile, explicit choices and `--set` corrections. The adapter is a pure function in `src/plan.mjs`. |
 | `begin [--allow-dirty]` | Records HEAD and the dirty paths in `session.json`. |
 | `install` | Runs the plan's commands with stdin closed; restores any product file under the ui dir or `lib/utils` that the CLI changed; moves files that landed outside the source root; prints the config diff to review. |
 | `end [--commit]` | Writes `manifest.json` (files, dependencies) and prints — or runs — the commit with the `Ambientui-Install: 1` trailer. |

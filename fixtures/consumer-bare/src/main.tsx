@@ -5,7 +5,7 @@ import "./index.css"
 import "./app.css"
 
 /**
- * A product NOT built on Tailwind or shadcn (Excalidraw's shape): its own
+ * A product NOT built on Tailwind or shadcn: its own
  * stylesheet, browser defaults everywhere else, no lib/utils, no token block.
  * Tailwind v4 is installed the way the install plan does it for such a
  * product: theme and utilities only, with the preflight confined to the

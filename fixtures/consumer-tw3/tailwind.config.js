@@ -2,9 +2,7 @@ import animate from "tailwindcss-animate"
 
 /**
  * What `npx shadcn init` writes for a Tailwind v3 project (new-york,
- * neutral), with tailwindcss-animate — which most v3 shadcn projects carry,
- * and which is what makes `duration-[var(--x)]` ambiguous in v3. The fixture
- * keeps it so the v3 door is tested against the hard case.
+ * neutral), with tailwindcss-animate (see scripts/variants/tailwind-v3.mjs).
  *
  * @type {import('tailwindcss').Config}
  */

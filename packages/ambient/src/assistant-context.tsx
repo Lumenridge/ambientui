@@ -79,9 +79,7 @@ export type PageIntel = {
 /**
  * A place the host app can navigate to, offered in the palette's "Jump to".
  *
- * THE LAYER IS TOLD, NEVER IMPORTS. assistant.tsx used to `import { sections }
- * from "@/nav"` — a UI layer reaching into one particular app's route table,
- * and the single thing that made it un-liftable.
+ * The layer is told its nav items; it never imports the host's routes.
  *
  * `icon` is a vocabulary NAME ("home", "settings"), drawn by the configured
  * library through <Icon>. A HugeIcons icon object is also accepted.
@@ -93,7 +91,7 @@ export type NavItem = {
   icon?: IconName | NavIconObject
 }
 
-/** A HugeIcons icon definition — the legacy form of NavItem.icon. */
+/** A HugeIcons icon object, also accepted as NavItem.icon. */
 export type NavIconObject = readonly unknown[] | Record<string, unknown>
 
 export type AmbientCommand = {
@@ -452,8 +450,8 @@ export function matchesHotkey(event: KeyboardEvent, hotkey: AmbientHotkey) {
     shift: parts.includes("shift"),
     alt: parts.includes("alt"),
   }
-  // ⌘ and Ctrl both open it on a Mac keyboard for "mod": a Mac user on a
-  // PC keyboard, and the layer's own history, both expect Ctrl to work too
+  // on a Mac, "mod" accepts ⌘ and Ctrl: a Mac user on a PC keyboard
+  // expects Ctrl to work too
   const modOk = parts.includes("mod")
     ? event.metaKey || event.ctrlKey
     : event.metaKey === want.meta && event.ctrlKey === want.ctrl

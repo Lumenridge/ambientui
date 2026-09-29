@@ -1125,7 +1125,7 @@ export function Assistant({
         desc: j.desc,
         iconKind: "nav" as const,
         // a NAME goes through <Icon>, like every icon in the system; an icon
-        // object is the legacy HugeIcons form
+        // object is drawn directly by HugeIcons
         ...(typeof j.icon === "string"
           ? { iconName: j.icon }
           : { navIcon: j.icon as typeof SparklesIcon | undefined }),
@@ -1274,9 +1274,8 @@ export function Assistant({
     ].map((sec) => {
       const inSection = commands.filter((c) => c.section === sec)
       const n = inSection.length
-      // a section NAME is a heading, not a countable noun — "10
-      // documentation" is what happens when you lowercase one and hope. The
-      // registering host names its own noun; ours are in HINT_NOUNS.
+      // a section name is a heading, not a noun: hosts set `noun`, ours
+      // are in HINT_NOUNS.
       // the host's plural when it gave one; English falls back to "s"
       const declared = inSection.find((c) => c.noun)
       const singular = declared?.noun ?? HINT_NOUNS[sec]

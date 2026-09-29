@@ -23,7 +23,7 @@ most projects have something only reading the code reveals.
    always with the reason:
 
    ```bash
-   npx -y @ambient-ui/cli plan --set provider.zIndex=10200 --because "CaptureHost sits at 10100; the 'modal layer' guess was a date picker"
+   npx -y @ambient-ui/cli plan --set provider.zIndex=10200 --because "the product's modals sit at 10100"
    ```
 
    Keys are paths into `.ambientui/plan.json` (`provider.zIndex`,
@@ -33,10 +33,6 @@ most projects have something only reading the code reveals.
 5. **Record anything you will do differently from the plan** as you do it
    (`ambientui note`, below).
 
-Do not ask the owner anything here. The doctor decides, you verify and
-correct, and the notes tell the owner afterwards what was chosen and how
-to choose differently.
-
 ## What the survey cannot see
 
 **Where the app really starts.** The doctor picks the root component from
@@ -45,8 +41,8 @@ providers (auth, theme, query client). If it renders before them, the
 layer cannot navigate or read the theme: set `mount.file` to the layout
 that sits inside them.
 
-**Command palettes that are not ⌘K.** The survey finds `cmdk`, `kbar` and
-handlers near `metaKey` + `k`. Look for a product search, a "/" shortcut, a
+**Command palettes that are not ⌘K.** The survey finds known palette
+libraries and ⌘K handlers. Look for a product search, a "/" shortcut, a
 command menu built by hand, or a keyboard-shortcut library with its own
 registry. If the product already has a palette, the layer's spotlight
 should not become a second one silently: note what exists.
@@ -99,11 +95,8 @@ proceed by hand and note it.
 
 ## When the plan cannot do it
 
-Doing something by hand is allowed. The point of this install is for the
-owner to see ambientui working in their product before committing to it.
-A best-effort layer they can press ⌘K in is worth more than a stop and a
-question. Take the closest workable path, keep it reversible (everything
-stays inside the install commit), and record it the moment you do it:
+Doing it by hand is allowed. Take the closest workable path, keep it
+inside the install commit, and record it the moment you do it:
 
 ```bash
 npx -y @ambient-ui/cli note "Mounted in src/Shell.tsx, not App.tsx: App renders outside the router" --kind judgement
@@ -111,10 +104,12 @@ npx -y @ambient-ui/cli note "Wired ask() to the existing /api/chat route by hand
 npx -y @ambient-ui/cli note "No design tokens exist; the layer uses ambientui's neutral roles" --kind unavailable
 ```
 
+Kinds: `judgement` (a choice between workable options), `manual` (done by
+hand), `unavailable` (the product lacked something; say what you did
+instead).
+
 `ambientui end` writes these, with the doctor's decisions and your
-corrections, into `AMBIENTUI-NOTES.md`. When anything strayed from the
-happy path, that file recommends the owner try the layer, then uninstall
-and reinstall with the right options chosen on purpose.
+corrections, into `AMBIENTUI-NOTES.md`.
 
 ## Done when
 

@@ -233,7 +233,7 @@ export function detectNetwork(ctx) {
   wrappers.sort((a, b) => b.calls - a.calls)
   if (wrappers[0]) ctx.ev("network.wrapper", { file: wrappers[0].file, note: `${wrappers[0].calls} fetch/client calls` })
 
-  // A SHARED HELPER inside those calls (`fetch(getApiPath(…))`) is the
+  // A SHARED HELPER inside those calls (`fetch(apiUrl(…))`) is the
   // convention, not any one service.
   const helperCounts = {}
   for (const w of wrappers) {

@@ -84,7 +84,6 @@ export const AXES = {
     default: { id: "radix", label: "Radix (shadcn default)" },
     variants: {},
   },
-  // Declared for a future single-library icon variant.
   icons: {
     question: "Which icon library does the project use?",
     default: { id: "all", label: "all five, chosen at runtime" },

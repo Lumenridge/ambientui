@@ -130,7 +130,7 @@ describe("fixtures/consumer-bare — Tailwind v4 without its reset, no shadcn", 
   })
 })
 
-describe("a Next.js app-router product (Invoify's shape)", () => {
+describe("a Next.js app-router product", () => {
   const dir = project({
     "package.json": {
       name: "invoicer",
@@ -187,7 +187,7 @@ describe("a Next.js app-router product (Invoify's shape)", () => {
   })
 })
 
-describe("a Yarn-berry monorepo with a ⌘K palette (Actual's shape)", () => {
+describe("a Yarn-berry monorepo with a ⌘K palette", () => {
   const dir = project({
     "package.json": { name: "money", private: true, workspaces: { packages: ["packages/*"] }, packageManager: "yarn@4.17.1" },
     ".yarnrc.yml": "nodeLinker: node-modules\nyarnPath: .yarn/releases/yarn-4.17.1.cjs\n",
@@ -258,7 +258,7 @@ describe("a Yarn-berry monorepo with a ⌘K palette (Actual's shape)", () => {
   })
 })
 
-describe("a webpack app with a backend beside it and no @/ (tududi's shape)", () => {
+describe("a webpack app with a backend beside it and no @/", () => {
   const dir = project({
     "package.json": {
       name: "tasks",
@@ -274,8 +274,8 @@ describe("a webpack app with a backend beside it and no @/ (tududi's shape)", ()
     "frontend/App.tsx": "document.documentElement.classList.add('dark')\n",
     "frontend/Toast.tsx": "export const ToastProvider = ({ children }) => children\n",
     "frontend/styles/tailwind.css": "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n",
-    "frontend/utils/areasService.ts": "export const a = () => fetch(getApiPath('areas'), { credentials: 'include' })\nexport const b = () => fetch(getApiPath('b'))\nexport const c = () => fetch(getApiPath('c'))\n",
-    "frontend/config/paths.ts": "export function getApiPath(p) { return `/api/${p}` }\n",
+    "frontend/utils/areasService.ts": "export const a = () => fetch(apiUrl('areas'), { credentials: 'include' })\nexport const b = () => fetch(apiUrl('b'))\nexport const c = () => fetch(apiUrl('c'))\n",
+    "frontend/config/paths.ts": "export function apiUrl(p) { return `/api/${p}` }\n",
     "backend/app.js": "const OpenAI = require('openai')\n",
   })
   const p = survey(dir)
@@ -294,7 +294,7 @@ describe("a webpack app with a backend beside it and no @/ (tududi's shape)", ()
     assert.deepEqual(p.env.definePluginKeys, ["TASKS_BASE_PATH"])
     assert.equal(p.env.stubFlag, "AMBIENT_STUBS")
     assert.equal(p.env.read, "process.env.AMBIENT_STUBS")
-    assert.equal(p.network.helper.name, "getApiPath")
+    assert.equal(p.network.helper.name, "apiUrl")
     assert.equal(p.network.helper.file, "frontend/config/paths.ts")
     assert.ok(p.network.auth.credentialsInclude)
     assert.equal(p.jest.cjs, true)

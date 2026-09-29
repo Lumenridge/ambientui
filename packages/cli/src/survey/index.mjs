@@ -84,7 +84,7 @@ export function survey(cwd) {
   const ctx = createContext(cwd)
   const started = Date.now()
 
-  // 1–4: where, which app, which package manager, git.
+  // where, which app, which package manager, git
   const repo = detectRepo(ctx)
   const rootPkg = readJson(join(ctx.root, "package.json")) ?? {}
   const appPkg = readJson(join(repo.appAbs, "package.json")) ?? rootPkg
@@ -104,7 +104,7 @@ export function survey(cwd) {
   const packageManager = detectPackageManager(ctx, repo)
   const gitState = detectGit(ctx, repo)
 
-  // 5–6, 24–28: the project's kind.
+  // the project's kind
   const framework = detectFramework(ctx, repo)
   const react = detectReact(ctx)
   const typescript = detectTypeScript(ctx)
@@ -113,7 +113,7 @@ export function survey(cwd) {
   const jest = detectJest(ctx)
   ctx.jest = jest
 
-  // 10: aliases, which fix the source root every later detector reads.
+  // aliases, which fix the source root every later detector reads
   const aliases = detectAliases(ctx, framework)
   ctx.srcRootAbs = aliases.srcRootAbs
   delete aliases.srcRootAbs
@@ -146,7 +146,7 @@ export function survey(cwd) {
     ),
   ])]
 
-  // 5, 7–9, 11–17: styling and configuration.
+  // styling and configuration
   const entry = detectEntry(ctx, framework)
   // NO `@/` YET: the source root is where the app boots from, not a repo
   // root that also holds a backend.
@@ -170,7 +170,7 @@ export function survey(cwd) {
   const naming = detectNaming(ctx)
   const darkMode = detectDarkMode(ctx, tailwind)
 
-  // 18–23: collisions and seams.
+  // collisions and seams
   const hotkeys = detectHotkeys(ctx)
   const zIndex = detectZIndex(ctx)
   const fixedBottom = detectFixedBottom(ctx)

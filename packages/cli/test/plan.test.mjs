@@ -154,7 +154,7 @@ describe("doors and css — the four dialects", () => {
     assert.equal(p.css.mode, "v3-entry-import")
     assert.equal(p.css.entryFile, "src/main.tsx")
     assert.deepEqual(p.css.lines, ['import "./styles/ambient.css"'])
-    // the path is decided, not asked, and says why
+    // the path decision carries its reason
     const d = decisions(pr, {}).find((x) => x.id === "path")
     assert.equal(d.chosen, "layer")
     assert.match(d.why, /Tailwind v3/)
@@ -219,7 +219,7 @@ describe("hotkey", () => {
     },
   }
 
-  it("an existing ⌘K owner is decided, not asked: coexist on mod+j, alternatives recorded", () => {
+  it("an existing ⌘K owner: coexist on mod+j, alternatives recorded, alternatives recorded", () => {
     const pr = profile(owned)
     const q = decisions(pr, {}).find((x) => x.id === "hotkey")
     assert.ok(q)
@@ -244,7 +244,7 @@ describe("hotkey", () => {
     assert.ok(y.provider.yieldHotkey)
   })
 
-  it("no owner: no question, mod+k", () => {
+  it("no owner: mod+k", () => {
     assert.ok(!decisions(profile(), {}).some((x) => x.id === "hotkey"))
     assert.equal(buildPlan(profile(), {}).provider.hotkey, "mod+k")
   })

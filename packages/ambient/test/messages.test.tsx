@@ -38,7 +38,7 @@ describe("the formatter", () => {
     expect(formatAmbientMessage(ar, { n: 2 }, "ar")).toBe("محادثتان")
     expect(formatAmbientMessage(ar, { n: 5 }, "ar")).toBe("5 محادثات")
     expect(formatAmbientMessage("{n, plural, =0 {none} other {#}}", { n: 0 })).toBe("none")
-    expect(formatAmbientMessage("Ask {product}", { product: "Invoify" })).toBe("Ask Invoify")
+    expect(formatAmbientMessage("Ask {product}", { product: "Acme" })).toBe("Ask Acme")
   })
 })
 
