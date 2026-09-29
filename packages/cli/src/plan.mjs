@@ -1,14 +1,10 @@
 /**
  * THE ADAPTER — `profile + answers → plan`, and nothing else.
  *
- * WHY A PURE FUNCTION. Five real installs taught one lesson: the agent's
- * mistakes were never in running commands, they were in DECIDING — which
- * door, which CSS line where, which env prefix, whether the alias exists in
- * the test runner. Every decision now lives here, as data in and data out,
- * with no file reads, no environment, no clock. That makes each decision
- * unit-testable against a hand-written profile, reproducible from the
- * committed profile.json, and reviewable in one file when a new host breaks
- * a rule. The commands (doctor, plan) do the I/O around it.
+ * A PURE FUNCTION: every decision lives here, with no file reads, no
+ * environment, no clock, so each is unit-testable against a hand-written
+ * profile and reproducible from the committed profile.json. The commands
+ * (doctor, plan) do the I/O around it.
  *
  * PATHS. `appDir` is relative to the git root (it is where the commands
  * run). Every other path in the plan is relative to the project root — the
@@ -57,17 +53,10 @@ export function blockers(profile, answers = {}) {
 /**
  * THE DECISIONS — made for the owner, never asked.
  *
- * The first installs stopped to ask the owner questions only the survey
- * could really answer, and a person trying ambientui for the first time
- * cannot weigh "coexist or yield" before they have seen the layer. So the
- * doctor DECIDES: each decision takes the best case the survey supports —
- * the one that changes the least of the product, and still shows the layer
- * working — records why, and lists the alternatives. `end` writes every
- * decision into AMBIENTUI-NOTES.md, so the owner who wants another choice
- * uninstalls and reinstalls with it (`ambientui plan --hotkey takeover`).
- *
- * `given` is that manual reinstall: an explicit answer overrides the
- * decision and is recorded as the owner's.
+ * Each takes the best case the survey supports (the least change to the
+ * product that still shows the layer working), with its reason and
+ * alternatives. `given` is an owner's explicit choice for a reinstall; it
+ * overrides the decision and is recorded as the owner's.
  */
 export function decisions(profile, given = {}) {
   const out = []
@@ -168,12 +157,10 @@ export function resolveAnswers(profile, given = {}) {
 }
 
 /**
- * THE AGENT'S CORRECTIONS. The survey is heuristics; the agent reviews it
- * against the code (docs/doctor.md) and corrects the plan where it is wrong
- * — `ambientui plan --set provider.zIndex=2999 --because "…"`. Each
- * override is a dotted path and a value (JSON when it parses), kept in
- * plan.json and re-applied every time the plan is rebuilt, so a later
- * doctor run cannot silently undo a correction.
+ * THE AGENT'S CORRECTIONS (`ambientui plan --set key=value --because "…"`).
+ * Each override is a dotted path and a value (JSON when it parses), kept in
+ * plan.json and re-applied on every rebuild so a later doctor run cannot
+ * silently undo it.
  */
 export function applyOverrides(plan, overrides = []) {
   for (const o of overrides) {
@@ -207,9 +194,8 @@ export function parseOverride(spec, because) {
 
 /**
  * A TAILWIND v4 HOST WITHOUT THE GLOBAL RESET — it imports only
- * `tailwindcss/theme.css` + `utilities.css` (Excalidraw's shape after the
- * layer went in, fixtures/consumer-bare). It is treated like a host with no
- * Tailwind: the layer brings its own scoped preflight.
+ * `tailwindcss/theme.css` + `utilities.css`. It is treated like a host with
+ * no Tailwind: the layer brings its own scoped preflight.
  */
 export const isScopedV4 = (profile) =>
   tailwindMajor(profile) === 4 && profile.styling?.directive?.kind !== "v4-import" && !profile.styling?.preflight
@@ -239,9 +225,8 @@ function doorsFor(profile, a, reqs, warnings) {
   if (tokens === "hsl-triplet" && missing.length) {
     warnings.push(`The HSL-triplet token block lacks ${missing.join(", ")}; add them in the same triplet format, or those parts of the glass render transparent.`)
   }
-  // ONE ICON LIBRARY on the layer-only path: the full `icon` item brings
-  // five, and Remix alone put ~600 KB in Excalidraw's main chunk. The
-  // Foundation switches libraries live, so the full path keeps all five.
+  // ONE ICON LIBRARY on the layer-only path, for bundle size. The Foundation
+  // switches libraries live, so the full path keeps all five.
   if (a.path !== "full") doors.push(`icon-${iconLibraryFor(profile)}`)
   if (a.governance === "yes" || (a.path === "full" && a.governance === undefined)) doors.push("governance")
   return doors
@@ -274,9 +259,8 @@ export function iconLibraryFor(profile) {
 /**
  * Icon packages the layer's `icon` dependency brought that nothing uses:
  * not the product's own, not the one icon-<lib> draws with, and not
- * shadcn's. The shadcn primitives the layer composes (sheet, sidebar)
- * import their icon library directly — lucide by default — so removing it
- * broke the build (found running the pipeline end to end, 2026-09-28).
+ * shadcn's, which the primitives the layer composes (sheet, sidebar) import
+ * directly.
  */
 export function unusedIconPackages(profile, lib) {
   const had = new Set((profile.icons ?? []).map((i) => i.pkg))
@@ -564,14 +548,16 @@ const LOCALE_FROM = {
 function i18nFor(profile, srcRoot) {
   const i = profile.i18n
   const catalog = join(srcRoot, "components/ambient/messages.en.ts")
-  const others = (i.locales ?? []).filter((l) => !/^en([-_]|$)/i.test(l))
+  // the layer ships these catalogs (packages/ambient/src/messages.ts)
+  const shipped = ["en", "zh", "hi", "es", "fr", "ar", "pt", "ru", "ja", "de"]
+  const others = (i.locales ?? []).filter((l) => !shipped.includes(l.toLowerCase().split(/[-_]/)[0]))
   return {
     lib: i.lib,
     locales: i.locales ?? [],
     catalog,
     locale: LOCALE_FROM[i.lib] ?? "<AssistantProvider locale={the product's active locale} …> (else the layer reads <html lang>)",
     translate: others.length
-      ? `For each of the product's other locales (${others.slice(0, 12).join(", ")}${others.length > 12 ? `, +${others.length - 12}` : ""}): copy ${catalog} to messages.<locale>.ts, or add its keys under an \`ambient\` namespace in the product's own locale files (ICU format, which ${i.lib === "custom" ? "most i18n libraries" : i.lib} reads); translate the values only, keeping keys, {placeholders} and plural syntax; pass the active locale's object as \`messages\`. Note every machine-translated locale: \`ambientui note "…" --kind judgement\`.`
+      ? `The layer ships ${shipped.join(", ")}. For the product's other locales (${others.slice(0, 12).join(", ")}${others.length > 12 ? `, +${others.length - 12}` : ""}): copy ${catalog} to messages.<locale>.ts, translate the values only (keys, {placeholders} and plural syntax stay), and register it in ambientCatalogs (messages.ts). Note every machine-translated locale: \`ambientui note "…" --kind judgement\`.`
       : null,
     rtl: i.rtl?.length ? `RTL locales present (${i.rtl.join(", ")}): verify checks the spotlight under dir="rtl"` : null,
   }
@@ -725,7 +711,6 @@ export function buildPlan(profile, answers = {}, { registry = DEFAULT_REGISTRY }
     commands,
     css,
     staticDir: profile.staticDir ?? "public",
-    // what `install` changes in the landed files for THIS product (src/adapt.mjs)
     adapt: adaptationsFor(profile, { srcRoot, staticDir: profile.staticDir ?? "public", path: a.path }),
     envFlag: envFlagFor(profile),
     aliasEdits,
@@ -744,9 +729,8 @@ export function buildPlan(profile, answers = {}, { registry = DEFAULT_REGISTRY }
 }
 
 /**
- * THE STUB FLAG'S NAME AND HOW CODE READS IT. The survey's house prefix wins
- * (Excalidraw's VITE_APP_, Actual's REACT_APP_ under Vite); without one, the
- * framework's own convention — the prefix the bundler actually exposes.
+ * THE STUB FLAG'S NAME AND HOW CODE READS IT. The survey's house prefix
+ * wins; without one, the prefix the framework's bundler exposes.
  */
 export function envFlagFor(profile) {
   const fw = profile.framework?.name

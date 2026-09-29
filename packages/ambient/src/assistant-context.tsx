@@ -84,11 +84,7 @@ export type PageIntel = {
  * and the single thing that made it un-liftable.
  *
  * `icon` is a vocabulary NAME ("home", "settings"), drawn by the configured
- * library through <Icon>, like every other icon in the system. It was typed
- * `unknown` and documented as "forwarded to the host's Icon" while actually
- * being handed to <HugeiconsIcon>, so the first host to pass a name
- * ('home') crashed the whole app on its first ⌘K (Actual, 2026-09-28). A
- * HugeIcons icon object is still accepted, for hosts built against that.
+ * library through <Icon>. A HugeIcons icon object is also accepted.
  */
 export type NavItem = {
   id: string
@@ -110,12 +106,7 @@ export type AmbientCommand = {
   keywords?: string
   /** An icon NAME from the vocabulary, drawn by the configured library. */
   icon?: string
-  /**
-   * What one of this section's commands is called when they are counted
-   * ("8 accounts"). Omitted, the section name is lowercased and given an
-   * "s", which is right for "Components" and wrong for "Accounts"
-   * ("8 accountss", Actual, 2026-09-28).
-   */
+  /** What one of this section's commands is called when counted ("8 accounts"). */
   noun?: string
   /** The plural, for languages where it is not the noun plus "s". */
   nounPlural?: string
@@ -140,11 +131,9 @@ type AssistantState = {
   /** Everything ⌘K can DO, registered by the app — see AmbientCommand. */
   commands: AmbientCommand[]
   /**
-   * Replace the registered commands. SAFE TO CALL ON EVERY RENDER: a list
-   * whose ids, labels, sections and descriptions match the current one does
-   * not update state, so registering from an effect that re-runs cannot
-   * loop. `run` always calls the LATEST closure passed in. Prefer
-   * useRegisterCommands, which also clears on unmount.
+   * Replace the registered commands. Safe to call on every render: an
+   * identical list does not update state, and `run` always calls the latest
+   * closure. Prefer useRegisterCommands, which also clears on unmount.
    */
   setCommands: (c: AmbientCommand[]) => void
   /** Where the host can go — see NavItem. Empty is a valid state. */
@@ -218,6 +207,7 @@ export function AssistantProvider({
   navItems = [],
   api,
   productName,
+  assistantName,
   messages,
   locale: localeProp,
   hotkey = "mod+k",
@@ -232,11 +222,15 @@ export function AssistantProvider({
   /** Where questions go: the host's API, built with createAmbientApi. */
   api?: AmbientApi
   /**
-   * The product's name, as its users know it. The chrome's defaults say it
-   * ("Ask Invoify", "Open Invoify"); omitted, they say "the assistant".
-   * Never the library's name.
+   * The product's name, as its users know it. Omitted, the chrome says
+   * "the assistant".
    */
   productName?: string
+  /**
+   * What the assistant is called ("Ask Nova"), when it has a name of its
+   * own. Defaults to `productName`.
+   */
+  assistantName?: string
   /**
    * The chrome's words in another language, or just different words: any
    * subset of the catalog (messages.en.ts), each an ICU string. Missing
@@ -256,42 +250,33 @@ export function AssistantProvider({
    */
   hotkey?: AmbientHotkey | false
   /**
-   * Called with the keydown before the layer claims its hotkey. Return true
-   * and the layer steps aside: the host's own handler gets the key. The
-   * layer listens in the CAPTURE phase, so it hears the key before a host
-   * handler can stop it (Excalidraw binds ⌘K to "Add link" and stopped
-   * propagation, so the palette never opened), and this is the host's way
-   * to share it back.
+   * Called with the keydown before the layer claims its hotkey; return true
+   * to let the host's own handler have it. The layer listens in the capture
+   * phase, so a host handler that stops propagation cannot swallow the key.
    */
   yieldHotkey?: (event: KeyboardEvent) => boolean
   /**
-   * Stack the layer at this z-index. Its surfaces sit at `z-50` inside the
-   * layer, which loses to host chrome above 50 (Actual's sticky headers sit
-   * at 1000); set this above the product's chrome and below its modals.
+   * Stack the layer at this z-index: above the product's chrome, below its
+   * modals. Without it the surfaces sit at `z-50`.
    */
   zIndex?: number
   /**
-   * Render in dark mode. The layer follows a `.dark` class on an ancestor,
-   * which is shadcn's convention; a product that keeps its theme elsewhere
-   * (Excalidraw's `.theme--dark` container, an app preference) mirrors it
-   * here.
+   * Render in dark mode. The layer follows a `.dark` ancestor by itself; a
+   * product that keeps its theme elsewhere mirrors it here.
    */
   dark?: boolean
   /**
-   * Where the resting orb starts. Bottom centre by default; a product with
-   * its own fixed bottom bar passes "mr" (Invoify's Generate PDF bar).
+   * Where the resting orb starts. Bottom centre by default; "mr" clears a
+   * product's fixed bottom bar.
    */
   defaultOrbAnchor?: OrbAnchor
 }) {
   const [mode, setMode] = React.useState<AssistantMode>("line")
   const [pageChip, setPageChip] = React.useState<ContextChip | null>(null)
   const [pageIntel, setPageIntel] = React.useState<PageIntel | null>(null)
-  // THE LIST THAT RENDERS changes only when what it SAYS changes; the
-  // closures live in a ref so a command always runs the latest one. A plain
-  // useState here looped forever for the first host that registered from an
-  // effect (Actual, 2026-09-28): its lists were rebuilt every render, each
-  // set re-rendered every consumer, the registering component included, and
-  // the page never painted.
+  // The rendered list changes only when what it says changes, so a host can
+  // register on every render without looping; the closures live in a ref so
+  // a command always runs the latest one.
   const [commands, setCommandState] = React.useState<AmbientCommand[]>([])
   const latestCommands = React.useRef<AmbientCommand[]>([])
   const commandSig = React.useRef("")
@@ -391,8 +376,8 @@ export function AssistantProvider({
   }, [])
 
   const words = React.useMemo(
-    () => resolveAmbientMessages({ messages, productName, locale }),
-    [messages, productName, locale]
+    () => resolveAmbientMessages({ messages, productName, assistantName, locale }),
+    [messages, productName, assistantName, locale]
   )
 
   const value = React.useMemo(

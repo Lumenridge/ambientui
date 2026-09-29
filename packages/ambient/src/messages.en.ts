@@ -3,35 +3,38 @@
  * own behalf. The words inside an answer are the host's, from its API; these
  * are only the chrome's.
  *
+ * Ten languages ship: en, zh, hi, es, fr, ar, pt, ru, ja, de. The layer
+ * picks one from `locale` (exact tag, then language, then English).
+ *
  * TO ADD A LANGUAGE (this file is written to be copied):
  *
- *   1. Copy it to `messages.<locale>.ts` (`messages.fr.ts`, `messages.ar.ts`)
- *      and rename the export (`ambientMessagesFr`).
+ *   1. Copy it to `messages.<locale>.ts`, rename the export
+ *      (`ambientMessagesIt`), and register it in `ambientCatalogs`
+ *      (messages.ts).
  *   2. Translate the VALUES. Keep every key, every `{placeholder}` exactly as
  *      written, and the plural syntax around the words:
  *        "{n, plural, one {# conversation} other {# conversations}}"
  *      becomes, in Spanish,
  *        "{n, plural, one {# conversación} other {# conversaciones}}"
- *      and in Arabic can use all of zero/one/two/few/many/other.
- *      `#` is the number; the categories are the language's own (the
- *      Unicode CLDR plural rules, which `Intl.PluralRules` knows).
- *   3. Pass it with the locale:
- *        <AssistantProvider locale="fr" messages={ambientMessagesFr} …>
- *      A missing key falls back to English, so a partial translation works.
- *   4. A product that already translates through i18next, next-intl or
- *      react-intl can instead put these keys in its own locale files, under
- *      an `ambient` namespace, and pass them the same way: the format is
- *      ICU MessageFormat, which all three read.
+ *      `#` is the number; the categories are the language's own CLDR
+ *      plural rules (Arabic uses zero/one/two/few/many/other).
+ *   3. A product can also override any subset without a file:
+ *        <AssistantProvider locale="it" messages={{ askAction: "Chiedi a {assistant}" }}>
+ *      Missing keys fall back to the shipped catalog, then English. A
+ *      product that translates through i18next, next-intl or react-intl can
+ *      keep these keys in its own locale files (ICU MessageFormat).
  *
- * `{product}` is filled from `productName` everywhere. Keep the copy plain:
+ * `{product}` is the product's name (`productName`); `{assistant}` is what
+ * the assistant is called (`assistantName`, which defaults to the product's
+ * name). Keep the copy plain:
  * no markup, sentence case, the ellipsis character (…) for "more to come".
  */
 export const ambientMessagesEn = {
   // the spotlight
   askPlaceholder: "Search or ask a question in {product}…",
-  askAction: "Ask {product}",
-  noMatches: "No pages match — ↵ asks {product} instead.",
-  footerName: "{product}",
+  askAction: "Ask {assistant}",
+  noMatches: "No pages match — ↵ asks {assistant} instead.",
+  footerName: "{assistant}",
   suggestedForPage: "Suggested for this page",
   jumpTo: "Jump to",
   recentChats: "Recent chats",
@@ -45,8 +48,8 @@ export const ambientMessagesEn = {
   toggle: "Toggle",
 
   // the orb
-  openOrb: "Open {product}",
-  quickAskPlaceholder: "Ask {product}…",
+  openOrb: "Open {assistant}",
+  quickAskPlaceholder: "Ask {assistant}…",
 
   // the conversation surfaces
   askAboutPage: "Ask about this page",

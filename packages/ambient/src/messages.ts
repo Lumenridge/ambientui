@@ -2,30 +2,49 @@
 
 import * as React from "react"
 
+import { ambientMessagesAr } from "./messages.ar"
+import { ambientMessagesDe } from "./messages.de"
 import { ambientMessagesEn, type AmbientCatalog } from "./messages.en"
+import { ambientMessagesEs } from "./messages.es"
+import { ambientMessagesFr } from "./messages.fr"
+import { ambientMessagesHi } from "./messages.hi"
+import { ambientMessagesJa } from "./messages.ja"
+import { ambientMessagesPt } from "./messages.pt"
+import { ambientMessagesRu } from "./messages.ru"
+import { ambientMessagesZh } from "./messages.zh"
 
 export { ambientMessagesEn, type AmbientCatalog }
 
+/** The catalogs that ship, by language. Add one by adding its file here. */
+export const ambientCatalogs: Record<string, AmbientCatalog> = {
+  en: ambientMessagesEn,
+  zh: ambientMessagesZh,
+  hi: ambientMessagesHi,
+  es: ambientMessagesEs,
+  fr: ambientMessagesFr,
+  ar: ambientMessagesAr,
+  pt: ambientMessagesPt,
+  ru: ambientMessagesRu,
+  ja: ambientMessagesJa,
+  de: ambientMessagesDe,
+}
+
+/** The shipped catalog for a locale: exact tag, then its language, then English. */
+export function catalogFor(locale = "en"): AmbientCatalog {
+  const tag = locale.toLowerCase()
+  return ambientCatalogs[tag] ?? ambientCatalogs[tag.split(/[-_]/)[0]!] ?? ambientMessagesEn
+}
+
 /**
- * EVERY WORD THE LAYER SAYS ON ITS OWN BEHALF, resolved for one product and
- * one locale.
+ * The layer's words, resolved for one product and one locale from a catalog
+ * (messages.<locale>.ts: flat keys, ICU MessageFormat strings).
  *
- * The copy lives in a catalog (messages.en.ts): flat keys, ICU MessageFormat
- * strings. It used to be written inline, in English, and several words named
- * the LIBRARY ("Ask ambientui", a footer reading "ambientui"). Every install
- * hit that (tududi, Actual, Invoify, Excalidraw), and a product with
- * eighteen locales had no way to pass its translations in. Now:
+ *   <AssistantProvider productName="Acme" locale="ar">
  *
- *   <AssistantProvider productName="Invoify" locale="ar" messages={ambientMessagesAr}>
- *
- * `messages` may be any subset (missing keys fall back to English), and
- * `locale` picks the plural rules and travels with every question, so the
- * host's API can answer in the same language.
- *
- * The formatter is a small ICU subset — `{name}` and
- * `{name, plural, =N {…} zero|one|two|few|many|other {…}}` with `#` — so
- * the layer needs no i18n library, and a catalog is still one that
- * i18next, next-intl and react-intl read unchanged.
+ * `messages` may override any subset; `locale` picks the catalog and the
+ * plural rules, and travels with every question so the host can answer in
+ * the same language. The formatter is a small ICU subset (`{name}`,
+ * `{name, plural, …}` with `#`), so the layer needs no i18n library.
  */
 
 /** The keys that take values beyond `{product}`, and what they take. */
@@ -105,30 +124,28 @@ export function formatAmbientMessage(
 export function resolveAmbientMessages({
   messages,
   productName = "the assistant",
+  assistantName = productName,
   locale = "en",
 }: {
   messages?: Partial<AmbientCatalog>
   productName?: string
+  assistantName?: string
   locale?: string
 } = {}): AmbientMessages {
-  const catalog: AmbientCatalog = { ...ambientMessagesEn, ...messages }
+  const catalog: AmbientCatalog = { ...ambientMessagesEn, ...catalogFor(locale), ...messages }
   const out: Record<string, unknown> = {}
   for (const [key, template] of Object.entries(catalog)) {
-    const params = /\{(?!product\b)\w+/.test(template)
+    const names = { product: productName, assistant: assistantName }
+    const params = /\{(?!(?:product|assistant)\b)\w+/.test(template)
     out[key] = params
       ? (values: Record<string, string | number>) =>
-          formatAmbientMessage(template, { product: productName, ...values }, locale)
-      : formatAmbientMessage(template, { product: productName }, locale)
+          formatAmbientMessage(template, { ...names, ...values }, locale)
+      : formatAmbientMessage(template, names, locale)
   }
   return out as AmbientMessages
 }
 
-/**
- * A context of its own, NOT a field of the assistant context: the kits
- * (ReasoningPanel, ErrorState, Composer) render standalone — in the /ds
- * playground, in a host's own page — with no AssistantProvider above them,
- * and must still have words. With no provider they get English.
- */
+/** Its own context: the kits also render without an AssistantProvider, in English. */
 const MessagesContext = React.createContext<AmbientMessages>(resolveAmbientMessages())
 
 export const AmbientMessagesProvider = MessagesContext.Provider

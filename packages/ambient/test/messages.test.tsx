@@ -47,21 +47,21 @@ describe("the English catalog", () => {
     const t = resolveAmbientMessages({ productName: "Ledger" })
     for (const [key, template] of Object.entries(ambientMessagesEn)) {
       const value = (t as Record<string, unknown>)[key]
-      const takesValues = /\{(?!product\b)\w+/.test(template)
+      const takesValues = /\{(?!(?:product|assistant)\b)\w+/.test(template)
       expect(typeof value, key).toBe(takesValues ? "function" : "string")
       if (!takesValues) expect(value as string, key).not.toMatch(/\{\w+/)
     }
     expect(t.askAction).toBe("Ask Ledger")
   })
 
-  it("a partial translation falls back to English, key by key", () => {
+  it("a partial translation for an unshipped language falls back to English, key by key", () => {
     const t = resolveAmbientMessages({
-      locale: "es",
+      locale: "it",
       productName: "Ledger",
-      messages: { askAction: "Preguntar a {product}", conversations: "{n, plural, one {# conversación} other {# conversaciones}}" },
+      messages: { askAction: "Chiedi a {assistant}", conversations: "{n, plural, one {# conversazione} other {# conversazioni}}" },
     })
-    expect(t.askAction).toBe("Preguntar a Ledger")
-    expect(t.conversations({ n: 2 })).toBe("2 conversaciones")
+    expect(t.askAction).toBe("Chiedi a Ledger")
+    expect(t.conversations({ n: 2 })).toBe("2 conversazioni")
     expect(t.newChat).toBe("New chat")
   })
 })
@@ -100,5 +100,32 @@ describe("the language on the wire", () => {
     await act(() => new Promise((r) => setTimeout(r, 30)))
     expect(seen.length).toBeGreaterThanOrEqual(2)
     expect(seen.every((l) => l === "es")).toBe(true)
+  })
+})
+
+describe("the shipped catalogs", () => {
+  it("ship ten languages, each with every key, resolving at every plural count", async () => {
+    const { ambientCatalogs, catalogFor } = await import("../src/messages")
+    expect(Object.keys(ambientCatalogs).sort()).toEqual(["ar", "de", "en", "es", "fr", "hi", "ja", "pt", "ru", "zh"])
+    const keys = Object.keys(ambientMessagesEn).sort()
+    for (const [locale, catalog] of Object.entries(ambientCatalogs)) {
+      expect(Object.keys(catalog).sort(), locale).toEqual(keys)
+      const t = resolveAmbientMessages({ locale, productName: "Ledger" })
+      for (const n of [0, 1, 2, 3, 5, 11, 21, 100]) {
+        const text = t.conversations({ n })
+        expect(text, `${locale} conversations(${n})`).not.toMatch(/[{}]/)
+        expect(t.pastedMeta({ lines: n, chars: 40 }), locale).not.toMatch(/[{}]/)
+      }
+      expect(t.askAction, locale).toContain("Ledger")
+    }
+    expect(catalogFor("ar-EG")).toBe(ambientCatalogs.ar)
+    expect(catalogFor("pt-BR")).toBe(ambientCatalogs.pt)
+    expect(catalogFor("xx")).toBe(ambientMessagesEn)
+  })
+
+  it("the assistant can be named apart from the product", () => {
+    const t = resolveAmbientMessages({ productName: "Ledger", assistantName: "Nova" })
+    expect(t.askAction).toBe("Ask Nova")
+    expect(t.askAboutProduct).toBe("Ask about Ledger")
   })
 })

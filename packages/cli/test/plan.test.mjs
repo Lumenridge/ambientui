@@ -1,10 +1,9 @@
 /**
- * THE ADAPTER'S RULES, ONE CASE PER HOST SHAPE WE HAVE MET.
+ * THE ADAPTER'S RULES, ONE CASE PER HOST SHAPE.
  *
- * Each test builds a profile by hand — the smallest one that makes the rule
- * apply — and asserts the decision. The base profile is a stock Vite +
- * Tailwind v4 + shadcn app, i.e. the reference environment; every case is a
- * deviation from it, which is exactly how the variants are defined.
+ * Each test builds the smallest profile that makes a rule apply and asserts
+ * the decision. Every case is a deviation from the base profile, a stock
+ * Vite + Tailwind v4 + shadcn app.
  */
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
@@ -498,9 +497,10 @@ describe("AMBIENTUI-NOTES.md", () => {
 
 describe("language", () => {
   it("an i18n product gets its locale source and the catalog to copy; English-only products get neither", () => {
-    const p = buildPlan(profile({ i18n: { lib: "next-intl", locales: ["en", "de", "ar", "he"], count: 4, rtl: ["ar", "he"] } }), {})
+    const p = buildPlan(profile({ i18n: { lib: "next-intl", locales: ["en", "de", "ar", "he", "it"], count: 5, rtl: ["ar", "he"] } }), {})
     assert.match(p.i18n.locale, /useLocale\(\)/)
-    assert.match(p.i18n.translate, /de, ar, he/)
+    // only the locales the layer does not ship need a catalog
+    assert.match(p.i18n.translate, /other locales \(he, it\)/)
     assert.match(p.i18n.translate, /messages\.en\.ts/)
     assert.ok(p.i18n.rtl)
     assert.equal(buildPlan(profile(), {}).i18n, null)

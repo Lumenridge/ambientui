@@ -236,14 +236,59 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ar.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ar.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.de.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.de.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/messages.en.ts",
           "type": "registry:lib",
           "target": "components/ambient/messages.en.ts"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.es.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.es.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.fr.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.fr.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.hi.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.hi.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ja.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ja.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.pt.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.pt.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ru.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ru.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/messages.ts",
           "type": "registry:lib",
           "target": "components/ambient/messages.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.zh.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.zh.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -412,14 +457,59 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.ar.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ar.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.de.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.de.ts"
+        },
+        {
           "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.en.ts",
           "type": "registry:lib",
           "target": "components/ambient/messages.en.ts"
         },
         {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.es.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.es.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.fr.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.fr.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.hi.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.hi.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.ja.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ja.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.pt.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.pt.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.ru.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ru.ts"
+        },
+        {
           "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.ts",
           "type": "registry:lib",
           "target": "components/ambient/messages.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.zh.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.zh.ts"
         },
         {
           "path": ".registry/variants/tailwind-v3/packages/ambient/src/orb-character.tsx",
