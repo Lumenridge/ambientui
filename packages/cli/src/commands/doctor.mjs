@@ -1,17 +1,12 @@
 /**
- * `ambientui doctor` — SURVEY, THEN PLAN, THEN SAY WHAT IS IN THE WAY.
+ * `ambientui doctor` — SURVEY, THEN DECIDE THE PLAN.
  *
- * Read-only on the host (it writes only `.ambientui/`). The output is three
- * lists in a fixed order — facts, blockers, decisions — and the plan built
- * from them. Nothing is asked: every decision is the best case the survey
- * supports, with its reason and its alternatives, and lands in
- * AMBIENTUI-NOTES.md at the end. The agent then reviews the survey against
- * the code (docs/doctor.md) and corrects the plan where it is wrong.
+ * Read-only on the host except `.ambientui/`. Every decision is the best
+ * case the survey supports, with its reason and alternatives.
  *
- * `--baseline` runs the host's own typecheck/lint/test/build ONCE, before
- * anything is installed, so `verify` can tell a failure the install caused
- * from one the project already had. It never fails doctor: a host whose
- * build is already red is exactly the host that needs a baseline.
+ * `--baseline` runs the host's checks once before install, so `verify` can
+ * separate install-caused failures from pre-existing ones. It never fails
+ * doctor.
  */
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
@@ -138,9 +133,8 @@ export async function doctor(opts, out) {
 }
 
 /**
- * The facts, one per line — what the agent would otherwise have guessed.
- * Each line ends with its evidence (`← file:line` or a package), and a fact
- * graded low confidence says so with the reason, so it is checked, not used.
+ * The facts, one per line, each ending with its evidence (`← file:line` or
+ * a package). A low-confidence fact says so with the reason.
  */
 export function printFacts(p, out) {
   out.head("FACTS")
@@ -249,7 +243,6 @@ export function printPlanSummary(plan, out) {
     out.ok(`language: ${plan.i18n.lib}, ${plan.i18n.locales.length} locale(s) — ${plan.i18n.locale}`)
     if (plan.i18n.translate) out.info(plan.i18n.translate)
   }
-  // ADAPT: what install changes in the landed files, for this product
   for (const a of plan.adapt ?? []) {
     const what =
       a.id === "accent" && !a.skip ? `accent → ${a.value}` : a.id === "orb-assets" ? `orb artwork → ${a.to}/` : a.id

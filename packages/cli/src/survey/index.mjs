@@ -1,15 +1,11 @@
 /**
  * THE SURVEY — every detector, in dependency order, into one profile.
  *
- * The order is not cosmetic. The app package decides which package.json is
- * read; the framework decides where the alias and the entry live; the alias
- * decides the source root; the source root decides which files the code
- * detectors read. A detector that ran before its inputs would guess, and the
- * whole point of `doctor` is that nothing downstream guesses.
+ * The order matters: app package → framework → alias → source root → the
+ * files the code detectors read. A detector run before its inputs would guess.
  *
- * READ-ONLY. The survey reads files and runs `git status`/`check-ignore`
- * and `<pm> --version`. It writes nothing; the doctor command writes the
- * result under `.ambientui/`.
+ * READ-ONLY. It writes nothing; the doctor command writes the result under
+ * `.ambientui/`.
  */
 import { join, relative, resolve } from "node:path"
 
@@ -55,10 +51,8 @@ const CODE_EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts"]
 const CSS_EXTS = [".css", ".scss", ".sass"]
 
 /**
- * WORKSPACE PACKAGES THE APP IS BUILT FROM. Excalidraw's canvas UI (and its
- * Cmd-K binding) lives in `packages/excalidraw`, aliased in by the vite
- * config; Actual's shared components in `@actual-app/components`. A survey
- * of the app dir alone would miss both.
+ * WORKSPACE PACKAGES THE APP IS BUILT FROM — depended on or aliased in by the
+ * bundler config. Their UI (and hotkeys) is part of the product.
  */
 function relatedPackages(ctx, repo, framework) {
   if (!repo.workspaces.length) return []
@@ -154,8 +148,8 @@ export function survey(cwd) {
 
   // 5, 7–9, 11–17: styling and configuration.
   const entry = detectEntry(ctx, framework)
-  // NO `@/` YET: the source root is where the app boots from — tududi's
-  // `frontend/`, not the repo root beside its backend.
+  // NO `@/` YET: the source root is where the app boots from, not a repo
+  // root that also holds a backend.
   if (!aliases.atResolves && aliases.srcRoot === "." && entry.file) {
     const top = relative(ctx.app.abs, join(ctx.root, entry.file)).split("/")
     if (top.length > 1 && !top[0].startsWith(".")) {

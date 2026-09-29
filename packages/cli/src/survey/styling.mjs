@@ -1,15 +1,9 @@
 /**
  * HOW THE PRODUCT IS STYLED — the facts that choose the door.
  *
- * WHY THIS IS THE CENTRE OF THE SURVEY. The layer ships in four dialects
- * (Tailwind v4 colour tokens, v4 with HSL triplets, Tailwind v3, and no
- * Tailwind at all) and every one of them fails QUIETLY when chosen wrong:
- * the wrong token format renders transparent glass with no error, an
- * `@import` after `@tailwind` is dropped with only a warning, a global
- * preflight restyles every screen of a product that never had one. So the
- * Tailwind version is read from what is installed (the declared range only
- * when node_modules is absent), the token format from the actual values, and
- * the CSS entry from the file that really loads Tailwind.
+ * Every door fails quietly when chosen wrong, so the Tailwind version is read
+ * from what is installed, the token format from the actual values, and the
+ * CSS entry from the file that really loads Tailwind.
  */
 import { dirname, join, resolve } from "node:path"
 
@@ -136,9 +130,8 @@ export function detectTailwind(ctx) {
 }
 
 /**
- * Comments out, newlines kept — so a directive QUOTED in a comment (Excalidraw
- * explains its scoped setup in one) is not mistaken for the real one, and
- * line numbers still point at the right line.
+ * Comments out, newlines kept — so a directive quoted in a comment is not
+ * mistaken for the real one, and line numbers still hold.
  */
 export const stripCssComments = (t) => t.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
 
@@ -189,8 +182,8 @@ export function detectCss(ctx, entry, tailwind) {
   const scssFiles = ctx.cssFiles.filter((f) => /\.s[ac]ss$/.test(f))
   const moduleFiles = ctx.cssFiles.filter((f) => /\.module\.(s?css|sass)$/.test(f))
 
-  // OTHER TAILWIND CONSUMERS: scripts that run Tailwind's JS API (Invoify
-  // compiles a PDF stylesheet with it). A config change reaches them too.
+  // OTHER TAILWIND CONSUMERS: scripts that run Tailwind's JS API. A config
+  // change reaches them too.
   const consumers = []
   for (const f of ctx.scriptFiles) {
     const t = ctx.read(f)
@@ -354,9 +347,8 @@ export function detectShadcn(ctx) {
 
 /**
  * HOW THE PRODUCT GOES DARK. The layer follows `.dark` on <html> by itself;
- * anything else (a container class like Excalidraw's `theme--dark`, a
- * data-theme attribute, a theme held in JS) has to be mirrored through the
- * provider's `dark` prop, or the glass stays light on a dark canvas.
+ * anything else (a container class, data-theme, a theme held in JS) must be
+ * mirrored through the provider's `dark` prop.
  */
 export function detectDarkMode(ctx, tailwind) {
   const signals = []
@@ -389,7 +381,6 @@ export function detectDarkMode(ctx, tailwind) {
     }
   }
   const has = (k) => signals.some((s) => s.kind === k)
-  // Precedence: a JS-toggled html class is what the layer reads natively.
   // Precedence: what the layer reads natively first, then the signals it
   // must be told about, most specific first.
   const order = ["html-class", "container-class", "data-theme", "js-state", "media"]

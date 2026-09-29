@@ -2,14 +2,9 @@
  * HOW THE PROJECT RESOLVES THINGS — import aliases, env flags, the static
  * directory and the bundle's limits.
  *
- * THE `@/` ALIAS IS THE SINGLE MOST COMMON SILENT FAILURE. The vendored
- * layer imports `@/components/ui/button`; the shadcn CLI resolves `@/`
- * through tsconfig `paths`; the bundler resolves it through its own alias;
- * the test runner through a third mapping. A project with the alias in one
- * of the three builds in the editor and fails in the browser, or passes in
- * the browser and fails in CI — and when the CLI cannot resolve it at all it
- * writes the files into a directory literally named `@`. So every place is
- * read, and the plan lists every place that lacks it.
+ * THE `@/` ALIAS must resolve in tsconfig `paths` (the shadcn CLI), the
+ * bundler and the test runner; missing from any one fails silently. Every
+ * place is read, and the plan lists each that lacks it.
  */
 import { readdirSync } from "node:fs"
 import { dirname, join, relative, resolve } from "node:path"
@@ -93,7 +88,7 @@ export function detectAliases(ctx, framework) {
         ctx.ev("aliases.tsconfig", { file: f, line: hit?.line, note: `@/* → ${paths[atKey][0]}` })
       }
       // A "solution" tsconfig (files: [], references) is not compiled itself
-      // but the shadcn CLI still reads it — the start.md lesson.
+      // but the shadcn CLI still reads it.
       tsconfigs.push({
         file: ctx.rel(f),
         hasAt: Boolean(atKey),
@@ -118,7 +113,7 @@ export function detectAliases(ctx, framework) {
       findLine(text, /find\s*:\s*\/\^@\\\//) ??
       findLine(text, /["']@\/["']\s*:/)
     // vite-tsconfig-paths, webpack's TsconfigPathsPlugin, or Vite 8's native
-    // `resolve: { tsconfigPaths: true }` (Actual).
+    // `resolve: { tsconfigPaths: true }`.
     const tsPaths = findLine(text, /tsconfigPaths\s*\(|TsconfigPathsPlugin|tsconfigPaths\s*:\s*true/)
     if (hit) {
       bundler.hasAt = true
@@ -168,7 +163,7 @@ export function detectAliases(ctx, framework) {
     }
   }
 
-  // PACKAGE.JSON SUBPATH IMPORTS (#components/…) — Actual's convention.
+  // PACKAGE.JSON SUBPATH IMPORTS (#components/…).
   const imports = ctx.app.pkg.imports ? Object.keys(ctx.app.pkg.imports) : []
   if (imports.length) ctx.ev("aliases.subpathImports", { file: ctx.app.pkgFile, note: `${imports.length} "#" imports, e.g. ${imports[0]}` })
 
@@ -226,11 +221,9 @@ export function detectAliases(ctx, framework) {
 /* ----------------------------------- env ---------------------------------- */
 
 /**
- * THE STUB FLAG. The layer's API decides stubs-or-server from one env flag;
- * it must use the prefix the bundler actually exposes to the browser (a
- * `VITE_` name is `undefined` under a `REACT_APP_` envPrefix, and the
- * assistant silently talks to a server that does not exist). Within that,
- * follow the house style: Excalidraw names everything `VITE_APP_…`.
+ * THE STUB FLAG. It must use the prefix the bundler exposes to the browser,
+ * or it reads as `undefined`; within that, it follows the house style
+ * (e.g. `VITE_APP_…`).
  */
 function housePrefix(names, allowed) {
   const pool = names.filter((n) => n.startsWith(allowed))
@@ -289,7 +282,7 @@ export function detectEnv(ctx, framework) {
   } else if (framework.name === "webpack") {
     style = "process.env"
     // DefinePlugin keys: literal `process.env.X` keys, or UPPER_CASE keys of
-    // an object mapped onto `process.env.${key}` (tududi's shape).
+    // an object mapped onto `process.env.${key}`.
     const dp = findLine(cfgText, /DefinePlugin\s*\(/)
     if (dp) {
       // Exactly the plugin's argument list: balanced parentheses from its `(`.

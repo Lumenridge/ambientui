@@ -414,10 +414,8 @@ export function ReasoningPanel({
   const transition = useMotionTransition("surface")
   // the trace arrives the way it was produced: a beat of nothing, then a
   // step, then the next
-  // A DECLARED DURATION IS A CEILING TOO. The reveal's own pacing (a 2.6s
-  // beat, then 1.5s a step) ran past a short declaration, so a stub that
-  // declared one second read "Thought for 4s" (tududi, Excalidraw). With
-  // `seconds`, the beat and the steps are fitted inside it.
+  // A DECLARED DURATION IS A CEILING TOO. With `seconds`, the beat and the
+  // steps are fitted inside it, so the summary never exceeds the declaration.
   const budget = seconds ? seconds * 1000 : undefined
   const delay = budget ? Math.min(2600, budget * 0.35) : 2600
   const interval =
@@ -438,8 +436,8 @@ export function ReasoningPanel({
   })
   const working = staged && (pending || shown < steps.length)
   const elapsed = useElapsedSeconds(counting)
-  // the settled summary quotes the declared time when there is one (the
-  // pacing now fits inside it), else the time it actually took
+  // the settled summary quotes the declared time when there is one, else
+  // the time it actually took
   const took = seconds ?? (staged ? Math.max(1, elapsed) : undefined)
   // A run that starts opens the trace; finishing collapses it back — adjusted
   // DURING render on the transition, not from an effect, so the panel never

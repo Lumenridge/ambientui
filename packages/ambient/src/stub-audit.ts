@@ -1,18 +1,7 @@
 /**
  * THE STUB CONTRACT, AS A TEST — proof that every question the assistant
- * offers has its own answer.
- *
- * start.md asked the installing agent to open each page and ask every
- * suggested question by hand. Two installs found that slow and unreliable:
- * each answer reveals over several seconds, a question asked mid-reveal is
- * queued, and a scripted run through 21 questions gave false fallbacks
- * (Actual). Pattern collisions went unnoticed until someone happened to ask
- * the colliding question (Invoify: "Where is my saved address book stored?"
- * routed to the reuse-a-client answer). Both installs wrote the same small
- * test instead, in minutes, and it caught what the browser check missed.
- *
- * So the layer ships that test's logic. A host calls it from its own test
- * runner with its stub handlers (or its real API, against a test server):
+ * offers has its own answer. A host calls it from its own test runner with
+ * its stub handlers (or its real API, against a test server):
  *
  *   const problems = await auditAmbientApi(stubs, [{ id: "items" }, { id: "users" }])
  *   expect(problems).toEqual([])

@@ -1,17 +1,10 @@
 /**
  * WHAT THE PRODUCT'S CODE ALREADY DOES — the collisions and the seams.
  *
- * COLLISIONS are things the layer would fight: an existing ⌘K palette
- * (Actual's CommandBar, Excalidraw's "Add link"), a modal layer at z-index
- * 9999 the orb would slide under, a fixed bottom bar the orb would cover on
- * a phone. SEAMS are where the layer plugs in: the HTTP client and its auth,
- * a worker bridge, an AI SDK already streaming, the i18n library that should
- * translate the layer's strings.
- *
- * Every hit is file:line, because the agent will be asked to act on it and
- * the owner will be asked to decide — neither can do that from "found one".
- * These are static heuristics; `ambientui verify` checks the ones that
- * matter (stacking, overlap) in the running page.
+ * COLLISIONS are things the layer would fight (an existing ⌘K owner, a high
+ * modal layer, fixed bottom UI). SEAMS are where it plugs in (HTTP client and
+ * auth, worker bridge, AI SDK, i18n). Every hit is file:line so it can be acted
+ * on; `ambientui verify` checks stacking and overlap in the running page.
  */
 import { join } from "node:path"
 
@@ -46,11 +39,8 @@ const K_TOKEN = /(["'`])[kK]\1|\bKeyK\b|KEYS\.K\b|\bkeyCode\s*===?\s*75\b/
 const MOD_TOKEN = /\b(metaKey|ctrlKey|CTRL_OR_CMD|isMac\w*|getModifierState)\b|(?:mod|meta|cmd|ctrl|command|control)\s*\+\s*k\b/i
 
 /**
- * EXISTING ⌘K / Ctrl+K OWNERS. The layer's default hotkey is mod+k, the
- * most contested chord on the web. A second owner means two things open at
- * once, or one silently never opens. Found three ways: a palette library in
- * the dependencies, a hotkey-library binding, and a raw key handler where a
- * modifier and `k` meet within two lines.
+ * EXISTING ⌘K / Ctrl+K OWNERS. The layer defaults to mod+k; a second owner
+ * means both open at once or one never does.
  */
 export function detectHotkeys(ctx) {
   const owners = []
@@ -74,12 +64,11 @@ export function detectHotkeys(ctx) {
     owners.push({ kind: "handler", ...h })
     ctx.ev("hotkeys", { file: h.file, line: h.line, note: h.text })
   }
-  // What the palette offers — the commands a takeover must re-register.
+  // The commands a takeover must re-register.
   const features = []
   for (const o of owners.filter((x) => x.file && x.kind !== "dependency")) {
     const t = ctx.read(join(ctx.root, o.file)) ?? ""
-    // Entries a palette declares: `name: t("Budget")`, `label: "…"`,
-    // `<Command.Item>Text`. Headings are kept too — they name the groups.
+    // Headings are kept too — they name the groups.
     const items = [
       ...t.matchAll(/\b(?:name|label|heading|title)\s*:\s*(?:t\(\s*)?["'`]([^"'`$]{2,50})["'`]|<Command\.Item[^>]*>\s*([A-Za-z][^<{]{1,40})/g),
     ]
@@ -95,10 +84,9 @@ export function detectHotkeys(ctx) {
 const MODALISH = /modal|dialog|overlay|popover|toast|drawer|sheet|backdrop|lightbox|tooltip|dropdown|menu/i
 
 /**
- * THE HOST'S STACKING SCALE. The layer defaults to z-50 (shadcn's scale);
- * a product whose header sits at 1000 would cover the orb. The plan sets the
- * provider's zIndex above the host's content and, where a modal layer is
- * identifiable, below it — a product modal should still cover the orb.
+ * THE HOST'S STACKING SCALE. The plan sets the provider's zIndex above the
+ * host's content and below its modal layer, so a product modal still covers
+ * the orb.
  */
 export function detectZIndex(ctx) {
   const vals = []
@@ -156,9 +144,8 @@ export function detectZIndex(ctx) {
 /* ------------------------------ fixed bottom ------------------------------ */
 
 /**
- * FIXED BOTTOM UI — mobile bars and sticky footers the resting orb would
- * cover (Invoify's action bar). Static and approximate; verify measures the
- * real overlap at 375px.
+ * FIXED BOTTOM UI the resting orb would cover. Static and approximate; verify
+ * measures the real overlap at 375px.
  */
 export function detectFixedBottom(ctx) {
   // shadcn primitives (a bottom Sheet) are not product chrome.
@@ -190,10 +177,8 @@ export function detectI18n(ctx) {
   const lib = ["react-i18next", "i18next", "next-intl", "react-intl", "@lingui/react", "@lingui/core", "next-i18next", "typesafe-i18n"].find((k) => d[k])
   const localeCodes = new Set()
   const where = []
-  // Locale files: locales/<code>.json, locales/<code>/…, messages/<code>.json.
-  // The app's files plus the workspace packages it is built from — Excalidraw
-  // keeps its locales (Arabic, Hebrew, Persian among them) in
-  // packages/excalidraw/locales.
+  // Includes the workspace packages the app is built from, where locales
+  // often live.
   for (const f of [...ctx.allFiles, ...ctx.relatedFiles]) {
     const m = /\/(?:locales?|messages|translations|i18n|lang)\/(?:[^/]+\/)?([a-z]{2,3}(?:[-_][A-Za-z]{2,4})?)(?:\.json|\.ts|\.js|\.po|\/)/.exec(f)
     if (m && !/node_modules/.test(f)) {
@@ -212,12 +197,9 @@ export function detectI18n(ctx) {
 /* --------------------------------- network -------------------------------- */
 
 /**
- * THE SEAM THE ASSISTANT'S REQUESTS GO THROUGH. The layer makes no request
- * of its own; the host's API layer does, with the host's auth. A new raw
- * `fetch` beside an axios instance that adds the CSRF header is a 403 in
- * production and a pass in stubs. So the client, the wrapper module and the
- * auth conventions are named, and a worker bridge (Actual's `send()` into
- * loot-core) is recognised as the place a handler goes — never a new server.
+ * THE SEAM THE ASSISTANT'S REQUESTS GO THROUGH. The layer makes no requests;
+ * the host's API layer does, with the host's auth, so its client, wrapper,
+ * auth conventions and any worker bridge are named for the handler to reuse.
  */
 export function detectNetwork(ctx) {
   const d = ctx.deps
@@ -239,8 +221,7 @@ export function detectNetwork(ctx) {
   for (const c of clients) ctx.ev("network.clients", { pkg: c })
   const files = ctx.codeFiles.filter((f) => /\.[jt]sx?$/.test(f))
 
-  // A FETCH WRAPPER: modules in api/services/utils/lib/http dirs that call
-  // fetch( or axios.create — ranked by how many calls they make.
+  // FETCH WRAPPERS, ranked by how many calls they make.
   const wrappers = []
   for (const f of files) {
     const rp = ctx.rel(f)
@@ -252,9 +233,8 @@ export function detectNetwork(ctx) {
   wrappers.sort((a, b) => b.calls - a.calls)
   if (wrappers[0]) ctx.ev("network.wrapper", { file: wrappers[0].file, note: `${wrappers[0].calls} fetch/client calls` })
 
-  // A SHARED HELPER inside those calls — `fetch(getApiPath("areas"))` across
-  // thirty service files means the convention is the helper, not any one
-  // service. Name it and where it is defined.
+  // A SHARED HELPER inside those calls (`fetch(getApiPath(…))`) is the
+  // convention, not any one service.
   const helperCounts = {}
   for (const w of wrappers) {
     const t = ctx.read(join(ctx.root, w.file)) ?? ""
@@ -351,9 +331,8 @@ export function detectAi(ctx) {
 /* ---------------------------- existing install ---------------------------- */
 
 /**
- * AN EARLIER INSTALL. Doctor is often run on a project that has already
- * been through one attempt; the survey then describes the host PLUS the
- * layer, and the owner should know that before trusting the plan.
+ * AN EARLIER INSTALL. The survey then describes the host plus the layer, and
+ * the owner should know that before trusting the plan.
  */
 export function detectExistingInstall(ctx) {
   const hits = []

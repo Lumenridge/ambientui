@@ -1,12 +1,10 @@
 /**
  * BEGIN → INSTALL → END → VERIFY → UNINSTALL, WITHOUT THE NETWORK.
  *
- * The real install runs the shadcn CLI against the registry; here the plan's
- * commands are replaced by one shell line that does what the CLI does wrong
- * — overwrites the product's button, and lands the layer at `<app>/components`
- * while `@/` points at `./src`. The test then holds install to its promises
- * (restore, move), end to its commit (by name, with the trailer), and
- * uninstall to its revert.
+ * The plan's commands are replaced by one shell line that overwrites the
+ * product's button and lands the layer at `<app>/components` while `@/`
+ * points at `./src`. Install must restore and move, end must commit by name
+ * with the trailer, and uninstall must revert.
  */
 import assert from "node:assert/strict"
 import { execFileSync } from "node:child_process"

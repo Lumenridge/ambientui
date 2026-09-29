@@ -1,15 +1,12 @@
 /**
- * TWO READERS, ONE REPORT. The CLI is driven by an AI agent and read by a
- * person, often in the same terminal. `--json` gives the agent one JSON
- * document on stdout and nothing else; without it, the person gets short
- * lines, one fact each, prefixed so the eye can sort them:
+ * TWO READERS, ONE REPORT. `--json` prints one JSON document on stdout for
+ * the agent; otherwise the person gets short prefixed lines:
  *
  *   ✔  true / done / passed        ✗  false / failed / blocked
  *   !  worth attention             ?  a question for the owner
  *
- * Every human report ends with ONE "Next: …" line naming the command to run
- * next, because an agent that finishes a step without knowing the next one
- * improvises, and improvising is what this tool replaces.
+ * Every report ends with one "Next: …" command so the agent never has to
+ * guess the next step.
  */
 export function createOutput({ json = false } = {}) {
   const lines = []

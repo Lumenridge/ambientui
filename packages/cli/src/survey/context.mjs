@@ -2,14 +2,10 @@
  * WHERE ARE WE, AND WHICH PACKAGE IS THE APP — the first three facts, which
  * every other detector depends on.
  *
- * WHY THE APP PACKAGE MATTERS SO MUCH. In a monorepo the root package.json
- * is usually a toolbox: turbo, lint, a workspace list. The shadcn CLI, the
- * Tailwind version, the aliases and the entry file all belong to ONE
- * workspace package (Actual's `packages/desktop-client`, Excalidraw's
- * `excalidraw-app`). Every install that went wrong at the root instead of
- * there went wrong silently: files landed, nothing imported them. So the app
- * is identified explicitly, with the losing candidates recorded, and every
- * later path is relative to it.
+ * In a monorepo the shadcn CLI, Tailwind version, aliases and entry file
+ * belong to one workspace package, not the root; installing at the root
+ * fails silently. So the app is identified explicitly, the losing candidates
+ * are recorded, and every later path is relative to it.
  */
 import { readdirSync } from "node:fs"
 import { join, resolve, dirname, basename } from "node:path"
@@ -78,7 +74,7 @@ function pnpmGlobs(dir) {
   return out
 }
 
-/** Expand `packages/*`, `apps/**`, `excalidraw-app` into package dirs. */
+/** Expand `packages/*`, `apps/**`, `web-app` into package dirs. */
 export function expandGlobs(base, globs) {
   const dirs = new Set()
   for (const g of globs) {
@@ -151,10 +147,8 @@ function countUiFiles(dir) {
 }
 
 /**
- * EXAMPLES AND DOCS ARE NOT THE PRODUCT. A monorepo's `examples/with-nextjs`
- * or docs site is a React app with a bundler, and in a small product it can
- * even outnumber the real app in .tsx files. They stay candidates (recorded
- * as alternatives) but lose ties to anything else.
+ * EXAMPLES AND DOCS ARE NOT THE PRODUCT, though they can outnumber it in .tsx
+ * files. They stay candidates but lose to anything else.
  */
 const SECONDARY = /(^|\/)(examples?|docs?|website|storybook|playground|demo|e2e|fixtures?)(\/|$)/
 
@@ -243,12 +237,10 @@ export function detectRepo(ctx) {
 /* ----------------------------- package manager ---------------------------- */
 
 /**
- * THE PACKAGE MANAGER AND HOW TO REACH IT. Knowing it is yarn is half the
- * answer; tududi-style repos pin a version in `packageManager` with no
- * global binary, and Actual ships its yarn inside `.yarn/releases`. The
- * shadcn CLI installs dependencies by calling the detected manager, so a
- * manager that is not on PATH makes `shadcn add` fail after it has already
- * written files. We say how to invoke it, and warn when it is unreachable.
+ * THE PACKAGE MANAGER AND HOW TO REACH IT. The shadcn CLI installs through
+ * the detected manager, so one not on PATH makes `shadcn add` fail after it
+ * has written files. We say how to invoke it (pinned version, repo-bundled
+ * release) and warn when it is unreachable.
  */
 export function detectPackageManager(ctx, repo) {
   const { root } = ctx
@@ -265,7 +257,6 @@ export function detectPackageManager(ctx, repo) {
     ["npm-shrinkwrap.json", "npm"],
   ]
   // Lockfiles live at the workspace root, which may be above the cwd.
-  // (the parent monorepo's, when the cwd is one of its workspaces).
   const lockDirs = [root]
   if (repo.parentMonorepo) lockDirs.push(resolve(root, repo.parentMonorepo))
   outer: for (const d of lockDirs) {

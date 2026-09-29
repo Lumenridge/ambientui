@@ -1,12 +1,7 @@
 /**
  * WHAT KIND OF PROJECT THIS IS — framework, React, TypeScript, tests, lint,
- * scripts, the product's name and the agent rules it already carries.
- *
- * These are the facts an agent used to guess at by reading the README. Each
- * one changes an instruction later: Next.js moves the entry file and the env
- * prefix, a CommonJS Jest cannot load the orb's ESM shader package, a linter
- * that autofixes on save rewrites vendored files the moment the agent writes
- * them. Evidence is recorded for every one, so a wrong guess is visible.
+ * scripts, the product's name and the agent rules it already carries. Each
+ * changes a later instruction, so each records its evidence.
  */
 import { join } from "node:path"
 
@@ -116,10 +111,8 @@ export function detectDepConvention(ctx) {
 /* ---------------------------------- jest ---------------------------------- */
 
 /**
- * A COMMONJS JEST CANNOT LOAD THE ORB. `@paper-design/shaders-react` is
- * ESM-only; ts-jest or babel-jest without an ESM transform throws on its
- * `export` the first time a test renders anything that imports the layer.
- * The plan then gives a mapper or a mock; this detector decides whether.
+ * A COMMONJS JEST CANNOT LOAD THE ORB's ESM-only shader package; the plan
+ * then gives a mapper or a mock.
  */
 export function detectJest(ctx) {
   const a = ctx.app.abs
@@ -157,12 +150,12 @@ export function detectScripts(ctx, framework) {
   const scripts = ctx.app.pkg.scripts ?? {}
   const out = { all: Object.keys(scripts) }
   // In a monorepo whose app lacks a check, the root's script is the one the
-  // project runs (Excalidraw's `test:typecheck`); it runs from the root.
+  // project runs; it runs from the root.
   const rootScripts = ctx.app.abs !== ctx.root ? ctx.rootPkg?.scripts ?? {} : {}
   for (const [k, prefs] of Object.entries(SCRIPT_PREFS)) {
     for (const [where, set, file] of [["app", scripts, ctx.app.pkgFile], ["root", rootScripts, "package.json"]]) {
-      // A script that runs the BACKEND (tududi's `test` is `cd backend &&
-      // jest`) says nothing about the UI; prefer one that does not.
+      // A script that runs the BACKEND says nothing about the UI; prefer one
+      // that does not.
       const avail = prefs.filter((p) => set[p])
       const name = avail.find((p) => !/\bbackend\b|\bserver\b/.test(set[p])) ?? avail[0]
       if (!name) continue
@@ -261,9 +254,8 @@ export function detectLint(ctx) {
     agentHooks: [],
   }
   for (const [k, v] of Object.entries(out)) if (v && typeof v === "object" && v.config) ctx.ev(`lint.${k}`, { file: v.config })
-  // AGENT HOOKS THAT FIX ON EDIT. A PostToolUse hook running `eslint --fix`
-  // or `prettier --write` rewrites the vendored layer as the agent writes
-  // it; the plan tells the agent to exclude those paths.
+  // AGENT HOOKS THAT FIX ON EDIT rewrite the vendored layer as the agent
+  // writes it; the plan tells the agent to exclude those paths.
   for (const f of [".claude/settings.json", ".claude/settings.local.json"]) {
     const p = join(ctx.root, f)
     const text = readText(p)
@@ -305,7 +297,7 @@ export function detectAgentConfig(ctx) {
 
 const GENERIC = /^(vite|react|app|my-app|web|client|frontend|consumer|vite \+ react.*|react app|create next app|next\.?js)$/i
 
-/** `@actual-app/web` → "Actual App"; `invoify` → "Invoify". */
+/** `@acme-app/web` → "Acme"; `my-product` → "My Product". */
 export function humanize(name) {
   if (!name) return null
   let base = name

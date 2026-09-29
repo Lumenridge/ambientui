@@ -41,8 +41,7 @@ import { fileURLToPath } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const FIXTURES = resolve(ROOT, "fixtures")
-// AMBIENTUI_VERIFY_PORT when 4321 is taken — by design this script will not
-// share a port (see waitForServer)
+// AMBIENTUI_VERIFY_PORT when 4321 is taken; this script never shares a port
 const PORT = Number(process.env.AMBIENTUI_VERIFY_PORT ?? 4321)
 const HOST = `http://127.0.0.1:${PORT}`
 
@@ -79,17 +78,13 @@ const DOORS = [
     compile: true,
     landed: { "src/components/ui/icon.tsx": "SETS.lucide!" },
   },
-  // THE TAILWIND v3 DOORS, in a stock shadcn v3 project (fixtures/
-  // consumer-tw3: tailwind.config.js, HSL-triplet tokens, tailwindcss-animate).
-  // `built` names classes the v3 rewrite produced that must appear in the
-  // compiled CSS — the proof that v3 actually generated them in a real build,
-  // not only in check-tailwind3's isolated compiles.
+  // THE TAILWIND v3 DOORS, in a stock shadcn v3 project (fixtures/consumer-tw3).
+  // `built` names rewritten classes that must appear in the compiled CSS.
   {
     name: "ambient-layer-tw3",
     fixture: "consumer-tw3",
     compile: true,
-    // wired the way start.md tells a v3 project to: from the entry file,
-    // after the global stylesheet (an @import after @tailwind is dropped)
+    // from the entry file, as start.md says: an @import after @tailwind is dropped
     entryImports: ["./styles/ambient.css"],
     builtText: ["hsl(var(--popover))"],
     built: [
@@ -100,17 +95,14 @@ const DOORS = [
       "!min-h-0",
     ],
   },
-  // REACT 18 WITH ITS OWN TYPES (fixtures/consumer-react18). tududi and
-  // Invoify were on React 18, and the layer's types failed there (icon prop
-  // widths, a React 19-shaped ref). The layer and the tw3 door both compile
-  // here, and the layer is mounted so its classes are built.
+  // REACT 18 WITH ITS OWN TYPES (fixtures/consumer-react18): the layer must
+  // type-check against React 18's types too.
   { name: "ambient-layer", fixture: "consumer-react18", compile: true, mount: true },
   { name: "icon-lucide", fixture: "consumer-react18", compile: true },
 
-  // A PRODUCT WITHOUT TAILWIND'S RESET OR shadcn (fixtures/consumer-bare,
-  // Excalidraw's shape). `ambient-base` must bring the helper and the roles,
-  // and its preflight must reach the layer and nothing else: the built CSS
-  // may not contain one global reset rule.
+  // A PRODUCT WITHOUT TAILWIND'S RESET OR shadcn (fixtures/consumer-bare).
+  // `ambient-base` brings the helper and the roles; its preflight reaches the
+  // layer only, so the built CSS has no global reset rule.
   {
     name: "ambient-base",
     fixture: "consumer-bare",
@@ -131,14 +123,12 @@ const DOORS = [
         '@import "./styles/ambient.css";',
       ],
     },
-    // the fixture's App mounts nothing; mount the layer so its classes are
-    // in the module graph Tailwind scans
+    // mount the layer so Tailwind scans its classes
     mount: true,
     builtText: [":where(.ambient-scope) button", "--glass-fill"],
     builtAbsent: [
-      // an unscoped preflight rule: `*,:after,:before{box-sizing…` or
-      // `button,input{font…` (Tailwind's own `*{--tw-…}` custom-property
-      // defaults are not a reset, so a body starting `--` is allowed)
+      // an unscoped preflight rule; a body starting `--` (Tailwind's own
+      // `*{--tw-…}` defaults) is not a reset
       "(^|[{}])\\s*(\\*|button|html|body|h1)[^{]*\\{\\s*[a-z]",
     ],
   },
@@ -295,9 +285,8 @@ run("npx", ["shadcn", "build", "--output", "registry-dist/r"], ROOT, {
 const registry = JSON.parse(readFileSync(resolve(ROOT, "registry.json"), "utf8"))
 
 /**
- * A SERVER ALREADY ON THE PORT IS A FAILURE, not a convenience. A leftover
- * registry server from another run answered here once, and every door was
- * "verified" against a stale registry that did not contain the new ones.
+ * A SERVER ALREADY ON THE PORT IS A FAILURE: doors would be verified against
+ * whatever registry it serves, not this build.
  */
 try {
   run("curl", ["-s", "-o", "/dev/null", `${HOST}/`], ROOT)

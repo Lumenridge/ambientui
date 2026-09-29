@@ -3,14 +3,9 @@
  * shadcn tokens are bare HSL channels (`--popover: 0 0% 100%`, read by the
  * project as `hsl(var(--popover))`).
  *
- * That is shadcn's Tailwind v3 format, and it is what every v3 shadcn project
- * has. `ambient.css` mixes the standard roles inside `color-mix()`, and a
- * triplet is not a colour: every mix is invalid, which the browser resolves
- * to transparent. The glass, the veils and the live border disappear with no
- * error (Invoify, 2026-09-28; tududi hit the undefined-variable form of the
- * same failure).
- *
- * The rewrite wraps each standard role in `hsl()`. The list is shadcn's
+ * `ambient.css` mixes the standard roles inside `color-mix()`, and a triplet
+ * is not a colour, so every mix would resolve to transparent. The rewrite
+ * wraps each standard role in `hsl()`. The list is shadcn's
  * token set and nothing else: `--ambient-*`, `--glass-*` and `--positive`
  * are this system's own tokens, declared as full colours in every format.
  */

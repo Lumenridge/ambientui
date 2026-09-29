@@ -1,13 +1,10 @@
 /**
- * WHAT CHANGED SINCE `begin` — the one computation end, verify and install
- * all need, done once.
+ * WHAT CHANGED SINCE `begin` — shared by end, verify and install.
  *
- * WHY GIT AND NOT A FILE WATCHER. The install touches files through three
- * hands — the shadcn CLI, the package manager, and the agent wiring things
- * up afterwards — and only git sees all three. `begin` records HEAD and the
- * paths that were already dirty; everything git reports as different from
- * that HEAD, minus those paths, is the install. That list is what `end`
- * commits (by name, never `git add -A`) and what `uninstall` reverses.
+ * WHY GIT. The shadcn CLI, the package manager and the agent all touch
+ * files, and only git sees all three. `begin` records HEAD and the already
+ * dirty paths; the diff from HEAD minus those is the install, which `end`
+ * commits by name and `uninstall` reverses.
  */
 import { createHash } from "node:crypto"
 import { join } from "node:path"

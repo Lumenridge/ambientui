@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * ambientui — THE INSTALL PIPELINE, AS COMMANDS AN AGENT CANNOT GET WRONG.
+ * ambientui — THE INSTALL PIPELINE, AS COMMANDS.
  *
- *   doctor     survey the host, write profile.json + plan.json, list blockers and questions
+ *   doctor     survey the host, decide the plan (profile.json + plan.json)
  *   plan       re-derive plan.json from the profile and the owner's answers
  *   begin      record the base commit the install is measured against
  *   install    run the plan's shadcn commands; restore the product's primitives;
@@ -12,11 +12,8 @@
  *   verify     static and runtime checks, each PASS / FAIL / SKIPPED / PRE-EXISTING
  *   uninstall  git revert the install commit(s); list leftovers
  *
- * WHY A CLI AT ALL. The install used to be prose (docs/start.md) that an
- * agent interpreted. Across five real products the prose was right and the
- * interpretation drifted: the wrong door, a CSS line Vite silently dropped,
- * a stub flag the bundler never exposed. Decisions now come from a pure
- * function over detected facts, and every failure is loud.
+ * Decisions come from a pure function over detected facts, not from an
+ * agent's reading of prose, and every failure is loud.
  */
 import { resolve } from "node:path"
 import { readFileSync } from "node:fs"

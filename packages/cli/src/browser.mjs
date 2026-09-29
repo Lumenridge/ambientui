@@ -1,13 +1,10 @@
 /**
  * THE BROWSER, LOADED ONLY WHEN ASKED FOR.
  *
- * WHY LAZY. Every command but the runtime probes works on files and git.
- * `playwright-core` is the one dependency, and it is useless without a
- * browser binary — which many machines, and most CI images, do not have.
- * So it is imported dynamically, and when it or a browser is missing the
- * caller gets `{ ok: false, hint }` naming exactly what to run, and prints a
- * SKIPPED line. A runtime check that quietly did not run and reported
- * nothing is the failure mode this CLI was written to remove.
+ * WHY LAZY. Only the runtime probes need `playwright-core` and a browser
+ * binary, which many machines lack. It is imported dynamically; when either
+ * is missing the caller gets `{ ok: false, hint }` and reports SKIPPED
+ * rather than silently not running.
  */
 
 export const INSTALL_HINT =
@@ -67,10 +64,8 @@ export const STYLE_PROPS = [
 
 /**
  * THE HOST'S SCREENS, AS NUMBERS. Computed styles of up to 3000 visible
- * elements keyed by a DOM path (tag + nth-of-type), skipping the layer's own
- * subtree. Taken before install and again after: any element whose computed
- * style moved is a screen the install restyled — the thing the layer path
- * promises never happens.
+ * elements keyed by DOM path, skipping the layer's subtree. Compared before
+ * and after install to catch any host screen the install restyled.
  */
 export async function snapshotStyles(page, props = STYLE_PROPS, limit = 3000) {
   return page.evaluate(

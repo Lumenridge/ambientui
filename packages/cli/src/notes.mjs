@@ -1,14 +1,8 @@
 /**
  * AMBIENTUI-NOTES.md — the developer's account of the install.
  *
- * The install takes decisions for the owner instead of asking them, and the
- * agent may do things by hand where the tooling could not. Both are right
- * for a first look at ambientui, and both are only acceptable written down.
- * This file is that record, committed with the install: what was installed,
- * each decision with its alternatives, the agent's corrections to the
- * survey, the judgement calls and manual work, what verify could not prove,
- * and — when any of that strayed from the happy path — the recommendation
- * to try it, then uninstall and reinstall with the choices made on purpose.
+ * The install decides for the owner instead of asking, so every decision,
+ * correction and manual step is recorded here and committed with it.
  *
  * Pure: plan + notes + verify result in, markdown out.
  */

@@ -2,20 +2,10 @@
  * TAILWIND'S PREFLIGHT, SCOPED TO THE LAYER — for a product not built on
  * Tailwind.
  *
- * The layer's components assume preflight: shadcn's buttons show the
- * browser's default border and background without it. But preflight is a
- * GLOBAL reset, and adding it to a product styled another way restyled that
- * product: Excalidraw's menu items grew from 42px to 47px (line-height on
- * <html>), headings and lists lost their margins, and only the properties
- * the product never set moved, so the change was patchy and easy to miss in
- * review (2026-09-28). "Layer only" promises the product's screens stay
- * exactly as they are.
- *
- * So the build generates a copy of Tailwind v4's own preflight.css with
- * every selector confined to `.ambient-scope`, the class on the layer's root
- * (assistant.tsx). The product gets no reset; the layer gets the one it was
- * written against. Excalidraw's hand-made version of this measured zero
- * computed-style differences across 737 of the product's elements.
+ * The layer's components assume preflight, but preflight is a GLOBAL reset
+ * and would restyle a product styled another way. So the build generates a
+ * copy of Tailwind v4's preflight.css with every selector confined to
+ * `.ambient-scope`, the class on the layer's root (assistant.tsx).
  */
 import postcss from "postcss"
 

@@ -653,10 +653,8 @@ export function compileFoundationCss(config: FoundationConfig): string {
   const scaling = SCALINGS.find((s) => s.pct === config.scaling) ?? SCALINGS[2]
 
   // THE ROOT SIZE ONLY WHEN IT IS A DECISION. `html { font-size }` rescales
-  // every rem on the page, including an existing product's own screens that
-  // the Foundation does not otherwise govern (Actual: 24 rem values moved,
-  // 2026-09-28). At 100% it is the browser default, so it is not written,
-  // and a product's own root size is left alone.
+  // every rem on the page, including a product's own screens. At 100% it is
+  // the browser default, so it is not written.
   return [
     `:root { ${light.join(" ")} }`,
     `.dark { ${dark.join(" ")} }`,

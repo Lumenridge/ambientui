@@ -1,14 +1,10 @@
 /**
- * THE PLUMBING EVERY COMMAND SHARES — reading a stranger's project without
- * tripping over it, running processes without hanging on a prompt, and
- * keeping all state in one folder the owner can delete.
+ * THE PLUMBING EVERY COMMAND SHARES — reading unfamiliar projects, running
+ * processes without hanging on a prompt, and keeping state in one folder.
  *
- * WHY SO DEFENSIVE. The CLI runs inside projects nobody here has seen: JSON
- * with comments (every tsconfig), files that are not UTF-8, symlinked
- * node_modules, directories of fifty thousand files. A reader that throws on
- * any of those turns "doctor" into a crash report, which is exactly the
- * silent-failure experience this tool exists to end. So every reader here
- * returns null on trouble and the detectors treat null as "not found".
+ * WHY SO DEFENSIVE. Readers return null on any trouble (commented JSON,
+ * non-UTF-8 files, huge trees) and detectors treat null as "not found", so
+ * `doctor` reports instead of crashing.
  */
 import { spawnSync } from "node:child_process"
 import {
@@ -61,9 +57,8 @@ export function readText(p, maxBytes = 2_000_000) {
 }
 
 /**
- * JSON AS PEOPLE ACTUALLY WRITE IT. tsconfig.json allows comments and
- * trailing commas, and so do half the config files a host carries. Strip
- * both (outside strings) before parsing; a file that still fails is null.
+ * JSON AS PEOPLE ACTUALLY WRITE IT. Comments and trailing commas are
+ * stripped (outside strings) before parsing; a file that still fails is null.
  */
 export function readJson(p) {
   const text = readText(p)
@@ -129,8 +124,8 @@ export function findLine(text, re) {
 export const rel = (from, to) => relative(from, to).split(sep).join("/") || "."
 
 /**
- * THE DIRECTORIES NO DETECTOR SHOULD READ. Build output and dependencies
- * would drown every grep in someone else's code; `.ambientui` is our own.
+ * THE DIRECTORIES NO DETECTOR SHOULD READ: build output, dependencies, and
+ * the CLI's own `.ambientui`.
  */
 export const IGNORE_DIRS = new Set([
   "node_modules",
@@ -155,9 +150,8 @@ export const IGNORE_DIRS = new Set([
 ])
 
 /**
- * Walk a directory for files. Capped, because a host can be enormous and a
- * doctor that takes a minute gets skipped; the cap is reported by the caller
- * rather than silently shrinking the survey.
+ * Walk a directory for files. Capped to keep doctor fast; the caller reports
+ * truncation rather than silently shrinking the survey.
  */
 export function walk(root, { exts = null, maxFiles = 25000, ignore = IGNORE_DIRS } = {}) {
   const files = []
@@ -208,8 +202,7 @@ export function* upwards(from, stop) {
 /* -------------------------------- versions -------------------------------- */
 
 /**
- * A VERSION FROM WHAT THE PROJECT SAYS. Installed versions are the truth,
- * but fixtures and freshly cloned repos have no node_modules, so a declared
+ * A VERSION FROM WHAT THE PROJECT SAYS. Without node_modules a declared
  * range (`^3.4.19`, `~6`, `npm:tailwindcss@^3.4`) is read as its floor.
  * `workspace:*`, `latest` and git URLs have no floor and return null.
  */
@@ -237,10 +230,9 @@ export function installedVersion(pkg, from, stop) {
 /* -------------------------------- processes ------------------------------- */
 
 /**
- * RUN A PROCESS WITH STDIN CLOSED. The shadcn CLI and package managers
- * prompt when they are unsure; with a pipe on stdin they wait forever and
- * the agent driving us sees a hang, not a question. "ignore" makes every
- * prompt fail fast with its question in the output, which we can report.
+ * RUN A PROCESS WITH STDIN CLOSED, so a prompt from the shadcn CLI or a
+ * package manager fails fast with its question in the output instead of
+ * hanging.
  */
 export function run(cmd, args, { cwd, timeout = 120_000, env, shell = false } = {}) {
   const started = Date.now()
@@ -279,11 +271,10 @@ export function git(args, cwd, opts = {}) {
 }
 
 /**
- * The git root, spelled the way the CALLER spells its path. `--show-toplevel`
- * returns the realpath (/private/var/… on macOS for /var/…), and a relative
- * path between the two spellings walks up to / and back down — every
- * `git add` of it then fails as "outside repository". `--show-cdup` is
- * relative, so resolving it against the cwd keeps one spelling throughout.
+ * The git root, spelled the way the caller spells its path. `--show-toplevel`
+ * returns the realpath, which breaks relative paths across symlinked
+ * spellings (/var vs /private/var); `--show-cdup` resolved against the cwd
+ * does not.
  */
 export function gitRoot(cwd) {
   const r = git(["rev-parse", "--show-cdup"], cwd)
@@ -305,17 +296,15 @@ export function porcelainPaths(text) {
 /* --------------------------------- state --------------------------------- */
 
 /**
- * ALL STATE IN ONE FOLDER. Everything the CLI knows about a project lives
- * in `<project>/.ambientui/`, as JSON stamped `schema: 1`, so an agent can
- * read it, a human can delete it, and a later CLI can refuse a shape it does
- * not understand instead of misreading it.
+ * ALL STATE IN ONE FOLDER: `<project>/.ambientui/`, as JSON stamped with a
+ * schema so a CLI refuses a shape it does not understand.
  */
 export const statePath = (cwd, name) => join(cwd, STATE_DIR, name)
 
 /**
- * What in the state folder is a record (committed with the install:
- * manifest, plan, profile) and what is one machine's scratch (never
- * committed). Written once, so `git status` after `end --commit` is clean.
+ * Manifest, plan and profile are committed with the install; the rest is
+ * one machine's scratch and ignored, so `git status` after `end --commit`
+ * is clean.
  */
 const STATE_GITIGNORE = "# ambientui: this machine's scratch; the manifest, plan and profile are committed\nsession.json\ninstall.log\nverify.json\nbaseline/\n"
 

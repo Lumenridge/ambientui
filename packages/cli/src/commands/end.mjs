@@ -1,14 +1,10 @@
 /**
  * `ambientui end` — WRITE DOWN WHAT THE INSTALL CHANGED, AND COMMIT IT BY NAME.
  *
- * The manifest is the install's receipt: the base commit, the doors, every
- * file added or modified, every dependency added. The commit it prints adds
- * exactly those paths — never `git add -A`, which would sweep in whatever
- * else was lying in the tree — and carries the `Ambientui-Install: 1`
- * trailer that `uninstall` finds it by.
- *
- * `--commit` runs it. The agent asks the owner first: a commit on their
- * branch is theirs to approve.
+ * The manifest records the base commit, the doors, and every file and
+ * dependency added or modified. The commit adds exactly those paths (never
+ * `git add -A`) and carries the `Ambientui-Install: 1` trailer `uninstall`
+ * finds it by. `--commit` runs it; the owner approves that first.
  */
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"
@@ -27,8 +23,7 @@ export async function end(opts, out) {
   const session = requireSession(root)
   const plan = readState(root, "plan.json")
   if (!plan) throw new CliError("No .ambientui/plan.json.", { next: "ambientui doctor" })
-  // THE DEVELOPER NOTES go in first, so they are part of what the install
-  // added, commit with it, and leave with the revert.
+  // Notes are written first so they commit with the install and leave with the revert.
   const notesFile = join(root, plan.appDirFromRoot ?? ".", "AMBIENTUI-NOTES.md")
   let verifyResult = null
   try {

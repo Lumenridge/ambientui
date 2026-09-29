@@ -1,15 +1,13 @@
 /**
- * THE PALETTE'S CONTRACT WITH A HOST — every behaviour here broke in a real
- * product (Actual, Excalidraw; 2026-09-28) and is held by a test so it
- * cannot quietly come back:
+ * THE PALETTE'S CONTRACT WITH A HOST:
  *
- *   - registering commands every render must not loop (Actual's blank page)
+ *   - registering commands every render does not loop
  *   - a command or a jump leaves the palette closed and its query empty
  *   - the hotkey is heard even when the host stops the key, unless the
- *     host yields it (Excalidraw's "Add link")
+ *     host yields it
  *   - the hotkey opens SEARCH mid-conversation, the conversation one row away
  *   - a section counts in its own noun ("8 accounts", not "8 accountss")
- *   - a nav item's icon is a name, drawn by <Icon> (a name crashed the app)
+ *   - a nav item's icon is a name, drawn by <Icon>
  *   - the chrome says the product's name, never "ambientui"
  */
 import * as React from "react"

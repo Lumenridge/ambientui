@@ -1,12 +1,10 @@
 /**
  * `ambientui uninstall` — GIT IS THE MECHANISM.
  *
- * No backups, no custom restoration: the install was one commit carrying
- * `Ambientui-Install: 1`, and uninstalling is `git revert` of it. That is
- * exactly as reliable as the owner's own history, it is reviewable, and it
- * is itself revertible. What a revert cannot know about is code written
- * AFTER the install that uses the layer — a page that calls setPageChip, a
- * second mount — so those are listed by file:line for the agent to remove.
+ * The install is one commit carrying `Ambientui-Install: 1`; uninstalling
+ * is `git revert` of it — reviewable and itself revertible. Code written
+ * after the install that uses the layer is listed by file:line for the
+ * agent to remove.
  */
 import { CliError, git, gitRoot, porcelainPaths, readState } from "../util.mjs"
 import { TRAILER } from "./end.mjs"

@@ -27,13 +27,9 @@
  */
 
 /* THE LAYER'S FLOOR — values the components read that are NOT standard
-   shadcn, declared at zero specificity. The Foundation, a host's own token
-   block, or a registry cssVars entry (all plain :root) override every one.
-   Without them, the ambient-layer-only path (no Foundation) ran with no
-   motion roles, so every CSS transition snapped, and `text-(--positive)`
-   resolved to nothing (Invoify, 2026-09-28). The motion values are the
-   runtime's own defaults (ambient-runtime.tsx), stated once more here because
-   CSS cannot read them from JavaScript. */
+   shadcn, at zero specificity so the Foundation, a host's token block, or a
+   registry cssVars entry overrides every one. The motion values mirror the
+   runtime's defaults (ambient-runtime.tsx); CSS cannot read them from JS. */
 :where(:root) {
   --positive: oklch(0.596 0.145 163.225);
   --motion-micro: 120ms;
@@ -44,12 +40,8 @@
 }
 
 /* THE LAYER'S OWN KNOBS — the four values an adopter is expected to retune.
-   --ambient-blur lived in packages/ui globals.css, which is the primitives
-   package: an ambient token sitting there was a filing error, not a decision.
-   Zero specificity, like the floor above: a product's own value always
-   wins, wherever this file lands in its cascade. At :root they beat the
-   product's own declarations whenever this file loaded later (a Tailwind v3
-   product imports it from the entry file, after its global stylesheet). */
+   Zero specificity, like the floor above: a product's own value always wins,
+   wherever this file lands in its cascade. */
 :where(:root) {
   --ambient-blur: 48px;
   --ambient-accent: #2563eb;
@@ -147,10 +139,9 @@
 }
 
 /* THE SCROLL STRIP'S HIDDEN BAR — the attachment strip scrolls sideways with
-   no visible bar. `no-scrollbar` is a utility from shadcn's v4 stylesheet
-   (shadcn/tailwind.css), which a host may not import and a Tailwind v3 host
-   cannot. The layer declares the one it uses so it depends on neither; where
-   shadcn's also exists, the two are identical. */
+   no visible bar. `no-scrollbar` comes from shadcn's v4 stylesheet, which a
+   host may not import (a Tailwind v3 host cannot), so the layer declares its
+   own, identical copy. */
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

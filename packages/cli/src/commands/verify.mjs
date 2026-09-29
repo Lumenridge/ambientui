@@ -1,16 +1,12 @@
 /**
  * `ambientui verify` — FAIL LOUDLY, WITH THE REASON.
  *
- * Every failure the five installs hit was silent: transparent glass with no
- * error, a hotkey owned by someone else, an orb under a fixed bar on a
- * phone, a spotlight that opened once and then never again, a host button
- * restyled. Each became a check here, and each check ends in exactly one of
+ * Each check ends in exactly one of
  *
  *   PASS · FAIL · SKIPPED (with the reason and the fix) · PRE-EXISTING
  *
- * PRE-EXISTING is a check that failed at `doctor --baseline` and fails the
- * same way now: the install did not cause it, and it must not block it. A
- * check that could not run is SKIPPED, never PASS.
+ * PRE-EXISTING fails the same way it did at `doctor --baseline`, so it does
+ * not block the install. A check that could not run is SKIPPED, never PASS.
  */
 import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
@@ -232,10 +228,8 @@ async function runtime(browser, url, root, plan, add) {
     }
     let step = "first open"
     try {
-      // THE LAYER LISTENS FROM AN EFFECT, which runs after the first paint
-      // (and twice under StrictMode). A key pressed the instant the page
-      // loads can land before the listener exists and prove nothing. Give
-      // it a beat, and let only the FIRST open retry once.
+      // The layer listens from an effect, after the first paint; wait a beat
+      // and let only the first open retry once.
       await page.waitForTimeout(600)
       await openIt().catch(async () => {
         await page.waitForTimeout(600)
@@ -334,11 +328,8 @@ async function runtime(browser, url, root, plan, add) {
     else add("theme", "PASS", `glass ${t.a} ⇄ ${t.b}`)
   } else add("theme", "SKIPPED", "the product's dark mode is not .dark on <html>; check the `dark` prop by hand in both themes")
 
-  // RTL: a product with right-to-left locales (Invoify: ar, he; Excalidraw:
-  // ar, he, fa) renders the layer under dir="rtl". The floating surfaces keep
-  // their physical places (the dock is where the drag puts it); what must
-  // mirror is their CONTENT: the input's direction, each row's order, and
-  // nothing pushed off-screen.
+  // RTL: the floating surfaces keep their physical places; their content
+  // must mirror (input direction, row order) and stay on screen.
   if (plan.i18n?.rtl && mounted && hk) {
     const before = await page.evaluate(() => {
       const d = document.documentElement.getAttribute("dir")

@@ -1,12 +1,10 @@
 /**
- * THE SURVEY AGAINST REAL FILES — the committed fixtures, plus three hosts
- * written to a temp dir in the shapes the real installs met (a Next.js app
- * router product, a Yarn-berry monorepo with a ⌘K palette, a webpack app
- * with no `@/` alias). `survey()` is called as a function: it reads, it
- * never writes, so nothing lands in the fixtures.
+ * THE SURVEY AGAINST REAL FILES — the committed fixtures, plus hosts written
+ * to a temp dir (a Next.js app router product, a Yarn-berry monorepo with a
+ * ⌘K palette, a webpack app with no `@/` alias). `survey()` never writes.
  *
  * The fixtures have no node_modules on purpose: versions come from the
- * declared ranges, which is what a fresh clone looks like.
+ * declared ranges, as in a fresh clone.
  */
 import assert from "node:assert/strict"
 import { execFileSync } from "node:child_process"

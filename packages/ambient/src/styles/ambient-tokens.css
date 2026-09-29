@@ -2,20 +2,11 @@
  * THE STANDARD ROLES, FOR A PRODUCT THAT HAS NONE — shadcn's neutral token
  * block, declared so it can never win.
  *
- * The ambient layer reads the standard shadcn roles (--popover, --border,
- * --foreground, …). A product on Tailwind without shadcn has none of them,
- * and the install message only said the layer "requires the standard shadcn
- * variables": undefined inside color-mix(), they resolve to transparent and
- * the surfaces render invisible, with no error (tududi, Excalidraw,
- * 2026-09-27/28). Running `shadcn init` instead would write its whole base
- * layer into a stylesheet the product shares.
- *
- * So: the same values `shadcn init` writes (neutral), at ZERO specificity
- * (:where), so any role the product already defines wins, and the @theme
- * mapping Tailwind v4 needs for `bg-popover` and friends. Not the radius
+ * The layer reads the standard shadcn roles; undefined inside color-mix()
+ * they resolve to transparent and the surfaces render invisible. These are
+ * the values `shadcn init` writes, at zero specificity so any role the
+ * product defines wins, plus the @theme mapping Tailwind v4 needs. No radius
  * steps: those would reshape every `rounded-*` the product already uses.
- * Map the roles onto the product's own palette to make the layer look like
- * it belongs; that is the recommended next edit, not a requirement.
  *
  * Tailwind v4. The v3 twin is ambient-tokens-hsl.css.
  */

@@ -2,20 +2,13 @@
  * THE TAILWIND v3 DIALECT — the layer's source, rewritten for a project that
  * cannot move to Tailwind v4.
  *
- * The layer is written in v4 and stays that way: v4 is the reference
- * environment, and the repo is not maintained in two dialects. This module is
- * the ONE place that knows how v4 class syntax maps onto v3, and it is applied
- * at registry build time, the same way the import rewrites are.
- *
- * Found in a real install (Invoify, Tailwind 3.3, 2026-09-28): on v3 the
- * layer's v4-only classes do not error. They generate NOTHING, with at most a
- * build warning, and the surfaces render unstyled. So every rule here is
- * backed by `scripts/check-tailwind3.mjs`, which compiles each class the layer
- * uses with both versions and fails if v3 would drop one.
+ * The layer is written in v4 only; this module is the ONE place that maps v4
+ * class syntax onto v3, applied at registry build time. v3 silently drops
+ * classes it does not know, so `scripts/check-tailwind3.mjs` compiles every
+ * class with both versions and fails if v3 would drop one.
  *
  * WHAT IS REWRITTEN: whole class tokens inside string literals, found through
- * the TypeScript AST. Nothing else in the file is touched, so a rule can never
- * reach into code or prose.
+ * the TypeScript AST, so a rule can never reach into code or prose.
  */
 import ts from "typescript"
 
@@ -31,10 +24,9 @@ const COLOR_PREFIXES = new Set([
 ])
 
 /**
- * v4 transition utilities that take a variable. `duration-[var(--x)]` is the
- * obvious v3 spelling and the wrong one: once `tailwindcss-animate` is
- * installed (most shadcn v3 projects), v3 reads it as ambiguous and emits
- * nothing. The arbitrary PROPERTY form has no ambiguity to resolve.
+ * v4 transition utilities that take a variable. The arbitrary PROPERTY form,
+ * because with `tailwindcss-animate` installed v3 reads `duration-[var(--x)]`
+ * as ambiguous and emits nothing.
  */
 const PROPERTY_FOR = {
   duration: "transition-duration",
@@ -43,12 +35,9 @@ const PROPERTY_FOR = {
 }
 
 /**
- * v4 renamed the bottom of several scales: v4 `shadow-xs` is v3 `shadow-sm`,
- * v4 `shadow-sm` is v3 `shadow`, and so on down blur and drop-shadow. The
- * NAME survives the upgrade and the VALUE shifts one step, so a class that
- * compiles in both versions can still render differently. Radius is not
- * here on purpose: in a shadcn project `rounded-sm/md/lg` are the theme's
- * radius roles in both versions, not Tailwind's default scale.
+ * v4 renamed the bottom of several scales (v4 `shadow-xs` is v3 `shadow-sm`),
+ * so the same name renders one step apart. Radius is left out: in a shadcn
+ * project `rounded-sm/md/lg` are the theme's radius roles in both versions.
  */
 const RENAMED = {
   "shadow-2xs": "shadow-[0_1px_rgb(0_0_0/0.05)]",
@@ -294,8 +283,7 @@ export function sourceToTailwind3(text, fileName) {
       const start = node.getStart(sf) + open
       const end = node.getEnd() - close
       const inner = text.slice(start, end)
-      // imports and directives are strings too; module specifiers never
-      // contain a class, but skip them anyway so the rule is obvious
+      // module specifiers are strings too; skip them
       const parent = node.parent
       const isSpecifier =
         parent &&

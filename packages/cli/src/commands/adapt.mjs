@@ -1,9 +1,8 @@
 /**
  * `ambientui adapt` — re-apply the plan's adaptations to the installed
- * files, on their own. `install` runs them after the doors; this is for
- * after a door is re-added (the shadcn CLI writes the generic bytes back),
- * or after `ambientui plan` changed an answer that an adaptation depends on.
- * Every adaptation is idempotent.
+ * files. Needed after a door is re-added (the shadcn CLI writes the generic
+ * bytes back) or after `ambientui plan` changes an input an adaptation
+ * depends on. Every adaptation is idempotent.
  */
 import { applyAdaptations } from "../adapt.mjs"
 import { CliError, readState } from "../util.mjs"

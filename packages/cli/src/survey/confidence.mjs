@@ -1,21 +1,13 @@
 /**
- * EVERY FACT SAYS WHERE IT CAME FROM, AND HOW SURE IT IS.
+ * EVERY FACT SAYS WHERE IT CAME FROM, AND HOW SURE IT IS, so a guess is never
+ * stated in the same voice as a fact.
  *
- * A survey that states a guess in the same voice as a fact is how the agent
- * ended up confidently wrong before. So after the detectors run, this pass
- * does two things:
+ *   EVIDENCE. Absence is a claim too: when a detector finds nothing, what was
+ *   searched is recorded.
  *
- *   EVIDENCE FOR EVERY FACT. A detector records evidence when it FINDS
- *   something. When it finds nothing, "nothing" is also a claim — so the
- *   absence is recorded too, naming what was searched ("no tailwindcss in
- *   package.json or node_modules"). No fact in the profile is unsourced.
- *
- *   CONFIDENCE. `high` = read from a declaration (an installed version, a
- *   config key, a lockfile). `medium` = a strong convention (a declared
- *   range, a framework default, a file-name match). `low` = a heuristic that
- *   can be wrong on an ordinary project (a grep for a key handler, a z-index
- *   guessed to be a modal from its neighbours). Low facts are printed with
- *   the reason, so the agent checks them instead of acting on them.
+ *   CONFIDENCE. `high` = read from a declaration; `medium` = a strong
+ *   convention; `low` = a heuristic that can be wrong on an ordinary project.
+ *   Low facts are printed with the reason so the agent checks them.
  */
 
 /** The evidence keys each printed fact draws on (first hit is shown). */

@@ -2,18 +2,12 @@
  * ONE ICON LIBRARY — `icon.tsx` cut down to the library the host already
  * uses, plus HugeIcons (the layer draws a few marks with it directly).
  *
- * The full `icon` item maps every name in five libraries so the Foundation
- * can switch between them live, and so it depends on all five. A product
- * taking only the ambient layer never switches: it installed four icon
- * packages it would never draw, and one of them (Remix) is not tree-shaken,
- * which put ~600 KB in Excalidraw's main chunk and past its PWA precache
- * limit (2026-09-28).
+ * The full `icon` item depends on all five libraries so the Foundation can
+ * switch live; a host taking only the ambient layer never switches, so it
+ * gets one library instead of four unused packages.
  *
- * The cut is structural, not textual guesswork: icon.tsx keeps one import
- * block, one renderer helper and one SETS entry per library, and this module
- * removes the blocks of the libraries not kept. `check-icons.mjs`-style
- * proof is the install check: every variant is installed and type-checked
- * by verify-install.
+ * icon.tsx keeps one import block, one renderer helper and one SETS entry
+ * per library; this module removes the blocks of the libraries not kept.
  */
 
 /** Per library: its packages, its SETS key, and the renderer helper it uses. */

@@ -137,11 +137,7 @@ const nextId = (m: Msg[]) => (m.length ? m[m.length - 1]!.id + 1 : 1)
 const SAMPLE_ATTACHMENT =
   'TypeError: Cannot read properties of undefined (reading "draft")\n    at Composer (composer.tsx:9:14)\n    at renderWithHooks (react-dom.js:14985:18)'
 
-/**
- * What each of ambientui's own command families is called when counted. A
- * host's families name their own noun on the command (AmbientCommand.noun);
- * these stay as the fallback for the site's registrations.
- */
+/** Nouns for ambientui's own command families; hosts set AmbientCommand.noun. */
 const HINT_NOUNS: Record<string, string> = {
   Components: "component",
   Documentation: "document",
@@ -263,14 +259,8 @@ export function Assistant({
 
   const [input, setInput] = React.useState("")
   const [messages, setMessages] = React.useState<Msg[]>([])
-  /**
-   * THE SPOTLIGHT SEARCHES FIRST. With a conversation open, the spotlight
-   * used to BE the conversation: the hotkey showed the transcript and
-   * anything typed was queued as a follow-up, so the product's command
-   * palette was gone until the chat was cleared (Actual, where the
-   * spotlight had taken over the app's own ⌘K). The hotkey now opens search
-   * every time, with the conversation one row away.
-   */
+  // The hotkey always opens search, even mid-conversation, so the palette
+  // stays a palette; the conversation is one row away.
   const [searchOver, setSearchOver] = React.useState(false)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
@@ -419,12 +409,8 @@ export function Assistant({
 
   // Global shortcuts: the hotkey toggles the palette; Esc clears the query,
   // then closes.
-  //
-  // THE CAPTURE PHASE, and the host's say. A bubble-phase listener on
-  // window hears the key LAST, so a host that handles ⌘K itself and stops
-  // propagation (Excalidraw's "Add link") swallowed it and the palette
-  // never opened. Capture hears it first; `yieldHotkey` is how the host
-  // takes a keystroke back.
+  // Capture phase, so a host handler that stops propagation cannot swallow
+  // the key; `yieldHotkey` is how the host takes a keystroke back.
   React.useEffect(() => {
     if (!hotkeys) return
     const onKey = (e: KeyboardEvent) => {
@@ -1083,11 +1069,8 @@ export function Assistant({
     // searchOver); the transcript shows only when search is not on top
     const transcriptView = asking && !searchOver
 
-    // EVERY WAY OUT OF THE PALETTE LEAVES IT CLOSED AND EMPTY. A command or
-    // a jump used to run with the palette still in spotlight mode (so the
-    // next hotkey CLOSED it, and read as doing nothing), and a jump kept its
-    // query (so the next search was appended to it: "reportsschedules",
-    // sent to the assistant as a question). Actual, 2026-09-28.
+    // Every way out of the palette leaves it closed and empty, so the next
+    // hotkey opens a fresh search.
     const leave = () => {
       setInput("")
       setSearchOver(false)
@@ -1294,8 +1277,7 @@ export function Assistant({
       // a section NAME is a heading, not a countable noun — "10
       // documentation" is what happens when you lowercase one and hope. The
       // registering host names its own noun; ours are in HINT_NOUNS.
-      // The plural is the host's word when it gave one (a language whose
-      // plural is not noun + "s"); English falls back to adding the "s".
+      // the host's plural when it gave one; English falls back to "s"
       const declared = inSection.find((c) => c.noun)
       const singular = declared?.noun ?? HINT_NOUNS[sec]
       if (!singular) return t.sectionCount({ n, noun: sec.toLowerCase() })
@@ -1794,15 +1776,9 @@ export function Assistant({
     )
   }
 
-  /**
-   * THE LAYER'S ONE ROOT. `data-ambient-root` is how anything outside —
-   * the install's verify step, a host's own tests — finds the layer
-   * without knowing its markup. `ambient-scope` is where a scoped preflight
-   * applies (ambient-base, for products not built on Tailwind), so the
-   * product's own screens are never reset. `dark` mirrors a theme the host
-   * keeps somewhere other than `<html>`. With a `zIndex` the root becomes a
-   * stacking context at that level; without one it is layout-neutral.
-   */
+  // The layer's one root: `data-ambient-root` lets tests and verify find
+  // it, `ambient-scope` is where a scoped preflight applies, and with a
+  // `zIndex` it becomes a stacking context (otherwise layout-neutral).
   return (
     <div
       data-ambient-root=""

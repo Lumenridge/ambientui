@@ -113,10 +113,8 @@ export function FoundationProvider({
   children: React.ReactNode
   /**
    * Load a selected Google font from Google. False for a product that
-   * bundles its fonts itself or cannot reach a third party: offline-first
-   * apps, strict CSP or COEP headers (Actual already shipped Inter locally
-   * and runs offline, 2026-09-28). The family is still applied; the product
-   * supplies the files.
+   * bundles its fonts or cannot reach a third party (offline-first, strict
+   * CSP or COEP). The family is still applied; the product supplies the files.
    */
   remoteFonts?: boolean
 }) {

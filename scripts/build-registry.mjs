@@ -143,19 +143,16 @@ const IMPORT_REWRITES = [
 
 /**
  * `v` is a variant from scripts/variants (or nothing, for the reference
- * environment). A variant's copy is staged under its own directory, so the
- * same source file can publish in several dialects without the stages
- * overwriting each other.
+ * environment). A variant's copy is staged under its own directory so
+ * dialects of one source do not overwrite each other.
  */
 function stage(relPath, v) {
   const src = resolve(ROOT, relPath)
   let text = readFileSync(src, "utf8")
   for (const [from, to] of IMPORT_REWRITES) text = text.replace(from, to)
-  // LINT DIRECTIVES NAME OUR PLUGINS, NOT THEIRS. `eslint-disable
-  // react-hooks/…` is an ERROR in a project without that plugin ("Definition
-  // for rule … was not found": tududi, and Excalidraw's dev overlay showed it
-  // beside the orb). The published copy keeps each directive's reach and
-  // drops the rule names; file-wide react-refresh directives go entirely.
+  // LINT DIRECTIVES NAME OUR PLUGINS, NOT THEIRS. A rule name is an error in
+  // a project without that plugin, so the published copy keeps each
+  // directive's reach and drops the rule names.
   text = text
     .replace(/^\/\* eslint-disable react-refresh\/[^*]*\*\/\n/m, "")
     .replace(
@@ -422,8 +419,7 @@ const ORB_SHAPES = [
 
 /** Shared by every dialect of the material, so the knobs cannot drift. */
 // Not --ambient-blur: ambient.css declares it, and as a cssVar the shadcn
-// CLI also wrote `--ambient-blur: var(--ambient-blur)` into the product's
-// @theme inline block, a variable defined as itself (tududi, 2026-09-27).
+// CLI would define it as itself in the product's @theme inline block.
 const AMBIENT_CSS_VARS = {
   light: {
     "ambient-accent": "#2563eb",
@@ -593,13 +589,10 @@ const items = [
     docs: 'Import the material once: `@import "./styles/ambient.css";` in your globals.css. Then mount the layer at the root of your app:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nIt needs no other providers — it falls back to DEFAULT_AMBIENT_RUNTIME. Supply your own design system by wrapping it in AmbientRuntimeProvider. This copies ~8,300 lines you will own and can edit — owning the source is the point; prefer `npm i ambientui` if you want an upgrade path instead.',
   },
   /**
-   * THE TAILWIND v3 DOOR. The same layer, rewritten class by class for a
-   * project on Tailwind 3.4+ (scripts/variants/tailwind-v3.mjs), so adopting
-   * the assistant never forces a Tailwind upgrade on a product. Upgrading
-   * rewrites a product's existing screens (tududi: 30 backdrops, 383 rings,
-   * every default border) and some products cannot take it at all (Invoify
-   * compiles its PDF CSS with the v3 API). Its material is the HSL-triplet
-   * stylesheet, because triplets are what shadcn writes for v3.
+   * THE TAILWIND v3 DOOR. The same layer, rewritten for Tailwind 3.4+
+   * (scripts/variants/tailwind-v3.mjs), so adopting the assistant never
+   * forces a Tailwind upgrade on a product. Its material is the HSL-triplet
+   * stylesheet, shadcn's v3 token format.
    *
    * Layer only: the Foundation drives Tailwind through v4's @theme and has no
    * v3 form.
@@ -651,10 +644,8 @@ const items = [
   },
   /**
    * THE BASE FOR A PRODUCT WITHOUT shadcn OR TAILWIND. What the layer
-   * assumes a shadcn project already has, shipped as items instead of a
-   * `shadcn init` that would rewrite the product's stylesheet: the `cn`
-   * helper, the standard roles at zero specificity, and (no Tailwind at all)
-   * a preflight confined to the layer.
+   * assumes a shadcn project has, shipped as items instead of a `shadcn init`
+   * that would rewrite the product's stylesheet.
    */
   {
     name: "ambient-utils",
@@ -801,8 +792,7 @@ const items = [
         type: "registry:file",
         target: "~/.claude/skills/ambientui-start/DESIGN.md",
       },
-      // the agent's review of the survey (step 1): the doctor's fixed checks
-      // are heuristics, and this is how they are checked against the code
+      // how the agent checks the doctor's heuristic survey against the code
       {
         path: "docs/doctor.md",
         type: "registry:file",
@@ -818,9 +808,8 @@ const items = [
     description:
       "The rules an AI agent works under in this system: the constitution's hard rules, plus three review roles — design-system manager, product-design manager, and copy.",
     files: [
-      // NOT the product's CLAUDE.md. Targeting ~/CLAUDE.md replaced a
-      // product's own maintained guide on install (tududi, 2026-09-27). The
-      // rules land beside it; start.md has the agent add one pointer line.
+      // NOT the product's CLAUDE.md, which it must not replace. start.md has
+      // the agent add one pointer line to it.
       { path: "CLAUDE.md", type: "registry:file", target: "~/.claude/ambientui/CLAUDE.md" },
       ...[
         "ds-manager/SKILL",

@@ -3,18 +3,12 @@
  * PROVES THE TAILWIND v3 DOOR IS COMPLETE — every class the layer uses still
  * styles something after the v3 rewrite.
  *
- * On Tailwind v3 a v4-only class is not an error. It generates nothing, and
- * the surface renders unstyled (Invoify, 2026-09-28: 44 such gaps, found by
- * compiling the layer with both versions and diffing). This script is that
- * diff, run on every commit:
+ * On Tailwind v3 a v4-only class silently generates nothing, so:
  *
  *   1. every class in the layer's string literals that v4 generates,
  *   2. rewritten by scripts/variants/tailwind-v3.mjs,
  *   3. must generate in v3 against a stock shadcn v3 config,
- *   4. and must set the same CSS properties it set in v4.
- *
- * (4) is what catches a rename: a class that compiles in both versions but
- * means something else in one of them.
+ *   4. and must set the same CSS properties it set in v4 (catches renames).
  *
  * It also proves the HSL-triplet stylesheet wraps every standard role.
  */
@@ -184,8 +178,7 @@ async function v3(cls) {
       content: [{ raw: ` ${cls} `, extension: "html" }],
       corePlugins: { preflight: false },
       theme: { extend: V3_THEME },
-      // most v3 shadcn projects carry it, and it is what makes
-      // `duration-[var(--x)]` ambiguous: compile against the hard case
+      // makes `duration-[var(--x)]` ambiguous: compile against the hard case
       plugins: [animate],
     }),
   ]).process("@tailwind utilities;", { from: undefined })
@@ -195,9 +188,8 @@ async function v3(cls) {
 /** The CSS properties a rule sets — the meaning, not the spelling. */
 function properties(css) {
   const props = new Set()
-  // declarations only: `prop: value;` — a selector such as `svg:not(…) {`
-  // has a colon too, and must not read as a property
-  // (the last declaration of a block may omit its semicolon)
+  // declarations only, not selectors like `svg:not(…) {`; the last
+  // declaration of a block may omit its semicolon
   for (const m of css.matchAll(/(?:^|[;{\s])(-?[a-z][a-z-]*)\s*:\s*[^;{}]+(?:;|(?=\s*\}))/g)) {
     const p = m[1]
     if (p.startsWith("-webkit-") || p.startsWith("-moz-")) continue

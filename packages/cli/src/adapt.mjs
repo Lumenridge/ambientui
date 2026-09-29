@@ -1,30 +1,18 @@
 /**
- * ADAPT — the doors stay generic; the files they land are fitted to THIS
- * product afterwards, from what the doctor found.
+ * ADAPT — the doors stay generic; the files they land are fitted to this
+ * product afterwards, from what the doctor found. Small per-product
+ * differences are applied to the installed files rather than multiplied into
+ * registry variants:
  *
- * A registry item is the same bytes for every product. Some differences are
- * worth their own item (Tailwind v3, the token format, one icon library:
- * those are variants, built and gate-checked in the library). Others are
- * small, local and decided per product, and are cheaper to apply to the
- * installed files than to multiply the registry by:
+ *   strip-use-client  removed outside React Server Components apps, where it
+ *                     only produces a bundler warning per file.
+ *   accent            follows the product's --primary when it is chromatic;
+ *                     a neutral primary keeps the default blue.
+ *   orb-assets        moved to the product's static dir when it is not
+ *                     public/, or the orb renders blank.
  *
- *   strip-use-client  `"use client"` on every layer file makes Vite and
- *                     webpack print a warning per file, twice (Excalidraw).
- *                     It only means something to a React Server Components
- *                     app, so everywhere else it is removed.
- *   accent            the layer's accent defaults to a blue unrelated to the
- *                     product. When the product's --primary is a real colour,
- *                     the accent follows it; a gray primary (shadcn's stock
- *                     neutral) keeps the blue, which a near-black glow would
- *                     not improve.
- *   orb-assets        the orb's artwork lands in public/, and a product may
- *                     serve static files from elsewhere (Excalidraw's
- *                     `../public`); unmoved, the orb renders blank.
- *
- * The DECISIONS are pure (`adaptationsFor`, called by the plan, so the owner
- * sees them before anything runs). The CHANGES are here (`applyAdaptations`,
- * called by install after the doors, and by `ambientui adapt` on its own).
- * Every adaptation is idempotent: running it twice changes nothing.
+ * Decisions are pure (`adaptationsFor`, shown in the plan); changes are
+ * applied by `applyAdaptations`. Every adaptation is idempotent.
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
@@ -74,8 +62,7 @@ export function adaptationsFor(profile, { srcRoot = ".", staticDir = "public", p
     out.push({
       id: "strip-use-client",
       dir: join(srcRoot, "components/ambient"),
-      // shadcn primitives the install brought (sheet, sidebar…) carry it too;
-      // only files the install ADDED there, never the product's own
+      // shadcn primitives the install added carry it too; never the product's own
       newIn: join(srcRoot, profile.shadcn?.uiDirFromSrc ?? "components/ui"),
       why: `${profile.framework?.name ?? "this app"} is not a React Server Components app, so the layer's "use client" directives only print a bundler warning per file`,
     })
@@ -127,8 +114,8 @@ function stripUseClient(appAbs, a, isNew) {
   const dir = join(appAbs, a.dir)
   if (!isDir(dir)) return { changed: [], note: `${a.dir} not found` }
   const files = walk(dir, { maxFiles: 2000 }).files
-  // without isNew (a standalone `ambientui adapt`) the product's ui dir is
-  // left alone: there is no way to tell its files from the install's
+  // without isNew the product's ui dir is left alone: its files cannot be
+  // told from the install's
   if (a.newIn && isNew && isDir(join(appAbs, a.newIn))) {
     files.push(...walk(join(appAbs, a.newIn), { maxFiles: 2000 }).files.filter(isNew))
   }
@@ -174,9 +161,8 @@ function applyAccent(root, appAbs, plan, profile, a) {
     }
     return { changed }
   }
-  // nothing declared it (a door without cssVars): declare it once, at the
-  // end of the CSS entry, where it wins over ambient.css's zero-specificity
-  // default wherever that file is imported
+  // nothing declared it: append it to the CSS entry, where it wins over
+  // ambient.css's zero-specificity default
   const entry = candidates[0]
   if (!entry) return { changed, note: "no CSS entry to write the accent into" }
   const text = readFileSync(entry, "utf8")

@@ -1,27 +1,18 @@
 /**
  * `ambientui install` — RUN THE PLAN'S COMMANDS, AND UNDO WHAT THEY MUST NOT DO.
  *
- * The shadcn CLI is the right tool to land the doors, and it has three
- * habits that broke real installs:
+ * The shadcn CLI lands the doors; around it:
  *
- *   1. `--overwrite` (needed so a re-run is idempotent) also replaces the
- *      product's OWN button, input and lib/utils.ts. Invoify's buttons all
- *      restyled; tududi's `cn` lost a custom merge. So every file under the
- *      ui dir and utils that exists before a command is snapshotted, and
- *      restored afterwards if it changed. The product's primitives are never
- *      replaced; the doors that need different ones ship their own.
- *   2. Registry items with explicit `target`s land at `<app>/<target>` even
- *      when the `@/` alias points at `./src` or `./frontend`. The files exist
- *      and nothing can import them. They are MOVED under the source root.
- *   3. It reformats config it touches (tailwind.config, components.json,
- *      the CSS entry). That is not undone — it may be wanted — but the diff
- *      is printed so the agent reviews it instead of committing it blind.
+ *   1. `--overwrite` also replaces the product's own primitives, so every
+ *      file under the ui dir and utils is snapshotted and restored if it
+ *      changed. The product's primitives are never replaced.
+ *   2. Items with explicit `target`s land at `<app>/<target>` even when `@/`
+ *      points elsewhere; they are moved under the source root.
+ *   3. Config the CLI reformats is not undone, but its diff is printed for
+ *      review.
  *
- * Then the plan's ADAPTATIONS run on what landed (src/adapt.mjs): the doors
- * are the same bytes for every product, and the few per-product changes
- * (the "use client" directives, the accent, where the orb's artwork goes)
- * are applied here. Wiring the CSS, the mount and the aliases is the
- * agent's job, from the plan, where the owner can see it happen.
+ * Then the plan's adaptations (src/adapt.mjs) run on what landed. Wiring
+ * the CSS, the mount and the aliases is the agent's job, from the plan.
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
@@ -140,8 +131,7 @@ export async function install(opts, out) {
     if (!walk(at, { maxFiles: 1 }).files.length) rmSync(at, { recursive: true, force: true })
   }
 
-  // (2b) ADAPT the landed files to this product (src/adapt.mjs): the
-  // decisions were made by the plan, where the owner could see them.
+  // (2b) ADAPT the landed files to this product.
   const adapted = applyAdaptations({
     root,
     plan,

@@ -256,9 +256,8 @@ const hi =
     <HugeiconsIcon icon={icon} size={size} strokeWidth={strokeWidth} className={className} />
   )
 const lu =
-  // `number | string`: the libraries type size that way, and under React
-  // 18's types a narrower `number` here fails every adapter (tududi: 132
-  // errors). Accepting the wider type costs nothing; we only pass numbers.
+  // `number | string`: the libraries type size that way, and a narrower
+  // `number` fails every adapter under React 18's types.
   (C: React.ComponentType<{ size?: number | string; strokeWidth?: number | string; className?: string }>): Renderer =>
   (size, strokeWidth, className) => <C size={size} strokeWidth={strokeWidth} className={className} />
 const tb = lu
