@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- The deterministic setup. The layer takes `productName`, `messages`, `hotkey`/`yieldHotkey`, `zIndex`, `dark` and `defaultOrbAnchor`; registering commands can no longer loop (`useRegisterCommands`); commands and jumps leave the spotlight closed and empty; the hotkey opens search even mid-conversation; `NavItem.icon` is an icon name; `auditAmbientApi` tests a host's stubs. The chrome no longer says "ambientui": it says `productName`, or "the assistant". Icon adapters accept React 18's types. The Foundation maps `--secondary`, only sets the root font size when scaling is not 100%, and takes `remoteFonts`. The install pipeline that uses all of this is the new `@ambient-ui/cli`.
+- Icon adapters accept `size` as `number | string`, so they type-check under React 18.
 
 ## 0.1.3
 

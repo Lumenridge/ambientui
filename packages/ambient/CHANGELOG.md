@@ -4,7 +4,12 @@
 
 ### Minor Changes
 
-- The deterministic setup. The layer takes `productName`, `messages`, `hotkey`/`yieldHotkey`, `zIndex`, `dark` and `defaultOrbAnchor`; registering commands can no longer loop (`useRegisterCommands`); commands and jumps leave the spotlight closed and empty; the hotkey opens search even mid-conversation; `NavItem.icon` is an icon name; `auditAmbientApi` tests a host's stubs. The chrome no longer says "ambientui": it says `productName`, or "the assistant". Icon adapters accept React 18's types. The Foundation maps `--secondary`, only sets the root font size when scaling is not 100%, and takes `remoteFonts`. The install pipeline that uses all of this is the new `@ambient-ui/cli`.
+- **Breaking.** The chrome's words come from a catalog in ten languages (`messages.<locale>.ts`) and name the product (`productName`, `assistantName`), never the library; with neither set they say "the assistant". `messages` takes catalog strings (ICU MessageFormat), not functions.
+- **Breaking.** `NavItem.icon` is an icon name, drawn by `<Icon>`; a HugeIcons object is still accepted.
+- `AssistantProvider` takes `locale`, `hotkey` / `yieldHotkey`, `zIndex`, `dark` and `defaultOrbAnchor`. The locale is sent with every question and suggestions request.
+- `setCommands` ignores identical lists, and `useRegisterCommands` registers for a component's lifetime. Commands and jumps leave the spotlight closed and empty; the hotkey opens search even mid-conversation, heard in the capture phase.
+- `auditAmbientApi` tests a host's stub or real API. The root carries `data-ambient-root`, each surface `data-ambient-surface`.
+- `ambient.css` declares its knobs and defaults at zero specificity, including motion roles, `--positive` and `.no-scrollbar`.
 
 ### Patch Changes
 
