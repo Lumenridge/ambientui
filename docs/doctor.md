@@ -7,8 +7,8 @@ is how you check the survey in spirit before anything is installed, and
 correct the plan where the survey is wrong or missed something.
 
 Do this after `doctor` and before `begin`. It takes a few minutes, and it
-is not optional: every install so far had at least one thing no fixed
-check would have found.
+is not optional: fixed checks see only what they were written for, and
+most projects have something only reading the code reveals.
 
 ## How to review
 

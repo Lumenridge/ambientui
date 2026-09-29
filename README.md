@@ -148,7 +148,9 @@ thing that decides what rendering looks like.
 [start.md](https://ambientui.ai/start.md). It runs
 `npx @ambient-ui/cli doctor` to survey your project, installs from the plan
 that writes, proves the result with `verify`, and commits the install as
-one commit that `npx @ambient-ui/cli uninstall` can revert.
+one commit that `npx @ambient-ui/cli uninstall` can revert. It picks the
+doors for your stack; the commands below are the defaults for a shadcn
+project on Tailwind v4.
 
 **Take the components.** The parts you can see. They land in your repo as code
 you own.
@@ -156,7 +158,6 @@ you own.
 | | | |
 |---|---|---|
 | **The whole ambient layer** | The orb, the spotlight, the panel, the dock and the history, plus the wiring that lets a page tell it where you are. | `npx shadcn add @ambientui/ambient-layer` |
-| **The layer on Tailwind v3** | The same layer, rewritten for Tailwind 3.4+ so your product keeps its Tailwind version. Layer only: the Foundation needs v4. | `npx shadcn add @ambientui/ambient-layer-tw3` |
 | **One component** | Just the piece you need: the reasoning panel, the tool timeline, the diff. 31 to choose from, each documented with what it is and is not for. | `npx shadcn add @ambientui/reasoning-panel` |
 
 **Adopt the architecture.** The part that decides how everything looks.

@@ -142,14 +142,8 @@ requests go.** The same client, the same base path, the same auth, the same
 error handling, the same mock mode. Never a new server just for the
 assistant, unless the product already works that way.
 
-This used to be the last paragraph of the advice instead of the first, and
-the one example was a bare `fetch` to `VITE_API_URL`. The first
-session-authenticated app would have failed on its first real request
-(tududi: an `/api` prefix, `credentials: "include"`, a CSRF header and a 401
-redirect, all missing from the example). The first local-first app was led
-toward a second, AI-only server it could not accept, whose assistant could
-never read the data it was meant to answer about (Actual, whose UI never
-makes an HTTP call).
+A transport of its own would miss the product's base path, auth and error
+handling, and a separate AI server cannot read the data the product holds.
 
 Find the product's transport before writing anything (`ambientui doctor`
 reports it), then pick the matching example:
@@ -239,7 +233,7 @@ holds. It reaches a model through whatever outbound path the product
 already has (its sync server, a user-supplied key), or stays on stubs.
 
 ```ts
-// lib/ambient/api.ts — Actual's shape: send(name, args) into loot-core
+// lib/ambient/api.ts — a local engine reached through send(name, args)
 import { createAmbientApi } from "@/components/ambient/responder"
 import { send } from "loot-core/platform/client/fetch" // the product's own
 

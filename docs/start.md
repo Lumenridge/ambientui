@@ -16,9 +16,8 @@ anything about it.
 Do the steps in this order. The order is the point: survey first, install
 from a plan, build, prove it, and the reveal last.
 
-**Decide as little as you can.** Most of what used to be your judgement is
-now a command's output. `ambientui doctor` surveys the project and writes a
-plan: which doors, which commands, where the CSS goes, which props the
+**Decide as little as you can.** `ambientui doctor` surveys the project
+and writes a plan: which doors, which commands, where the CSS goes, which props the
 provider takes, how the assistant reaches the backend. Follow the plan.
 Where it and this guide disagree, the plan knows the project and wins;
 where the plan is silent, this guide applies.
@@ -114,52 +113,26 @@ npx -y @ambient-ui/cli install
 ```
 
 `begin` records where the project stood. `install` runs the plan's
-commands: it registers the registry and adds each door the plan chose (the
-layer in the dialect this project needs: `ambient-layer`, or
-`ambient-layer-tw3` on Tailwind v3; the material for the project's token
-format; a scoped base for a product not built on Tailwind; one icon library
-instead of five), non-interactively. It also protects the product: any of
-the product's own files the shadcn CLI overwrote (its button, its input,
-its `lib/utils.ts`) are put back, and files that landed outside the
-project's source root are moved into it. Then it ADAPTS what landed to
-this product, as the plan listed: it removes the `"use client"`
-directives unless the app uses React Server Components, points the
-assistant's accent at the product's own primary colour when that is a
-real colour, and moves the orb's artwork to wherever the product serves
-static files. The doors are the same for everyone; the adaptations are
-yours. If a door is ever re-added, `npx -y @ambient-ui/cli adapt` applies
-them again. Read what it prints, then look at
-`git diff` on the config files it names: the shadcn CLI reformats configs
-and drops comments, so restore anything that was the author's.
+commands non-interactively: it registers the registry and adds the doors
+the plan chose for this project's stack. It puts back any of the product's
+own files the shadcn CLI overwrote, moves files that landed outside the
+source root into it, and then applies the plan's adaptations to what
+landed (`plan.adapt`, each with its reason). If a door is ever re-added,
+`npx -y @ambient-ui/cli adapt` applies them again. Read what it prints,
+then look at `git diff` on the config files it names: the shadcn CLI
+reformats configs and drops comments, so restore anything that was the
+author's.
 
 Then do what the plan says the CLI cannot do for you, each item as written
-there:
+there. **The plan is authoritative for this project's stack**: this guide
+names the kinds of step, the plan holds the exact files, lines and
+reasons, so a stack this guide never mentions still installs correctly.
 
-- **Required steps** (`plan.requiredSteps`): a Tailwind 3.4 bump, the `@/`
-  alias in the bundler and the test runner as well as tsconfig, and the
-  like. Each names its file and its snippet.
-- **The CSS** (`plan.css`). Use the shipped files; never reconstruct them
-  by hand, because they ARE the propagation contract. The mode decides
-  where they go:
-  - `v4-import` — in the global stylesheet, after Tailwind:
-
-    ```css
-    @import "tailwindcss" theme(static);
-    @import "./styles/foundation.css"; /* full path only */
-    @import "./styles/ambient.css";
-    ```
-
-    `theme(static)` matters on the full path: without it Tailwind only
-    emits the palette variables some class already uses, and the
-    Foundation's accents resolve to nothing, with no error.
-  - `v3-entry-import` — from the app's entry file, on the line after the
-    global stylesheet (`import "./styles/ambient.css"`). Not an `@import`
-    after the `@tailwind` directives: CSS does not allow it there, and Vite
-    drops the line with only a warning.
-  - `scoped` — a product not built on Tailwind gets Tailwind without its
-    global reset, and the reset only inside the layer. The plan prints the
-    exact lines. Never `@import "tailwindcss"` into such a product: its
-    preflight restyles the product's screens.
+- **Required steps** (`plan.requiredSteps`): each names its file, its
+  snippet and why.
+- **The CSS** (`plan.css`): add `plan.css.lines` exactly where
+  `plan.css.where` says. Use the shipped stylesheets as they are; never
+  reconstruct them by hand, because they carry the propagation contract.
 - **Lint and tests** (`plan.lint`, `plan.tests`): exclude the vendored
   folders from the product's lint autofix before you edit anything in
   them, and add the test mocks the plan names.
@@ -187,7 +160,8 @@ lists (`plan.provider`):
 ```tsx
 <FoundationProvider>{/* full path only */}
   <AssistantProvider
-    productName="Invoify"      // the product's name, never "ambientui"
+    productName="Acme"         // the product's name, never "ambientui"
+    assistantName="Nova"       // only if the assistant has a name of its own
     navItems={NAV}
     onNavigate={goTo}
     api={ambientApi}
@@ -207,18 +181,16 @@ When the plan says so, load `Assistant` lazily and import the provider
 from `@/components/ambient/assistant-context`, not from the barrel: the
 barrel pulls the whole layer into whichever chunk imports it.
 
-**Language.** The layer's own words ship in English, as a catalog written
-to be copied: `components/ambient/messages.en.ts`, one key per string, in
-ICU MessageFormat (`{placeholders}`, `{n, plural, one {…} other {…}}`). For
-a product that translates (`plan.i18n`), wire its active locale into
-`locale` (the plan gives the line for its library) and, for each of its
-other locales, copy the catalog to `messages.<locale>.ts`, or add the keys
-under an `ambient` namespace in its own locale files. Translate the values
-only: keys, placeholders and plural syntax stay as they are. Pass the
-active locale's object as `messages`; missing keys fall back to English.
-Note each machine-translated locale (`ambientui note --kind judgement`).
-The locale also travels with every question and suggestions request, so
-the backend and the stubs can answer in it.
+**Language.** The layer's own words ship in ten languages (en, zh, hi,
+es, fr, ar, pt, ru, ja, de) as catalogs in `components/ambient/`
+(`messages.<locale>.ts`: one key per string, ICU MessageFormat). For a
+product that translates (`plan.i18n`), wire its active locale into
+`locale` (the plan gives the line for its library); the layer picks the
+matching catalog. For a locale that does not ship, copy
+`messages.en.ts` to `messages.<locale>.ts` and register it, as its header
+explains, and note it (`ambientui note --kind judgement`). The locale also
+travels with every question and suggestions request, so the backend and
+the stubs can answer in it.
 
 `navItems` is where the palette's "Jump to" goes. Each takes an icon NAME
 (`icon: "home"`). For an existing product, do not add a call to every page:
@@ -450,7 +422,7 @@ With the dev server running:
 npx -y @ambient-ui/cli verify --url http://localhost:<port>
 ```
 
-It checks what used to fail silently, and fails loudly instead:
+It checks what would otherwise fail silently, and fails loudly:
 
 - the typecheck, lint, tests and build, against the baseline from step 1
   (anything that failed before and fails the same way is PRE-EXISTING);
