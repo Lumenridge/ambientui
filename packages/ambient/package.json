@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10",
-    "@paper-design/shaders-react": "^0.0.80",
+    "@paper-design/shaders-react": "^0.0.81",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^24",
@@ -71,7 +71,7 @@
     "assets"
   ],
   "peerDependencies": {
-    "@paper-design/shaders-react": "^0.0.80",
+    "@paper-design/shaders-react": ">=0.0.80 <0.1.0",
     "framer-motion": "^13",
     "react": "^19",
     "react-dom": "^19"

@@ -29,14 +29,15 @@ jobs:
       - run: npm ci
       # the same gate that guards every commit — nothing publishes red
       - run: npm run gate
-      - uses: changesets/action@v1
+      # v2 reads the published packages from changesets v3's structured
+      # output, so it can push the git tags and create the GitHub releases
+      - uses: changesets/action@v2
         with:
-          version: npm run version-packages
-          publish: npm run release
-          title: Version packages
-          commit: Version packages
+          version-script: npm run version-packages
+          publish-script: npm run release
+          pr-title: Version packages
+          commit-message: Version packages
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
