@@ -33,6 +33,10 @@ jobs:
       - name: Registry builds from a clean checkout
         run: npm run registry:build
 
+      # Not in `npm run gate`: a changeset is committed before it is versioned.
+      - name: Changesets are versioned in the PR
+        run: npm run changesets:check
+
   # SEPARATE JOB, because it is minutes rather than seconds: it installs a
   # scratch project and builds it. Only runs when something it could break
   # changed — doc-only and site-only PRs skip it entirely.

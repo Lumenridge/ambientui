@@ -13,5 +13,6 @@ That is the intended trade — the number means something instead.
 
 `@ambientui/site` is ignored; the website is not a package.
 
-Add a changeset with `npx changeset` in your PR. After it merges, the release
-workflow opens a "Version packages" PR; merging that PR publishes to npm.
+Add a changeset with `npx changeset` in your PR, then run
+`npm run version-packages` and commit the version bump and changelog. The gate
+fails a PR with an unversioned changeset. Merging the PR publishes to npm.

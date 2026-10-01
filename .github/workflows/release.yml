@@ -1,10 +1,11 @@
 name: Release to npm
 
-# On every push to main, changesets either opens (or updates) a "Version
-# packages" PR from the pending changesets, or, when none are pending and a
-# package's version is not on npm yet, publishes it. Merging the Version PR
-# is the release. NPM_TOKEN must be able to publish every package in the
-# @ambient-ui scope and `ambientui`.
+# On every merge to main, publishes each package whose version is not on
+# npm yet, then tags it and creates its GitHub release. Versions are bumped
+# in the PR that makes the change (`npm run version-packages`, enforced by
+# the gate workflow), so merging an approved PR is the release. NPM_TOKEN
+# must be able to publish every package in the @ambient-ui scope and
+# `ambientui`.
 on:
   push:
     branches: [main]
@@ -13,7 +14,6 @@ concurrency: release-${{ github.ref }}
 
 permissions:
   contents: write
-  pull-requests: write
   id-token: write
 
 jobs:
@@ -33,10 +33,7 @@ jobs:
       # output, so it can push the git tags and create the GitHub releases
       - uses: changesets/action@v2
         with:
-          version-script: npm run version-packages
           publish-script: npm run release
-          pr-title: Version packages
-          commit-message: Version packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

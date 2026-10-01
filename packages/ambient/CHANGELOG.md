@@ -1,5 +1,11 @@
 # ambientui
 
+## 0.2.1
+
+### Patch Changes
+
+- 60f4e20: `@paper-design/shaders-react` is accepted at any 0.0.x from 0.0.80, so `npm i ambientui` no longer conflicts with a newer shaders release.
+
 ## 0.2.0
 
 ### Minor Changes
