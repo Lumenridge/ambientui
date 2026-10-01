@@ -1,0 +1,35 @@
+{
+  "name": "@ambient-ui/cli",
+  "version": "0.1.0",
+  "description": "Surveys a host React project, plans the ambientui install, runs it safely, verifies it loudly and reverses it with git.",
+  "type": "module",
+  "bin": {
+    "ambientui": "./bin/ambientui.mjs"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test test/",
+    "typecheck": "node bin/ambientui.mjs --version",
+    "lint": "node --check bin/ambientui.mjs",
+    "build": "node --check bin/ambientui.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.55.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lumenridge/ambientui.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://ambientui.ai"
+}

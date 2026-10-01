@@ -144,6 +144,14 @@ The contract, examples and what it doesn't do yet:
 Two tracks. The first gives you things that render; the second gives you the
 thing that decides what rendering looks like.
 
+**Let an agent do it.** Point your coding agent at
+[start.md](https://ambientui.ai/start.md). It runs
+`npx @ambient-ui/cli doctor` to survey your project, installs from the plan
+that writes, proves the result with `verify`, and commits the install as
+one commit that `npx @ambient-ui/cli uninstall` can revert. It picks the
+doors for your stack; the commands below are the defaults for a shadcn
+project on Tailwind v4.
+
 **Take the components.** The parts you can see. They land in your repo as code
 you own.
 

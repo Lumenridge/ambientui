@@ -9,6 +9,12 @@ import type { AmbientRecent } from "./responder-schemas"
 import type { IconName } from "@ambient-ui/ui/components/icon"
 
 import type { OrbState } from "./orb-character"
+import {
+  AmbientMessagesProvider,
+  resolveAmbientMessages,
+  type AmbientCatalog,
+  type AmbientMessages,
+} from "./messages"
 
 export type AssistantMode =
   | "line"
@@ -53,7 +59,7 @@ export type PageIntel = {
    * routes: the palette should move you around where you are working, not
    * away from it.
    */
-  jumps?: { id: string; label: string; desc?: string }[]
+  jumps?: { id: string; label: string; desc?: string; icon?: NavItem["icon"] }[]
   onJump?: (id: string) => void
   /**
    * What the spotlight's input invites here. The generic line asks about the
@@ -73,18 +79,20 @@ export type PageIntel = {
 /**
  * A place the host app can navigate to, offered in the palette's "Jump to".
  *
- * THE LAYER IS TOLD, NEVER IMPORTS. assistant.tsx used to `import { sections }
- * from "@/nav"` — a UI layer reaching into one particular app's route table,
- * and the single thing that made it un-liftable. `icon` is deliberately
- * `unknown`: the layer only forwards it to the host's own Icon, so no icon
- * library leaks into the public contract.
+ * The layer is told its nav items; it never imports the host's routes.
+ *
+ * `icon` is a vocabulary NAME ("home", "settings"), drawn by the configured
+ * library through <Icon>. A HugeIcons icon object is also accepted.
  */
 export type NavItem = {
   id: string
   label: string
   desc?: string
-  icon?: unknown
+  icon?: IconName | NavIconObject
 }
+
+/** A HugeIcons icon object, also accepted as NavItem.icon. */
+export type NavIconObject = readonly unknown[] | Record<string, unknown>
 
 export type AmbientCommand = {
   id: string
@@ -96,8 +104,18 @@ export type AmbientCommand = {
   keywords?: string
   /** An icon NAME from the vocabulary, drawn by the configured library. */
   icon?: string
+  /** What one of this section's commands is called when counted ("8 accounts"). */
+  noun?: string
+  /** The plural, for languages where it is not the noun plus "s". */
+  nounPlural?: string
   run: () => void
 }
+
+/**
+ * A key combination: modifiers joined by `+`, then the key. `mod` is ⌘ on
+ * macOS and Ctrl elsewhere. "mod+k", "mod+j", "mod+shift+k".
+ */
+export type AmbientHotkey = string
 
 type AssistantState = {
   mode: AssistantMode
@@ -110,6 +128,11 @@ type AssistantState = {
   setPageIntel: (i: PageIntel | null) => void
   /** Everything ⌘K can DO, registered by the app — see AmbientCommand. */
   commands: AmbientCommand[]
+  /**
+   * Replace the registered commands. Safe to call on every render: an
+   * identical list does not update state, and `run` always calls the latest
+   * closure. Prefer useRegisterCommands, which also clears on unmount.
+   */
   setCommands: (c: AmbientCommand[]) => void
   /** Where the host can go — see NavItem. Empty is a valid state. */
   navItems: NavItem[]
@@ -132,6 +155,18 @@ type AssistantState = {
   setOrbState: (s: OrbState) => void
   /** Navigate the app shell to a section (wired by App). */
   navigate?: (sectionId: string) => void
+  /** The shortcut that opens the spotlight, or false for none. */
+  hotkey: AmbientHotkey | false
+  /** Return true to let the host keep this keystroke. */
+  yieldHotkey?: (event: KeyboardEvent) => boolean
+  /** The layer's stacking level against the host's chrome, when set. */
+  zIndex?: number
+  /** Render the layer in the host's dark theme regardless of `<html>`. */
+  dark: boolean
+  /** The chrome's words — see messages.ts. */
+  messages: AmbientMessages
+  /** The person's language: the provider's `locale`, else `<html lang>`, else "en". */
+  locale: string
   /**
    * The host's Ambient API (see responder.ts): where every question,
    * suggestion list and recent-chat list comes from. Without one, every
@@ -156,28 +191,117 @@ type AssistantState = {
 
 const AssistantContext = React.createContext<AssistantState | undefined>(undefined)
 
+/** A stable key for what a command list SAYS, ignoring its closures. */
+const commandSignature = (list: AmbientCommand[]) =>
+  list
+    .map((c) =>
+      [c.id, c.section, c.label, c.desc ?? "", c.keywords ?? "", c.icon ?? "", c.noun ?? ""].join("\u0001")
+    )
+    .join("\u0002")
+
 export function AssistantProvider({
   children,
   onNavigate,
   navItems = [],
   api,
+  productName,
+  assistantName,
+  messages,
+  locale: localeProp,
+  hotkey = "mod+k",
+  yieldHotkey,
+  zIndex,
+  dark = false,
+  defaultOrbAnchor = "bc",
 }: {
   children: React.ReactNode
   onNavigate?: (sectionId: string) => void
   navItems?: NavItem[]
   /** Where questions go: the host's API, built with createAmbientApi. */
   api?: AmbientApi
+  /**
+   * The product's name, as its users know it. Omitted, the chrome says
+   * "the assistant".
+   */
+  productName?: string
+  /**
+   * What the assistant is called ("Ask Nova"), when it has a name of its
+   * own. Defaults to `productName`.
+   */
+  assistantName?: string
+  /**
+   * The chrome's words in another language, or just different words: any
+   * subset of the catalog (messages.en.ts), each an ICU string. Missing
+   * keys fall back to English.
+   */
+  messages?: Partial<AmbientCatalog>
+  /**
+   * The person's language (BCP 47: "en", "ar", "pt-BR"). It picks the
+   * plural rules for `messages`, and it is sent with every question and
+   * suggestions request, so the host answers in it. Omitted: `<html lang>`.
+   */
+  locale?: string
+  /**
+   * The shortcut that opens the spotlight ("mod+k" by default), or false.
+   * A host that already owns ⌘K passes another combination, or keeps ⌘K and
+   * passes `yieldHotkey`.
+   */
+  hotkey?: AmbientHotkey | false
+  /**
+   * Called with the keydown before the layer claims its hotkey; return true
+   * to let the host's own handler have it. The layer listens in the capture
+   * phase, so a host handler that stops propagation cannot swallow the key.
+   */
+  yieldHotkey?: (event: KeyboardEvent) => boolean
+  /**
+   * Stack the layer at this z-index: above the product's chrome, below its
+   * modals. Without it the surfaces sit at `z-50`.
+   */
+  zIndex?: number
+  /**
+   * Render in dark mode. The layer follows a `.dark` ancestor by itself; a
+   * product that keeps its theme elsewhere mirrors it here.
+   */
+  dark?: boolean
+  /**
+   * Where the resting orb starts. Bottom centre by default; "mr" clears a
+   * product's fixed bottom bar.
+   */
+  defaultOrbAnchor?: OrbAnchor
 }) {
   const [mode, setMode] = React.useState<AssistantMode>("line")
   const [pageChip, setPageChip] = React.useState<ContextChip | null>(null)
   const [pageIntel, setPageIntel] = React.useState<PageIntel | null>(null)
-  const [commands, setCommands] = React.useState<AmbientCommand[]>([])
+  // The rendered list changes only when what it says changes, so a host can
+  // register on every render without looping; the closures live in a ref so
+  // a command always runs the latest one.
+  const [commands, setCommandState] = React.useState<AmbientCommand[]>([])
+  const latestCommands = React.useRef<AmbientCommand[]>([])
+  const commandSig = React.useRef("")
+  const setCommands = React.useCallback((next: AmbientCommand[]) => {
+    latestCommands.current = next
+    const sig = commandSignature(next)
+    if (sig === commandSig.current) return
+    commandSig.current = sig
+    setCommandState(
+      next.map((c) => ({
+        ...c,
+        run: () => latestCommands.current.find((x) => x.id === c.id)?.run(),
+      }))
+    )
+  }, [])
   const [chips, setChips] = React.useState<ContextChip[]>([])
   const [seedVersion, setSeedVersion] = React.useState(0)
   const [workspaceEffect, announceEffect] = React.useState<string | null>(null)
-  const [orbAnchor, setOrbAnchor] = React.useState<OrbAnchor>("bc")
+  const [orbAnchor, setOrbAnchor] = React.useState<OrbAnchor>(defaultOrbAnchor)
   const [orbState, setOrbState] = React.useState<OrbState>("still")
   const seededRef = React.useRef<string | null>(null)
+
+  // the person's language: the host's word for it, else the document's
+  const locale =
+    localeProp ??
+    (typeof document !== "undefined" ? document.documentElement.lang || undefined : undefined) ??
+    "en"
 
   // THE API IS ASKED, NOT IMPORTED. Suggestions follow the page (keyed on
   // what the chip says, not on the object, which pages recreate freely);
@@ -193,12 +317,12 @@ export function AssistantProvider({
   React.useEffect(() => {
     const request = new AbortController()
     connected
-      .suggestions({ pageChip: chipRef.current }, { signal: request.signal })
+      .suggestions({ pageChip: chipRef.current, locale }, { signal: request.signal })
       .then(setApiSuggestions, () => {
         if (!request.signal.aborted) setApiSuggestions([])
       })
     return () => request.abort()
-  }, [connected, chipKey])
+  }, [connected, chipKey, locale])
   const [apiRecents, setApiRecents] = React.useState<AmbientRecent[]>([])
   React.useEffect(() => {
     const request = new AbortController()
@@ -249,6 +373,11 @@ export function AssistantProvider({
     return a
   }, [])
 
+  const words = React.useMemo(
+    () => resolveAmbientMessages({ messages, productName, assistantName, locale }),
+    [messages, productName, assistantName, locale]
+  )
+
   const value = React.useMemo(
     () => ({
       mode,
@@ -278,14 +407,59 @@ export function AssistantProvider({
       recents,
       workspaceEffect,
       announceEffect,
+      hotkey,
+      yieldHotkey,
+      zIndex,
+      dark,
+      messages: words,
+      locale,
     }),
-    [mode, pageChip, pageIntel, commands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, connected, suggestions, recents, workspaceEffect]
+    [mode, pageChip, pageIntel, commands, setCommands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, connected, suggestions, recents, workspaceEffect, hotkey, yieldHotkey, zIndex, dark, words, locale]
   )
 
   return (
     <AssistantContext.Provider value={value}>
-      {children}
+      <AmbientMessagesProvider value={words}>{children}</AmbientMessagesProvider>
     </AssistantContext.Provider>
+  )
+}
+
+/**
+ * Register palette commands for as long as the calling component is
+ * mounted. Pass the list every render — building it inline is fine; the
+ * provider compares what the list says and ignores repeats, and `run` always
+ * reaches the newest closure. Unmounting clears the list.
+ */
+export function useRegisterCommands(list: AmbientCommand[]) {
+  const { setCommands } = useAssistant()
+  React.useEffect(() => {
+    setCommands(list)
+  })
+  React.useEffect(() => () => setCommands([]), [setCommands])
+}
+
+/** Does this keydown match a hotkey string such as "mod+k"? */
+export function matchesHotkey(event: KeyboardEvent, hotkey: AmbientHotkey) {
+  const parts = hotkey.toLowerCase().split("+")
+  const key = parts.pop()
+  const mac =
+    typeof navigator !== "undefined" && /mac|iphone|ipad/i.test(navigator.platform)
+  const want = {
+    meta: parts.includes("meta") || (mac && parts.includes("mod")),
+    ctrl: parts.includes("ctrl") || (!mac && parts.includes("mod")),
+    shift: parts.includes("shift"),
+    alt: parts.includes("alt"),
+  }
+  // on a Mac, "mod" accepts ⌘ and Ctrl: a Mac user on a PC keyboard
+  // expects Ctrl to work too
+  const modOk = parts.includes("mod")
+    ? event.metaKey || event.ctrlKey
+    : event.metaKey === want.meta && event.ctrlKey === want.ctrl
+  return (
+    modOk &&
+    event.shiftKey === want.shift &&
+    event.altKey === want.alt &&
+    event.key.toLowerCase() === key
   )
 }
 

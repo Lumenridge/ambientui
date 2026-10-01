@@ -192,12 +192,20 @@ export const ambientQuestionSchema = z.object({
   history: z.array(ambientTurnSchema),
   pageChip: contextChip.nullable(),
   chips: z.array(contextChip),
+  /**
+   * The person's language (a BCP 47 tag: "en", "ar", "pt-BR"): the
+   * provider's `locale`, else `<html lang>`. The layer's own words are
+   * already in it; this lets the host answer in it too.
+   */
+  locale: z.string().optional(),
 })
 export type AmbientQuestion = z.infer<typeof ambientQuestionSchema>
 
 /** What the suggestions endpoint is told: where the person is. */
 export const ambientSuggestionsInputSchema = z.object({
   pageChip: contextChip.nullable(),
+  /** The person's language, as on a question. */
+  locale: z.string().optional(),
 })
 export type AmbientSuggestionsInput = z.infer<typeof ambientSuggestionsInputSchema>
 

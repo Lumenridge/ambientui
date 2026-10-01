@@ -1,5 +1,12 @@
 # @ambient-ui/docs
 
+## 0.2.0
+
+### Minor Changes
+
+- start.md runs the install through `@ambient-ui/cli`: doctor, the agent's review (`doctor.md`), install from the plan, verify, and one revertible commit with developer notes.
+- ambient-api.md starts from the host's own transport, with session-auth and local-engine examples.
+
 ## 0.1.13
 
 ### Patch Changes

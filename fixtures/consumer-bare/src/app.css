@@ -1,0 +1,7 @@
+/* The product's own styling, written against browser defaults. */
+.product-title {
+  font-family: Georgia, serif;
+}
+.product-button {
+  padding: 6px 12px;
+}

@@ -19,19 +19,36 @@
  *   --positive  is an ambientui token
  *   --spacing   is Tailwind v4's, absent if the grid is not configured
  *
- * Requires Tailwind v4. Import it after tailwindcss and after your token block.
+ * This file is plain CSS and compiles under Tailwind v3 or v4; it is the
+ * layer's COMPONENTS that are written in v4 classes (the registry publishes a
+ * v3 rewrite of them as `ambient-layer-tw3`). Projects whose shadcn tokens are
+ * HSL triplets take `ambient-styles-hsl`, the same file with each role read
+ * through hsl(). Import it after tailwindcss and after your token block.
  */
 
+/* THE LAYER'S FLOOR — values the components read that are NOT standard
+   shadcn, at zero specificity so the Foundation, a host's token block, or a
+   registry cssVars entry overrides every one. The motion values mirror the
+   runtime's defaults (ambient-runtime.tsx); CSS cannot read them from JS. */
+:where(:root) {
+  --positive: oklch(0.596 0.145 163.225);
+  --motion-micro: 120ms;
+  --motion-control: 180ms;
+  --motion-surface: 240ms;
+  --motion-page: 320ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
 /* THE LAYER'S OWN KNOBS — the four values an adopter is expected to retune.
-   --ambient-blur lived in packages/ui globals.css, which is the primitives
-   package: an ambient token sitting there was a filing error, not a decision. */
-:root {
+   Zero specificity, like the floor above: a product's own value always wins,
+   wherever this file lands in its cascade. */
+:where(:root) {
   --ambient-blur: 48px;
   --ambient-accent: #2563eb;
   --ambient-accent-wash: rgba(59, 130, 246, 0.1);
 }
 
-.dark {
+:where(.dark) {
   --ambient-accent: #4d9aff;
   --ambient-accent-wash: rgba(61, 130, 246, 0.16);
 }
@@ -119,6 +136,18 @@
   );
   background-size: calc(var(--spacing, 0.25rem) * 8) calc(var(--spacing, 0.25rem) * 8);
   background-position: center;
+}
+
+/* THE SCROLL STRIP'S HIDDEN BAR — the attachment strip scrolls sideways with
+   no visible bar. `no-scrollbar` comes from shadcn's v4 stylesheet, which a
+   host may not import (a Tailwind v3 host cannot), so the layer declares its
+   own, identical copy. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* THE LIVE BORDER — the orb's states projected onto an AI surface's

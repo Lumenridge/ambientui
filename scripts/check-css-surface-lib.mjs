@@ -23,9 +23,17 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
 const scratch = mkdtempSync(join(tmpdir(), "ambientui-css-probe-"))
 const out = join(scratch, "probe.css")
+// The v4 CLI by path: the repo also installs Tailwind v3, whose `tailwindcss`
+// bin shadows v4's in node_modules/.bin.
 execFileSync(
-  "npx",
-  ["@tailwindcss/cli", "-i", resolve(ROOT, "scripts/css-probe.css"), "-o", out],
+  process.execPath,
+  [
+    resolve(ROOT, "node_modules/@tailwindcss/cli/dist/index.mjs"),
+    "-i",
+    resolve(ROOT, "scripts/css-probe.css"),
+    "-o",
+    out,
+  ],
   { cwd: ROOT, stdio: "pipe" }
 )
 const css = readFileSync(out, "utf8")

@@ -153,7 +153,6 @@
       ],
       "cssVars": {
         "light": {
-          "ambient-blur": "48px",
           "ambient-accent": "#2563eb",
           "ambient-accent-wash": "rgba(59, 130, 246, 0.1)"
         },
@@ -237,6 +236,61 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ar.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ar.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.de.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.de.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.en.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.en.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.es.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.es.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.fr.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.fr.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.hi.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.hi.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ja.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ja.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.pt.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.pt.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ru.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ru.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.zh.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.zh.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -277,6 +331,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/stub-audit.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stub-audit.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -293,6 +352,308 @@
         }
       ],
       "docs": "Import the material once: `@import \"./styles/ambient.css\";` in your globals.css. Then mount the layer at the root of your app:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nIt needs no other providers — it falls back to DEFAULT_AMBIENT_RUNTIME. Supply your own design system by wrapping it in AmbientRuntimeProvider. This copies ~8,300 lines you will own and can edit — owning the source is the point; prefer `npm i ambientui` if you want an upgrade path instead."
+    },
+    {
+      "name": "ambient-styles-hsl",
+      "type": "registry:file",
+      "title": "Ambient material (HSL-triplet tokens)",
+      "description": "The ambient material for a project whose shadcn tokens are HSL triplets (--popover: 0 0% 100%), which is shadcn's Tailwind v3 format. Same file as ambient-styles, with every standard role read through hsl().",
+      "files": [
+        {
+          "path": ".registry/variants/hsl-triplet/packages/ambient/src/styles/ambient.css",
+          "type": "registry:file",
+          "target": "styles/ambient.css"
+        }
+      ],
+      "cssVars": {
+        "light": {
+          "ambient-accent": "#2563eb",
+          "ambient-accent-wash": "rgba(59, 130, 246, 0.1)"
+        },
+        "dark": {
+          "ambient-accent": "#4d9aff",
+          "ambient-accent-wash": "rgba(61, 130, 246, 0.16)"
+        }
+      },
+      "docs": "Take this instead of ambient-styles when your tokens look like `--popover: 0 0% 100%`: ambient.css mixes the roles inside color-mix(), and a bare triplet there is not a colour, so every surface renders transparent with no error. On Tailwind v4, `@import \"./styles/ambient.css\";` after `@import \"tailwindcss\"`. On Tailwind v3, import it from your entry file on the line after your global stylesheet (`import \"./styles/ambient.css\"`).",
+      "meta": {
+        "base": "ambient-styles",
+        "variant": {
+          "tokens": "hsl-triplet"
+        }
+      }
+    },
+    {
+      "name": "ambient-layer-tw3",
+      "type": "registry:block",
+      "title": "The ambient layer (Tailwind v3)",
+      "description": "The complete AI assistant surface, rewritten for Tailwind 3.4+ so the product keeps its Tailwind version. Same components, same props, same contract as ambient-layer.",
+      "dependencies": [
+        "framer-motion",
+        "@paper-design/shaders-react",
+        "@hugeicons/react",
+        "@hugeicons/core-free-icons",
+        "zod",
+        "radix-ui",
+        "class-variance-authority"
+      ],
+      "registryDependencies": [
+        "https://registry.ambientui.ai/r/ambient-styles-hsl.json",
+        "https://registry.ambientui.ai/r/ambient-assets.json",
+        "https://registry.ambientui.ai/r/icon.json",
+        "input",
+        "skeleton",
+        "sidebar"
+      ],
+      "files": [
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/assistant.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/attach-menu.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/attach-menu.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/index.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/index.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/knowledge-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/knowledge-kit.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.ar.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ar.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.de.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.de.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.en.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.en.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.es.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.es.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.fr.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.fr.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.hi.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.hi.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.ja.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ja.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.pt.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.pt.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.ru.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ru.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/messages.zh.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.zh.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/orb.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/response-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/response-kit.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/stub-audit.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stub-audit.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/use-attach-menu.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-attach-menu.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ui/src/components/button.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ui/button.tsx"
+        }
+      ],
+      "docs": "For a project on Tailwind 3.4 or later that is not moving to v4. Import the material from your entry file, on the line after your global stylesheet:\n\n  import \"./index.css\"\n  import \"./styles/ambient.css\"\n\nThen mount it exactly as ambient-layer:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nYour tailwind.config must include the installed files in `content` (components/ambient/**) and map the standard shadcn colours as hsl(var(--x)), which `shadcn init` for v3 already does. The door ships its own button (components/ambient/ui/button.tsx) and never replaces yours. Layer only: the Foundation needs Tailwind v4.",
+      "meta": {
+        "base": "ambient-layer",
+        "variant": {
+          "styling": "tailwind-v3",
+          "tokens": "hsl-triplet"
+        }
+      }
+    },
+    {
+      "name": "ambient-utils",
+      "type": "registry:lib",
+      "title": "The class helper",
+      "description": "`cn`, the class-merging helper every layer and shadcn file imports from @/lib/utils. For a product that has not run `shadcn init`.",
+      "dependencies": [
+        "clsx",
+        "tailwind-merge"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ui/src/lib/utils.ts",
+          "type": "registry:lib",
+          "target": "lib/utils.ts"
+        }
+      ],
+      "docs": "Only for a product without lib/utils.ts. If yours has one, keep it: the layer needs only a `cn` export there."
+    },
+    {
+      "name": "ambient-tokens",
+      "type": "registry:file",
+      "title": "Standard roles (Tailwind v4)",
+      "description": "The standard shadcn colour roles at zero specificity, with the @theme mapping Tailwind v4 needs, for a product on Tailwind without shadcn. Any role the product defines wins.",
+      "registryDependencies": [
+        "https://registry.ambientui.ai/r/ambient-utils.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/styles/ambient-tokens.css",
+          "type": "registry:file",
+          "target": "styles/ambient-tokens.css"
+        }
+      ],
+      "docs": "Import before the material: `@import \"./styles/ambient-tokens.css\";` then `@import \"./styles/ambient.css\";`, both after `@import \"tailwindcss\"`. Map the roles onto your own palette when you want the layer to match the product."
+    },
+    {
+      "name": "ambient-tokens-hsl",
+      "type": "registry:file",
+      "title": "Standard roles (Tailwind v3)",
+      "description": "The standard shadcn colour roles as HSL channels at zero specificity, for a product on Tailwind v3 without shadcn. Your tailwind.config must map them as hsl(var(--x)).",
+      "registryDependencies": [
+        "https://registry.ambientui.ai/r/ambient-utils.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/styles/ambient-tokens-hsl.css",
+          "type": "registry:file",
+          "target": "styles/ambient-tokens-hsl.css"
+        }
+      ],
+      "docs": "Import it from your entry file before the material: `import \"./styles/ambient-tokens-hsl.css\"` then `import \"./styles/ambient.css\"`. Add the colour mapping `shadcn init` writes for v3 to tailwind.config (border, input, ring, background, foreground, and primary/secondary/destructive/muted/accent/popover/card with foregrounds, each `hsl(var(--name))`)."
+    },
+    {
+      "name": "ambient-base",
+      "type": "registry:file",
+      "title": "The base for a product without Tailwind",
+      "description": "Tailwind's preflight confined to the ambient layer (.ambient-scope), so a product styled another way keeps every screen exactly as it was. Brings the standard roles and the class helper.",
+      "registryDependencies": [
+        "https://registry.ambientui.ai/r/ambient-tokens.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/styles/ambient-preflight.css",
+          "type": "registry:file",
+          "target": "styles/ambient-preflight.css"
+        }
+      ],
+      "docs": "Install Tailwind v4 WITHOUT its global preflight. In your global stylesheet:\n\n  @layer theme, base, components, utilities;\n  @import \"tailwindcss/theme.css\" layer(theme);\n  @import \"./styles/ambient-preflight.css\" layer(base);\n  @import \"tailwindcss/utilities.css\" layer(utilities);\n  @import \"./styles/ambient-tokens.css\";\n  @import \"./styles/ambient.css\";\n\n`@import \"tailwindcss\"` would bring the global reset, which restyles a product not built on it."
     },
     {
       "name": "icon",
@@ -322,6 +683,155 @@
       "docs": "Every name is mapped in all five libraries, so switching library redraws the whole product and never leaves a hole. That is why all five are dependencies: they are named ESM exports, so the bundle cost is near zero — the cost is install size. Wrap your app in IconLibraryProvider to choose one; it defaults to hugeicons."
     },
     {
+      "name": "icon-hugeicons",
+      "type": "registry:ui",
+      "title": "Icon (hugeicons only)",
+      "description": "The Icon component drawing every name with hugeicons alone, for a product that already uses it and never switches libraries.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react"
+      ],
+      "files": [
+        {
+          "path": ".registry/variants/icon-hugeicons/packages/ui/src/components/icon.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/icon.tsx"
+        },
+        {
+          "path": ".registry/packages/ui/src/lib/icon-library.ts",
+          "type": "registry:lib",
+          "target": "lib/icon-library.ts"
+        }
+      ],
+      "docs": "Replaces components/ui/icon.tsx. Install it after the layer; the other icon packages the full `icon` brought can then be removed. The layer's own few HugeIcons marks keep that package.",
+      "meta": {
+        "base": "icon",
+        "variant": {
+          "icons": "hugeicons"
+        }
+      }
+    },
+    {
+      "name": "icon-lucide",
+      "type": "registry:ui",
+      "title": "Icon (lucide only)",
+      "description": "The Icon component drawing every name with lucide alone, for a product that already uses it and never switches libraries.",
+      "dependencies": [
+        "lucide-react",
+        "@hugeicons/react",
+        "@hugeicons/core-free-icons"
+      ],
+      "files": [
+        {
+          "path": ".registry/variants/icon-lucide/packages/ui/src/components/icon.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/icon.tsx"
+        },
+        {
+          "path": ".registry/packages/ui/src/lib/icon-library.ts",
+          "type": "registry:lib",
+          "target": "lib/icon-library.ts"
+        }
+      ],
+      "docs": "Replaces components/ui/icon.tsx. Install it after the layer; the other icon packages the full `icon` brought can then be removed. The layer's own few HugeIcons marks keep that package.",
+      "meta": {
+        "base": "icon",
+        "variant": {
+          "icons": "lucide"
+        }
+      }
+    },
+    {
+      "name": "icon-tabler",
+      "type": "registry:ui",
+      "title": "Icon (tabler only)",
+      "description": "The Icon component drawing every name with tabler alone, for a product that already uses it and never switches libraries.",
+      "dependencies": [
+        "@tabler/icons-react",
+        "@hugeicons/react",
+        "@hugeicons/core-free-icons"
+      ],
+      "files": [
+        {
+          "path": ".registry/variants/icon-tabler/packages/ui/src/components/icon.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/icon.tsx"
+        },
+        {
+          "path": ".registry/packages/ui/src/lib/icon-library.ts",
+          "type": "registry:lib",
+          "target": "lib/icon-library.ts"
+        }
+      ],
+      "docs": "Replaces components/ui/icon.tsx. Install it after the layer; the other icon packages the full `icon` brought can then be removed. The layer's own few HugeIcons marks keep that package.",
+      "meta": {
+        "base": "icon",
+        "variant": {
+          "icons": "tabler"
+        }
+      }
+    },
+    {
+      "name": "icon-phosphor",
+      "type": "registry:ui",
+      "title": "Icon (phosphor only)",
+      "description": "The Icon component drawing every name with phosphor alone, for a product that already uses it and never switches libraries.",
+      "dependencies": [
+        "@phosphor-icons/react",
+        "@hugeicons/react",
+        "@hugeicons/core-free-icons"
+      ],
+      "files": [
+        {
+          "path": ".registry/variants/icon-phosphor/packages/ui/src/components/icon.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/icon.tsx"
+        },
+        {
+          "path": ".registry/packages/ui/src/lib/icon-library.ts",
+          "type": "registry:lib",
+          "target": "lib/icon-library.ts"
+        }
+      ],
+      "docs": "Replaces components/ui/icon.tsx. Install it after the layer; the other icon packages the full `icon` brought can then be removed. The layer's own few HugeIcons marks keep that package.",
+      "meta": {
+        "base": "icon",
+        "variant": {
+          "icons": "phosphor"
+        }
+      }
+    },
+    {
+      "name": "icon-remix",
+      "type": "registry:ui",
+      "title": "Icon (remix only)",
+      "description": "The Icon component drawing every name with remix alone, for a product that already uses it and never switches libraries.",
+      "dependencies": [
+        "@remixicon/react",
+        "@hugeicons/react",
+        "@hugeicons/core-free-icons"
+      ],
+      "files": [
+        {
+          "path": ".registry/variants/icon-remix/packages/ui/src/components/icon.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/icon.tsx"
+        },
+        {
+          "path": ".registry/packages/ui/src/lib/icon-library.ts",
+          "type": "registry:lib",
+          "target": "lib/icon-library.ts"
+        }
+      ],
+      "docs": "Replaces components/ui/icon.tsx. Install it after the layer; the other icon packages the full `icon` brought can then be removed. The layer's own few HugeIcons marks keep that package.",
+      "meta": {
+        "base": "icon",
+        "variant": {
+          "icons": "remix"
+        }
+      }
+    },
+    {
       "name": "start",
       "type": "registry:file",
       "title": "From nothing to Cmd-K",
@@ -336,6 +846,11 @@
           "path": "DESIGN.md",
           "type": "registry:file",
           "target": "~/.claude/skills/ambientui-start/DESIGN.md"
+        },
+        {
+          "path": "docs/doctor.md",
+          "type": "registry:file",
+          "target": "~/.claude/skills/ambientui-start/doctor.md"
         }
       ],
       "docs": "Also readable without installing anything: tell your agent to read https://ambientui.ai/start.md and set the project up. The installed copy makes the guidance part of the repo, so any future session finds it - and DESIGN.md lands beside the skill, because the journey's rules live there."
@@ -349,7 +864,7 @@
         {
           "path": "CLAUDE.md",
           "type": "registry:file",
-          "target": "~/CLAUDE.md"
+          "target": "~/.claude/ambientui/CLAUDE.md"
         },
         {
           "path": ".claude/skills/ds-manager/SKILL.md",
@@ -566,6 +1081,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -668,6 +1188,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -774,6 +1299,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -876,6 +1406,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -982,6 +1517,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -1086,6 +1626,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -1188,6 +1733,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -1299,6 +1849,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -1401,6 +1956,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -1507,6 +2067,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -1609,6 +2174,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -1715,6 +2285,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -1817,6 +2392,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -1923,6 +2503,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -2025,6 +2610,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -2131,6 +2721,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -2233,6 +2828,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -2339,6 +2939,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -2441,6 +3046,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -2547,6 +3157,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -2649,6 +3264,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -2755,6 +3375,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -2857,6 +3482,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
@@ -2963,6 +3593,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -3067,6 +3702,11 @@
           "target": "components/ambient/message-kit.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/orb-character.tsx",
           "type": "registry:component",
           "target": "components/ambient/orb-character.tsx"
@@ -3169,6 +3809,11 @@
           "path": ".registry/packages/ambient/src/message-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
         },
         {
           "path": ".registry/packages/ambient/src/orb-character.tsx",

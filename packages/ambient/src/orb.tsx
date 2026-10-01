@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import { useAmbientMessages } from "./messages"
+
 import { AnimatePresence, motion } from "framer-motion"
 
 
@@ -51,6 +53,7 @@ function anchorPoint(a: OrbAnchor, w: number, h: number) {
  * context, can be dragged anywhere in the window, and snaps to 8 edge anchors.
  */
 export function AssistantOrb() {
+  const t = useAmbientMessages()
   const {
     orbAnchor,
     setOrbAnchor,
@@ -315,6 +318,7 @@ export function AssistantOrb() {
         })}
       <div
         ref={rootRef}
+        data-ambient-surface="orb"
         className={cn(
           "fixed z-50 touch-none select-none",
           // snap-to-anchor rides the page role — the largest ambient move
@@ -328,7 +332,7 @@ export function AssistantOrb() {
       >
           <button
             type="button"
-            aria-label="Open ambientui"
+            aria-label={t.openOrb}
             className={cn(
               "relative z-10 flex items-center justify-center rounded-full shadow-lg shadow-black/30",
               drag?.moved ? "cursor-grabbing" : "cursor-grab"
@@ -378,7 +382,7 @@ export function AssistantOrb() {
                   onChange={setQuickInput}
                   onSend={() => sendQuick()}
                   onEscape={closeQuick}
-                  placeholder="Ask ambientui…"
+                  placeholder={t.quickAskPlaceholder}
                   // what this page thinks is worth doing next; Tab runs it
                   suggestion={suggestions[0]}
                   onAcceptSuggestion={() => {
@@ -402,8 +406,8 @@ export function AssistantOrb() {
               <motion.button
                 key="quick-history"
                 type="button"
-                aria-label="History"
-                title="History"
+                aria-label={t.history}
+                title={t.history}
                 onClick={() => {
                   closeQuick()
                   setMode("history")

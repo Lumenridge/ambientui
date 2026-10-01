@@ -1,5 +1,11 @@
 # @ambient-ui/ui
 
+## 0.2.0
+
+### Minor Changes
+
+- Icon adapters accept `size` as `number | string`, so they type-check under React 18.
+
 ## 0.1.3
 
 ### Patch Changes

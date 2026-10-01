@@ -9,11 +9,18 @@ You are an AI coding agent, and this guide is addressed to you. A person has
 asked you to set their project up with ambientui: an AI assistant layer that
 lives above their product, plus the design system that lets you build inside
 their rules. Your job is to run this whole journey and to make it feel like
-one fluid move. The person should type one sentence, answer one question,
-and end up pressing Cmd-K inside their own product.
+one fluid move. The person should type one sentence and end up pressing
+Cmd-K inside their own product, having seen ambientui work before deciding
+anything about it.
 
-Do the steps in this order. The order is the point: tools first, taste
-second, build third, and the reveal last.
+Do the steps in this order. The order is the point: survey first, install
+from a plan, build, prove it, and the reveal last.
+
+**Decide as little as you can.** `ambientui doctor` surveys the project
+and writes a plan: which doors, which commands, where the CSS goes, which props the
+provider takes, how the assistant reaches the backend. Follow the plan.
+Where it and this guide disagree, the plan knows the project and wins;
+where the plan is silent, this guide applies.
 
 **How to end every message.** Whatever you just did or found, finish each
 message to the person with their next action — one line, **bold**, at the
@@ -21,34 +28,54 @@ very bottom, nothing after it. A next step buried in the middle of a long
 answer gets lost; the person should be able to read only your last line
 and know what to do.
 
-## 1. Find out what you are walking into (mandatory)
+## 1. Survey the project (mandatory)
 
-Look at the project before you install anything. Two situations, two
-different journeys — and the fork below is not optional:
+Run the doctor from the project's root before you change anything:
 
-**An existing product UI.** The person already has screens they built and
-styled. You MUST ask them one question before installing anything, and
-wait for the answer:
+```bash
+npx -y @ambient-ui/cli doctor --baseline
+```
 
-> Do you want the ambient layer only — the assistant living above your
-> existing screens, which stay exactly as they are — or the full design
-> architecture, where the Foundation also governs your tokens, spacing,
-> radius and motion from one configuration?
+It reads the project and writes `.ambientui/profile.json` (what it found,
+with evidence) and `.ambientui/plan.json` (what to do about it). With
+`--baseline` it also runs the project's own typecheck, lint, tests and build
+once and records what already fails, so nothing that was broken before is
+later blamed on the install. If the dev server is running, add
+`--url http://localhost:<port>`: it records how the product's screens look
+now, and step 6 proves they did not change.
 
-- **Ambient layer only:** install just the `@ambientui/ambient-layer`
-  door in step 2, mount `AssistantProvider` + `Assistant`, and skip the
-  taste question — the layer derives sensible defaults and their product
-  keeps its own styling. Steps 3 and 4 do not apply. The assistant's API
-  (step 2) and its stubs (step 5) still do: the assistant answers either
-  way, and it should answer about THIS product.
-- **The design architecture:** run the whole journey below. Be explicit
-  that saving the Foundation will restyle their existing components that
-  consume its tokens, and migrate gently — never rewrite screens they
-  did not ask you to touch.
+Then act on its report, in this order. **Ask the person nothing.** The
+doctor DECIDES everything it can, taking the best case the survey supports,
+and every decision lands in the developer notes at the end with its
+alternatives. The person's job is to see the layer working; choosing
+differently comes after, with a reinstall.
 
-**From scratch.** No product yet: scaffold the reference environment
-(next section), then run the whole journey — including the `/ds` page in
-step 5, which is mandatory on this path.
+1. **Blockers** stop the install: no React, or React older than 18. If the
+   tree has uncommitted work, stop too, and ask the person to commit or
+   stash it: the install is one commit that uninstall reverts, and their
+   own work must not be inside it. (No git at all is not a stop: the plan
+   lists `git init` as a required step, and you run it.)
+2. **Decisions** are listed with their reasons: the path (the ambient layer
+   only for an existing product, so none of its screens change; the full
+   architecture for a new one), the hotkey when the product already owns
+   ⌘K (the assistant takes ⌘J and the product keeps ⌘K), the look, the
+   rules, the theme. Tell the person in one short paragraph what you are
+   about to do, as information, not as a question.
+3. **Review the survey against the code — mandatory.** The doctor's checks
+   are fixed patterns; you can read the code. Follow `doctor.md` (beside
+   this file): confirm every low-confidence fact the plan depends on, look
+   for what no fixed check can see, and correct the plan where it is wrong
+   (`plan --set … --because "…"`).
+
+**Beyond the plan, by hand.** Where the tooling cannot do something (a
+transport it could not wire, a mount point it could not find, a pattern of
+the product's nothing here fits), take the closest workable path yourself
+rather than stopping, keep it inside the install, and record it as you go
+with `ambientui note` (the kinds are in `doctor.md`).
+
+**From scratch.** No product yet: scaffold the reference environment (next
+section), then run the doctor on it. It plans the full journey, including
+the `/ds` page in step 5, which is mandatory on this path.
 
 ## Scaffolding, when there is no project
 
@@ -59,124 +86,116 @@ is the reference environment:
 npm create vite@latest . -- --template react-ts
 npm install tailwindcss @tailwindcss/vite
 npx shadcn@latest init
+git init && git add -A && git commit -m "Scaffold"
 ```
 
 Follow shadcn's prompts with their defaults. Any framework shadcn supports
 works the same way from here.
 
-## 2. Install the system
+## 2. Install from the plan
 
-Register the registry once, then take the doors (ambient-layer only, if
-that was the answer in step 1). The `start` door is how THIS guide and
-its rulebook land in the repo — install it even if you are reading this
-from the web, so every future session finds both:
+Open the install, then run it:
 
 ```bash
-npx shadcn@latest registry add "@ambientui=https://registry.ambientui.ai/r/{name}.json"
-npx shadcn@latest add @ambientui/start
-npx shadcn@latest add @ambientui/governance
-npx shadcn@latest add @ambientui/foundation
-npx shadcn@latest add @ambientui/ambient-layer
+npx -y @ambient-ui/cli begin
+npx -y @ambient-ui/cli install
 ```
 
-The `governance` door lands the working rules: a `CLAUDE.md` at the repo
-root — the hard rules an AI follows in a governed codebase — and three
-reviewer skills (design-system manager, product-design manager, copy).
-They are written for the ambientui repo itself, so adapt them now, as
-part of setup: rewrite their file paths and repo references to THIS
-project, keep the rules. From then on they are the rules you work under
-here too.
+`begin` records where the project stood; `install` adds the doors the plan
+chose. Read what it prints, then look at `git diff` on the config files it
+names: the shadcn CLI reformats configs and drops comments, so restore
+anything that was the author's.
 
-This lands real source files in the project: the Foundation (the design
-system's configuration engine) under `lib/foundation/` and
-`components/foundation-provider.tsx`, and the complete ambient layer under
-`components/ambient/`. The person owns every line. Do not npm-install
-`ambientui` as well; the two routes conflict in one repo.
+Then do what the plan says the CLI cannot do for you, each item as written
+there. **The plan is authoritative for this project's stack**: this guide
+names the kinds of step, the plan holds the exact files, lines and
+reasons, so a stack this guide never mentions still installs correctly.
 
-**Wire the shipped CSS — do this now, and never reconstruct it by hand.**
-The doors also landed two stylesheets: `styles/foundation.css` (the bridge
-that routes Tailwind's radius, transition and color utilities through the
-Foundation's variables) and `styles/ambient.css` (the layer's material).
-Import both in the project's global stylesheet, AFTER the
-`@import "tailwindcss";` line:
+- **Required steps** (`plan.requiredSteps`): each names its file, its
+  snippet and why.
+- **The CSS** (`plan.css`): add `plan.css.lines` exactly where
+  `plan.css.where` says. Use the shipped stylesheets as they are; never
+  reconstruct them by hand, because they carry the propagation contract.
+- **Lint and tests** (`plan.lint`, `plan.tests`): exclude the vendored
+  folders from the product's lint autofix before you edit anything in
+  them, and add the test mocks the plan names.
+- **Governance**, if the plan's governance decision is yes: the rules landed at
+  `./.claude/ambientui/CLAUDE.md`. Add one line to the product's own
+  CLAUDE.md pointing at it. Never replace their file.
 
-```css
-@import "tailwindcss";
-@import "./styles/foundation.css";
-@import "./styles/ambient.css";
-```
+This lands real source files: the layer under `components/ambient/`, and on
+the full path the Foundation under `lib/foundation/` and
+`components/foundation-provider.tsx`. The person owns every line. The
+vendored files keep their own kebab-case names even in a PascalCase
+project; say so in one line if the project's convention differs. Do not
+npm-install `ambientui` as well; the two routes conflict in one repo.
 
-Adjust the relative paths to wherever the files landed next to that
-stylesheet. Do not rewrite or approximate what is inside them — a
-hand-reconstructed bridge is exactly how radius ends up as
-`calc(var(--radius) * 0.6)` instead of the Foundation's radius window,
-and how transitions and status colors silently stop following the
-configuration. The shipped files ARE the propagation contract.
+**Read the rulebook — mandatory.** The `start` door installed the
+constitution beside this skill: the file named DESIGN.md, in the same
+folder as this SKILL.md. It is the logic every later step runs on: how a
+screenshot is read as a CONFIGURATION rather than copied as styling, and
+the propagation rules that make one saved value restyle every component.
+Read it before you write any UI.
 
-The layer's orb artwork installed into the project's `public/` directory
-(files named `orb-*.svg` and friends). If your framework serves static
-assets from somewhere else, move them there — the orb renders blank
-without them.
-
-**Verify the install actually landed — three checks, before mounting
-anything.** The shadcn CLI fails quietly when a project's alias is not
-configured everywhere it looks:
-
-1. No literal `@` directory exists at the repo root. If one appeared, the
-   CLI could not resolve the `@/` alias and wrote real files into a folder
-   named `@` — add `"paths": { "@/*": ["./src/*"] }` to EVERY tsconfig the
-   project has (the root one included, not just `tsconfig.app.json`), move
-   the folder's contents into `src/`, and re-run the failed door.
-2. `lib/utils.ts` and the ui components the layer composes (button, input,
-   skeleton, sidebar) exist under the source tree. A missing one is an
-   unresolvable import, and the assistant crashes the moment it opens.
-3. The dev server starts with zero console errors before you press Cmd-K
-   yourself. Press it. If it crashes, fix it now — never hand this
-   failure to the person.
-
-**Then read the rulebook — this is mandatory, not optional.** The `start`
-door installed the constitution beside this skill: the file named
-DESIGN.md, in the same folder as this SKILL.md. It is the logic every later
-step runs on: how a screenshot is read as a CONFIGURATION rather than
-copied as styling, and the propagation rules that make one saved value
-restyle every component — colors through semantic roles, spacing through
-the grid, corners through the radius window, borders and surfaces from
-the gray family. Read it before you write any UI. A setup built without
-it produces screens where changing the theme moves some things and not
-others — borders that stay put while buttons re-theme — which defeats
-the entire point of the architecture.
-
-Mount both providers at the app root now, before building anything:
+**Mount the layer** where the plan says (`plan.mount`), with the props it
+lists (`plan.provider`):
 
 ```tsx
-<FoundationProvider>
-  <AssistantProvider navItems={NAV} onNavigate={goTo} api={ambientApi}>
+<FoundationProvider>{/* full path only */}
+  <AssistantProvider
+    productName="Acme"         // the product's name, never "ambientui"
+    assistantName="Nova"       // only if the assistant has a name of its own
+    navItems={NAV}
+    onNavigate={goTo}
+    api={ambientApi}
+    hotkey="mod+k"             // as planned; false for none
+    zIndex={2999}              // only if planned: above the chrome, below modals
+    defaultOrbAnchor="mr"      // only if planned: clear of a fixed bottom bar
+    dark={isDark}              // only if the product's theme is not .dark on <html>
+    locale={locale}            // only for a product with its own i18n: its active locale
+  >
     <App />
     <Assistant />
   </AssistantProvider>
 </FoundationProvider>
 ```
 
-`navItems` is the app's own route list; wire `onNavigate` to its router.
+When the plan says so, load `Assistant` lazily and import the provider
+from `@/components/ambient/assistant-context`, not from the barrel: the
+barrel pulls the whole layer into whichever chunk imports it.
 
-`api` is where the assistant's requests go. The layer never makes a
-request of its own: it calls the functions it is given, validates what
-comes back against its contract, and renders it. The requests go to THIS
-product's server, never to ambientui.
+**Language.** The layer's own words ship as catalogs in
+`components/ambient/` (`messages.<locale>.ts`: one key per string, ICU
+MessageFormat); `plan.i18n` says which ship and which do not. For a
+product that translates (`plan.i18n`), wire its active locale into
+`locale` (the plan gives the line for its library); the layer picks the
+matching catalog. For a locale that does not ship, copy
+`messages.en.ts` to `messages.<locale>.ts` and register it, as its header
+explains. The locale also
+travels with every question and suggestions request, so the backend and
+the stubs can answer in it.
 
-**Fit the assistant into the API layer the project already has.** Before
-writing anything, look at how the app talks to its backend: its HTTP
-client (a fetch wrapper, an axios instance, a generated client), where
-endpoints are declared, how base URLs, auth headers and errors are
-handled, how env flags are read, and whether it already has a mock or
-stub mode. The assistant's endpoints join that the way any other
-feature's would: same client, same conventions, same stub mechanism if
-there is one. Wrap them with `createAmbientApi`, which checks every
-request and response against the layer's zod schemas, so a malformed
-reply shows the failure state instead of breaking the page.
+`navItems` is where the palette's "Jump to" goes. Each takes an icon NAME
+(`icon: "home"`). For an existing product, do not add a call to every page:
+write ONE small component beside the router that maps the current route to
+the page chip and the page's jumps, and leaves the pages untouched. A
+"page" is whatever the person thinks of as a screen: a route, a wizard
+step, a mode of a single-canvas app, a tab with its own work. `PageIntel.jumps`
+lists the places inside it (the wizard's steps, the editor's dialogs), and
+`onJump` goes there.
 
-If the project has no API layer yet, this shape works — one file for
-every request the assistant makes, stubs by default:
+**Taking over the product's ⌘K** (when the plan's hotkey is `takeover`): register
+everything the old palette offered as commands, with `useRegisterCommands`,
+which is safe to call on every render. Each command section can name its
+own noun (`noun: "account"`) for the palette's counts. Then update or remove
+the product's tests for the palette it replaced.
+
+**Connect the assistant to the backend the product already has**
+(`plan.transport`), following [ambient-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/ambient-api.md),
+which has the rule and an example for each kind the doctor reports. Read
+the stub flag exactly as `plan.envFlag` says. If the project has no API
+layer yet, this shape works, with the plan's flag in place of the one
+shown:
 
 ```ts
 // lib/ambient/api.ts — every request the assistant makes goes through here.
@@ -184,8 +203,7 @@ import { createAmbientApi } from "@/components/ambient/responder"
 
 import { stubs } from "./stubs"
 
-// STUBS until the backend exists. Set VITE_AMBIENT_STUBS=false (or the
-// framework's public env equivalent) to send every request to the server.
+// STUBS until the backend exists; the flag's name comes from the plan.
 const USE_STUBS = import.meta.env.VITE_AMBIENT_STUBS !== "false"
 
 const post =
@@ -208,31 +226,28 @@ export const ambientApi = createAmbientApi(
 )
 ```
 
-Whatever shape the project's own API layer gives it, keep three things:
-the assistant's requests go through one place, the stub-or-server
-decision is made there (the layer must never know which it is talking
-to), and stubs are the default until a backend exists. Adjust the import
-to where the layer landed. A backend that streams returns
-`answerEventsFromSSE(response)` from `ask` instead of JSON. If the project
-already uses an LLM harness or an AI SDK,
-[ambient-api.md](https://github.com/Lumenridge/ambientui/blob/main/docs/ambient-api.md)
-shows how it fits behind the API, and which tools don't.
-Confirm the app still runs before moving on. Fix anything that broke; the
-person should never see this step fail.
+Keep three things whatever the shape: the assistant's requests go through
+one place, the stub-or-server decision is made there, and stubs are the
+default until a backend exists. Confirm the app still runs before moving
+on.
 
-## 3. Ask for the taste
+## 3. Find the taste (full architecture only)
 
-Now, and not before, ask the person ONE question:
+Do not stop to ask for it. The plan's `look` decision says where it comes
+from:
 
-> Show me something that has the feel you want. A screenshot of a product
-> you admire, a link, or a few words like "calm, dense, gray-on-gray".
+- **current** (an existing product, or one with a DESIGN.md): find the
+  product's own design record (a DESIGN.md, a theme file, its CSS
+  variables; the doctor names what it found) and read it as the reference.
+- **reference** (a new project): use whatever the person said about the
+  look in their request ("calm, dense, gray-on-gray", a product they
+  named). If they said nothing, start from the Foundation's defaults, and
+  note it (`--kind unavailable`): the `/ds` page is where they will make it
+  theirs.
 
-Wait for the answer. This is the only input the journey needs from them.
-
-When it arrives, read the reference like a designer: which gray family,
-how saturated the accent is and what it is reserved for, how tight the
-corners are, how dense the spacing feels, whether the type runs compact or
-generous.
+Read the reference like a designer: which gray family, how saturated the
+accent is and what it is reserved for, how tight the corners are, how
+dense the spacing feels, whether the type runs compact or generous.
 
 ## 4. Express the taste as configuration, never as styling
 
@@ -247,6 +262,13 @@ one short paragraph ("Attio's calm comes from a neutral gray ramp and an
 accent that only appears on actions, so: gray `slate`, accent `indigo`,
 radius one step tighter").
 
+On an existing product, leave type scaling at 100%: any other value
+rescales every rem on the page, including the screens the Foundation does
+not govern. If the product bundles its fonts or cannot load third-party
+resources (offline-first, strict CSP), pass `remoteFonts={false}` to
+`FoundationProvider`. The product's dark mode stays the product's: the
+Foundation writes a `.dark` block, and something must set the class.
+
 Never chase the reference by styling individual components, adding hex
 values, or writing one-off CSS. If the menu cannot express something, that
 is the system working; stay inside it.
@@ -259,10 +281,9 @@ vocabulary, consume semantic tokens only (`--primary`,
 `--muted-foreground`, spacing utilities, the radius steps), and let the
 Foundation you just configured decide how everything looks.
 
-Give each page a context line for the assistant while you build it: call
-`setPageChip` with what the page is showing, so the layer knows where the
-person is. It is one call per page and it is what makes the assistant feel
-aware later.
+Give each page a context line for the assistant: `setPageChip` with what the
+page is showing, so the layer knows where the person is. On a product you
+build, one call per page; on an existing one, the route map from step 2.
 
 **Then seed the assistant's stubs — mandatory.** The layer ships no
 answers of its own. Until a backend exists, the stubs are what the
@@ -277,27 +298,29 @@ has them; otherwise use the shape below.
    really ask, each answered as an `AmbientAnswer` — prose, `evidence` (a
    records query as a `tool` block, a `search`, a short `reasoning`),
    `artifacts` where the answer produces something, `refs` to the records
-   it used, and `followUps` that lead to the page's other answers. Match
-   questions loosely, one pattern per intent.
-3. **Route by page.** The page's `setPageChip` id travels with every
-   request (with the conversation's `history`, which stubs can ignore), so the stubs hand each question to that page's answers, and
-   `suggestions` returns that page's questions — every suggestion then has
-   an answer. Anything unmatched gets one honest fallback answer: there is
-   no sample answer for that yet.
+   it used, and `followUps` that lead to the page's other answers. Keep
+   each question next to its answer (a list of `{ ask, answer }` pairs,
+   matched exactly first and loosely second), so two answers cannot
+   claim the same question.
+3. **Route by page.** The page's chip id travels with every request, so
+   the stubs hand each question to that page's answers, and `suggestions`
+   returns that page's questions. Anything unmatched gets one honest
+   fallback answer: there is no sample answer for that yet.
 4. **Behave like the network.** About 400 ms per request, honour the
    `AbortSignal`, and fail when asked to "simulate an error", so the
-   error state can be seen before a real outage shows it:
+   error state can be seen before a real outage shows it. (Each request
+   also carries `locale`; a product that translates can key its sample
+   answers by it, or leave them in one language and note it.)
 
    ```ts
    // lib/ambient/stubs/index.ts — SAMPLE ANSWERS, not a backend.
-   // Turned off by VITE_AMBIENT_STUBS=false (see lib/ambient/api.ts).
    import type { AmbientApiHandlers } from "@/components/ambient/responder"
 
    import { items } from "./items"
    import { users } from "./users"
    import { FALLBACK } from "./fallback"
 
-   const PAGES = { items, users } // keyed by each page's setPageChip id
+   const PAGES = { items, users } // keyed by each page's chip id
    const LATENCY_MS = 400
 
    const settle = <T,>(value: T, signal: AbortSignal) =>
@@ -323,62 +346,99 @@ has them; otherwise use the shape below.
    }
    ```
 5. **Stay inside the product.** Answers only describe what the app can
-   actually show or do. Grammar only — no styling, no colours, no markup
-   inside the answers. Keep reasoning short: a `reasoning` block holds the
-   answer for its `seconds` (four when omitted), so declare 1 on stubs.
+   actually show or do. Plain prose: the answer's `text` renders as
+   written, so `**bold**` and backticks show as characters. Keep reasoning
+   short: a `reasoning` block takes its `seconds` (four when omitted), so
+   declare 1 on stubs.
 
 Cap it: 3–5 answers per page, for at most 5 pages — the ones the person
 will open first. Past that, the fallback covers the rest, and you say so.
 
+**Prove the stubs with a test, not by clicking.** Add one test, in the
+runner and at the path the plan names (`plan.tests`):
+
+```ts
+import { auditAmbientApi } from "@/components/ambient/stub-audit"
+import { stubs } from "@/lib/ambient/stubs"
+
+test("every suggestion has its own answer", async () => {
+  expect(await auditAmbientApi(stubs, [{ id: "items" }, { id: "users" }])).toEqual([])
+})
+```
+
+It asks every suggestion on every page and fails on an empty answer, the
+fallback, two questions sharing one answer, a follow-up with no answer, or
+an error probe that does not fail. It runs in milliseconds, and it keeps
+running every time someone edits a stub.
+
 Each stub is also the contract the backend will meet: when the engineer
-connects one, the server returns the same `AmbientAnswer` JSON (a pydantic
-model or zod schema on the server can mirror the layer's), the flag
+connects one, the server returns the same `AmbientAnswer` JSON, the flag
 flips, and nothing on screen changes.
 
-Also build one page the person did not ask for — this is mandatory on
-the from-scratch path, and strongly recommended when an existing product
-adopted the full architecture: a `/ds` page, composed on the installed
-FoundationProvider, where every value from step 4 is a control — accent,
-gray, radius, spacing, type scaling, motion. Check the route first: if
-the app already has a `/ds` route, use `/foundation` instead (then
-`/design-system`), and say which you picked and why. This is where they
-will make the product theirs after you hand it over, and both user tests
-of this journey taught the same lesson: if the Foundation is not a page
-they can open, it does not exist to them.
+**The full path adds one page the person did not ask for** — mandatory from
+scratch, strongly recommended for an existing product: a `/ds` page,
+composed on the installed FoundationProvider, where every value from step 4
+is a control — accent, gray, radius, spacing, type scaling, motion. Check
+the route first: if the app already has a `/ds` route, use `/foundation`
+instead (then `/design-system`), and say which you picked and why. If the
+Foundation is not a page they can open, it does not exist to them.
 
-**Then run the propagation check — mandatory before the reveal.** On
-the `/ds` page, change the accent, then the gray family, then the
-radius, then the spacing, and watch YOUR OWN screens each time. Every
-border, corner, surface, gap and piece of text must follow. Anything
-that does not move is a literal you wrote — a hex value, a raw border
-color, a typed pixel — and it is a bug: find it, replace it with the
-token (DESIGN.md names the right one for each dimension), and check
-again. Do not hand the project over until every control on the page
-visibly re-themes everything you built. The architecture's whole claim
-is one configuration, everything follows; a screen that half-follows
-disproves it in front of the person you built it for.
+**Then run the propagation check** on that page: change the accent, then
+the gray family, then the radius, then the spacing, and watch YOUR OWN
+screens each time. Every border, corner, surface, gap and piece of text
+must follow. Anything that does not move is a literal you wrote, and a bug:
+replace it with the token (DESIGN.md names the right one for each
+dimension), and check again. When you hand over, walk the owner through the
+page in a few sentences: what each control governs, that every change
+propagates, and that Save is what persists it.
 
-Then take them there. When you hand the project over, walk the owner
-through the page in a few sentences: what each control governs, that
-every change propagates to every component, and that Save is what
-persists it. Do not just mention the page exists — explain it.
+## 6. Verify (mandatory)
 
-**Check the stubs too — mandatory before the reveal.** Open each page
-that has them, ask every suggested question, and confirm each one gets
-its own answer, not the fallback. Ask "simulate an error" once and
-confirm the error state appears with Retry. Then tell the person what you
-wrote, in one line, and how to get more:
+With the dev server running:
+
+```bash
+npx -y @ambient-ui/cli verify --url http://localhost:<port>
+```
+
+Fix every FAIL and run it again until nothing fails. Never hand a FAIL to
+the person. If a check is SKIPPED (no browser available), say which, in one
+line; do not report it as passed.
+
+Then tell the person what you wrote for the assistant, in one line, and how
+to get more:
 
 > I've added 14 sample answers across 4 pages (Items, Users, Settings,
 > Dashboard). They're stubs behind `VITE_AMBIENT_STUBS`, served from
 > `lib/ambient/api.ts`. If you want sample answers for more pages, or
 > different questions, ask me to add them.
 
-## 6. The reveal
+## 7. Commit, then the reveal
 
-Do not describe the ambient layer. Show it. When the build runs clean,
-end with exactly this move: tell the person the app is running, give them
-the URL, and say
+Close the install:
+
+```bash
+npx -y @ambient-ui/cli end
+```
+
+It writes `AMBIENTUI-NOTES.md` into the app: what was installed, every
+decision the doctor made with its alternatives, your corrections and notes,
+and anything verify could not prove. Then it lists every file the
+install added or changed since `begin`, and writes
+`.ambientui/manifest.json`. Show the person the list in one line
+("41 files added, 6 changed, 7 packages added"), ask before committing,
+and on a yes:
+
+```bash
+npx -y @ambient-ui/cli end --commit
+```
+
+That is ONE commit, marked `Ambientui-Install: 1`, and it is what makes the
+install removable later.
+
+Then the reveal. If the notes list judgement calls, say so first, in one
+line, and point at `AMBIENTUI-NOTES.md`. Then do not describe the ambient
+layer. Show it: tell the person the app is running, give them the URL, and
+say the hotkey the plan chose:
 
 > Press Cmd-K.
 
@@ -386,6 +446,20 @@ That keystroke opens the spotlight: search over their own product, with
 the assistant behind it. Tell them to drag the orb to the right edge to
 dock the panel, and to the top to get the palette. Then stop. The moment
 belongs to them.
+
+## 8. Removing it, when asked
+
+The person can remove ambientui at any time, and should know that before
+you finish. Tell them in one line during the handover. When they ask:
+
+```bash
+npx -y @ambient-ui/cli uninstall
+```
+
+It reverts the install commit (git is the mechanism: nothing is restored
+from a copy), then lists anything added after it that still refers to the
+layer, such as a page that sets its chip, for you to remove. Reinstall the
+packages afterwards with the project's package manager.
 
 ## Going deeper, only if asked
 

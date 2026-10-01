@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import { useAmbientMessages } from "./messages"
+
 import { cn } from "@ambient-ui/ui/lib/utils"
 
 import { Button } from "@ambient-ui/ui/components/button"
@@ -62,7 +64,11 @@ export function Composer({
   variant = "panel",
   className,
 }: {
-  inputRef?: React.RefObject<HTMLInputElement | null>
+  /**
+   * `Ref`, not `RefObject<… | null>`: the latter is React 19's shape and
+   * fails to type-check against `<input ref>` under React 18's types.
+   */
+  inputRef?: React.Ref<HTMLInputElement>
   value: string
   onChange: (v: string) => void
   onSend: () => void
@@ -117,6 +123,7 @@ export function Composer({
   variant?: ComposerVariant
   className?: string
 }) {
+  const t = useAmbientMessages()
   // an offer only stands while the field is empty: the moment the user types,
   // their own words win
   const offering = Boolean(suggestion && onAcceptSuggestion && value === "")
@@ -198,8 +205,8 @@ export function Composer({
           type="button"
           size={variant === "inline" ? "icon-xs" : "icon-sm"}
           variant="ghost"
-          aria-label="Attach context"
-          title="Attach a file, a selection, or paste text"
+          aria-label={t.attachContext}
+          title={t.attachContextTitle}
           onClick={onAttach}
           className="text-muted-foreground hover:text-foreground shrink-0 rounded-full"
         >
@@ -211,8 +218,8 @@ export function Composer({
           type="button"
           size="icon-sm"
           variant="secondary"
-          aria-label="Queue this instruction"
-          title="Queue — sends when the running turn finishes"
+          aria-label={t.queueInstruction}
+          title={t.queueTitle}
           onClick={onSend}
           className="shrink-0 rounded-full"
         >
@@ -224,8 +231,8 @@ export function Composer({
           type="button"
           size="icon-sm"
           variant="outline"
-          aria-label="Stop the answer"
-          title="Stop"
+          aria-label={t.stopAnswer}
+          title={t.stop}
           onClick={onStop}
           className="shrink-0 rounded-full"
         >
@@ -236,8 +243,8 @@ export function Composer({
           type="button"
           size={variant === "inline" ? "icon-xs" : "icon-sm"}
           variant="default"
-          aria-label="Send"
-          title="Send"
+          aria-label={t.send}
+          title={t.send}
           onClick={onSend}
           disabled={value.trim() === ""}
           className="shrink-0 rounded-full"

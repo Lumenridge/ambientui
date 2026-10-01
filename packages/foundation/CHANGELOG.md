@@ -1,5 +1,19 @@
 # @ambient-ui/foundation
 
+## 0.2.0
+
+### Minor Changes
+
+- `--secondary` follows the gray family.
+- The root font size is set only when scaling is not 100%.
+- `FoundationProvider` takes `remoteFonts={false}` to skip loading a Google font.
+
+### Patch Changes
+
+- Updated dependencies
+  - ambientui@0.2.0
+  - @ambient-ui/ui@0.2.0
+
 ## 0.1.13
 
 ### Patch Changes

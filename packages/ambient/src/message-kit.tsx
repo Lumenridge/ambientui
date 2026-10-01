@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import { useAmbientMessages } from "./messages"
+
 import { AnimatePresence, motion } from "framer-motion"
 
 import { Button } from "@ambient-ui/ui/components/button"
@@ -79,6 +81,7 @@ export function MessageActions({
   text?: string
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [copied, setCopied] = React.useState(false)
   React.useEffect(() => {
     if (!copied) return
@@ -122,8 +125,8 @@ export function MessageActions({
       <Button
         size="icon-sm"
         variant="ghost"
-        aria-label={copied ? "Copied" : "Copy"}
-        title={copied ? "Copied" : "Copy"}
+        aria-label={copied ? t.copied : t.copy}
+        title={copied ? t.copied : t.copy}
         onClick={copy}
         className={cn(
           "text-muted-foreground hover:text-foreground",
@@ -132,10 +135,10 @@ export function MessageActions({
       >
         <Icon name={copied ? "check" : "copy"} size={13} />
       </Button>
-      {act("thumbs-up", "Good answer", () => onRate?.(rating === "up" ? null : "up"), rating === "up")}
-      {act("thumbs-down", "Bad answer", () => onRate?.(rating === "down" ? null : "down"), rating === "down")}
+      {act("thumbs-up", t.goodAnswer, () => onRate?.(rating === "up" ? null : "up"), rating === "up")}
+      {act("thumbs-down", t.badAnswer, () => onRate?.(rating === "down" ? null : "down"), rating === "down")}
       {onRegenerate && act("replay", "Regenerate", onRegenerate)}
-      {onMore && act("more", "More actions", onMore)}
+      {onMore && act("more", t.moreActions, onMore)}
     </div>
   )
 }
@@ -158,7 +161,7 @@ export function MessageActions({
 export function FollowUpSuggestions({
   suggestions,
   onPick,
-  label = "Ask more",
+  label: labelProp,
   className,
 }: {
   suggestions: string[]
@@ -167,6 +170,8 @@ export function FollowUpSuggestions({
   label?: string | null
   className?: string
 }) {
+  const t = useAmbientMessages()
+  const label = labelProp === undefined ? t.askMore : labelProp
   const transition = useMotionTransition("control")
   if (suggestions.length === 0) return null
 
@@ -220,10 +225,10 @@ export function FollowUpSuggestions({
  * says what happened, and offers the single move that helps.
  */
 export function ErrorState({
-  title = "Generation stopped",
+  title,
   detail,
   onRetry,
-  retryLabel = "Retry",
+  retryLabel,
   className,
 }: {
   title?: string
@@ -232,6 +237,7 @@ export function ErrorState({
   retryLabel?: string
   className?: string
 }) {
+  const t = useAmbientMessages()
   return (
     <div
       role="alert"
@@ -244,7 +250,7 @@ export function ErrorState({
         <Icon name="alert" size={15} />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium">{title}</div>
+        <div className="text-sm font-medium">{title ?? t.generationStopped}</div>
         {detail && <p className="mt-0.5 text-sm opacity-80">{detail}</p>}
       </div>
       {onRetry && (
@@ -255,7 +261,7 @@ export function ErrorState({
           className="text-destructive hover:text-destructive shrink-0 hover:bg-(--destructive-wash)"
         >
           <Icon name="replay" size={13} />
-          {retryLabel}
+          {retryLabel ?? t.retry}
         </Button>
       )}
     </div>
@@ -298,6 +304,7 @@ export function MessageQueue({
   onCancel?: (id: string) => void
   className?: string
 }) {
+  const t = useAmbientMessages()
   const transition = useMotionTransition("control")
   if (!running && queued.length === 0) return null
   return (
@@ -340,7 +347,7 @@ export function MessageQueue({
                     size="icon-sm"
                     variant="ghost"
                     aria-label={`Send "${q.text}" now, interrupting the running turn`}
-                    title="Send now — interrupts the running turn"
+                    title={t.sendNow}
                     onClick={() => onInterrupt(q.id)}
                     className="text-muted-foreground hover:text-foreground shrink-0"
                   >
@@ -402,26 +409,36 @@ export function ReasoningPanel({
   staged?: boolean
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [open, setOpen] = React.useState(defaultOpen ?? running)
   const transition = useMotionTransition("surface")
   // the trace arrives the way it was produced: a beat of nothing, then a
   // step, then the next
+  // A DECLARED DURATION IS A CEILING TOO. With `seconds`, the beat and the
+  // steps are fitted inside it, so the summary never exceeds the declaration.
+  const budget = seconds ? seconds * 1000 : undefined
+  const delay = budget ? Math.min(2600, budget * 0.35) : 2600
+  const interval =
+    budget && steps.length > 0
+      ? Math.min(1500, (budget - delay) / steps.length)
+      : 1500
   const { shown, pending, working: counting } = useStagedReveal(steps.length, {
     // THINKING TAKES ITS OWN TIME. A trace that declares `seconds` is held
     // to exactly that — the scenario's estimate of its work is the wait the
     // user sees, so a small explain settles in ~4s and a five-file fix earns
     // its twelve. The floor only catches blocks that don't say.
-    minDuration: seconds ? seconds * 1000 : THINKING_FLOOR_MS,
+    minDuration: budget ?? THINKING_FLOOR_MS,
     enabled: staged,
     // long enough to be a real wait, and paced so a step can be READ before
     // the next one lands rather than three arriving on top of each other
-    delay: 2600,
-    interval: 1500,
+    delay,
+    interval,
   })
   const working = staged && (pending || shown < steps.length)
   const elapsed = useElapsedSeconds(counting)
-  // the settled summary quotes the time it ACTUALLY took, not a prop
-  const took = staged ? Math.max(1, elapsed) : seconds
+  // the settled summary quotes the declared time when there is one, else
+  // the time it actually took
+  const took = seconds ?? (staged ? Math.max(1, elapsed) : undefined)
   // A run that starts opens the trace; finishing collapses it back — adjusted
   // DURING render on the transition, not from an effect, so the panel never
   // paints in the stale state first. (react.dev: adjusting state when a prop
@@ -442,10 +459,10 @@ export function ReasoningPanel({
       >
         <span className={cn(working && "ambient-shimmer")}>
           {running || working
-            ? `Thinking… ${elapsed}s`
+            ? t.thinkingFor({ n: elapsed })
             : took !== undefined
-              ? `Thought for ${took}s`
-              : "Reasoning"}
+              ? t.thoughtFor({ n: took })
+              : t.reasoning}
         </span>
         <Icon name={open ? "chevron-down" : "chevron-right"} size={13} />
       </button>
@@ -509,7 +526,7 @@ export function ReasoningEffort({
   onChange,
   spent,
   budget,
-  label = "Thinking",
+  label: labelProp,
   defaultOpen = false,
   className,
 }: {
@@ -523,6 +540,8 @@ export function ReasoningEffort({
   defaultOpen?: boolean
   className?: string
 }) {
+  const t = useAmbientMessages()
+  const label = labelProp ?? t.thinking
   const [open, setOpen] = React.useState(defaultOpen)
   const transition = useMotionTransition("surface")
   const ratio =
@@ -654,6 +673,7 @@ export function MessageAttachments({
   compact?: boolean
   className?: string
 }) {
+  const t = useAmbientMessages()
   if (attachments.length === 0) return null
 
   if (compact) {
@@ -722,7 +742,7 @@ export function MessageAttachments({
                 size="icon-xs"
                 variant="ghost"
                 aria-label={`Remove ${a.name}`}
-                title="Remove"
+                title={t.remove}
                 onClick={(e) => {
                   e.stopPropagation()
                   onRemove(a.id)
@@ -763,6 +783,7 @@ export function ChipSlider({
   deps?: number
   className?: string
 }) {
+  const t = useAmbientMessages()
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [edges, setEdges] = React.useState({ left: false, right: false })
 
@@ -801,7 +822,7 @@ export function ChipSlider({
       type="button"
       size="icon-xs"
       variant="ghost"
-      aria-label={dir === -1 ? "Scroll back" : "Scroll forward"}
+      aria-label={dir === -1 ? t.scrollBack : t.scrollForward}
       disabled={!shown}
       onClick={() => page(dir)}
       className={cn(
@@ -842,6 +863,7 @@ export function AttachmentChip({
   attachment: MessageAttachment
   onRemove?: (id: string) => void
 }) {
+  const t = useAmbientMessages()
   return (
     <span
       title={`${a.name}${a.meta ? ` · ${a.meta}` : ""}`}
@@ -857,7 +879,7 @@ export function AttachmentChip({
           size="icon-xs"
           variant="ghost"
           aria-label={`Remove ${a.name}`}
-          title="Remove"
+          title={t.remove}
           onClick={() => onRemove(a.id)}
           className="text-muted-foreground hover:text-foreground size-[22px] shrink-0 rounded-md bg-accent"
         >
@@ -904,22 +926,25 @@ export type QuoteAction =
 
 type QuoteMode = "idle" | "thinking" | "streaming" | "result"
 
-const PRIMARY_ACTIONS: { id: QuoteAction; label: string; icon: IconName }[] = [
-  { id: "explain", label: "Explain", icon: "sparkles" },
-  { id: "improve", label: "Improve", icon: "edit" },
+// labels are catalog keys (messages.en.ts), resolved at render
+type Words = ReturnType<typeof useAmbientMessages>
+type WordKey = { [K in keyof Words]: Words[K] extends string ? K : never }[keyof Words]
+const PRIMARY_ACTIONS: { id: QuoteAction; label: WordKey; icon: IconName }[] = [
+  { id: "explain", label: "quoteExplain", icon: "sparkles" },
+  { id: "improve", label: "quoteImprove", icon: "edit" },
 ]
-const MORE_ACTIONS: { id: QuoteAction; label: string; icon: IconName }[] = [
-  { id: "shorten", label: "Shorten", icon: "scissors" },
-  { id: "tone", label: "Tone", icon: "smile" },
-  { id: "grammar", label: "Grammar", icon: "type" },
+const MORE_ACTIONS: { id: QuoteAction; label: WordKey; icon: IconName }[] = [
+  { id: "shorten", label: "quoteShorten", icon: "scissors" },
+  { id: "tone", label: "quoteTone", icon: "smile" },
+  { id: "grammar", label: "quoteGrammar", icon: "type" },
 ]
-const BUSY_LABEL: Record<QuoteAction, string> = {
-  explain: "Explaining",
-  improve: "Improving",
-  shorten: "Shortening",
-  tone: "Changing tone",
-  grammar: "Fixing grammar",
-  prompt: "Editing",
+const BUSY_LABEL: Record<QuoteAction, WordKey> = {
+  explain: "busyExplain",
+  improve: "busyImprove",
+  shorten: "busyShorten",
+  tone: "busyTone",
+  grammar: "busyGrammar",
+  prompt: "busyPrompt",
 }
 
 /**
@@ -954,6 +979,7 @@ export function QuoteReply({
   onAction?: (action: QuoteAction, selection: string) => void
   className?: string
 }) {
+  const t = useAmbientMessages()
   const hostRef = React.useRef<HTMLDivElement | null>(null)
   const frameRef = React.useRef<number | null>(null)
   const [selection, setSelection] = React.useState("")
@@ -1103,11 +1129,11 @@ export function QuoteReply({
                   <span className="border-muted-foreground/30 border-t-primary size-3 shrink-0 animate-spin rounded-full border-[1.5px]" />
                   {mode === "thinking" ? (
                     <span className="ambient-shimmer tabular-nums">
-                      {BUSY_LABEL[action]}… {elapsed}s
+                      {t[BUSY_LABEL[action]]}… {elapsed}s
                     </span>
                   ) : (
                     <span className="text-muted-foreground">
-                      {BUSY_LABEL[action]}…
+                      {t[BUSY_LABEL[action]]}…
                     </span>
                   )}
                 </span>
@@ -1136,7 +1162,7 @@ export function QuoteReply({
                   <Button
                     size="icon-sm"
                     variant="ghost"
-                    aria-label="Try again"
+                    aria-label={t.tryAgain}
                     onClick={() => run(action, prompt || undefined)}
                     className="shrink-0 rounded-full"
                   >
@@ -1158,15 +1184,15 @@ export function QuoteReply({
                       value={prompt}
                       onPointerDown={(e) => e.stopPropagation()}
                       onChange={(e) => setPrompt(e.target.value)}
-                      aria-label="Describe edits"
-                      placeholder="Describe edits"
+                      aria-label={t.describeEdits}
+                      placeholder={t.describeEdits}
                       className="placeholder:text-muted-foreground h-7 w-32 bg-transparent ps-2.5 pe-1 text-xs outline-none"
                     />
                   </form>
                   {prompt.trim() ? (
                     <Button
                       size="icon-sm"
-                      aria-label="Send edit instruction"
+                      aria-label={t.sendEdit}
                       onClick={() => run("prompt", prompt.trim())}
                       className="shrink-0 rounded-full"
                     >
@@ -1184,7 +1210,7 @@ export function QuoteReply({
                           className="shrink-0 rounded-full font-normal"
                         >
                           <Icon name={a.icon} size={12} />
-                          {a.label}
+                          {t[a.label]}
                         </Button>
                       ))}
                       {/* the long tail unfolds inside the pill, so the bar
@@ -1206,7 +1232,7 @@ export function QuoteReply({
                             className="shrink-0 rounded-full font-normal"
                           >
                             <Icon name={a.icon} size={12} />
-                            {a.label}
+                            {t[a.label]}
                           </Button>
                         ))}
                       </motion.div>
@@ -1214,7 +1240,7 @@ export function QuoteReply({
                       <Button
                         size="icon-sm"
                         variant="ghost"
-                        aria-label={expanded ? "Show fewer actions" : "Show more actions"}
+                        aria-label={expanded ? t.showFewerActions : t.showMoreActions}
                         aria-expanded={expanded}
                         onClick={() => setExpanded((v) => !v)}
                         className="shrink-0 rounded-full"
@@ -1263,6 +1289,7 @@ export function FeedbackDialog({
   onDismiss?: () => void
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [reasons, setReasons] = React.useState<string[]>([])
   const [note, setNote] = React.useState("")
   const toggle = (r: string) =>
@@ -1271,7 +1298,7 @@ export function FeedbackDialog({
   return (
     <div
       role="group"
-      aria-label="What went wrong?"
+      aria-label={t.whatWentWrong}
       className={cn(
         "border-border bg-card flex w-full max-w-sm flex-col gap-3 rounded-xl border p-3 shadow-xs",
         className
@@ -1281,7 +1308,7 @@ export function FeedbackDialog({
         <span className="bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-lg">
           <Icon name="thumbs-down" size={14} />
         </span>
-        <span className="flex-1 text-sm font-medium">What went wrong?</span>
+        <span className="flex-1 text-sm font-medium">{t.whatWentWrong}</span>
         <span className="text-muted-foreground font-mono text-xs">
           optional
         </span>
@@ -1308,8 +1335,8 @@ export function FeedbackDialog({
       <Input
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Anything else?"
-        aria-label="Anything else?"
+        placeholder={t.anythingElse}
+        aria-label={t.anythingElse}
       />
       <div className="flex items-center justify-end gap-1.5">
         {onDismiss && (
@@ -1382,14 +1409,14 @@ export type { ReasoningEffortLevel }
 
 export type ReviewStatus = "comment" | "change-requested" | "resolved"
 
-const REVIEW_STATUS: Record<ReviewStatus, { label: string; className: string }> = {
-  comment: { label: "Comment", className: "bg-muted text-muted-foreground" },
+const REVIEW_STATUS: Record<ReviewStatus, { label: WordKey; className: string }> = {
+  comment: { label: "reviewComment", className: "bg-muted text-muted-foreground" },
   "change-requested": {
-    label: "Change requested",
+    label: "reviewChangeRequested",
     className: "bg-(--destructive-wash) text-destructive",
   },
   resolved: {
-    label: "Resolved",
+    label: "reviewResolved",
     className: "bg-(--positive-wash) text-(--positive)",
   },
 }
@@ -1415,7 +1442,7 @@ export function ReviewComment({
   status = "comment",
   text,
   onReply,
-  replyPlaceholder = "Leave a reply…",
+  replyPlaceholder,
   className,
 }: {
   author: string
@@ -1427,6 +1454,7 @@ export function ReviewComment({
   replyPlaceholder?: string
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [reply, setReply] = React.useState("")
   const badge = REVIEW_STATUS[status]
   const send = () => {
@@ -1461,7 +1489,7 @@ export function ReviewComment({
             badge.className
           )}
         >
-          {badge.label}
+          {t[badge.label]}
         </span>
       </div>
       <p className="text-sm leading-relaxed">{text}</p>
@@ -1475,7 +1503,7 @@ export function ReviewComment({
           value={reply}
           onChange={setReply}
           onSend={send}
-          placeholder={replyPlaceholder}
+          placeholder={replyPlaceholder ?? t.leaveReply}
         />
       )}
     </div>

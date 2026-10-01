@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import { useAmbientMessages } from "./messages"
+
 import { Button } from "@ambient-ui/ui/components/button"
 import { Icon, type IconName } from "@ambient-ui/ui/components/icon"
 import { cn } from "@ambient-ui/ui/lib/utils"
@@ -333,6 +335,7 @@ export function MessageBranches({
   onFollowUp?: (text: string) => void
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [index, setIndex] = React.useState(branches.length - 1)
   // a new branch arriving becomes the one you are looking at
   const countRef = React.useRef(branches.length)
@@ -367,7 +370,7 @@ export function MessageBranches({
           <Button
             size="icon-sm"
             variant="ghost"
-            aria-label="Previous version"
+            aria-label={t.previousVersion}
             disabled={index === 0}
             onClick={() => setIndex((i) => Math.max(0, i - 1))}
             className="text-muted-foreground hover:text-foreground"
@@ -380,7 +383,7 @@ export function MessageBranches({
           <Button
             size="icon-sm"
             variant="ghost"
-            aria-label="Next version"
+            aria-label={t.nextVersion}
             disabled={index === branches.length - 1}
             onClick={() =>
               setIndex((i) => Math.min(branches.length - 1, i + 1))

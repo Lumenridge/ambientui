@@ -1,8 +1,8 @@
 # The Ambient API: connecting the layer to a backend
 
 The ambient layer never makes a network request. The host app gives it one
-object, built with `createAmbientApi` from
-`packages/ambient/src/responder.ts`, and the layer calls it:
+object, built with `createAmbientApi` from the layer's `responder.ts`, and
+the layer calls it:
 
 ```tsx
 <AssistantProvider api={ambientApi}>…</AssistantProvider>
@@ -34,10 +34,14 @@ example):
 | `AmbientRecent` | One row of the working history. |
 | `AmbientApi`, `createAmbientApi`, `AmbientApiError` | The API the layer calls, how to build it, and how it fails. |
 
-The zod schemas live in `packages/ambient/src/responder-schemas.ts`
-(`ambientAnswerSchema`, `ambientQuestionSchema`,
-`ambientAnswerEventSchema`, …). The API around them lives in
-`packages/ambient/src/responder.ts`. In the host, keep the prefix too:
+The zod schemas live in `responder-schemas.ts` (`ambientAnswerSchema`,
+`ambientQuestionSchema`, `ambientAnswerEventSchema`, …) and the API around
+them in `responder.ts`. **Where those are depends on how you installed the
+layer:** through the registry they are in your project, at
+`@/components/ambient/responder-schemas` and `@/components/ambient/responder`;
+with `npm i ambientui` they are `ambientui/responder-schemas` and
+`ambientui/responder`. (In this repo: `packages/ambient/src/`.) The examples
+below use the registry paths. In the host, keep the prefix too:
 `lib/ambient/api.ts`, `ambientApi`, `VITE_AMBIENT_STUBS`, and endpoints
 under `/ambient/`, so anyone reading the codebase can tell which code
 serves the assistant.
@@ -131,6 +135,28 @@ how answers look, overlaps with the layer and is out of scope.
 | Vercel AI SDK UI (`useChat`) | Not needed | It manages chat state and messages in the browser, which the layer already does. Use the AI SDK on the server instead. |
 | assistant-ui, CopilotKit, other chat UI kits | Out of scope | They have opinions about the presentation layer. A host could still run their backend runtimes behind its own server. |
 
+## Use the transport the product already has
+
+**The first rule: the assistant's requests go the way every other feature's
+requests go.** The same client, the same base path, the same auth, the same
+error handling, the same mock mode. Never a new server just for the
+assistant, unless the product already works that way.
+
+A transport of its own would miss the product's base path, auth and error
+handling, and a separate AI server cannot read the data the product holds.
+
+Find the product's transport before writing anything (`ambientui doctor`
+reports it), then pick the matching example:
+
+| The product talks to its backend through | Put `ask` |
+|---|---|
+| an HTTP client module (axios, ky, a fetch wrapper) | on that client, beside the other features' calls — [existing client](#with-the-projects-existing-http-client), [session auth](#session-auth-cookies-and-csrf) |
+| TanStack Query / SWR over a client | on the client; the layer does its own request state, so no query hook |
+| tRPC or a generated client | as one more procedure or operation |
+| a worker, IPC, or a local engine (`send(name, args)`) | as one more handler in that engine — [local-first](#a-local-first-app-worker-or-ipc) |
+| an AI SDK already (Vercel AI SDK, a provider SDK) | behind its existing route — [AI SDK routes](#a-server-route-with-the-vercel-ai-sdk-whole-answer) |
+| nothing yet | the default `lib/ambient/api.ts` in start.md |
+
 ## Examples
 
 ### How it relates to the Vercel AI SDK
@@ -170,6 +196,60 @@ export const ambientApi = createAmbientApi(
 )
 ```
 
+### Session auth: cookies and CSRF
+
+What a session-authenticated product's own services already do, and what
+the assistant's calls must do too:
+
+```ts
+// lib/ambient/api.ts — the product's conventions, not new ones
+import { createAmbientApi } from "@/components/ambient/responder"
+import { csrfToken, onUnauthorized } from "@/utils/session" // the product's own
+
+const post = (path: string) => async (body: unknown, { signal }: { signal: AbortSignal }) => {
+  const res = await fetch(`/api/ambient${path}`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken() },
+    body: JSON.stringify(body),
+    signal,
+  })
+  if (res.status === 401) onUnauthorized()
+  if (!res.ok) throw new Error(`The assistant request failed (${res.status}).`)
+  return res.json()
+}
+
+export const ambientApi = createAmbientApi({
+  ask: post("/ask"),
+  suggestions: post("/suggestions"),
+})
+```
+
+### A local-first app: worker or IPC
+
+When the UI talks to a local engine rather than a server, `ask` is one more
+message to that engine, and the engine answers from the data it already
+holds. It reaches a model through whatever outbound path the product
+already has (its sync server, a user-supplied key), or stays on stubs.
+
+```ts
+// lib/ambient/api.ts — a local engine reached through send(name, args)
+import { createAmbientApi } from "@/components/ambient/responder"
+import { send } from "@/platform/engine" // the product's own
+
+export const ambientApi = createAmbientApi({
+  ask: (input) => send("ambient-ask", input),
+  suggestions: (input) => send("ambient-suggestions", input),
+})
+
+// and inside the engine, beside its other handlers:
+// handlers["ambient-ask"] = async (input) => answerFromData(input)
+```
+
+`send` here takes no `AbortSignal`, so Stop ends the turn on screen while
+the engine finishes in the background. That is acceptable; a transport
+that can cancel should.
+
 ### A streaming endpoint (SSE)
 
 ```ts
@@ -195,7 +275,8 @@ export const ambientApi = createAmbientApi({
 // app/api/ambient/ask/route.ts (Next.js)
 import { anthropic } from "@ai-sdk/anthropic"
 import { generateObject } from "ai"
-import { ambientQuestionSchema, ambientAnswerSchema } from "ambientui/responder"
+// registry install; with `npm i ambientui`, import from "ambientui/responder-schemas"
+import { ambientQuestionSchema, ambientAnswerSchema } from "@/components/ambient/responder-schemas"
 
 export async function POST(req: Request) {
   const input = ambientQuestionSchema.parse(await req.json())
@@ -219,7 +300,7 @@ export async function POST(req: Request) {
 // app/api/ambient/ask/stream/route.ts (Next.js)
 import { anthropic } from "@ai-sdk/anthropic"
 import { streamText } from "ai"
-import { ambientQuestionSchema, type AmbientAnswerEvent } from "ambientui/responder"
+import { ambientQuestionSchema, type AmbientAnswerEvent } from "@/components/ambient/responder-schemas"
 
 export async function POST(req: Request) {
   const input = ambientQuestionSchema.parse(await req.json())
@@ -256,7 +337,7 @@ same way: a tool call and its result become a `tool` block.
 
 A FastAPI endpoint returns the same JSON. Until the schema is exported as JSON
 Schema (see the gaps below), mirror `AmbientAnswer` in pydantic by hand from the
-schemas in `responder.ts`. The browser still validates every reply, so drift
+schemas in `responder-schemas.ts`. The browser still validates every reply, so drift
 shows up as a clear error, not a broken page.
 
 ## Gaps, and what we plan to do

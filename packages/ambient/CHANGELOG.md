@@ -1,5 +1,21 @@
 # ambientui
 
+## 0.2.0
+
+### Minor Changes
+
+- **Breaking.** The chrome's words come from a catalog in ten languages (`messages.<locale>.ts`) and name the product (`productName`, `assistantName`), never the library; with neither set they say "the assistant". `messages` takes catalog strings (ICU MessageFormat), not functions.
+- **Breaking.** `NavItem.icon` is an icon name, drawn by `<Icon>`; a HugeIcons object is still accepted.
+- `AssistantProvider` takes `locale`, `hotkey` / `yieldHotkey`, `zIndex`, `dark` and `defaultOrbAnchor`. The locale is sent with every question and suggestions request.
+- `setCommands` ignores identical lists, and `useRegisterCommands` registers for a component's lifetime. Commands and jumps leave the spotlight closed and empty; the hotkey opens search even mid-conversation, heard in the capture phase.
+- `auditAmbientApi` tests a host's stub or real API. The root carries `data-ambient-root`, each surface `data-ambient-surface`.
+- `ambient.css` declares its knobs and defaults at zero specificity, including motion roles, `--positive` and `.no-scrollbar`.
+
+### Patch Changes
+
+- Updated dependencies
+  - @ambient-ui/ui@0.2.0
+
 ## 0.1.13
 
 ### Patch Changes
