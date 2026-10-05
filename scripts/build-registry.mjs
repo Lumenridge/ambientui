@@ -251,9 +251,20 @@ async function stagePreflight() {
 }
 
 const SRC = "packages/ambient/src"
-const layerFiles = readdirSync(resolve(ROOT, SRC))
+const sourceFiles = readdirSync(resolve(ROOT, SRC))
   .filter((f) => f.endsWith(".ts") || f.endsWith(".tsx"))
   .sort()
+
+/**
+ * A CHAT STACK'S ADAPTER IS ITS OWN DOOR. `stack-<name>.ts` connects the
+ * layer to one stack a product may already run; a product takes the door
+ * for the stack it has and no other. `stack-parts.ts` is what they share,
+ * and travels with each.
+ */
+const isStackFile = (f) => f.startsWith("stack-")
+const STACK_SHARED = "stack-parts.ts"
+const layerFiles = sourceFiles.filter((f) => !isStackFile(f))
+const stackFiles = sourceFiles.filter((f) => isStackFile(f) && f !== STACK_SHARED)
 
 // one file, one type: hooks are hooks, plain .ts is lib, .tsx is a component
 const fileType = (f) =>
@@ -316,6 +327,28 @@ function shadcnDeps(files) {
     }
   }
   return [...deps].sort()
+}
+
+/** What each stack door says. A new `stack-<name>.ts` needs an entry here. */
+const STACKS = {
+  "stack-ai-sdk": {
+    title: "Vercel AI SDK adapter",
+    description:
+      "Puts the ambient layer on a product that runs the Vercel AI SDK: its chat route, or its Chat instance, answers the layer.",
+    docs: 'Needs the ambient layer. Give the provider an API built from the adapter:\n\n  const api = createAmbientApi(aiSdkRoute({ api: "/api/chat" }))\n\nor, to share the product\'s own Chat (its tools, approvals and messages): createAmbientApi(aiSdkChat(() => chat)). See docs/chat-stacks.md.',
+  },
+  "stack-assistant-ui": {
+    title: "assistant-ui adapter",
+    description:
+      "Puts the ambient layer on a product that runs an assistant-ui runtime: the layer asks through the runtime's thread and follows it.",
+    docs: "Needs the ambient layer. Give the provider an API built from the runtime:\n\n  const api = createAmbientApi(assistantUIThread(() => runtime.thread))\n\nSee docs/chat-stacks.md.",
+  },
+  "stack-ag-ui": {
+    title: "AG-UI adapter (CopilotKit, LangGraph, Mastra)",
+    description:
+      "Puts the ambient layer on a product that runs CopilotKit or any AG-UI agent: the layer runs its questions on the agent and follows its messages.",
+    docs: "Needs the ambient layer. Give the provider an API built from the agent:\n\n  const api = createAmbientApi(agUIAgent(() => agent))\n\nInside CopilotKit, pass `run: (agent) => copilotkit.runAgent({ agent })`. See docs/chat-stacks.md.",
+  },
 }
 
 const NPM_FOR = [
@@ -642,6 +675,23 @@ const items = [
     docs: 'For a project on Tailwind 3.4 or later that is not moving to v4. Import the material from your entry file, on the line after your global stylesheet:\n\n  import "./index.css"\n  import "./styles/ambient.css"\n\nThen mount it exactly as ambient-layer:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nYour tailwind.config must include the installed files in `content` (components/ambient/**) and map the standard shadcn colours as hsl(var(--x)), which `shadcn init` for v3 already does. The door ships its own button (components/ambient/ui/button.tsx) and never replaces yours. Layer only: the Foundation needs Tailwind v4.',
     meta: { base: "ambient-layer", variant: { styling: "tailwind-v3", tokens: "hsl-triplet" } },
   },
+  ...stackFiles.map((f) => {
+    const name = f.replace(/\.ts$/, "")
+    const about = STACKS[name]
+    if (!about) throw new Error(`${f} has no entry in STACKS (scripts/build-registry.mjs)`)
+    return {
+      name,
+      type: "registry:lib",
+      title: about.title,
+      description: about.description,
+      files: [f, STACK_SHARED].map((file) => ({
+        path: stage(`${SRC}/${file}`),
+        type: "registry:lib",
+        target: `components/ambient/${file}`,
+      })),
+      docs: about.docs,
+    }
+  }),
   /**
    * THE BASE FOR A PRODUCT WITHOUT shadcn OR TAILWIND. What the layer
    * assumes a shadcn project has, shipped as items instead of a `shadcn init`

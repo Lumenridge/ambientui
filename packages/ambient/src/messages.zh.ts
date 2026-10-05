@@ -94,6 +94,12 @@ export const ambientMessagesZh: AmbientCatalog = {
   run: "运行",
   succeeded: "成功",
   failed: "失败",
+  approvalNeeded: "需要你的批准",
+  approve: "批准",
+  deny: "拒绝",
+  approved: "已批准",
+  denied: "已拒绝",
+  waitingForYou: "正在等待你",
   applied: "已应用",
   applyCount: "应用 {n} 项",
 }

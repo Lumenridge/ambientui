@@ -89,7 +89,12 @@ governance. (DESIGN.md §2, with the Linear precedent.)
    `ask`/`suggestions`/`recents`, passed to `<AssistantProvider api>`). The
    layer makes no requests and never knows whether it is talking to a
    server or stubs; that is the host's API layer's call, and a model
-   replaces the host's stubs, never the objects. **One character per surface**: the
+   replaces the host's stubs, never the objects. On a product that runs a
+   chat stack (Vercel AI SDK, assistant-ui, CopilotKit) the layer is the
+   surface and the stack stays the engine, connected through an adapter
+   (`stack-*.ts`, `docs/chat-stacks.md`); the product's own tool components
+   render inside the layer's frame, and approvals are asked in the
+   transcript. **One character per surface**: the
    orb/OrbCharacter mark belongs in the row where the user speaks to the
    assistant (composer mark, quick-ask pill) and in the resting orb — never
    in headers, footers, navigation or product chrome. **An answer arrives in order**:

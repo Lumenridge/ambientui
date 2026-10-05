@@ -42,3 +42,11 @@ export * from "./responder-schemas"
 export * from "./stub-audit"
 export * from "./stage-queue"
 export * from "./use-staged-reveal"
+
+// The host's own components and thread, inside the layer.
+export * from "./tool-host"
+export * from "./follow-conversation"
+
+// NOT HERE: the chat-stack adapters (stack-ai-sdk, stack-assistant-ui,
+// stack-ag-ui). A product has one stack, so each is its own import
+// (`ambientui/stack-ai-sdk`) and its own registry door.

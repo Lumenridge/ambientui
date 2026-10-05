@@ -94,6 +94,12 @@ export const ambientMessagesRu: AmbientCatalog = {
   run: "Запустить",
   succeeded: "Успешно",
   failed: "Ошибка",
+  approvalNeeded: "Требуется ваше подтверждение",
+  approve: "Разрешить",
+  deny: "Отклонить",
+  approved: "Разрешено",
+  denied: "Отклонено",
+  waitingForYou: "Ожидает вас",
   applied: "Применено",
   applyCount: "Применить {n}",
 }

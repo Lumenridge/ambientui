@@ -325,7 +325,33 @@ export function detectAi(ctx) {
   const routes = grep(ctx, files, /["'`](?:\/api)?\/(?:ai|chat|assistant|llm|completions?)(?:\/[\w-]*)?["'`]/, { limit: 5 })
   for (const r of routes) ctx.ev("ai.routes", { file: r.file, line: r.line, note: r.text })
   const kind = sdk.length ? "sdk-streaming" : provider.length ? "provider-sdk" : routes.length || envNames.size ? "http-endpoint" : "none"
-  return { kind, sdk, provider, envNames: [...envNames], routes }
+  return { kind, sdk, provider, envNames: [...envNames], routes, stack: detectChatStack(ctx, d, files) }
+}
+
+/**
+ * THE CHAT STACK THE PRODUCT ALREADY RUNS, and where its own chat UI is
+ * mounted. The layer becomes the assistant's surface on top of that stack
+ * (its runtime, tools and thread stay), so the plan needs to know which
+ * adapter door to open and which mounts the layer takes over.
+ *
+ * A stack that owns the thread in the browser wins over one that only
+ * streams: a product on assistant-ui usually has `ai` underneath it.
+ */
+const CHAT_STACKS = [
+  { id: "assistant-ui", door: "stack-assistant-ui", pkg: (k) => k === "@assistant-ui/react", ui: /<(?:Thread|AssistantModal|AssistantSidebar|ThreadPrimitive\.Root)\b/, wiring: /\buse(?:Chat|Local|ExternalStore|LangGraph)Runtime\s*\(/ },
+  { id: "copilotkit", door: "stack-ag-ui", pkg: (k) => k.startsWith("@copilotkit/"), ui: /<(?:CopilotChat|CopilotSidebar|CopilotPopup)\b/, wiring: /<(?:CopilotKit|CopilotKitProvider)\b/ },
+  { id: "ag-ui", door: "stack-ag-ui", pkg: (k) => k === "@ag-ui/client", ui: null, wiring: /\bnew\s+HttpAgent\s*\(/ },
+  { id: "ai-sdk", door: "stack-ai-sdk", pkg: (k) => k === "ai" || k === "@ai-sdk/react", ui: null, wiring: /\buseChat\s*\(|\bnew\s+Chat\s*\(/ },
+]
+
+function detectChatStack(ctx, deps, files) {
+  const stack = CHAT_STACKS.find((s) => deps.some(s.pkg))
+  if (!stack) return null
+  const at = (re) => (re ? grep(ctx, files, re, { limit: 5 }).map((h) => ({ file: h.file, line: h.line, text: h.text })) : [])
+  const chatUi = at(stack.ui)
+  const wiring = at(stack.wiring)
+  for (const h of [...wiring, ...chatUi]) ctx.ev("ai.stack", { file: h.file, line: h.line, note: h.text })
+  return { id: stack.id, door: stack.door, wiring, chatUi }
 }
 
 /* ---------------------------- existing install ---------------------------- */

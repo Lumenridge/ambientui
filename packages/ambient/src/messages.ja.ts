@@ -94,6 +94,12 @@ export const ambientMessagesJa: AmbientCatalog = {
   run: "実行",
   succeeded: "成功",
   failed: "失敗",
+  approvalNeeded: "承認が必要です",
+  approve: "承認",
+  deny: "拒否",
+  approved: "承認済み",
+  denied: "拒否済み",
+  waitingForYou: "入力を待っています",
   applied: "適用済み",
   applyCount: "{n} 件を適用",
 }

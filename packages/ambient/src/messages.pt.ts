@@ -94,6 +94,12 @@ export const ambientMessagesPt: AmbientCatalog = {
   run: "Executar",
   succeeded: "Concluído",
   failed: "Falhou",
+  approvalNeeded: "Precisa da sua aprovação",
+  approve: "Aprovar",
+  deny: "Recusar",
+  approved: "Aprovado",
+  denied: "Recusado",
+  waitingForYou: "À sua espera",
   applied: "Aplicado",
   applyCount: "Aplicar {n}",
 }

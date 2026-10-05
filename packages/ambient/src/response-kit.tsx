@@ -11,6 +11,7 @@ import { cn } from "@ambient-ui/ui/lib/utils"
 import { useAmbientRuntime } from "./ambient-runtime"
 
 import { StageQueueContext, useStageQueue } from "./stage-queue"
+import { useAmbientToolHost, type AmbientToolProps } from "./tool-host"
 import { StreamingText } from "./streaming-text"
 import {
   FeedbackDialog,
@@ -28,9 +29,11 @@ import {
 } from "./knowledge-kit"
 import {
   CodeDiff,
+  HostTool,
   ParallelTools,
   ReviewableDiff,
   TerminalBlock,
+  ToolApproval,
   ToolCall,
   ToolFailure,
   ToolTimeline,
@@ -77,7 +80,7 @@ export interface AmbientReference {
  * the whole grammar — every member maps to one documented component, and a
  * model wiring in emits these rather than markdown.
  */
-export type AmbientBlock =
+export type AmbientBlock = (
   | { kind: "reasoning"; steps: ReasoningStep[]; seconds?: number }
   | { kind: "parallel"; summary: string; calls: ParallelCall[] }
   | {
@@ -85,6 +88,32 @@ export type AmbientBlock =
       verb: string
       request?: string
       result?: string
+      /**
+       * The tool as the model called it, with its input and output as data.
+       * A host that registered its own component for this name
+       * (`<AssistantProvider toolComponents>`) has it drawn in place of the
+       * generic call. See tool-host.ts.
+       */
+      name?: string
+      input?: unknown
+      output?: unknown
+      /**
+       * Where the call is. `waiting` is waiting on the person (the host's
+       * component collects the input and responds); omitted means done.
+       */
+      status?: "running" | "waiting" | "done"
+    }
+  | {
+      /**
+       * The assistant wants to run a tool and needs a yes first. `id` is
+       * what the answer is sent back under (`respond` on the Ambient API).
+       */
+      kind: "approval"
+      id: string
+      tool: string
+      request?: string
+      reason?: string
+      decision?: "approved" | "denied"
     }
   | { kind: "search"; query: string; sources: SearchSource[] }
   | { kind: "diff"; path: string; lines: DiffLine[] }
@@ -93,6 +122,14 @@ export type AmbientBlock =
   | { kind: "timeline"; steps: TimelineStep[]; files?: FileStat[] }
   | { kind: "failure"; tool: string; target?: string; error: string; attempt?: number; attempts?: number }
   | { kind: "report"; title: string; sections: ReportSection[]; sourcesRead?: number }
+) & {
+  /**
+   * A block's identity within its answer. A later block with the same id
+   * REPLACES the earlier one in place, which is how a call that was waiting
+   * becomes one that finished.
+   */
+  id?: string
+}
 
 export interface AmbientAnswer {
   text: string
@@ -411,7 +448,41 @@ function AmbientBlockView({
   /** False for a settled message: history is written, not replayed. */
   staged?: boolean
 }) {
+  const host = useAmbientToolHost()
+  // A TOOL THE HOST HAS A COMPONENT FOR is drawn by it, in the layer's
+  // frame. Named component first, then the host's own registry; neither
+  // means the generic call below.
+  if (block.kind === "tool" && block.name && host) {
+    const id = block.id
+    const props: AmbientToolProps = {
+      id,
+      name: block.name,
+      input: block.input,
+      output: block.output,
+      status: block.status ?? "done",
+      respond: (output) => id !== undefined && host.respond?.({ id, output }),
+    }
+    const Component = host.components?.[block.name]
+    const drawn = Component ? <Component {...props} /> : host.render?.(props)
+    if (drawn !== undefined && drawn !== null)
+      return (
+        <HostTool verb={block.verb} status={props.status} staged={staged}>
+          {drawn}
+        </HostTool>
+      )
+  }
   switch (block.kind) {
+    case "approval":
+      return (
+        <ToolApproval
+          tool={block.tool}
+          request={block.request}
+          reason={block.reason}
+          decision={block.decision}
+          onDecide={(approved) => host?.respond?.({ id: block.id, approved })}
+          staged={staged}
+        />
+      )
     case "reasoning":
       return (
         <ReasoningPanel
@@ -432,6 +503,8 @@ function AmbientBlockView({
       return (
         <ToolCall
           verb={block.verb}
+          // a call still out (or waiting, with no component to wait in)
+          status={block.status && block.status !== "done" ? "running" : "done"}
           request={block.request}
           result={block.result}
           staged={staged}

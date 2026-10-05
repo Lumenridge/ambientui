@@ -94,6 +94,12 @@ export const ambientMessagesAr: AmbientCatalog = {
   run: "تشغيل",
   succeeded: "نجح",
   failed: "فشل",
+  approvalNeeded: "بحاجة إلى موافقتك",
+  approve: "موافقة",
+  deny: "رفض",
+  approved: "تمت الموافقة",
+  denied: "تم الرفض",
+  waitingForYou: "بانتظارك",
   applied: "تم التطبيق",
   applyCount: "تطبيق {n}",
 }

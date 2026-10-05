@@ -859,6 +859,181 @@ export function ToolFailure({
   )
 }
 
+/* ------------------------------ approval ------------------------------- */
+
+/**
+ * TOOL APPROVAL — the assistant wants to act, and asks first.
+ *
+ * It is the tool call's claim before the fact: the same verb, the same
+ * verbatim request, and two answers. The request is shown open, never
+ * behind a disclosure, because the person is being asked to agree to
+ * exactly that. Once answered it collapses to one row that says what was
+ * decided, and the transcript keeps it: an approval is part of what
+ * happened.
+ */
+export function ToolApproval({
+  tool,
+  request,
+  reason,
+  decision,
+  onDecide,
+  staged = true,
+  className,
+}: {
+  /** What it wants to do, in plain language: "Delete 3 tasks". */
+  tool: string
+  /** The exact request being approved, quoted verbatim. */
+  request?: string
+  /** Why the assistant is asking, when it said. */
+  reason?: string
+  /** Already answered (a settled transcript, or the host's own record). */
+  decision?: "approved" | "denied"
+  onDecide?: (approved: boolean) => void
+  staged?: boolean
+  className?: string
+}) {
+  const t = useAmbientMessages()
+  // the person's own click shows at once; the host's record confirms it
+  const [chosen, setChosen] = React.useState<"approved" | "denied" | null>(null)
+  const decided = decision ?? chosen
+  const { pending } = useStagedReveal(1, {
+    enabled: staged,
+    delay: 400,
+    interval: 0,
+  })
+  const decide = (approved: boolean) => {
+    setChosen(approved ? "approved" : "denied")
+    onDecide?.(approved)
+  }
+
+  if (decided)
+    return (
+      <div className={cn("flex items-center gap-2 text-sm", className)}>
+        <span className="font-medium">{tool}</span>
+        <span className="text-muted-foreground">
+          {decided === "approved" ? t.approved : t.denied}
+        </span>
+        <StatusMark status={decided === "approved" ? "done" : "failed"} />
+      </div>
+    )
+
+  return (
+    <div
+      className={cn(
+        "border-(--glass-border) bg-(--wash) flex flex-col gap-2 rounded-xl border p-3",
+        className
+      )}
+    >
+      <div className="flex items-center gap-2 text-sm">
+        <span className={cn("font-medium", staged && pending && "ambient-shimmer")}>
+          {tool}
+        </span>
+        <span className="text-muted-foreground">{t.approvalNeeded}</span>
+      </div>
+      {request && (
+        <pre className="bg-(--glass-wash) overflow-x-auto rounded-lg px-2.5 py-1.5 font-mono text-xs whitespace-pre-wrap">
+          {request}
+        </pre>
+      )}
+      {reason && (
+        <p className="text-muted-foreground text-sm leading-relaxed">{reason}</p>
+      )}
+      <div className="flex items-center justify-end gap-1.5">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => decide(false)}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          {t.deny}
+        </Button>
+        <Button size="sm" onClick={() => decide(true)}>
+          <Icon name="check" size={12} />
+          {t.approve}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+/* --------------------------- the host's own ---------------------------- */
+
+/**
+ * HOST TOOL — the product's own component for a tool call, in the layer's
+ * frame.
+ *
+ * The row above it is the same claim every tool call makes (the verb and
+ * its status), so a call drawn by the host still reads as a call. The
+ * component sits open beneath it on the layer's wash: it is the result,
+ * and a result the product built a component for is one worth seeing. The
+ * frame is the layer's; what is inside is the product's, untouched.
+ */
+export function HostTool({
+  verb,
+  status = "done",
+  defaultOpen = true,
+  staged = true,
+  children,
+  className,
+}: {
+  verb: string
+  /** `waiting`: the component is collecting something from the person. */
+  status?: "running" | "waiting" | "done"
+  defaultOpen?: boolean
+  staged?: boolean
+  /** The host's component. */
+  children: React.ReactNode
+  className?: string
+}) {
+  const t = useAmbientMessages()
+  const [open, setOpen] = React.useState(defaultOpen)
+  const transition = useMotionTransition("surface")
+  const { pending } = useStagedReveal(1, {
+    enabled: staged,
+    delay: 400,
+    interval: 0,
+  })
+  const working = (staged && pending) || status === "running"
+
+  return (
+    <div className={cn("flex flex-col", className)}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex items-center gap-2 self-start text-start text-sm"
+      >
+        <span className="text-muted-foreground shrink-0">
+          <Icon name={open ? "chevron-down" : "chevron-right"} size={13} />
+        </span>
+        <span className={cn("font-medium", working && "ambient-shimmer")}>
+          {verb}
+        </span>
+        {status === "waiting" && !pending ? (
+          <span className="text-muted-foreground">{t.waitingForYou}</span>
+        ) : (
+          <StatusMark status={working ? "running" : "done"} />
+        )}
+      </button>
+      <AnimatePresence initial={false}>
+        {open && !(staged && pending) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={transition}
+            className="overflow-hidden"
+          >
+            <div className="border-(--glass-border) bg-(--wash) mt-2 rounded-xl border p-3">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 /* ----------------------------- code runner ----------------------------- */
 
 /**

@@ -1,16 +1,18 @@
 import type { z } from "zod"
 
-import type { AmbientAnswer } from "./response-kit"
+import type { AmbientAnswer, AmbientBlock } from "./response-kit"
 import {
   ambientAnswerEventSchema,
   ambientAnswerSchema,
   ambientQuestionSchema,
   ambientRecentsSchema,
+  ambientResponseSchema,
   ambientSuggestionsInputSchema,
   ambientSuggestionsSchema,
   type AmbientAnswerEvent,
   type AmbientQuestion,
   type AmbientRecent,
+  type AmbientResponse,
   type AmbientSuggestionsInput,
 } from "./responder-schemas"
 /**
@@ -47,6 +49,14 @@ import {
 
 /* ------------------------------- answers -------------------------------- */
 
+/** A block joins its list, or takes the place of the one with its id. */
+const withBlock = (blocks: AmbientBlock[] = [], block: AmbientBlock) => {
+  const at = block.id ? blocks.findIndex((b) => b.id === block.id) : -1
+  return at < 0
+    ? [...blocks, block]
+    : blocks.map((b, i) => (i === at ? block : b))
+}
+
 /** The answer so far, with one more event applied. */
 export function applyAnswerEvent(
   kit: AmbientAnswer,
@@ -54,11 +64,11 @@ export function applyAnswerEvent(
 ): AmbientAnswer {
   switch (event.type) {
     case "evidence":
-      return { ...kit, evidence: [...(kit.evidence ?? []), event.block] }
+      return { ...kit, evidence: withBlock(kit.evidence, event.block) }
     case "text":
       return { ...kit, text: kit.text + event.delta }
     case "artifact":
-      return { ...kit, artifacts: [...(kit.artifacts ?? []), event.block] }
+      return { ...kit, artifacts: withBlock(kit.artifacts, event.block) }
     case "refs":
       return { ...kit, refs: [...kit.refs, ...event.refs] }
     case "followUps":
@@ -80,6 +90,31 @@ export const EMPTY_ANSWER: AmbientAnswer = { text: "", refs: [] }
 export type AmbientRequestOptions = { signal: AbortSignal }
 
 /**
+ * One turn of a conversation the HOST keeps (see `conversation` below). An
+ * assistant turn carries its answer in the layer's own grammar; `running`
+ * while the host is still producing it.
+ */
+export type AmbientConversationTurn =
+  | { id: string; role: "user"; text: string }
+  | { id: string; role: "assistant"; answer: AmbientAnswer; running?: boolean }
+
+/**
+ * A CONVERSATION THE HOST KEEPS. A host whose chat stack owns the thread
+ * (assistant-ui, CopilotKit, the AI SDK's Chat) hands the layer a view of
+ * it, and the layer's transcript follows: a turn that started anywhere in
+ * the product shows in the layer, and the two never disagree.
+ *
+ * `getTurns` must return the same array until something changed (it is
+ * read the way a store snapshot is).
+ */
+export type AmbientConversation = {
+  subscribe: (listener: () => void) => () => void
+  getTurns: () => readonly AmbientConversationTurn[]
+  /** Cancel the run in flight, for a turn the layer did not start. */
+  stop?: () => void
+}
+
+/**
  * What the host implements. Only `ask` is required; without `suggestions`
  * and `recents` the palette simply offers none (a page can still announce
  * its own through PageIntel, for state only the page knows).
@@ -98,6 +133,15 @@ export type AmbientApiHandlers = {
     options: AmbientRequestOptions
   ) => Promise<unknown>
   recents?: (options: AmbientRequestOptions) => Promise<unknown>
+  /**
+   * The person answered a waiting block: approved or denied a tool, or gave
+   * a waiting call its output. The answer in flight continues from it.
+   */
+  respond?: (response: AmbientResponse) => void | Promise<void>
+  /** The person cleared the conversation; a host that keeps a thread clears it. */
+  reset?: () => void | Promise<void>
+  /** The host's own thread, when it keeps one. */
+  conversation?: AmbientConversation
 }
 
 /**
@@ -112,6 +156,9 @@ export type AmbientApi = {
     options: AmbientRequestOptions
   ) => Promise<string[]>
   recents: (options: AmbientRequestOptions) => Promise<AmbientRecent[]>
+  respond: (response: AmbientResponse) => Promise<void>
+  reset: () => Promise<void>
+  conversation: AmbientConversation | null
 }
 
 /**
@@ -232,6 +279,40 @@ export function createAmbientApi(
             options.signal
           )
         : Promise.resolve([]),
+    respond: async (response) => {
+      await handlers.respond?.(ambientResponseSchema.parse(response))
+    },
+    reset: async () => {
+      await handlers.reset?.()
+    },
+    conversation: handlers.conversation
+      ? checkedConversation(handlers.conversation)
+      : null,
+  }
+}
+
+/**
+ * The host's thread, with every answer checked against the contract. A turn
+ * whose answer does not match is left out, so a malformed block cannot
+ * reach a component; the check runs once per change, not per read.
+ */
+function checkedConversation(source: AmbientConversation): AmbientConversation {
+  let seen: readonly AmbientConversationTurn[] | null = null
+  let checked: readonly AmbientConversationTurn[] = []
+  return {
+    subscribe: source.subscribe,
+    stop: source.stop,
+    getTurns() {
+      const turns = source.getTurns()
+      if (turns === seen) return checked
+      seen = turns
+      checked = turns.flatMap((turn): AmbientConversationTurn[] => {
+        if (turn.role === "user") return [turn]
+        const parsed = ambientAnswerSchema.safeParse(turn.answer)
+        return parsed.success ? [{ ...turn, answer: parsed.data }] : []
+      })
+      return checked
+    },
   }
 }
 

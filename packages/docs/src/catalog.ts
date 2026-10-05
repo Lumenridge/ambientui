@@ -1001,6 +1001,48 @@ name: "ContextChip · ContextChipView",
     ],
   },
   {
+    id: "tool-approval",
+    group: "Tool use",
+    name: "ToolApproval",
+    description:
+      "The assistant wants to run a tool and asks first: the exact request, and two answers.",
+    behavior: [
+      "IT IS THE TOOL CALL'S CLAIM BEFORE THE FACT: the same verb and the same verbatim request, shown open, because the person is being asked to agree to exactly that.",
+      "Two answers, Deny and Approve. Approve is the filled button; neither is destructive-coloured, because the layer does not know what the tool does.",
+      "Once answered it collapses to one row that says what was decided. On approval the call that was allowed takes its place when it runs.",
+      "It lives in the transcript, never in a dialog over it: an approval is part of what happened in the conversation.",
+      "The answer goes to the host through the Ambient API's `respond`; the answer in flight continues from it.",
+    ],
+    whenToUse: [
+      "A tool whose effect the person should agree to before it happens: writing, sending, deleting, spending.",
+    ],
+    whenNotToUse: [
+      "For a question that needs more than yes or no — that is a tool the person answers in a component of the product's (HostTool).",
+      "For a call that already ran — that is ToolCall, or ToolFailure.",
+    ],
+  },
+  {
+    id: "host-tool",
+    group: "Tool use",
+    name: "HostTool",
+    description:
+      "The product's own component for a tool call, drawn inside the layer's frame.",
+    behavior: [
+      "THE FRAME IS THE LAYER'S, WHAT IS INSIDE IS THE PRODUCT'S: the row above is the same claim every tool call makes (the verb and its status), and the component sits beneath it on the layer's wash, untouched.",
+      "Open by default. A result the product built a component for is one worth seeing.",
+      "A call waiting on the person says so in the row, and the component collects the answer and calls `respond`.",
+      "Given by tool name through `toolComponents` on the provider, or by a chat stack's own registry through `renderTool`. A tool with neither is a plain ToolCall.",
+    ],
+    whenToUse: [
+      "A tool the product already draws with a component of its own: a result card, a picker, a form the model asked the person to fill.",
+    ],
+    whenNotToUse: [
+      "For a tool with no component — ToolCall shows its request and result.",
+      "For a yes or no before a tool runs — that is ToolApproval.",
+      "To restyle the product's component; it is rendered as the product made it.",
+    ],
+  },
+  {
     id: "code-runner",
     group: "Tool use",
     name: "CodeRunner",

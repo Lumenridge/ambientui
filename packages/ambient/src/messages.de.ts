@@ -94,6 +94,12 @@ export const ambientMessagesDe: AmbientCatalog = {
   run: "Ausführen",
   succeeded: "Erfolgreich",
   failed: "Fehlgeschlagen",
+  approvalNeeded: "Benötigt deine Zustimmung",
+  approve: "Zustimmen",
+  deny: "Ablehnen",
+  approved: "Zugestimmt",
+  denied: "Abgelehnt",
+  waitingForYou: "Wartet auf dich",
   applied: "Angewendet",
   applyCount: "{n} anwenden",
 }

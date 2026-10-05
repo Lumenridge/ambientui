@@ -94,6 +94,12 @@ export const ambientMessagesHi: AmbientCatalog = {
   run: "चलाएँ",
   succeeded: "सफल",
   failed: "विफल",
+  approvalNeeded: "आपकी मंज़ूरी चाहिए",
+  approve: "मंज़ूर करें",
+  deny: "अस्वीकार करें",
+  approved: "मंज़ूर",
+  denied: "अस्वीकृत",
+  waitingForYou: "आपका इंतज़ार है",
   applied: "लागू किया गया",
   applyCount: "{n} लागू करें",
 }

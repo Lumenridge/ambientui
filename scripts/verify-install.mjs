@@ -68,6 +68,23 @@ const DOORS = [
   { name: "section-rail", compile: true },
   { name: "view-menu", compile: true },
   { name: "save-reminder", compile: true },
+  // the chat-stack adapters: each lands beside the layer, with what the
+  // adapters share, and compiles against the layer's contract
+  {
+    name: "stack-ai-sdk",
+    compile: true,
+    landed: { "src/components/ambient/stack-ai-sdk.ts": "export function aiSdkRoute", "src/components/ambient/stack-parts.ts": "createPartsReader" },
+  },
+  {
+    name: "stack-assistant-ui",
+    compile: true,
+    landed: { "src/components/ambient/stack-assistant-ui.ts": "export function assistantUIThread" },
+  },
+  {
+    name: "stack-ag-ui",
+    compile: true,
+    landed: { "src/components/ambient/stack-ag-ui.ts": "export function agUIAgent" },
+  },
   // the governance files: the CLI resolves their ~/ targets to the project
   // root, so this proves the fetch and the landing, not their content
   { name: "governance", compile: false },

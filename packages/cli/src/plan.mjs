@@ -229,6 +229,8 @@ function doorsFor(profile, a, reqs, warnings) {
   // switches libraries live, so the full path keeps all five.
   if (a.path !== "full") doors.push(`icon-${iconLibraryFor(profile)}`)
   if (a.governance === "yes" || (a.path === "full" && a.governance === undefined)) doors.push("governance")
+  // the adapter for the chat stack the product already runs
+  if (profile.ai?.stack?.door) doors.push(profile.ai.stack.door)
   return doors
 }
 
@@ -448,6 +450,20 @@ function mountFor(profile, srcRoot) {
 function transportFor(profile, srcRoot) {
   const n = profile.network ?? {}
   const ai = profile.ai ?? {}
+  if (ai.stack) {
+    const st = ai.stack
+    const where = (hits) => hits.map((h) => `${h.file}:${h.line}`).join(", ")
+    return {
+      kind: "chat-stack",
+      stack: st.id,
+      door: st.door,
+      guidance:
+        `The product already runs ${st.id}${st.wiring.length ? ` (${where(st.wiring)})` : ""}. Keep its runtime, tools and thread; build the Ambient API from the ${st.door} adapter (https://github.com/Lumenridge/ambientui/blob/main/docs/chat-stacks.md) beside that wiring, and pass it to <AssistantProvider api>. Do not add a second AI stack or a new endpoint.` +
+        (st.chatUi.length
+          ? ` The layer is now the assistant's surface: it takes over from the product's own chat UI at ${where(st.chatUi)}. Remove those mounts once the layer answers, and register the components the product draws its tools with as toolComponents.`
+          : ""),
+    }
+  }
   if (ai.kind === "sdk-streaming") {
     return {
       kind: "ai-sdk",

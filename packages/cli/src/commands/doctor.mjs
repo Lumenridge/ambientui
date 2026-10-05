@@ -199,6 +199,7 @@ export function printFacts(p, out) {
   const auth = Object.entries(p.network.auth ?? {}).filter(([, v]) => v).map(([k, v]) => (typeof v === "string" ? `${k} ${v}` : `${k} ← ${v.file}:${v.line}`))
   if (auth.length) out.info(`auth: ${auth.join("; ")}`)
   say(out.ok, `ai engine: ${p.ai.kind}${[...p.ai.sdk, ...p.ai.provider, ...p.ai.envNames].length ? ` (${[...p.ai.sdk, ...p.ai.provider, ...p.ai.envNames].join(", ")})` : ""}`, "ai")
+  if (p.ai.stack) say(out.ok, `chat stack: ${p.ai.stack.id} (door ${p.ai.stack.door})${p.ai.stack.chatUi.length ? `; its chat UI at ${p.ai.stack.chatUi.map((h) => `${h.file}:${h.line}`).join(", ")}` : ""}`, "ai")
   say(out.ok, `tests: ${p.tests.runners.join(", ") || "none"}${p.tests.vrt ? `; visual regression: ${p.tests.vrt}` : ""}`, "tests")
   const lints = ["eslint", "oxlint", "biome", "prettier", "oxfmt"].filter((k) => p.lint[k])
   say(out.ok, `lint/format: ${lints.join(", ") || "none"}${p.lint.reactHooks ? " (+react-hooks)" : ""}${p.lint.checkerOverlay ? "; vite-plugin-checker overlay" : ""}`, "lint")

@@ -1,5 +1,11 @@
 # @ambient-ui/patterns
 
+## 0.3.0
+
+### Patch Changes
+
+- @ambient-ui/foundation@0.3.0
+
 ## 0.2.0
 
 ### Patch Changes

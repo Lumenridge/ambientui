@@ -10,6 +10,11 @@ import type { IconName } from "@ambient-ui/ui/components/icon"
 
 import type { OrbState } from "./orb-character"
 import {
+  AmbientToolHostContext,
+  type AmbientToolComponents,
+  type AmbientToolHost,
+} from "./tool-host"
+import {
   AmbientMessagesProvider,
   resolveAmbientMessages,
   type AmbientCatalog,
@@ -213,6 +218,8 @@ export function AssistantProvider({
   zIndex,
   dark = false,
   defaultOrbAnchor = "bc",
+  toolComponents,
+  renderTool,
 }: {
   children: React.ReactNode
   onNavigate?: (sectionId: string) => void
@@ -268,6 +275,18 @@ export function AssistantProvider({
    * product's fixed bottom bar.
    */
   defaultOrbAnchor?: OrbAnchor
+  /**
+   * The product's own components for its tools, by tool name. A call to a
+   * tool listed here is drawn by its component, in the layer's frame; see
+   * tool-host.ts.
+   */
+  toolComponents?: AmbientToolComponents
+  /**
+   * The same, for a chat stack that keeps its own registry of tool
+   * components: forward the call to it, and return undefined for a tool it
+   * does not draw.
+   */
+  renderTool?: AmbientToolHost["render"]
 }) {
   const [mode, setMode] = React.useState<AssistantMode>("line")
   const [pageChip, setPageChip] = React.useState<ContextChip | null>(null)
@@ -417,9 +436,20 @@ export function AssistantProvider({
     [mode, pageChip, pageIntel, commands, setCommands, chips, addChip, removeChip, explain, seedVersion, seedPrompt, consumeAutoSend, consumeSeededPrompt, orbAnchor, orbState, onNavigate, navItems, connected, suggestions, recents, workspaceEffect, hotkey, yieldHotkey, zIndex, dark, words, locale]
   )
 
+  const toolHost = React.useMemo<AmbientToolHost>(
+    () => ({
+      components: toolComponents,
+      render: renderTool,
+      respond: (response) => void connected.respond(response),
+    }),
+    [toolComponents, renderTool, connected]
+  )
+
   return (
     <AssistantContext.Provider value={value}>
-      <AmbientMessagesProvider value={words}>{children}</AmbientMessagesProvider>
+      <AmbientToolHostContext.Provider value={toolHost}>
+        <AmbientMessagesProvider value={words}>{children}</AmbientMessagesProvider>
+      </AmbientToolHostContext.Provider>
     </AssistantContext.Provider>
   )
 }
