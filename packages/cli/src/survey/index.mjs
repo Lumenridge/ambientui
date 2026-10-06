@@ -222,6 +222,8 @@ export function survey(cwd) {
     product,
     scripts,
     existingInstall,
+    // the range the product declares, for the plan's warning when it is past the layer's
+    framerMotion: ctx.deps["framer-motion"] ?? null,
     srcRoot: aliases.srcRoot,
     evidence: ctx.evidence,
   }

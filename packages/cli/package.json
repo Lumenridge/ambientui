@@ -1,6 +1,6 @@
 {
   "name": "@ambient-ui/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Surveys a host React project, plans the ambientui install, runs it safely, verifies it loudly and reverses it with git.",
   "type": "module",
   "bin": {

@@ -330,8 +330,17 @@ function shadcnDeps(files) {
   return [...deps].sort()
 }
 
+/**
+ * THE framer-motion A DOOR INSTALLS. Named with its range, never bare: a
+ * bare name makes shadcn install whatever is latest, so a new major would
+ * reach every fresh install untested. This is the major the layer is built
+ * and tested on, the same one `ambientui` declares as its peer. Move both
+ * together, after the layer has been run on the new major.
+ */
+const FRAMER_MOTION = "framer-motion@^13"
+
 const NPM_FOR = [
-  [/from "framer-motion"/, "framer-motion"],
+  [/from "framer-motion"/, FRAMER_MOTION],
   [/@paper-design\/shaders-react/, "@paper-design/shaders-react"],
   [/@hugeicons\/react/, "@hugeicons/react"],
   [/@hugeicons\/core-free-icons/, "@hugeicons/core-free-icons"],
@@ -445,7 +454,7 @@ const AMBIENT_CSS_VARS = {
 
 /** Shared by every dialect of the layer door. */
 const LAYER_NPM = [
-  "framer-motion",
+  FRAMER_MOTION,
   "@paper-design/shaders-react",
   "@hugeicons/react",
   "@hugeicons/core-free-icons",
@@ -899,7 +908,7 @@ items.push(
   productItem("view-menu", {
     file: "packages/patterns/src/view-menu.tsx",
     target: "components/ui/view-menu.tsx",
-    dependencies: ["framer-motion"],
+    dependencies: [FRAMER_MOTION],
     // the motion hooks rewrite to @/components/foundation-provider, so the
     // foundation door is not optional here
     registryDependencies: [url("foundation"), url("icon"), "button", "tooltip"],
@@ -908,7 +917,7 @@ items.push(
   productItem("save-reminder", {
     file: "packages/patterns/src/settings-kit.tsx",
     target: "components/ui/settings-kit.tsx",
-    dependencies: ["framer-motion"],
+    dependencies: [FRAMER_MOTION],
     registryDependencies: [url("foundation"), "button"],
     exportsNames: ["SaveReminder"],
   })

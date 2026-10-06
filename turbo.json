@@ -37,7 +37,8 @@
     },
     "lint": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "build"
       ]
     },
     "format": {

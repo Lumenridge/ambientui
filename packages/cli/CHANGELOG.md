@@ -1,5 +1,11 @@
 # @ambient-ui/cli
 
+## 0.2.1
+
+### Patch Changes
+
+- `doctor` warns when the product is on a newer framer-motion major than the layer is built and tested on (13), because the layer's door installs `framer-motion@^13` and would move the product's version down.
+
 ## 0.2.0
 
 ### Minor Changes

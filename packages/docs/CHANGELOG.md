@@ -1,5 +1,11 @@
 # @ambient-ui/docs
 
+## 0.3.1
+
+### Patch Changes
+
+- The registry doors install `framer-motion@^13`, the major the layer is built and tested on, instead of whatever is latest; the peer range stays `^13`. The docs package now carries the install's fixed outro in `start.md`.
+
 ## 0.3.0
 
 ### Minor Changes

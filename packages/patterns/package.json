@@ -1,6 +1,6 @@
 {
   "name": "@ambient-ui/patterns",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": false,
   "type": "module",
   "description": "Promoted product-vocabulary patterns \u2014 components that grew out of the site through governance and ride the Foundation's motion roles.",
