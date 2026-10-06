@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- `framer-motion` 14 is accepted as a peer, beside 13 (`^13 || ^14`), so `npm i ambientui` works next to the current release. The layer builds and passes its tests on 14.0.0. The docs package now carries the install's fixed outro in `start.md`.
+- The registry doors install `framer-motion@^13`, the major the layer is built and tested on, instead of whatever is latest; the peer range stays `^13`. The docs package now carries the install's fixed outro in `start.md`.
 
 ## 0.3.0
 

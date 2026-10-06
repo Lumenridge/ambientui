@@ -15,6 +15,9 @@ import { posix } from "node:path"
 
 export const DEFAULT_REGISTRY = "https://registry.ambientui.ai"
 
+/** The framer-motion major the layer is built and tested on (its peer, and what its doors install). */
+export const LAYER_FRAMER_MOTION = 13
+
 const join = (...p) => posix.normalize(posix.join(...p)).replace(/^\.\//, "")
 const relTo = (fromDir, to) => {
   const r = posix.relative(fromDir || ".", to)
@@ -702,6 +705,8 @@ export function buildPlan(profile, answers = {}, { registry = DEFAULT_REGISTRY }
   if (profile.bundle?.precacheLimit) warnings.push(`PWA precache limit ${profile.bundle.precacheLimit.expr} (${profile.bundle.precacheLimit.file}:${profile.bundle.precacheLimit.line}): a chunk above it is silently left out of the offline cache — lazy-load the layer.`)
   for (const c of profile.styling?.otherTailwindConsumers ?? []) warnings.push(`${c.file}:${c.line} also runs Tailwind (${c.text}); tailwind config changes reach that build too — rebuild and diff its output.`)
   if (profile.lint?.agentHooks?.length) warnings.push("An agent hook autofixes files on edit; exclude the vendored paths (lint.exclude) before writing them, or the hook rewrites them.")
+  const motionMajor = Number(/\d+/.exec(profile.framerMotion ?? "")?.[0])
+  if (motionMajor > LAYER_FRAMER_MOTION) warnings.push(`The product is on framer-motion ${profile.framerMotion}; the layer is built and tested on ${LAYER_FRAMER_MOTION}, and its door installs framer-motion@^${LAYER_FRAMER_MOTION}, which would move the product's own version down. Tell the owner before installing.`)
   if (profile.existingInstall?.present) warnings.push(`An earlier ambientui install is present (${profile.existingInstall.paths.join(", ")}); this survey describes the host plus that layer.`)
   if (profile.repo?.alternatives?.length) warnings.push(`Other React apps in this repo: ${profile.repo.alternatives.join(", ")}. The plan targets ${cwd}.`)
   if (profile.styling?.cssInJs?.length && tw == null) warnings.push(`The product styles with ${profile.styling.cssInJs.join(", ")}; the layer's Tailwind is scoped so the product's screens are untouched.`)

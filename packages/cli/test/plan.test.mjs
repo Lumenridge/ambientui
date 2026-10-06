@@ -95,6 +95,13 @@ const TW3 = {
 }
 
 describe("doors and css — the four dialects", () => {
+  it("warns when the product is past the framer-motion the layer is tested on", () => {
+    const on14 = buildPlan(profile({ framerMotion: "^14.0.0" }), { path: "layer" })
+    assert.ok(on14.warnings.some((w) => /framer-motion \^14\.0\.0.*tested on 13.*framer-motion@\^13/.test(w)))
+    for (const range of ["^13.1.0", null])
+      assert.ok(!buildPlan(profile({ framerMotion: range }), { path: "layer" }).warnings.some((w) => /framer-motion/.test(w)))
+  })
+
   it("Tailwind v4 with colour tokens, layer only: ambient-layer, @import after tailwindcss", () => {
     const p = buildPlan(profile(), { path: "layer" })
     assert.equal(p.path, "layer")

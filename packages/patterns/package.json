@@ -30,7 +30,7 @@
     "eslint": "^10",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "framer-motion": "^13 || ^14",
+    "framer-motion": "^13",
     "globals": "^17",
     "tsup": "^8.5.1",
     "typescript": "~6",
@@ -54,7 +54,7 @@
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19",
-    "framer-motion": "^13 || ^14"
+    "framer-motion": "^13"
   },
   "sideEffects": false,
   "keywords": [
