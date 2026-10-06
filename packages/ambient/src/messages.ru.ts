@@ -53,6 +53,7 @@ export const ambientMessagesRu: AmbientCatalog = {
   send: "Отправить",
   sendNow: "Отправить сейчас — прерывает текущий шаг",
   couldNotAnswer: "Не удалось ответить",
+  couldNotClear: "Не удалось очистить разговор",
   emptyAnswer: "Ассистент прислал пустой ответ.",
   generationStopped: "Генерация остановлена",
   retry: "Повторить",

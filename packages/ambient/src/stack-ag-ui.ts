@@ -1,13 +1,16 @@
-import type { AmbientConversationTurn } from "./responder"
+import { failureDetail, type AmbientConversationTurn } from "./responder"
 import type { AmbientAnswerEvent, AmbientResponse } from "./responder-schemas"
 import {
   ambientDataEvent,
   answerFromParts,
-  cachedTurns,
   createPartsReader,
   createPushQueue,
   createWaitingRoom,
+  MAX_ROUNDS,
+  noBrowserTool,
   openCalls,
+  PENDING_TURN,
+  tooManyRounds,
   waitForPerson,
   type AmbientStack,
   type StackOptions,
@@ -90,7 +93,7 @@ export type AgUIAgent = {
   addMessage(
     message:
       | { id: string; role: "user"; content: string }
-      | { id: string; role: "tool"; toolCallId: string; content: string }
+      | { id: string; role: "tool"; toolCallId: string; content: string; error?: string }
   ): void
   setMessages(messages: AgUIMessage[]): void
   // method syntax: AG-UI passes more than these read, and may await the result
@@ -136,6 +139,11 @@ export type AgUIOptions<A extends AgUIAgent> = StackOptions & {
     answer: { approved: boolean; reason?: string },
     interrupt: AgUIInterrupt
   ) => unknown
+  /**
+   * How many times one answer may run again after the browser's tools.
+   * Default MAX_ROUNDS. A host runner (CopilotKit) keeps its own count.
+   */
+  maxRounds?: number
 }
 
 const textOf = (content: unknown): string =>
@@ -170,7 +178,10 @@ export function agUIParts(
   messages: readonly AgUIMessage[],
   idle: boolean,
   interrupts: readonly AgUIInterrupt[] = [],
-  clientCall: (name: string) => StackToolPart["state"] = () => "done"
+  clientCall: (name: string) => Pick<StackToolPart, "state" | "error"> = (name) => ({
+    state: "failed",
+    error: noBrowserTool(name),
+  })
 ): StackPart[] {
   const results = new Map(
     messages.filter((m) => m.role === "tool").map((m) => [m.toolCallId, m])
@@ -202,7 +213,9 @@ export function agUIParts(
             ? { ...base, state: "failed", error: result.error }
             : { ...base, state: "done", output: parsed(textOf(result.content)) }
         if (interrupt) return { ...base, state: "approval" }
-        return { ...base, state: idle ? clientCall(call.function.name) : "running" }
+        return idle
+          ? { ...base, ...clientCall(call.function.name) }
+          : { ...base, state: "running" }
       }),
     ]
   })
@@ -239,10 +252,13 @@ export function agUIAgent<A extends AgUIAgent>(
   options: AgUIOptions<A> = {}
 ): AmbientStack {
   const room = createWaitingRoom<AmbientResponse>()
-  // with a host runner (CopilotKit) the browser's tools are the runner's
-  const clientCall = (name: string): StackToolPart["state"] => {
+  const rounds = options.maxRounds ?? MAX_ROUNDS
+  // a call the run left open is the browser's: one of `tools`, or nobody's.
+  // (A host runner like CopilotKit answers its own before the run returns.)
+  const clientCall = (name: string): Pick<StackToolPart, "state" | "error"> => {
     const tool = options.tools?.[name]
-    return !tool ? "done" : tool.run === waitForPerson ? "waiting" : "running"
+    if (!tool) return { state: "failed", error: noBrowserTool(name) }
+    return { state: tool.run === waitForPerson ? "waiting" : "running" }
   }
   const tools = Object.entries(options.tools ?? {}).map(([name, tool]) => ({
     name,
@@ -252,38 +268,61 @@ export function agUIAgent<A extends AgUIAgent>(
   const run = options.run ?? ((agent: A, parameters) => agent.runAgent(parameters))
   const stopRun = options.stop ?? ((agent: A) => agent.abortRun())
 
-  const turns = cachedTurns((): AmbientConversationTurn[] => {
+  // Finished groups keep their turn between changes. A group is the
+  // messages of one answer, so it is known by their ids (and by how many
+  // interrupts are open, which changes what an unanswered call means).
+  let kept = new Map<string, AmbientConversationTurn>()
+  let list: readonly AmbientConversationTurn[] = []
+  let stale = true
+  const readTurns = () => {
+    if (!stale) return list
+    stale = false
     const agent = getAgent()
-    const list: AmbientConversationTurn[] = []
+    const interrupts = agent.pendingInterrupts ?? []
+    const next: AmbientConversationTurn[] = []
+    const seen = new Map<string, AmbientConversationTurn>()
+    const reuse = (key: string, build: () => AmbientConversationTurn) => {
+      const turn = kept.get(key) ?? build()
+      seen.set(key, turn)
+      return turn
+    }
     let group: AgUIMessage[] = []
     const flush = (live: boolean) => {
       if (!group.length) return
-      list.push({
-        id: group[0]!.id,
+      const messages = group
+      group = []
+      const build = (): AmbientConversationTurn => ({
+        id: messages[0]!.id,
         role: "assistant",
         answer: answerFromParts(
-          agUIParts(group, !live, live ? [] : (agent.pendingInterrupts ?? []), clientCall),
+          agUIParts(messages, !live, live ? [] : interrupts, clientCall),
           !live,
           options
         ),
         running: live,
       })
-      group = []
+      next.push(
+        live
+          ? build()
+          : reuse(`a:${messages.map((m) => m.id).join(",")}:${interrupts.length}`, build)
+      )
     }
     for (const message of agent.messages) {
       if (message.role === "user") {
         flush(false)
-        list.push({ id: message.id, role: "user", text: textOf(message.content) })
+        const text = textOf(message.content)
+        next.push(reuse(`u:${message.id}:${text}`, () => ({ id: message.id, role: "user", text })))
       } else if (message.role !== "system" && message.role !== "developer")
         group.push(message)
     }
-    const asked = !group.length && list[list.length - 1]?.role === "user"
+    const asked = !group.length && next[next.length - 1]?.role === "user"
     flush(agent.isRunning)
     // asked, and nothing has come back yet
-    if (agent.isRunning && asked)
-      list.push({ id: "pending", role: "assistant", answer: { text: "", refs: [] }, running: true })
+    if (agent.isRunning && asked) next.push(PENDING_TURN)
+    kept = seen
+    if (next.length !== list.length || next.some((turn, i) => turn !== list[i])) list = next
     return list
-  })
+  }
 
   return {
     ask(input, { signal }) {
@@ -291,15 +330,15 @@ export function agUIAgent<A extends AgUIAgent>(
       const queue = createPushQueue<AmbientAnswerEvent>()
       const read = createPartsReader(options)
 
-      // regenerate: the thread goes back to the question and runs again
+      // Regenerate redoes the thread's LAST answer: the thread goes back to
+      // the question it answers and runs again. An earlier answer cannot be
+      // redone without dropping every turn after it, so that is a new turn.
       let asked = -1
-      if (input.regenerate)
-        for (let i = agent.messages.length - 1; i >= 0 && asked < 0; i--)
-          if (
-            agent.messages[i]!.role === "user" &&
-            textOf(agent.messages[i]!.content) === input.question
-          )
-            asked = i
+      if (input.regenerate) {
+        const last = agent.messages.map((m) => m.role).lastIndexOf("user")
+        if (last >= 0 && textOf(agent.messages[last]!.content) === input.question)
+          asked = last
+      }
       if (asked >= 0) agent.setMessages(agent.messages.slice(0, asked + 1))
       else
         agent.addMessage({
@@ -328,7 +367,7 @@ export function agUIAgent<A extends AgUIAgent>(
           } else if (event.type === "RUN_ERROR") {
             queue.push({
               type: "error",
-              message: String(event.message ?? "The agent failed."),
+              message: failureDetail(event.message),
             })
             queue.close()
           } else if (event.type === "RUN_STARTED") {
@@ -354,11 +393,10 @@ export function agUIAgent<A extends AgUIAgent>(
 
       ;(async () => {
         let resume: AgUIRunParameters["resume"]
-        for (;;) {
+        for (let round = 0; ; round++) {
           await run(agent, { context, tools, ...(resume ? { resume } : {}) })
           resume = undefined
           if (signal.aborted) break
-          say(true)
           // what the run left for the browser: tools to run, and questions
           // only the person can answer
           const now = parts(true)
@@ -370,25 +408,30 @@ export function agUIAgent<A extends AgUIAgent>(
           )
           const open = openCalls(now)
           if (!mine.length && !open.length) break
+          // the results below would never reach the agent: say so
+          if (round + 1 >= rounds) {
+            queue.push(tooManyRounds(rounds))
+            return queue.close()
+          }
+          // wait BEFORE the blocks are sent, so an answer always finds a waiter
+          const answers = Promise.all(open.map((call) => room.wait(call.id, signal)))
+          say(true)
 
           await Promise.all(
             mine.map(async (call) => {
-              let content: string
+              const result = { id: newId("tool"), role: "tool" as const, toolCallId: call.id }
               try {
                 const tool = options.tools![call.name]!.run as (input: unknown) => unknown
-                content = stringify(await tool(call.input))
+                agent.addMessage({ ...result, content: stringify(await tool(call.input)) })
               } catch (error) {
-                content = `Error: ${error instanceof Error ? error.message : String(error)}`
+                // AG-UI's own field for a failed tool, so it reads as one
+                const message = failureDetail(error)
+                agent.addMessage({ ...result, content: message, error: message })
               }
-              agent.addMessage({ id: newId("tool"), role: "tool", toolCallId: call.id, content })
             })
           )
           const interrupts = agent.pendingInterrupts ?? []
-          const answers = await Promise.all(
-            open.map((call) => room.wait(call.id, signal))
-          )
-          if (signal.aborted) break
-          for (const answer of answers) {
+          for (const answer of await answers) {
             if (!answer) continue
             if ("approved" in answer) {
               const interrupt = interrupts.find(
@@ -409,6 +452,7 @@ export function agUIAgent<A extends AgUIAgent>(
                 content: stringify(answer.output),
               })
           }
+          if (signal.aborted) break
         }
         say(true, true)
         queue.close()
@@ -436,7 +480,7 @@ export function agUIAgent<A extends AgUIAgent>(
     conversation: {
       subscribe(listener) {
         const changed = () => {
-          turns.invalidate()
+          stale = true
           listener()
         }
         return getAgent().subscribe({
@@ -446,7 +490,7 @@ export function agUIAgent<A extends AgUIAgent>(
           onRunFailed: changed,
         }).unsubscribe
       },
-      getTurns: turns.get,
+      getTurns: readTurns,
       stop: () => stopRun(getAgent()),
     },
   }

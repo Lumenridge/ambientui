@@ -53,6 +53,7 @@ export const ambientMessagesJa: AmbientCatalog = {
   send: "送信",
   sendNow: "今すぐ送信 — 実行中のターンを中断します",
   couldNotAnswer: "回答できませんでした",
+  couldNotClear: "会話を消去できませんでした",
   emptyAnswer: "アシスタントから空の回答が返されました。",
   generationStopped: "生成を停止しました",
   retry: "再試行",

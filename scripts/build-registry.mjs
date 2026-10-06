@@ -24,6 +24,7 @@ import {
 } from "node:fs"
 import { resolve, dirname } from "node:path"
 import { readCatalog } from "./extract-catalog.mjs"
+import { STACK_DOORS } from "../packages/cli/src/stacks.mjs"
 import { fileURLToPath } from "node:url"
 import { variant } from "./variants/index.mjs"
 import { ICON_LIBRARIES, iconSourceFor } from "./variants/icons.mjs"
@@ -327,28 +328,6 @@ function shadcnDeps(files) {
     }
   }
   return [...deps].sort()
-}
-
-/** What each stack door says. A new `stack-<name>.ts` needs an entry here. */
-const STACKS = {
-  "stack-ai-sdk": {
-    title: "Vercel AI SDK adapter",
-    description:
-      "Puts the ambient layer on a product that runs the Vercel AI SDK: its chat route, or its Chat instance, answers the layer.",
-    docs: 'Needs the ambient layer. Give the provider an API built from the adapter:\n\n  const api = createAmbientApi(aiSdkRoute({ api: "/api/chat" }))\n\nor, to share the product\'s own Chat (its tools, approvals and messages): createAmbientApi(aiSdkChat(() => chat)). See docs/chat-stacks.md.',
-  },
-  "stack-assistant-ui": {
-    title: "assistant-ui adapter",
-    description:
-      "Puts the ambient layer on a product that runs an assistant-ui runtime: the layer asks through the runtime's thread and follows it.",
-    docs: "Needs the ambient layer. Give the provider an API built from the runtime:\n\n  const api = createAmbientApi(assistantUIThread(() => runtime.thread))\n\nSee docs/chat-stacks.md.",
-  },
-  "stack-ag-ui": {
-    title: "AG-UI adapter (CopilotKit, LangGraph, Mastra)",
-    description:
-      "Puts the ambient layer on a product that runs CopilotKit or any AG-UI agent: the layer runs its questions on the agent and follows its messages.",
-    docs: "Needs the ambient layer. Give the provider an API built from the agent:\n\n  const api = createAmbientApi(agUIAgent(() => agent))\n\nInside CopilotKit, pass `run: (agent) => copilotkit.runAgent({ agent })`. See docs/chat-stacks.md.",
-  },
 }
 
 const NPM_FOR = [
@@ -677,8 +656,8 @@ const items = [
   },
   ...stackFiles.map((f) => {
     const name = f.replace(/\.ts$/, "")
-    const about = STACKS[name]
-    if (!about) throw new Error(`${f} has no entry in STACKS (scripts/build-registry.mjs)`)
+    const about = STACK_DOORS[name]
+    if (!about) throw new Error(`${f} has no entry in STACK_DOORS (packages/cli/src/stacks.mjs)`)
     return {
       name,
       type: "registry:lib",

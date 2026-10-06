@@ -1,11 +1,11 @@
-import type { AmbientConversationTurn } from "./responder"
-import type { AmbientAnswerEvent } from "./responder-schemas"
+import { failureDetail, type AmbientConversationTurn } from "./responder"
 import {
   answerFromParts,
-  cachedTurns,
-  createPartsReader,
-  createPushQueue,
-  unfinishedCalls,
+  createRunPump,
+  createTurnList,
+  lastAnswerTo,
+  NotWaitingError,
+  PENDING_TURN,
   type AmbientStack,
   type StackOptions,
   type StackPart,
@@ -91,8 +91,22 @@ type Approval = {
   id: string
   prompt?: string
   approved?: boolean
-  resolution?: string
+  /** Closed without an answer: the person dismissed it, or it timed out. */
+  resolution?: "cancelled" | "expired"
 }
+
+/**
+ * How long a run that ended on a tool result is given to continue by
+ * itself. The runtime resumes after its own bookkeeping (an AI SDK runtime
+ * waits on `sendAutomaticallyWhen`), which was seen to take over a second.
+ */
+export const CONTINUE_GRACE_MS = 2500
+
+/**
+ * How long a resubmit through the runtime's own chat is given to start a
+ * run before the answer is treated as over.
+ */
+export const RESUBMIT_GRACE_MS = 1500
 
 const errorText = (value: unknown): string => {
   if (typeof value === "string") return value
@@ -153,7 +167,9 @@ export function assistantUIParts(
                 ? { ...call, state: "failed", error: errorText(part.result) }
                 : { ...call, state: "done", output: part.result },
           ]
-        if (approval && approval.resolution) return [{ ...call, state: "denied" }]
+        // closed without a yes: no call will run, the same as a no
+        if (approval?.resolution === "cancelled" || approval?.resolution === "expired")
+          return [{ ...call, state: "denied" }]
         if (approval && approval.approved === undefined)
           return [{ ...call, state: "approval" }]
         if (approval?.approved === false) return [{ ...call, state: "denied" }]
@@ -198,7 +214,7 @@ const failureOf = (message: AssistantUIMessage): string | null => {
   const status = message.status
   if (status?.type !== "incomplete" || status.reason !== "error") return null
   return status.error === undefined
-    ? "The assistant could not answer."
+    ? failureDetail(undefined)
     : errorText(status.error)
 }
 
@@ -207,94 +223,102 @@ export function assistantUIThread(
   getThread: () => AssistantUIThread,
   options: AssistantUIOptions = {}
 ): AmbientStack {
-  /** The assistant message that answers `question`, newest first. */
-  const answerTo = (messages: readonly AssistantUIMessage[], question: string) => {
-    for (let i = messages.length - 1; i > 0; i--)
-      if (
-        messages[i]!.role === "assistant" &&
-        messages[i - 1]!.role === "user" &&
-        textOf(messages[i - 1]!) === question
-      )
-        return messages[i]!
-  }
-
-  const turns = cachedTurns((): AmbientConversationTurn[] => {
-    const { messages, isRunning } = getThread().getState()
-    const list = messages.flatMap((message, index): AmbientConversationTurn[] => {
-      if (message.role === "user")
-        return [{ id: message.id, role: "user", text: textOf(message) }]
-      if (message.role !== "assistant") return []
-      const live = isRunning && index === messages.length - 1
-      return [
-        {
-          id: message.id,
-          role: "assistant",
-          answer: answerFromParts(assistantUIParts(message, !live), !live, options),
-          running: live,
-        },
-      ]
+  const turns = createTurnList<AssistantUIMessage>()
+  const readTurns = () =>
+    turns.get(() => {
+      const { messages, isRunning } = getThread().getState()
+      const list = messages.flatMap((message, index): AmbientConversationTurn[] => {
+        if (message.role !== "user" && message.role !== "assistant") return []
+        const live = isRunning && index === messages.length - 1
+        return [
+          turns.turn(message, live, () =>
+            message.role === "user"
+              ? { id: message.id, role: "user", text: textOf(message) }
+              : {
+                  id: message.id,
+                  role: "assistant",
+                  answer: answerFromParts(assistantUIParts(message, !live), !live, options),
+                  running: live,
+                }
+          ),
+        ]
+      })
+      // asked, and nothing has come back yet
+      if (isRunning && messages[messages.length - 1]?.role === "user") list.push(PENDING_TURN)
+      return list
     })
-    // asked, and nothing has come back yet
-    if (isRunning && messages[messages.length - 1]?.role === "user")
-      list.push({ id: "pending", role: "assistant", answer: { text: "", refs: [] }, running: true })
-    return list
-  })
 
   return {
     ask(input, { signal }) {
       const thread = getThread()
       const shown = thread.getState().messages
-      const replaced = input.regenerate ? answerTo(shown, input.question) : undefined
+      const replaced = input.regenerate
+        ? lastAnswerTo(shown, input.question, textOf)
+        : undefined
       const before = new Set(shown.map((m) => m.id))
-      const queue = createPushQueue<AmbientAnswerEvent>()
-      const read = createPartsReader(options)
       let started = false
-      let owed: ReturnType<typeof setTimeout> | null = null
+      const timers = new Set<ReturnType<typeof setTimeout>>()
+      const later = (run: () => void, ms: number) => {
+        const timer = setTimeout(() => {
+          timers.delete(timer)
+          run()
+        }, ms)
+        timers.add(timer)
+      }
+      let waiting = false
       let resubmitted = false
 
-      const update = () => {
-        const { messages, isRunning } = thread.getState()
-        if (isRunning) started = true
-        if (isRunning && owed) {
-          clearTimeout(owed)
-          owed = null
-        }
-        const idle = started && !isRunning
+      const answerNow = () => {
+        const { messages } = thread.getState()
         const last = messages[messages.length - 1]
-        const answer =
-          last?.role === "assistant" && !before.has(last.id) ? last : undefined
-        const parts = answer ? assistantUIParts(answer, idle) : []
-        // a call that is the person's, or approved and not yet run, keeps
-        // the answer open: it continues from there
-        const open = idle ? unfinishedCalls(parts) : []
-        for (const event of read(parts, idle && !open.length)) queue.push(event)
-        if (!idle) return
-        const failure = answer && failureOf(answer)
-        if (failure) queue.push({ type: "error", message: failure })
-        if (failure) return queue.close()
-        if (open.length) return
-        // A call just got its result and the model has not answered it.
-        // The runtime continues the run; an AI SDK runtime that was not
-        // set up to (no sendAutomaticallyWhen) is resubmitted through its
-        // own chat. Only when neither happens is the answer over.
-        if (answer && endsOnToolCall(answer)) {
-          if (owed) return
-          owed = setTimeout(() => {
-            if (thread.getState().isRunning) return void (owed = null)
-            const chat = chatOf(thread)
-            if (!chat || resubmitted) return queue.close()
-            resubmitted = true
-            owed = null
-            void chat.sendMessage()
-            // if even that starts nothing, there is nothing more to wait for
-            setTimeout(() => !thread.getState().isRunning && update(), 1500)
-          }, 2500)
-          return
-        }
-        queue.close()
+        return last?.role === "assistant" && !before.has(last.id) ? last : undefined
       }
+      const pump = createRunPump(
+        () => {
+          const { isRunning } = thread.getState()
+          if (isRunning) {
+            started = true
+            waiting = false
+          }
+          const idle = started && !isRunning
+          const answer = answerNow()
+          return {
+            parts: answer ? assistantUIParts(answer, idle) : [],
+            idle,
+            failure: answer ? failureOf(answer) : null,
+          }
+        },
+        {
+          ...options,
+          // A call just got its result and the model has not answered it.
+          // The runtime continues the run; an AI SDK runtime that was not
+          // set up to (no sendAutomaticallyWhen) is resubmitted through its
+          // own chat. Only when neither happens is the answer over.
+          owes() {
+            const answer = answerNow()
+            if (!answer || !endsOnToolCall(answer)) return false
+            if (waiting) return true
+            if (resubmitted) return false
+            waiting = true
+            later(() => {
+              if (thread.getState().isRunning) return
+              const chat = chatOf(thread)
+              waiting = false
+              resubmitted = true
+              if (!chat) return pump.update()
+              void chat.sendMessage()
+              waiting = true
+              later(() => {
+                waiting = false
+                if (!thread.getState().isRunning) pump.update()
+              }, RESUBMIT_GRACE_MS)
+            }, CONTINUE_GRACE_MS)
+            return true
+          },
+        }
+      )
 
-      const unsubscribe = thread.subscribe(update)
+      const unsubscribe = thread.subscribe(pump.update)
       const stop = () => thread.cancelRun()
       signal.addEventListener("abort", stop, { once: true })
       const runConfig = {
@@ -313,14 +337,14 @@ export function assistantUIThread(
           content: [{ type: "text", text: input.question }],
           runConfig,
         })
-      update()
+      pump.update()
 
       return (async function* () {
         try {
-          yield* queue.drain()
+          yield* pump.events.drain()
         } finally {
           unsubscribe()
-          if (owed) clearTimeout(owed)
+          for (const timer of timers) clearTimeout(timer)
           signal.removeEventListener("abort", stop)
         }
       })()
@@ -330,8 +354,7 @@ export function assistantUIThread(
       const thread = getThread()
       for (const message of thread.getState().messages)
         for (const part of message.content) {
-          if (part.type !== "tool-call") continue
-          if (part.toolCallId !== response.id) continue
+          if (part.type !== "tool-call" || part.toolCallId !== response.id) continue
           const call = thread
             .getMessageById(message.id)
             .getMessagePartByToolCallId(String(part.toolCallId))
@@ -344,6 +367,7 @@ export function assistantUIThread(
           else call.addToolResult(response.output)
           return
         }
+      throw new NotWaitingError()
     },
 
     async reset() {
@@ -359,7 +383,7 @@ export function assistantUIThread(
           turns.invalidate()
           listener()
         }),
-      getTurns: turns.get,
+      getTurns: readTurns,
       stop: () => getThread().cancelRun(),
     },
   }

@@ -1,5 +1,6 @@
 import {
   answerEventsFromSSE,
+  failureDetail,
   type AmbientConversationTurn,
 } from "./responder"
 import type {
@@ -9,12 +10,17 @@ import type {
 } from "./responder-schemas"
 import {
   answerFromParts,
-  cachedTurns,
   createPartsReader,
-  createPushQueue,
+  createRunPump,
+  createTurnList,
   createWaitingRoom,
+  lastAnswerTo,
+  MAX_ROUNDS,
+  noBrowserTool,
+  NotWaitingError,
   openCalls,
-  unfinishedCalls,
+  PENDING_TURN,
+  tooManyRounds,
   waitForPerson,
   type AmbientStack,
   type StackOptions,
@@ -87,6 +93,9 @@ const str = (value: unknown) => (typeof value === "string" ? value : undefined)
 
 type Approval = { id: string; approved?: boolean; requestReason?: string; reason?: string }
 
+/** What the browser will do about a call the stream left with no output. */
+export type ClientCall = (name: string) => Pick<StackToolPart, "state" | "error">
+
 /**
  * A UI message's parts in the terms every stack shares. `idle` is whether
  * the stream has stopped: a call with input and no output is running while
@@ -96,7 +105,7 @@ type Approval = { id: string; approved?: boolean; requestReason?: string; reason
 export function uiMessageParts(
   parts: readonly UIPartLike[],
   idle: boolean,
-  clientCall: (name: string) => StackToolPart["state"] = () => "waiting"
+  clientCall: ClientCall = () => ({ state: "waiting" })
 ): StackPart[] {
   return parts.flatMap((part): StackPart[] => {
     if (part.type === "text") return [{ type: "text", text: String(part.text ?? "") }]
@@ -149,10 +158,9 @@ export function uiMessageParts(
         return [{ ...call, state: "denied", error: approval?.reason }]
       default:
         return [
-          {
-            ...call,
-            state: idle && !part.providerExecuted ? clientCall(name) : "running",
-          },
+          idle && !part.providerExecuted
+            ? { ...call, ...clientCall(name) }
+            : { ...call, state: "running" },
         ]
     }
   })
@@ -338,24 +346,28 @@ export type AiSdkRouteOptions = StackOptions & {
    * The tools the BROWSER runs (declared on the server with no `execute`).
    * A function runs and its return value is the call's output; a tool the
    * person has to answer (a form, a picker) is `waitForPerson`, and the
-   * component drawn for it calls `respond`. A tool not listed here ends
-   * the answer with the call shown and no result.
+   * component drawn for it calls `respond`. A call to a tool that is not
+   * listed here fails, naming the tool.
    */
   tools?: Record<
     string,
     ((input: unknown) => unknown | Promise<unknown>) | typeof waitForPerson
   >
-  /** How many times one answer may continue after tools. Default 8. */
+  /** How many times one answer may continue after tools. Default MAX_ROUNDS. */
   maxRounds?: number
 }
 
 /** The layer on an AI SDK chat route. */
 export function aiSdkRoute(options: AiSdkRouteOptions): AmbientStack {
   const send = options.fetch ?? fetch
+  const rounds = options.maxRounds ?? MAX_ROUNDS
   const room = createWaitingRoom<AmbientResponse>()
-  const clientCall = (name: string): StackToolPart["state"] => {
+  const clientCall: ClientCall = (name) => {
     const tool = options.tools?.[name]
-    return tool === waitForPerson ? "waiting" : tool ? "running" : "done"
+    if (tool === waitForPerson) return { state: "waiting" }
+    if (tool) return { state: "running" }
+    // not registered: a missing tool must not read as one that succeeded
+    return { state: "failed", error: noBrowserTool(name) }
   }
 
   async function* ask(
@@ -365,9 +377,16 @@ export function aiSdkRoute(options: AiSdkRouteOptions): AmbientStack {
     const base = toUIMessages(input)
     const builder = createUIMessageBuilder(`${input.conversationId}-${base.length}`)
     const read = createPartsReader(options)
-    const parts = (idle: boolean) => uiMessageParts(builder.message.parts, idle, clientCall)
+    // An approval is asked once the stream has stopped, when there is a
+    // waiter for the answer; until then the call reads as still out.
+    const parts = (idle: boolean) =>
+      uiMessageParts(builder.message.parts, idle, clientCall).map((part) =>
+        !idle && part.type === "tool" && part.state === "approval"
+          ? { ...part, state: "running" as const, approval: undefined }
+          : part
+      )
 
-    for (let round = 0; round < (options.maxRounds ?? 8); round++) {
+    for (let round = 0; ; round++) {
       const response = await send(options.api, {
         method: "POST",
         headers: { "content-type": "application/json", ...options.headers },
@@ -394,51 +413,51 @@ export function aiSdkRoute(options: AiSdkRouteOptions): AmbientStack {
 
       // what the stream left for the browser: tools to run, and questions
       // only the person can answer
-      const calls = builder.clientCalls()
+      const mine = builder
+        .clientCalls()
+        .filter((call) => typeof options.tools?.[toolNameOf(call)] === "function")
       const open = openCalls(parts(true))
-      if (!open.length && !calls.some((call) => clientCall(toolNameOf(call)) === "running"))
-        break
+      if (!open.length && !mine.length) break
+      // the outputs below would never reach the model: say so, do not end quietly
+      if (round + 1 >= rounds) {
+        yield tooManyRounds(rounds)
+        return
+      }
       await Promise.all(
-        calls.map(async (call) => {
-          const tool = options.tools?.[toolNameOf(call)]
-          if (typeof tool !== "function") return
+        mine.map(async (call) => {
+          const tool = options.tools![toolNameOf(call)] as (input: unknown) => unknown
           try {
             builder.setOutput(String(call.toolCallId), await tool(call.input))
           } catch (error) {
-            builder.setOutput(
-              String(call.toolCallId),
-              undefined,
-              error instanceof Error ? error.message : String(error)
-            )
+            builder.setOutput(String(call.toolCallId), undefined, failureDetail(error))
           }
         })
       )
+      // wait BEFORE the blocks are sent, so an answer always finds a waiter
+      const answers = Promise.all(open.map((call) => room.wait(call.id, signal)))
       // what the browser ran is done before the person is asked anything
       yield* read(parts(true), false)
-      const answers = await Promise.all(
-        open.map((call) => room.wait(call.id, signal))
-      )
-      if (signal.aborted) return
-      for (const answer of answers) {
+      for (const answer of await answers) {
         if (!answer) continue
         if ("approved" in answer) {
           const approval = open.find((call) => call.id === answer.id)?.approval
           if (approval) builder.setApproval(approval.id, answer.approved, answer.reason)
-        }
-        else builder.setOutput(answer.id, answer.output)
+        } else builder.setOutput(answer.id, answer.output)
       }
+      if (signal.aborted) return
       yield* read(parts(false), false)
     }
     yield* read(parts(true), true)
   }
 
-  return {
-    ask,
-    respond: room.answer,
-  }
+  return { ask, respond: room.answer }
 }
 
-/** A UI message stream response → answer events, for a host's own `ask`. */
+/**
+ * A UI message stream response → answer events, for a host's own `ask`. A
+ * call the stream leaves with no output is the host's to continue, so it
+ * is shown as the call, with no result.
+ */
 export async function* answerEventsFromUIMessageStream(
   response: Response,
   options: StackOptions = {}
@@ -455,7 +474,7 @@ export async function* answerEventsFromUIMessageStream(
     builder.apply(chunk)
     yield* read(uiMessageParts(builder.message.parts, false), false)
   }
-  yield* read(uiMessageParts(builder.message.parts, true, () => "done"), true)
+  yield* read(uiMessageParts(builder.message.parts, true, () => ({ state: "done" })), true)
 }
 
 /* -------------------------------- the chat ------------------------------- */
@@ -465,6 +484,11 @@ export async function* answerEventsFromUIMessageStream(
  * `@ai-sdk/react` fits; the object `useChat` returns does not, because it
  * cannot be subscribed to from outside a component. Share one instance:
  * `useChat({ chat })`.
+ *
+ * The two `~register…` methods are the SDK's own hooks for its React
+ * binding, not documented API: they are the only way to follow a `Chat`
+ * from outside a component. `aiSdkChat` checks for them and fails with a
+ * message naming them if an SDK release has moved them.
  */
 export type AiSdkChat = {
   messages: UIMessageLike[]
@@ -490,6 +514,24 @@ export type AiSdkChat = {
   "~registerStatusCallback"(onChange: () => void): () => void
 }
 
+export type AiSdkChatOptions = StackOptions & {
+  /**
+   * Resubmit the chat when a tool output or an approval is in and nothing
+   * continued it. Default true. Pass false when the chat's own
+   * `sendAutomaticallyWhen` is asynchronous and can take longer than
+   * CONTINUE_GRACE_MS to decide: both would then submit.
+   */
+  resubmit?: boolean
+}
+
+/**
+ * How long a chat that owes a continuation is given to start it itself
+ * (its `sendAutomaticallyWhen` runs a tick after the output lands) before
+ * the adapter resubmits. Long enough for a synchronous predicate on a slow
+ * device, short enough not to read as a stall.
+ */
+export const CONTINUE_GRACE_MS = 250
+
 const busy = (chat: AiSdkChat) =>
   chat.status === "submitted" || chat.status === "streaming"
 
@@ -508,8 +550,13 @@ function owesContinuation(message: UIMessageLike | undefined) {
       (p.type === "dynamic-tool" || p.type.startsWith("tool-")) &&
       !p.providerExecuted
   )
+  // prose after the last call is the model answering it
+  const answered = step
+    .slice(step.lastIndexOf(calls[calls.length - 1]!) + 1)
+    .some((p) => p.type === "text" && p.text)
   return (
     calls.length > 0 &&
+    !answered &&
     calls.every(
       (p) =>
         (p.state === "output-available" && !p.preliminary) ||
@@ -521,29 +568,32 @@ function owesContinuation(message: UIMessageLike | undefined) {
 }
 
 /**
- * Continue a chat that owes one. A chat set up to continue by itself
- * (`sendAutomaticallyWhen`) has started by the time this looks; one that
- * is not is resubmitted here.
+ * Continue a chat that owes one, unless it has started by itself within
+ * the grace. One look at a time per chat, so two callers never both
+ * resubmit.
  */
 const looking = new WeakSet<AiSdkChat>()
-function continueWhenStalled(getChat: () => AiSdkChat) {
-  const chat = getChat()
-  // one look at a time, so two callers never both resubmit
+function continueWhenStalled(chat: AiSdkChat) {
   if (looking.has(chat)) return
   looking.add(chat)
   setTimeout(() => {
     looking.delete(chat)
     if (!busy(chat) && owesContinuation(chat.messages[chat.messages.length - 1]))
       void chat.sendMessage()
-  }, 60)
+  }, CONTINUE_GRACE_MS)
 }
 
 /** The layer on the product's own AI SDK `Chat`. */
 export function aiSdkChat(
   getChat: () => AiSdkChat,
-  options: StackOptions = {}
+  options: AiSdkChatOptions = {}
 ): AmbientStack {
   const subscribe = (chat: AiSdkChat, listener: () => void) => {
+    for (const hook of ["~registerMessagesCallback", "~registerStatusCallback"] as const)
+      if (typeof chat[hook] !== "function")
+        throw new Error(
+          `aiSdkChat needs the AI SDK Chat's "${hook}" to follow it, and this Chat has none. Pass the Chat instance (not what useChat returns); if it is one, this SDK version moved the hook.`
+        )
     const offMessages = chat["~registerMessagesCallback"](listener)
     const offStatus = chat["~registerStatusCallback"](listener)
     return () => {
@@ -551,92 +601,96 @@ export function aiSdkChat(
       offStatus()
     }
   }
-  /** The assistant message that answers `question`, when it is an earlier one. */
-  const answerTo = (chat: AiSdkChat, question: string) => {
-    const messages = chat.messages
-    for (let i = messages.length - 1; i > 0; i--)
-      if (
-        messages[i]!.role === "assistant" &&
-        messages[i - 1]!.role === "user" &&
-        textOf(messages[i - 1]!) === question
-      )
-        return messages[i]!
-  }
 
-  const turns = cachedTurns((): AmbientConversationTurn[] => {
-    const chat = getChat()
-    const running = busy(chat)
-    const messages = chat.messages
-    const list = messages.flatMap((message, index): AmbientConversationTurn[] => {
-      if (message.role === "user")
-        return [{ id: message.id, role: "user", text: textOf(message) }]
-      if (message.role !== "assistant") return []
-      const live = running && index === messages.length - 1
-      return [
-        {
-          id: message.id,
-          role: "assistant",
-          answer: answerFromParts(uiMessageParts(message.parts, !live), !live, options),
-          running: live,
-        },
-      ]
+  const turns = createTurnList<UIMessageLike>()
+  const readTurns = () =>
+    turns.get(() => {
+      const chat = getChat()
+      const running = busy(chat)
+      const messages = chat.messages
+      const list = messages.flatMap((message, index): AmbientConversationTurn[] => {
+        if (message.role !== "user" && message.role !== "assistant") return []
+        const live = running && index === messages.length - 1
+        return [
+          turns.turn(message, live, () =>
+            message.role === "user"
+              ? { id: message.id, role: "user", text: textOf(message) }
+              : {
+                  id: message.id,
+                  role: "assistant",
+                  answer: answerFromParts(uiMessageParts(message.parts, !live), !live, options),
+                  running: live,
+                }
+          ),
+        ]
+      })
+      // asked, and nothing has come back yet
+      if (running && messages[messages.length - 1]?.role === "user") list.push(PENDING_TURN)
+      return list
     })
-    // asked, and nothing has come back yet
-    if (running && messages[messages.length - 1]?.role === "user")
-      list.push({ id: "pending", role: "assistant", answer: { text: "", refs: [] }, running: true })
-    return list
-  })
 
   return {
     ask(input, { signal }) {
       const chat = getChat()
-      const replaced = input.regenerate ? answerTo(chat, input.question) : undefined
+      const replaced = input.regenerate
+        ? lastAnswerTo(chat.messages, input.question, textOf)
+        : undefined
       const before = new Set(
         chat.messages.filter((m) => m !== replaced).map((m) => m.id)
       )
-      const queue = createPushQueue<AmbientAnswerEvent>()
-      const read = createPartsReader(options)
       let started = false
+      // continuations of this answer: counted once each, capped like rounds
       let continued = 0
+      let awaiting = false
 
-      const update = () => {
-        if (busy(chat)) started = true
-        const idle = started && !busy(chat)
+      const answerNow = () => {
         const last = chat.messages[chat.messages.length - 1]
-        const answer =
-          last?.role === "assistant" && !before.has(last.id) ? last : undefined
-        const parts = answer ? uiMessageParts(answer.parts, idle) : []
-        // a call that is the person's, or approved and not yet run, keeps
-        // the answer open: it continues from there
-        const open = idle ? unfinishedCalls(parts) : []
-        for (const event of read(parts, idle && !open.length)) queue.push(event)
-        if (!idle) return
-        if (chat.status === "error")
-          queue.push({
-            type: "error",
-            message: chat.error?.message ?? "The assistant could not answer.",
-          })
-        if (chat.status === "error") return queue.close()
-        if (open.length) return
-        // outputs are in and the model has not answered them: more is coming
-        if (answer && owesContinuation(answer) && continued++ < 8)
-          return continueWhenStalled(() => chat)
-        queue.close()
+        return last?.role === "assistant" && !before.has(last.id) ? last : undefined
       }
+      const pump = createRunPump(
+        () => {
+          if (busy(chat)) {
+            started = true
+            awaiting = false
+          }
+          const idle = started && !busy(chat)
+          return {
+            parts: uiMessageParts(answerNow()?.parts ?? [], idle),
+            idle,
+            failure: chat.status === "error" ? failureDetail(chat.error) : null,
+          }
+        },
+        {
+          ...options,
+          // outputs are in and the model has not answered them: more is coming
+          owes() {
+            if (!owesContinuation(answerNow())) return false
+            if (awaiting) return true
+            if (continued >= MAX_ROUNDS) {
+              pump.events.push(tooManyRounds(MAX_ROUNDS))
+              return false
+            }
+            continued++
+            awaiting = true
+            if (options.resubmit !== false) continueWhenStalled(chat)
+            return true
+          },
+        }
+      )
 
-      const unsubscribe = subscribe(chat, update)
+      const unsubscribe = subscribe(chat, pump.update)
       const stop = () => void chat.stop()
       signal.addEventListener("abort", stop, { once: true })
       const body = { ambient: ambientOf(input) }
       const sent = replaced
         ? chat.regenerate({ messageId: replaced.id, body })
         : chat.sendMessage({ text: input.question }, { body })
-      sent.catch((error: unknown) => queue.fail(error))
-      update()
+      sent.catch((error: unknown) => pump.events.fail(error))
+      pump.update()
 
       return (async function* () {
         try {
-          yield* queue.drain()
+          yield* pump.events.drain()
         } finally {
           unsubscribe()
           signal.removeEventListener("abort", stop)
@@ -649,10 +703,10 @@ export function aiSdkChat(
       const part = chat.messages
         .flatMap((m) => m.parts)
         .find((p) => p.toolCallId === response.id)
-      if (!part) return
+      if (!part) throw new NotWaitingError()
       if ("approved" in response) {
         const approval = part.approval as Approval | undefined
-        if (!approval) return
+        if (!approval) throw new NotWaitingError()
         await chat.addToolApprovalResponse({
           id: approval.id,
           approved: response.approved,
@@ -661,7 +715,7 @@ export function aiSdkChat(
       } else {
         await chat.addToolOutput({ tool: toolNameOf(part), toolCallId: response.id, output: response.output })
       }
-      continueWhenStalled(getChat)
+      if (options.resubmit !== false) continueWhenStalled(chat)
     },
 
     async reset() {
@@ -676,7 +730,7 @@ export function aiSdkChat(
           turns.invalidate()
           listener()
         }),
-      getTurns: turns.get,
+      getTurns: readTurns,
       stop: () => void getChat().stop(),
     },
   }

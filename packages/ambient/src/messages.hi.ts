@@ -53,6 +53,7 @@ export const ambientMessagesHi: AmbientCatalog = {
   send: "भेजें",
   sendNow: "अभी भेजें — चल रहा चरण रुक जाएगा",
   couldNotAnswer: "जवाब नहीं दे सका",
+  couldNotClear: "बातचीत साफ़ नहीं हो सकी",
   emptyAnswer: "सहायक ने खाली जवाब भेजा।",
   generationStopped: "जनरेशन रुक गया",
   retry: "फिर से कोशिश करें",

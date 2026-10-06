@@ -377,6 +377,26 @@ describe("a product already on a chat stack", () => {
     assert.doesNotMatch(plan.transport.guidance, /takes over/)
   })
 
+  it("`ai` installed but only used on the server, with no chat stream: not a chat stack", () => {
+    const p = app(
+      { ai: "^7.0.0", "@ai-sdk/openai": "^4.0.0" },
+      { "src/App.tsx": "export const App = () => null\n", "src/server/summarize.ts": 'import { generateObject } from "ai"\nexport const run = () => generateObject({})\n' }
+    )
+    assert.equal(p.ai.stack, null)
+    const plan = buildPlan(p, { path: "layer" })
+    assert.equal(plan.transport.kind, "ai-sdk")
+    assert.ok(!plan.doors.some((d) => d.startsWith("stack-")))
+  })
+
+  it("a chat route that streams UI messages is proof enough, with no useChat in the product", () => {
+    const p = app(
+      { ai: "^7.0.0" },
+      { "src/App.tsx": "export const App = () => null\n", "src/api/chat.ts": 'import { streamText } from "ai"\nexport const POST = () => streamText({}).toUIMessageStreamResponse()\n' }
+    )
+    assert.equal(p.ai.stack.id, "ai-sdk")
+    assert.equal(p.ai.stack.wiring[0].file, "src/api/chat.ts")
+  })
+
   it("no chat stack: no stack, no extra door", () => {
     const p = app({}, { "src/App.tsx": "export const App = () => null\n" })
     assert.equal(p.ai.stack, null)

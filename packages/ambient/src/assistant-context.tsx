@@ -440,7 +440,7 @@ export function AssistantProvider({
     () => ({
       components: toolComponents,
       render: renderTool,
-      respond: (response) => void connected.respond(response),
+      respond: (response) => connected.respond(response),
     }),
     [toolComponents, renderTool, connected]
   )

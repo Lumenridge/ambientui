@@ -259,7 +259,7 @@ conversation is made of, in four groups at `/ds` → Ambient vocabulary:
   **DayDivider** · **MessageTime**.
 - *Tool use* (`tool-kit.tsx`): **ToolCall**, **ToolTimeline**,
   **TerminalBlock**, **CodeDiff**, **ReviewableDiff**, **ParallelTools**,
-  **ToolFailure**, **ToolApproval**, **HostTool**, **CodeRunner**.
+  **ToolFailure**, **ToolApproval**, **CodeRunner**.
 - *Knowledge* (`knowledge-kit.tsx`): **WebSearch**, **InlineCitation**,
   **ResearchReport**.
 See §8 for its contract.
@@ -368,9 +368,10 @@ render in the `/ds` Inspect rail.
    `docs/chat-stacks.md`), so the layer still makes no requests and imports
    no stack. Three things follow, and each is the same on every stack. A
    tool the product has a component for is drawn by that component, inside
-   the layer's frame (**HostTool**, on the layer's wash, under the same
-   claim row every tool call has): the frame is the layer's, what is inside
-   is the product's. An approval is asked in the transcript
+   the layer's frame (**ToolCall** takes it as children, on the layer's
+   wash, under the same claim row every tool call has): the frame is the
+   layer's, what is inside is the product's. An approval is asked in the
+   transcript
    (**ToolApproval**), never in a dialog over it. And when the stack keeps
    the thread, the transcript follows it: a turn started anywhere in the
    product is in the layer.

@@ -47,8 +47,12 @@ export type AmbientToolHost = {
   components?: AmbientToolComponents
   /** For a stack with its own registry. Undefined means "not mine". */
   render?: (call: AmbientToolProps) => React.ReactNode | undefined
-  /** Where a waiting block's answer goes: the Ambient API's `respond`. */
-  respond?: (response: AmbientResponse) => void
+  /**
+   * Where a waiting block's answer goes: the Ambient API's `respond`. It
+   * rejects when the host could not take the answer; the block that asked
+   * shows why.
+   */
+  respond?: (response: AmbientResponse) => Promise<void>
 }
 
 /**

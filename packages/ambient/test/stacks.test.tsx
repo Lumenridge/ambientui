@@ -11,6 +11,11 @@
  *   - regenerate replaces the stack's answer; clear clears its thread
  *   - the stack's thread can be followed, turn by turn
  *   - every event the adapters emit passes the layer's own validation
+ *   - Stop while the person is being asked ends the turn, and a late answer
+ *     is refused, not kept
+ *   - a browser tool that throws is a failure on every stack; one that is
+ *     not registered is a failure too, never a quiet success
+ *   - an answer that keeps calling tools is stopped with an error
  */
 import { describe, expect, it, vi } from "vitest"
 
@@ -34,7 +39,13 @@ import {
   type AssistantUIThread,
 } from "../src/stack-assistant-ui"
 import { agUIAgent, type AgUIAgent, type AgUIEvent, type AgUIMessage } from "../src/stack-ag-ui"
-import { waitForPerson, type AmbientStack } from "../src/stack-parts"
+import {
+  createPartsReader,
+  NotWaitingError,
+  waitForPerson,
+  type AmbientStack,
+  type StackPart,
+} from "../src/stack-parts"
 
 const question: AmbientQuestion = {
   question: "Which tasks are overdue?",
@@ -118,7 +129,7 @@ describe("Vercel AI SDK route", () => {
     { type: "text-delta", id: "t2", delta: "Both are yours." },
     { type: "text-end", id: "t2" },
     { type: "source-url", sourceId: "s", url: "https://example.com/docs", title: "Tracker docs" },
-    { type: "data-ambient-followUps", data: ["Reassign them?"] },
+    { type: "data-ambient-follow-ups", data: ["Reassign them?"] },
     { type: "data-weather", data: { ignored: true } },
     { type: "finish" },
   ]
@@ -336,7 +347,7 @@ describe("Vercel AI SDK chat", () => {
           { type: "step-start" },
           { type: "text", text: "Both are yours." },
           { type: "source-url", url: "https://example.com/docs", title: "Tracker docs" },
-          { type: "data-ambient-followUps", data: ["Reassign them?"] },
+          { type: "data-ambient-follow-ups", data: ["Reassign them?"] },
         ]),
       ],
     ])
@@ -467,7 +478,7 @@ describe("assistant-ui", () => {
             { ...call, result: [{ id: 1 }, { id: 2 }] },
             { type: "text", text: "Both are yours." },
             { type: "source", url: "https://example.com/docs", title: "Tracker docs" },
-            { type: "data", name: "ambient-followUps", data: ["Reassign them?"] },
+            { type: "data", name: "ambient-follow-ups", data: ["Reassign them?"] },
           ],
           "complete"
         ),
@@ -604,7 +615,7 @@ describe("AG-UI (CopilotKit)", () => {
     { messages: [reasoning, withCall] },
     { messages: [reasoning, withCall, result, { id: "m2", role: "assistant", content: "Both are yours." }] },
     { event: { type: "CUSTOM", name: "ambient-refs", value: [{ label: "Tracker docs", href: "https://example.com/docs" }] } },
-    { event: { type: "CUSTOM", name: "ambient-followUps", value: ["Reassign them?"] } },
+    { event: { type: "CUSTOM", name: "ambient-follow-ups", value: ["Reassign them?"] } },
   ]
 
   it("runs the question on the agent and reads its messages", async () => {
@@ -680,5 +691,238 @@ describe("AG-UI (CopilotKit)", () => {
     expect(stack.conversation!.getTurns()).toEqual([])
     expect(agent.threadId).not.toBe("t1")
     off()
+  })
+})
+
+
+/* ------------------------- the edges worth pinning ----------------------- */
+
+/** Collect a stack's events until it ends, with a handle to stop it. */
+function start(stack: AmbientStack, input: AmbientQuestion = question) {
+  const api = createAmbientApi(stack)
+  const stop = new AbortController()
+  let kit: AmbientAnswer = EMPTY_ANSWER
+  const seen: ((kit: AmbientAnswer) => void)[] = []
+  const done = (async () => {
+    for await (const event of api.ask(input, { signal: stop.signal })) {
+      kit = applyAnswerEvent(kit, event)
+      seen.forEach((f) => f(kit))
+    }
+    return kit
+  })()
+  /** Resolves once the answer has a block matching `test`. */
+  const until = (test: (kit: AmbientAnswer) => boolean) =>
+    new Promise<AmbientAnswer>((resolve) => {
+      const check = (now: AmbientAnswer) => test(now) && resolve(now)
+      seen.push(check)
+      check(kit)
+    })
+  return { api, stop, done, until }
+}
+
+const asking = (kit: AmbientAnswer) =>
+  Boolean(kit.evidence?.some((b) => b.kind === "approval" && !b.decision))
+const waitingOn = (kit: AmbientAnswer) =>
+  Boolean(kit.evidence?.some((b) => b.kind === "tool" && b.status === "waiting"))
+
+describe("the shared reader", () => {
+  it("says nothing twice when a call is slotted in ahead of what is already said", () => {
+    const read = createPartsReader()
+    const said = (parts: StackPart[]) =>
+      read(parts, false).map((e) => (e.type === "text" ? e.delta : e.type === "evidence" ? e.block.id : e.type))
+    const b: StackPart = { type: "tool", id: "b", name: "second", input: {}, state: "running" }
+    const text: StackPart = { type: "text", text: "Looking." }
+    expect(said([b, text])).toEqual(["b", "Looking."])
+    // the first call's input finished streaming: it appears BEFORE both
+    const a: StackPart = { type: "tool", id: "a", name: "first", input: {}, state: "running" }
+    expect(said([a, b, text])).toEqual(["a"])
+  })
+})
+
+describe("Stop while the person is being asked", () => {
+  it("AI SDK route: an open approval ends the turn, and a late answer is refused", async () => {
+    const fetch = vi.fn(async () =>
+      sse([
+        { type: "tool-input-available", toolCallId: "d", toolName: "completeTask", input: { id: 101 } },
+        { type: "tool-approval-request", approvalId: "ap1", toolCallId: "d" },
+      ])
+    )
+    const run = start(aiSdkRoute({ api: "/api/chat", fetch }))
+    await run.until(asking)
+    run.stop.abort()
+    await run.done
+    expect(fetch).toHaveBeenCalledOnce()
+    await expect(run.api.respond({ id: "d", approved: true })).rejects.toBeInstanceOf(NotWaitingError)
+  })
+
+  it("AI SDK route: stopped while a browser tool still runs, with a call waiting in the same round", async () => {
+    let finish!: (value: string) => void
+    const slow = () => new Promise<string>((resolve) => (finish = resolve))
+    const fetch = vi.fn(async () =>
+      sse([
+        { type: "tool-input-available", toolCallId: "s", toolName: "slow", input: {} },
+        { type: "tool-input-available", toolCallId: "p", toolName: "pickOwner", input: {} },
+      ])
+    )
+    const run = start(aiSdkRoute({ api: "/api/chat", fetch, tools: { slow, pickOwner: waitForPerson } }))
+    await tick()
+    await tick()
+    run.stop.abort()
+    finish("late")
+    // the wait is taken on a signal that has already fired: it must not hang
+    await run.done
+    expect(fetch).toHaveBeenCalledOnce()
+  })
+
+  it("AG-UI: an open interrupt ends the turn, cancels the run, and a late answer is refused", async () => {
+    const agent = fakeAgent([[{ messages: [{ id: "m1", role: "assistant", content: "I need a yes." }] }]])
+    const original = agent.runAgent.bind(agent)
+    agent.runAgent = async (parameters) => {
+      const out = await original(parameters)
+      agent.pendingInterrupts = [{ id: "i1", reason: "Complete task 101" }]
+      return out
+    }
+    const run = start(agUIAgent(() => agent))
+    await run.until(asking)
+    run.stop.abort()
+    await run.done
+    expect(agent.aborted).toBe(true)
+    expect(agent.runs).toHaveLength(1)
+    await expect(run.api.respond({ id: "i1", approved: true })).rejects.toBeInstanceOf(NotWaitingError)
+  })
+
+  it("assistant-ui: a waiting call ends the turn and cancels the run", async () => {
+    const waiting = { type: "tool-call", toolCallId: "p", toolName: "pickOwner", args: {} }
+    const thread = fakeThread([[{ id: "a1", role: "assistant", content: [waiting], status: { type: "requires-action" } }]])
+    const run = start(assistantUIThread(() => thread))
+    await run.until(waitingOn)
+    run.stop.abort()
+    expect(thread.cancelled).toBe(true)
+  })
+})
+
+describe("a browser tool that fails, or is not there", () => {
+  const boom = () => {
+    throw new Error("Row not found.")
+  }
+
+  it("AI SDK route: a throw is a failure block, and the model is told", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(sse([{ type: "tool-input-available", toolCallId: "h", toolName: "highlight", input: { id: 9 } }]))
+      .mockResolvedValueOnce(sse([{ type: "text-start", id: "t" }, { type: "text-delta", id: "t", delta: "I could not." }]))
+    const kit = await answerOf(aiSdkRoute({ api: "/api/chat", fetch, tools: { highlight: boom } }))
+    expect(kit.evidence).toEqual([{ kind: "failure", id: "h", tool: "highlight", target: '{"id":9}', error: "Row not found." }])
+    const body = JSON.parse((fetch.mock.calls[1] as unknown as [string, RequestInit])[1].body as string)
+    expect(body.messages[1].parts[0]).toMatchObject({ state: "output-error", errorText: "Row not found." })
+  })
+
+  it("AG-UI: the same throw is the same failure block", async () => {
+    const calling = { id: "m1", role: "assistant", toolCalls: [{ id: "h", function: { name: "highlight", arguments: '{"id":9}' } }] }
+    const agent = fakeAgent([[{ messages: [calling] }], [{ messages: [{ id: "m2", role: "assistant", content: "I could not." }] }]])
+    const kit = await answerOf(agUIAgent(() => agent, { tools: { highlight: { description: "Highlight", run: boom } } }))
+    expect(kit.evidence).toEqual([{ kind: "failure", id: "h", tool: "highlight", target: '{"id":9}', error: "Row not found." }])
+    expect(agent.messages.find((m) => m.role === "tool")).toMatchObject({ toolCallId: "h", error: "Row not found." })
+  })
+
+  it("a call to a tool the browser has not registered fails, naming it", async () => {
+    const fetch = async () => sse([{ type: "tool-input-available", toolCallId: "x", toolName: "missing", input: {} }])
+    const route = await answerOf(aiSdkRoute({ api: "/api/chat", fetch }))
+    expect(route.evidence).toMatchObject([{ kind: "failure", id: "x", error: expect.stringContaining('"missing"') }])
+    const calling = { id: "m1", role: "assistant", toolCalls: [{ id: "x", function: { name: "missing", arguments: "{}" } }] }
+    const agent = await answerOf(agUIAgent(() => fakeAgent([[{ messages: [calling] }]])))
+    expect(agent.evidence).toMatchObject([{ kind: "failure", id: "x", error: expect.stringContaining('"missing"') }])
+  })
+})
+
+describe("an answer that keeps calling tools", () => {
+  it("AI SDK route: stops at the cap with an error, not quietly", async () => {
+    let n = 0
+    const fetch = vi.fn(async () => sse([{ type: "tool-input-available", toolCallId: `h${n++}`, toolName: "again", input: {} }]))
+    await expect(
+      answerOf(aiSdkRoute({ api: "/api/chat", fetch, tools: { again: () => "ok" }, maxRounds: 3 }))
+    ).rejects.toThrow("after 3 rounds")
+    expect(fetch).toHaveBeenCalledTimes(3)
+  })
+
+  it("AG-UI: the same cap", async () => {
+    let n = 0
+    const agent = fakeAgent([])
+    const original = agent.runAgent.bind(agent)
+    agent.runAgent = async (parameters) => {
+      const out = await original(parameters)
+      agent.messages = [...agent.messages, { id: `m${n}`, role: "assistant", toolCalls: [{ id: `h${n++}`, function: { name: "again", arguments: "{}" } }] }]
+      return out
+    }
+    await expect(
+      answerOf(agUIAgent(() => agent, { tools: { again: { description: "Again", run: () => "ok" } }, maxRounds: 3 }))
+    ).rejects.toThrow("after 3 rounds")
+    expect(agent.runs).toHaveLength(3)
+  })
+})
+
+describe("regenerating on a thread the stack keeps", () => {
+  it("an answer that is not the thread's last is asked again as a new turn, and nothing after it is lost", async () => {
+    const agent = fakeAgent([
+      [{ messages: [{ id: "m1", role: "assistant", content: "First." }] }],
+      [{ messages: [{ id: "m2", role: "assistant", content: "Other." }] }],
+      [{ messages: [{ id: "m3", role: "assistant", content: "First, again." }] }],
+    ])
+    const stack = agUIAgent(() => agent)
+    await answerOf(stack)
+    await answerOf(stack, { ...question, question: "And the rest?" })
+    const kit = await answerOf(stack, { ...question, regenerate: true })
+    expect(kit.text).toBe("First, again.")
+    expect(agent.messages.map((m) => m.role)).toEqual(["user", "assistant", "user", "assistant", "user", "assistant"])
+  })
+})
+
+describe("assistant-ui, the runtime's own edges", () => {
+  it("an approval that was cancelled or expired reads as denied; an unknown resolution does not", async () => {
+    const call = { type: "tool-call", toolCallId: "d", toolName: "completeTask", args: {} }
+    const answer = async (approval: Record<string, unknown>, result?: string) =>
+      (
+        await answerOf(
+          assistantUIThread(() =>
+            fakeThread([[{ id: "a1", role: "assistant", content: [{ ...call, approval, result }, { type: "text", text: "Ok." }], status: { type: "complete" } }]])
+          )
+        )
+      ).evidence?.[0]
+    expect(await answer({ id: "ap", resolution: "expired" })).toMatchObject({ kind: "approval", decision: "denied" })
+    expect(await answer({ id: "ap", resolution: "cancelled" })).toMatchObject({ kind: "approval", decision: "denied" })
+    expect(await answer({ id: "ap", approved: true, resolution: "something-new" }, "ok")).toMatchObject({ kind: "tool" })
+  })
+
+  it("a run that ends on a tool result and is not continued is resubmitted through the runtime's chat", async () => {
+    const call = { type: "tool-call", toolCallId: "p", toolName: "pickOwner", args: {} }
+    const done = { ...call, result: "Ana" }
+    const thread = fakeThread([
+      [{ id: "a1", role: "assistant", content: [call], status: { type: "requires-action" } }],
+      [{ id: "a1", role: "assistant", content: [done, { type: "text", text: "Assigned to Ana." }], status: { type: "complete" } }],
+    ])
+    const sendMessage = vi.fn(async () => {
+      // the chat resubmits: the runtime runs again and continues the message
+      thread.getMessageById("a1").reload()
+    })
+    const state = thread.getState.bind(thread)
+    thread.getState = () => ({ ...state(), extras: { chat: { sendMessage } } })
+    let answered = false
+    const kit = await answerOf(assistantUIThread(() => thread), question, (now, api) => {
+      if (!answered && waitingOn(now)) {
+        answered = true
+        void api.respond({ id: "p", output: "Ana" })
+      }
+    })
+    expect(sendMessage).toHaveBeenCalledOnce()
+    expect(kit.text).toBe("Assigned to Ana.")
+  }, 10000)
+})
+
+describe("AI SDK chat, the SDK's own edges", () => {
+  it("says which hook is missing when the Chat cannot be followed", () => {
+    const chat = fakeChat([])
+    delete (chat as Record<string, unknown>)["~registerMessagesCallback"]
+    const stack = aiSdkChat(() => chat)
+    expect(() => stack.conversation!.subscribe(() => {})).toThrow("~registerMessagesCallback")
   })
 })

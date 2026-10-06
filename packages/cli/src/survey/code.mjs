@@ -9,6 +9,7 @@
 import { join } from "node:path"
 
 import { isDir, readJson, readText } from "../util.mjs"
+import { CHAT_STACKS } from "../stacks.mjs"
 import { OURS } from "./styling.mjs"
 
 /** Grep lines across files, skipping the layer's own files. */
@@ -334,24 +335,22 @@ export function detectAi(ctx) {
  * (its runtime, tools and thread stay), so the plan needs to know which
  * adapter door to open and which mounts the layer takes over.
  *
- * A stack that owns the thread in the browser wins over one that only
- * streams: a product on assistant-ui usually has `ai` underneath it.
+ * The stacks, their order and what counts as proof of use are declared in
+ * stacks.mjs.
  */
-const CHAT_STACKS = [
-  { id: "assistant-ui", door: "stack-assistant-ui", pkg: (k) => k === "@assistant-ui/react", ui: /<(?:Thread|AssistantModal|AssistantSidebar|ThreadPrimitive\.Root)\b/, wiring: /\buse(?:Chat|Local|ExternalStore|LangGraph)Runtime\s*\(/ },
-  { id: "copilotkit", door: "stack-ag-ui", pkg: (k) => k.startsWith("@copilotkit/"), ui: /<(?:CopilotChat|CopilotSidebar|CopilotPopup)\b/, wiring: /<(?:CopilotKit|CopilotKitProvider)\b/ },
-  { id: "ag-ui", door: "stack-ag-ui", pkg: (k) => k === "@ag-ui/client", ui: null, wiring: /\bnew\s+HttpAgent\s*\(/ },
-  { id: "ai-sdk", door: "stack-ai-sdk", pkg: (k) => k === "ai" || k === "@ai-sdk/react", ui: null, wiring: /\buseChat\s*\(|\bnew\s+Chat\s*\(/ },
-]
-
 function detectChatStack(ctx, deps, files) {
-  const stack = CHAT_STACKS.find((s) => deps.some(s.pkg))
-  if (!stack) return null
   const at = (re) => (re ? grep(ctx, files, re, { limit: 5 }).map((h) => ({ file: h.file, line: h.line, text: h.text })) : [])
-  const chatUi = at(stack.ui)
-  const wiring = at(stack.wiring)
-  for (const h of [...wiring, ...chatUi]) ctx.ev("ai.stack", { file: h.file, line: h.line, note: h.text })
-  return { id: stack.id, door: stack.door, wiring, chatUi }
+  for (const stack of CHAT_STACKS) {
+    if (!deps.some(stack.pkg)) continue
+    const wiring = at(stack.wiring)
+    const proof = at(stack.proof)
+    // installed is not in use: see `proof` in stacks.mjs
+    if (stack.proof && !wiring.length && !proof.length) continue
+    const chatUi = at(stack.ui)
+    for (const h of [...wiring, ...proof, ...chatUi]) ctx.ev("ai.stack", { file: h.file, line: h.line, note: h.text })
+    return { id: stack.id, door: stack.door, wiring: wiring.length ? wiring : proof, chatUi }
+  }
+  return null
 }
 
 /* ---------------------------- existing install ---------------------------- */

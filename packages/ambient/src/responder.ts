@@ -280,7 +280,13 @@ export function createAmbientApi(
           )
         : Promise.resolve([]),
     respond: async (response) => {
-      await handlers.respond?.(ambientResponseSchema.parse(response))
+      // an answer with nowhere to go must not look delivered
+      if (!handlers.respond)
+        throw new AmbientApiError(
+          "This Ambient API has no `respond`, so the answer could not be delivered.",
+          "respond"
+        )
+      await handlers.respond(ambientResponseSchema.parse(response))
     },
     reset: async () => {
       await handlers.reset?.()
@@ -299,6 +305,23 @@ export function createAmbientApi(
 function checkedConversation(source: AmbientConversation): AmbientConversation {
   let seen: readonly AmbientConversationTurn[] | null = null
   let checked: readonly AmbientConversationTurn[] = []
+  // a turn is checked once: the host hands back the same object until it changes
+  const results = new WeakMap<AmbientConversationTurn, AmbientConversationTurn | null>()
+  const check = (turn: AmbientConversationTurn) => {
+    if (turn.role === "user") return turn
+    let result = results.get(turn)
+    if (result === undefined) {
+      const parsed = ambientAnswerSchema.safeParse(turn.answer)
+      result = parsed.success ? turn : null
+      results.set(turn, result)
+      // a turn missing from the transcript has to be findable by the host
+      if (!parsed.success)
+        console.warn(
+          `[ambient] ${contractError("ask", `conversation turn "${turn.id}"`, parsed.error).message} The turn is left out of the transcript.`
+        )
+    }
+    return result
+  }
   return {
     subscribe: source.subscribe,
     stop: source.stop,
@@ -306,11 +329,10 @@ function checkedConversation(source: AmbientConversation): AmbientConversation {
       const turns = source.getTurns()
       if (turns === seen) return checked
       seen = turns
-      checked = turns.flatMap((turn): AmbientConversationTurn[] => {
-        if (turn.role === "user") return [turn]
-        const parsed = ambientAnswerSchema.safeParse(turn.answer)
-        return parsed.success ? [{ ...turn, answer: parsed.data }] : []
-      })
+      const next = turns.flatMap((turn) => check(turn) ?? [])
+      // the same array while every turn in it is the same
+      if (next.length !== checked.length || next.some((turn, i) => turn !== checked[i]))
+        checked = next
       return checked
     },
   }

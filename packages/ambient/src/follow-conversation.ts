@@ -46,6 +46,16 @@ export type TranscriptMessage = {
   arriving?: boolean
 }
 
+/**
+ * The id for the next message. Derived from the list itself, never from a
+ * shared counter: a state updater can be invoked more than once for a
+ * single update, so `++counter` inside one mints colliding ids — which
+ * makes React remount the transcript and replay every settled answer's
+ * stream.
+ */
+export const nextId = (list: TranscriptMessage[]) =>
+  list.length ? list[list.length - 1]!.id + 1 : 1
+
 const isEmpty = (answer: AmbientAnswer) =>
   !answer.text && !answer.evidence?.length && !answer.artifacts?.length
 
@@ -65,7 +75,7 @@ export function followConversation(
   let changed = false
   // once a turn stops lining up with what is shown, nothing after it is reused
   let aligned = true
-  const freshId = () => (next.length ? next[next.length - 1]!.id + 1 : 1)
+  const freshId = () => nextId(next)
 
   turns.forEach((turn, index) => {
     const shown = aligned ? messages[index] : undefined

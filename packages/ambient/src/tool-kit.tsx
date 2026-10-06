@@ -33,11 +33,12 @@ import { useElapsedSeconds, useStagedReveal } from "./use-staged-reveal"
 
 /* ------------------------------ one call ------------------------------- */
 
-export type ToolStatus = "running" | "done" | "failed"
+/** `waiting`: the call is the person's to answer, in the component drawn for it. */
+export type ToolStatus = "running" | "waiting" | "done" | "failed"
 
 function StatusMark({ status }: { status: ToolStatus }) {
   const t = useAmbientMessages()
-  if (status === "running")
+  if (status === "running" || status === "waiting")
     return (
       <span
         aria-label={t.running}
@@ -63,14 +64,21 @@ function StatusMark({ status }: { status: ToolStatus }) {
  * The verb is written in plain language ("Searched the docs") with the
  * argument that mattered beside it as a code chip. That pairing is the whole
  * design: the sentence is for reading, the chip is for verifying.
+ *
+ * A PRODUCT'S OWN COMPONENT FOR THE TOOL goes in as `children`, and takes
+ * the place of the request and result: the row is still the layer's claim,
+ * what is under it is the product's, on the layer's wash, untouched. It
+ * sits open, because a result the product built a component for is one
+ * worth seeing, and a call waiting on the person says so in the row.
  */
 export function ToolCall({
   verb,
   status = "done",
   request,
   result,
-  defaultOpen = false,
+  defaultOpen,
   staged = true,
+  children,
   className,
 }: {
   /** What it did, in plain language: "Searched the docs". */
@@ -79,22 +87,32 @@ export function ToolCall({
   /** The exact request — evidence, so it is monospaced and unedited. */
   request?: string
   result?: string
+  /** Defaults to closed; open when there are `children`, or on failure. */
   defaultOpen?: boolean
   /** Stage the call: working with a live count, then the result streams. */
   staged?: boolean
+  /** The product's own component for this tool, in place of request and result. */
+  children?: React.ReactNode
   className?: string
 }) {
-  const [open, setOpen] = React.useState(defaultOpen || status === "failed")
+  const t = useAmbientMessages()
+  const custom = children !== undefined && children !== null
+  const [open, setOpen] = React.useState(
+    defaultOpen ?? (custom || status === "failed")
+  )
   const transition = useMotionTransition("surface")
-  const hasBody = Boolean(request || result)
-  // a call that returns instantly is a call that never went anywhere
+  const hasBody = custom || Boolean(request || result)
+  // a call that returns instantly is a call that never went anywhere; the
+  // product's own component is the result itself, and arrives on a short beat
   const { pending, working: counting } = useStagedReveal(1, {
     enabled: staged,
-    delay: 2200,
+    delay: custom ? 400 : 2200,
     interval: 0,
   })
   const elapsed = useElapsedSeconds(counting)
-  const working = staged && pending
+  // a call the stack says is still out keeps working past its staged beat
+  const working = (staged && pending) || status === "running"
+  const waiting = status === "waiting" && !(staged && pending)
 
   return (
     <div className={cn("flex flex-col", className)}>
@@ -116,15 +134,32 @@ export function ToolCall({
         <span className={cn("font-medium", working && "ambient-shimmer")}>
           {verb}
         </span>
-        {working && (
+        {working && staged && pending && (
           <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
             {elapsed}s
           </span>
         )}
-        <StatusMark status={working ? "running" : status} />
+        {waiting ? (
+          <span className="text-muted-foreground">{t.waitingForYou}</span>
+        ) : (
+          <StatusMark status={working ? "running" : status} />
+        )}
       </button>
       <AnimatePresence initial={false}>
-        {open && hasBody && !working && (
+        {open && custom && !(staged && pending) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={transition}
+            className="overflow-hidden"
+          >
+            <div className="border-(--glass-border) bg-(--wash) mt-2 rounded-xl border p-3">
+              {children}
+            </div>
+          </motion.div>
+        )}
+        {open && hasBody && !custom && !working && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -888,7 +923,8 @@ export function ToolApproval({
   reason?: string
   /** Already answered (a settled transcript, or the host's own record). */
   decision?: "approved" | "denied"
-  onDecide?: (approved: boolean) => void
+  /** May return a promise; if it rejects, the choice is undone and the reason shown. */
+  onDecide?: (approved: boolean) => void | Promise<void>
   staged?: boolean
   className?: string
 }) {
@@ -901,9 +937,20 @@ export function ToolApproval({
     delay: 400,
     interval: 0,
   })
+  // the host could not take the answer: the question is open again
+  const [failed, setFailed] = React.useState<string | null>(null)
   const decide = (approved: boolean) => {
     setChosen(approved ? "approved" : "denied")
-    onDecide?.(approved)
+    setFailed(null)
+    const undo = (error: unknown) => {
+      setChosen(null)
+      setFailed(error instanceof Error && error.message ? error.message : String(error))
+    }
+    try {
+      Promise.resolve(onDecide?.(approved)).catch(undo)
+    } catch (error) {
+      undo(error)
+    }
   }
 
   if (decided)
@@ -938,6 +985,11 @@ export function ToolApproval({
       {reason && (
         <p className="text-muted-foreground text-sm leading-relaxed">{reason}</p>
       )}
+      {failed && (
+        <p role="alert" className="text-destructive text-sm leading-relaxed">
+          {failed}
+        </p>
+      )}
       <div className="flex items-center justify-end gap-1.5">
         <Button
           size="sm"
@@ -952,84 +1004,6 @@ export function ToolApproval({
           {t.approve}
         </Button>
       </div>
-    </div>
-  )
-}
-
-/* --------------------------- the host's own ---------------------------- */
-
-/**
- * HOST TOOL — the product's own component for a tool call, in the layer's
- * frame.
- *
- * The row above it is the same claim every tool call makes (the verb and
- * its status), so a call drawn by the host still reads as a call. The
- * component sits open beneath it on the layer's wash: it is the result,
- * and a result the product built a component for is one worth seeing. The
- * frame is the layer's; what is inside is the product's, untouched.
- */
-export function HostTool({
-  verb,
-  status = "done",
-  defaultOpen = true,
-  staged = true,
-  children,
-  className,
-}: {
-  verb: string
-  /** `waiting`: the component is collecting something from the person. */
-  status?: "running" | "waiting" | "done"
-  defaultOpen?: boolean
-  staged?: boolean
-  /** The host's component. */
-  children: React.ReactNode
-  className?: string
-}) {
-  const t = useAmbientMessages()
-  const [open, setOpen] = React.useState(defaultOpen)
-  const transition = useMotionTransition("surface")
-  const { pending } = useStagedReveal(1, {
-    enabled: staged,
-    delay: 400,
-    interval: 0,
-  })
-  const working = (staged && pending) || status === "running"
-
-  return (
-    <div className={cn("flex flex-col", className)}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex items-center gap-2 self-start text-start text-sm"
-      >
-        <span className="text-muted-foreground shrink-0">
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={13} />
-        </span>
-        <span className={cn("font-medium", working && "ambient-shimmer")}>
-          {verb}
-        </span>
-        {status === "waiting" && !pending ? (
-          <span className="text-muted-foreground">{t.waitingForYou}</span>
-        ) : (
-          <StatusMark status={working ? "running" : "done"} />
-        )}
-      </button>
-      <AnimatePresence initial={false}>
-        {open && !(staged && pending) && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={transition}
-            className="overflow-hidden"
-          >
-            <div className="border-(--glass-border) bg-(--wash) mt-2 rounded-xl border p-3">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

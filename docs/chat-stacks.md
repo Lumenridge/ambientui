@@ -36,15 +36,16 @@ const api = createAmbientApi({ ...aiSdkRoute({ api: "/api/chat" }), suggestions 
 | asks | streams the answer: reasoning, each tool call as it runs and finishes, prose, sources | runs the turn as it always does |
 | is asked to approve a tool | shows the approval in the transcript, with the exact request | gets the yes or no and continues |
 | is asked for something only they can give (a form, a picker) | draws the product's component for that tool, which calls `respond` | gets the output and continues |
-| regenerates an answer | keeps both versions | replaces its own last answer |
+| regenerates the last answer | keeps both versions | replaces its own last answer |
+| asks again for an earlier answer (a stateless route only) | keeps both versions | answers from the history before it |
 | clears the conversation | starts clean | clears its thread |
 | starts a turn somewhere else in the product | shows that turn in its transcript | (nothing: the layer follows the thread) |
-| presses Stop | stops | cancels the run |
+| presses Stop | stops, and closes an approval that was still open | cancels the run |
 
 A server that knows the layer's grammar can also send its blocks through any
 stack, under the names in `AMBIENT_DATA` (`stack-parts.ts`):
-`ambient-evidence`, `ambient-artifact`, `ambient-refs`, `ambient-followUps`,
-`ambient-effect`. On the AI SDK that is a data part (`data-ambient-followUps`),
+`ambient-evidence`, `ambient-artifact`, `ambient-refs`, `ambient-follow-ups`,
+`ambient-effect`. On the AI SDK that is a data part (`data-ambient-follow-ups`),
 on AG-UI a `CUSTOM` event with that name, on assistant-ui a `data` part.
 
 ## The product's own components
@@ -93,7 +94,9 @@ export const ambientApi = createAmbientApi(
 
 `tools` are the tools declared on the server with no `execute`. After one,
 or after an approval, the assistant message is posted back whole and the
-same answer continues.
+same answer continues. A call to a tool that is not in `tools` fails,
+naming the tool. One answer continues at most `maxRounds` times (8 unless
+set); past that the turn fails rather than ending quietly.
 
 **A `Chat`.** When other parts of the product read the chat too, share one
 `Chat` instance (`useChat({ chat })`) and hand it to the layer. Its
@@ -109,7 +112,10 @@ export const ambientApi = createAmbientApi(aiSdkChat(() => chat))
 The adapter needs the `Chat` instance, not the object `useChat` returns,
 because that object cannot be subscribed to from outside a component. A
 chat without `sendAutomaticallyWhen` is resubmitted by the adapter when a
-tool output or an approval is in and the model has not answered it.
+tool output or an approval is in and the model has not answered it. It
+waits `CONTINUE_GRACE_MS` for the chat to continue by itself first; a chat
+whose `sendAutomaticallyWhen` is asynchronous and slower than that passes
+`resubmit: false`, or both submit.
 
 ## assistant-ui
 
@@ -164,9 +170,11 @@ const renderTool = (call: AmbientToolProps) =>
 
 A plain AG-UI agent (`new HttpAgent({ url })`) needs no options. Its
 browser-side tools go in `tools`, each with a `description`, its
-`parameters` and `run` (a function, or `waitForPerson`). An AG-UI interrupt
-is an approval; it is resumed with `{ approved, reason }`, or with what
-`resumePayload` returns.
+`parameters` and `run` (a function, or `waitForPerson`). A `run` that
+throws is reported to the agent as a failed tool. An AG-UI interrupt is an
+approval; it is resumed with `{ approved, reason }`, or with what
+`resumePayload` returns. `maxRounds` caps the runs of one answer, as on
+the AI SDK route.
 
 ## Removing the stack's own chat UI
 
@@ -180,6 +188,18 @@ component the product drew a tool with into `toolComponents`.
 `plan.transport`.
 
 ## Limits
+
+- **Regenerate redoes the thread's last answer only** on a stack that keeps
+  the thread. Redoing an earlier one would drop every turn after it, so the
+  layer does not offer it there.
+- **Two adapters lean on something the stack does not document.**
+  `aiSdkChat` follows the `Chat` through its `~registerMessagesCallback`
+  and `~registerStatusCallback` methods, which the AI SDK keeps for its own
+  React binding. `assistantUIThread` resubmits a stalled AI SDK runtime
+  through `thread.getState().extras.chat`. A release of either stack can
+  move them. The first is checked: `aiSdkChat` throws an error naming the
+  missing method. The second is optional: without it a run that nothing
+  continues simply ends there.
 
 - The layer's transcript is the current branch of the stack's thread. Its
   own earlier versions of an answer stay reachable in the layer; the

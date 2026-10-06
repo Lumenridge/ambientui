@@ -76,6 +76,7 @@ import {
 import { MessageQueue } from "./message-kit"
 import {
   followConversation,
+  nextId,
   type TranscriptMessage,
 } from "./follow-conversation"
 
@@ -106,12 +107,18 @@ const historyOf = (list: Msg[]): AmbientTurn[] =>
   )
 
 /**
- * Ids are derived from the list itself, never from a shared counter: a
- * state updater can be invoked more than once for a single update, so
- * `++counter` inside one mints colliding ids — which makes React remount
- * the transcript and replay every settled answer's stream.
+ * A stopped answer's approvals are closed: the tool will not run, so the
+ * question is no longer one the person can answer.
  */
-const nextId = (m: Msg[]) => (m.length ? m[m.length - 1]!.id + 1 : 1)
+const withApprovalsClosed = (kit: AmbientAnswer): AmbientAnswer =>
+  kit.evidence?.some((b) => b.kind === "approval" && !b.decision)
+    ? {
+        ...kit,
+        evidence: kit.evidence.map((b) =>
+          b.kind === "approval" && !b.decision ? { ...b, decision: "denied" } : b
+        ),
+      }
+    : kit
 
 /**
  * What the `+` attaches. A real file picker belongs to the host product, not
@@ -448,11 +455,20 @@ export function Assistant({
   }, [asking, mode, searchOver])
 
   const [conversationId, setConversationId] = React.useState(newConversationId)
+  // why the host could not clear its thread, when it could not
+  const [clearFailed, setClearFailed] = React.useState<string | null>(null)
   const clearConversation = () => {
-    setMessages([])
-    setConversationId(newConversationId())
-    // a host that keeps its own thread clears it too
-    void api.reset().catch(() => {})
+    setClearFailed(null)
+    // A host that keeps its own thread clears it first. If it cannot, the
+    // transcript stays: its thread is still there, and following it would
+    // bring a cleared transcript straight back.
+    api.reset().then(
+      () => {
+        setMessages([])
+        setConversationId(newConversationId())
+      },
+      (error: unknown) => setClearFailed(failureDetail(error))
+    )
   }
 
   // AI activation while typing: the moment the input reads as a question
@@ -507,7 +523,9 @@ export function Assistant({
       if (running && !last.answer.text) setOrbState("thinking")
       else if (!running && orbStateRef.current === "thinking") setOrbState("still")
     }
-  }, [conversation, hostTurns, setOrbState])
+    // `busy` is here for the moment it clears: whatever the thread did
+    // while the layer's own turn was writing is read then
+  }, [conversation, hostTurns, busy, setOrbState])
   // the settled answer's workspace effect, relayed to whichever surface owns
   // the product state — the layer never learns what "fix-composer" means
   const pendingEffect = React.useRef<string | null>(null)
@@ -828,7 +846,10 @@ export function Assistant({
     turnRef.current?.abort()
     turnRef.current = null
     // a stream stopped partway ends where it is: what arrived was said
-    updateArriving(() => ({ arriving: false }))
+    updateArriving((msg) => ({
+      arriving: false,
+      kits: msg.kits?.map(withApprovalsClosed),
+    }))
     busyRef.current = false
     setBusy(false)
     setOrbState("still")
@@ -936,7 +957,13 @@ export function Assistant({
                   // the work is not over when the answer was composed — it
                   // is over when the answer starts being said
                   onAnswerStart={() => setOrbState("answer")}
-                  onRegenerate={() => regenerate(m.id)}
+                  // a thread the host keeps can only redo its last answer
+                  // without losing every turn after it
+                  onRegenerate={
+                    api.conversation && m.id !== messages[messages.length - 1]?.id
+                      ? undefined
+                      : () => regenerate(m.id)
+                  }
                   onFollowUp={(text) => send(text)}
                 />
               )}
@@ -956,6 +983,9 @@ export function Assistant({
               className="block max-w-full text-[13px] leading-relaxed"
             />
           )
+        )}
+        {clearFailed && (
+          <ErrorState title={t.couldNotClear} detail={clearFailed} />
         )}
       </div>
     </div>

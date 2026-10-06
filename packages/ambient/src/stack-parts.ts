@@ -1,7 +1,9 @@
 import {
   applyAnswerEvent,
   EMPTY_ANSWER,
+  failureDetail,
   type AmbientApiHandlers,
+  type AmbientConversationTurn,
 } from "./responder"
 import type { AmbientAnswer, AmbientBlock, AmbientReference } from "./response-kit"
 import type { AmbientAnswerEvent } from "./responder-schemas"
@@ -87,7 +89,7 @@ export const AMBIENT_DATA = {
   evidence: "ambient-evidence",
   artifact: "ambient-artifact",
   refs: "ambient-refs",
-  followUps: "ambient-followUps",
+  followUps: "ambient-follow-ups",
   effect: "ambient-effect",
 } as const
 
@@ -140,24 +142,25 @@ export function toolCallBlock(
 ): AmbientBlock | null {
   const verb = call.title ?? call.name
   const request = compact(call.input)
-  if (call.approval && (call.state === "approval" || call.state === "denied"))
+  // a no is the approval, decided, whether or not the stack kept the request
+  if (call.state === "denied" || (call.approval && call.state === "approval"))
     return {
       kind: "approval",
       id: call.id,
       tool: verb,
       request,
-      reason: call.approval.reason,
+      reason: call.approval?.reason,
       decision: call.state === "denied" ? "denied" : undefined,
     }
   const drawn = options.toolBlock?.(call)
   if (drawn !== undefined) return drawn && { ...drawn, id: call.id }
-  if (call.state === "failed" || call.state === "denied")
+  if (call.state === "failed")
     return {
       kind: "failure",
       id: call.id,
       tool: verb,
       target: request,
-      error: call.error ?? "Denied.",
+      error: call.error ?? failureDetail(undefined),
     }
   return {
     kind: "tool",
@@ -210,10 +213,15 @@ export function sourceReference(source: {
  * text as deltas, reasoning when it is finished, a source once. A tool
  * call is said every time its state changes, under the same id, so the
  * running call becomes the finished one in place.
+ *
+ * What has been said is remembered per PIECE, not per position: a call by
+ * its id, anything else by its place among its own kind. A stack may slot
+ * a call in ahead of parts that are already there (its input was still
+ * streaming), and nothing after it is said twice.
  */
 export function createPartsReader(options: StackOptions = {}) {
-  const textSent = new Map<number, number>()
-  const said = new Map<number, string>()
+  const textSent = new Map<string, number>()
+  const said = new Map<string, string>()
   let wroteText = false
 
   return function read(
@@ -221,11 +229,16 @@ export function createPartsReader(options: StackOptions = {}) {
     finished: boolean
   ): AmbientAnswerEvent[] {
     const events: AmbientAnswerEvent[] = []
+    const seen: Record<string, number> = {}
     parts.forEach((part, index) => {
+      const key =
+        part.type === "tool"
+          ? `tool:${part.id}`
+          : `${part.type}:${(seen[part.type] = (seen[part.type] ?? -1) + 1)}`
       const settled = finished || index < parts.length - 1
       switch (part.type) {
         case "text": {
-          const sent = textSent.get(index)
+          const sent = textSent.get(key)
           // a later text part (after a tool step) is a new paragraph
           if (sent === undefined && part.text && wroteText)
             events.push({ type: "text", delta: "\n\n" })
@@ -234,12 +247,12 @@ export function createPartsReader(options: StackOptions = {}) {
             events.push({ type: "text", delta: part.text.slice(from) })
             wroteText = true
           }
-          if (part.text) textSent.set(index, part.text.length)
+          if (part.text) textSent.set(key, part.text.length)
           break
         }
         case "reasoning": {
-          if (said.has(index) || !(part.done || settled)) return
-          said.set(index, "")
+          if (said.has(key) || !(part.done || settled)) return
+          said.set(key, "")
           const block = reasoningBlock(part.text)
           if (block) events.push({ type: "evidence", block })
           break
@@ -247,21 +260,21 @@ export function createPartsReader(options: StackOptions = {}) {
         case "tool": {
           const block = toolCallBlock(part, options)
           const signature = JSON.stringify(block)
-          if (said.get(index) === signature) return
-          said.set(index, signature)
+          if (said.get(key) === signature) return
+          said.set(key, signature)
           if (block) events.push({ type: "evidence", block })
           break
         }
         case "source": {
-          if (said.has(index)) return
-          said.set(index, "")
+          if (said.has(key)) return
+          said.set(key, "")
           const ref = sourceReference(part)
           if (ref) events.push({ type: "refs", refs: [ref] })
           break
         }
         case "data": {
-          if (said.has(index)) return
-          said.set(index, "")
+          if (said.has(key)) return
+          said.set(key, "")
           const event = ambientDataEvent(part.name, part.data)
           if (event) events.push(event)
           break
@@ -304,27 +317,50 @@ export const unfinishedCalls = (parts: readonly StackPart[]) =>
   )
 
 /**
- * WHERE AN ANSWER WAITS FOR THE PERSON. The adapter waits on a block's id;
- * `answer` (the Ambient API's `respond`) delivers. An answer that arrives
- * before anyone waits is kept, so a fast click is never lost.
+ * How many times one answer may continue after the browser's tools, on an
+ * adapter that runs the rounds itself. A model that keeps calling a tool
+ * is stopped there, with an error.
+ */
+export const MAX_ROUNDS = 8
+
+/** What the turn fails with when it used up its rounds. */
+export const tooManyRounds = (rounds: number): AmbientAnswerEvent => ({
+  type: "error",
+  message: `The assistant was still calling tools after ${rounds} rounds, and was stopped.`,
+})
+
+/** What a call the browser was left with, and has no tool for, fails with. */
+export const noBrowserTool = (name: string) =>
+  `No tool named "${name}" is registered in the browser, so this call was never answered.`
+
+/** `respond` was given an id nothing is waiting on (the turn was stopped). */
+export class NotWaitingError extends Error {
+  constructor() {
+    super("That is no longer waiting for an answer.")
+    this.name = "NotWaitingError"
+  }
+}
+
+/**
+ * WHERE AN ANSWER WAITS FOR THE PERSON. The adapter waits on a block's id,
+ * BEFORE it sends the block, so there is always a waiter by the time
+ * anyone can answer; `answer` (the Ambient API's `respond`) delivers.
+ * Nothing is kept for an id nobody waits on: `answer` throws, so a click
+ * on a stopped turn's block is told so instead of being held forever.
  */
 export function createWaitingRoom<T extends { id: string }>() {
   const waiters = new Map<string, (response: T) => void>()
-  const early = new Map<string, T>()
   return {
     answer(response: T) {
       const waiter = waiters.get(response.id)
-      if (waiter) waiter(response)
-      else early.set(response.id, response)
+      if (!waiter) throw new NotWaitingError()
+      waiter(response)
     },
     /** Resolves with the answer, or null when the turn is stopped. */
     wait(id: string, signal: AbortSignal) {
       return new Promise<T | null>((resolve) => {
-        const kept = early.get(id)
-        if (kept) {
-          early.delete(id)
-          return resolve(kept)
-        }
+        // a listener on a signal that already fired would never run
+        if (signal.aborted) return resolve(null)
         const stop = () => {
           waiters.delete(id)
           resolve(null)
@@ -381,14 +417,105 @@ export function createPushQueue<T>() {
   }
 }
 
+/* --------------------- a run on a thread the stack keeps ------------------ */
+
+/** What a thread-backed stack's run looks like right now. */
+export type RunSnapshot = {
+  /** The answer's message so far. */
+  parts: readonly StackPart[]
+  /** The run has stopped (it may still be owed a continuation). */
+  idle: boolean
+  /** Why the run failed, when it did. */
+  failure?: string | null
+}
+
 /**
- * A thread view that is recomputed only when the stack said something
- * changed, so `getTurns` keeps returning the same array in between.
+ * ONE RUN, PUMPED INTO ANSWER EVENTS. The stack calls `update` whenever
+ * its thread changes; each call says what is new and decides whether the
+ * answer is over. It is not over while a call is the person's or still
+ * out, nor while `owes` says the stack is about to continue.
  */
-export function cachedTurns<T>(compute: () => readonly T[]) {
-  let turns: readonly T[] | null = null
+export function createRunPump(
+  snapshot: () => RunSnapshot,
+  options: StackOptions & {
+    /** True while a continuation of this answer is due; see each adapter. */
+    owes?: () => boolean
+  } = {}
+) {
+  const queue = createPushQueue<AmbientAnswerEvent>()
+  const read = createPartsReader(options)
   return {
-    get: () => (turns ??= compute()),
-    invalidate: () => void (turns = null),
+    events: queue,
+    update() {
+      const { parts, idle, failure } = snapshot()
+      const open = idle ? unfinishedCalls(parts) : []
+      for (const event of read(parts, idle && !open.length)) queue.push(event)
+      if (!idle) return
+      if (failure) {
+        queue.push({ type: "error", message: failure })
+        return queue.close()
+      }
+      if (open.length || options.owes?.()) return
+      queue.close()
+    },
+  }
+}
+
+/** The turn for "asked, and nothing has come back yet". */
+export const PENDING_TURN: AmbientConversationTurn = {
+  id: "pending",
+  role: "assistant",
+  answer: EMPTY_ANSWER,
+  running: true,
+}
+
+/**
+ * The thread's LAST answer, when it answers `question`. Regenerating
+ * replaces that one; an earlier answer cannot be redone on a thread
+ * without dropping every turn after it, so it is asked as a new turn.
+ */
+export function lastAnswerTo<M extends { role: string }>(
+  messages: readonly M[],
+  question: string,
+  textOf: (message: M) => string
+): M | undefined {
+  const last = messages[messages.length - 1]
+  const asked = messages[messages.length - 2]
+  return last?.role === "assistant" &&
+    asked?.role === "user" &&
+    textOf(asked) === question
+    ? last
+    : undefined
+}
+
+/**
+ * THE THREAD AS TURNS, REBUILT CHEAPLY. A stack reports every token, and
+ * only the answer being written changes. So the turns are rebuilt only
+ * after the stack said something changed (`invalidate`); a finished
+ * message keeps the turn it was given the first time (by the message
+ * object's identity); and the list handed out is the same array until
+ * some turn in it differs.
+ */
+export function createTurnList<M extends object>() {
+  const finished = new WeakMap<M, AmbientConversationTurn>()
+  let list: readonly AmbientConversationTurn[] = []
+  let stale = true
+  return {
+    /** The turn for one message; `live` ones are built every time. */
+    turn(message: M, live: boolean, build: () => AmbientConversationTurn) {
+      if (live) return build()
+      let turn = finished.get(message)
+      if (!turn) finished.set(message, (turn = build()))
+      return turn
+    },
+    invalidate: () => void (stale = true),
+    get(compute: () => AmbientConversationTurn[]) {
+      if (!stale) return list
+      stale = false
+      const next = compute()
+      if (next.length !== list.length || next.some((turn, i) => turn !== list[i]))
+        list = next
+      return list
+    },
   }
 }

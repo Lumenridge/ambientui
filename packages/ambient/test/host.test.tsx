@@ -8,6 +8,8 @@
  *   - the transcript follows a thread the host keeps, and keeps what it
  *     already showed
  *   - regenerate says so to the API; clear clears the host's thread
+ *   - an answer the host could not take is undone and shown; Stop closes an
+ *     open approval; a clear the host refused keeps the transcript
  */
 import * as React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
@@ -146,6 +148,67 @@ describe("an approval", () => {
     fireEvent.click(screen.getByText("Approve"))
     expect(respond).toHaveBeenCalledWith({ id: "d", approved: true })
     expect(screen.getByText("Approved")).toBeTruthy()
+  })
+})
+
+describe("when the host cannot take it", () => {
+  const approval = { kind: "approval", id: "d", tool: "Complete task 101" } as const
+
+  it("an approval the host refuses is open again, with the reason", async () => {
+    await mount({
+      ask: async () => ({ text: "", refs: [], evidence: [approval] }),
+      respond: async () => {
+        throw new Error("That is no longer waiting for an answer.")
+      },
+    })
+    await ask("complete it")
+    await wait(600)
+    fireEvent.click(screen.getByText("Approve"))
+    await wait()
+    expect(screen.getByRole("alert").textContent).toBe("That is no longer waiting for an answer.")
+    expect(screen.getByText("Approve")).toBeTruthy()
+    expect(screen.queryByText("Approved")).toBeNull()
+  })
+
+  it("an API with no respond refuses, instead of looking delivered", async () => {
+    await mount({ ask: async () => ({ text: "", refs: [], evidence: [approval] }) })
+    await ask("complete it")
+    await wait(600)
+    fireEvent.click(screen.getByText("Approve"))
+    await wait()
+    expect(screen.getByRole("alert").textContent).toContain("no `respond`")
+  })
+
+  it("Stop closes an approval that was still open", async () => {
+    await mount({
+      ask: async function* () {
+        yield { type: "evidence", block: approval }
+        await new Promise(() => {})
+      },
+      respond: vi.fn(),
+    })
+    await ask("complete it")
+    await wait(600)
+    expect(screen.getByText("Approve")).toBeTruthy()
+    fireEvent.click(document.querySelector(`button[title="${ambientMessagesEn.stop}"]`)!)
+    await wait()
+    expect(screen.queryByText("Approve")).toBeNull()
+    expect(screen.getByText("Denied")).toBeTruthy()
+  })
+
+  it("a clear the host refused keeps the transcript and says why", async () => {
+    await mount({
+      ask: async () => ({ text: "An answer.", refs: [] }),
+      reset: async () => {
+        throw new Error("The thread is locked.")
+      },
+    })
+    await ask("anything")
+    fireEvent.click(document.querySelector(`button[aria-label="${ambientMessagesEn.backToSearch}"]`)!)
+    await wait()
+    expect(document.body.textContent).toContain("Couldn't clear the conversation")
+    expect(document.body.textContent).toContain("The thread is locked.")
+    expect(document.body.textContent).toContain("anything")
   })
 })
 

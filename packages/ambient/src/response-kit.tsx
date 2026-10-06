@@ -29,7 +29,6 @@ import {
 } from "./knowledge-kit"
 import {
   CodeDiff,
-  HostTool,
   ParallelTools,
   ReviewableDiff,
   TerminalBlock,
@@ -449,8 +448,10 @@ function AmbientBlockView({
   staged?: boolean
 }) {
   const host = useAmbientToolHost()
-  // A TOOL THE HOST HAS A COMPONENT FOR is drawn by it, in the layer's
-  // frame. Named component first, then the host's own registry; neither
+  // the host could not take a waiting call's output: said under the call
+  const [respondFailed, setRespondFailed] = React.useState<string | null>(null)
+  // A TOOL THE HOST HAS A COMPONENT FOR is drawn by it, under the call's
+  // own row. Named component first, then the host's own registry; neither
   // means the generic call below.
   if (block.kind === "tool" && block.name && host) {
     const id = block.id
@@ -460,15 +461,26 @@ function AmbientBlockView({
       input: block.input,
       output: block.output,
       status: block.status ?? "done",
-      respond: (output) => id !== undefined && host.respond?.({ id, output }),
+      respond: (output) => {
+        if (id === undefined) return
+        setRespondFailed(null)
+        host.respond?.({ id, output })?.catch((error: unknown) =>
+          setRespondFailed(error instanceof Error && error.message ? error.message : String(error))
+        )
+      },
     }
     const Component = host.components?.[block.name]
     const drawn = Component ? <Component {...props} /> : host.render?.(props)
     if (drawn !== undefined && drawn !== null)
       return (
-        <HostTool verb={block.verb} status={props.status} staged={staged}>
+        <ToolCall verb={block.verb} status={props.status} staged={staged}>
           {drawn}
-        </HostTool>
+          {respondFailed && (
+            <p role="alert" className="text-destructive mt-2 text-sm leading-relaxed">
+              {respondFailed}
+            </p>
+          )}
+        </ToolCall>
       )
   }
   switch (block.kind) {
