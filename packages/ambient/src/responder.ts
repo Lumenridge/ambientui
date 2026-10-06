@@ -206,7 +206,7 @@ async function call<T>(
   } catch (error) {
     // an abort is not a failure: whoever aborted already knows
     if (isAbort(error, signal)) throw error
-    throw new AmbientApiError(failureDetail(error), endpoint, error)
+    throw new AmbientApiError(failureReason(error), endpoint, error)
   }
   const parsed = schema.safeParse(raw)
   if (!parsed.success)
@@ -229,7 +229,7 @@ async function* askStream(
     result = await handler(ambientQuestionSchema.parse(input), options)
   } catch (error) {
     if (isAbort(error, options.signal)) throw error
-    throw new AmbientApiError(failureDetail(error), "ask", error)
+    throw new AmbientApiError(failureReason(error), "ask", error)
   }
   if (!isAsyncIterable(result)) {
     const parsed = ambientAnswerSchema.safeParse(result)
@@ -248,7 +248,7 @@ async function* askStream(
   } catch (error) {
     if (isAbort(error, options.signal) || error instanceof AmbientApiError)
       throw error
-    throw new AmbientApiError(failureDetail(error), "ask", error)
+    throw new AmbientApiError(failureReason(error), "ask", error)
   }
 }
 
@@ -399,9 +399,21 @@ export async function* answerEventsFromSSE(
   }
 }
 
-/** What a failed turn says, when the error has anything worth saying. */
-export function failureDetail(error: unknown): string {
+/**
+ * What a failure said about itself, or "" when it said nothing. The layer
+ * fills an empty reason from its catalog (`unknownFailure`), so a failure
+ * with no words of its own is told in the person's language.
+ */
+export function failureReason(error: unknown): string {
   if (error instanceof Error && error.message) return error.message
   if (typeof error === "string" && error) return error
-  return "The assistant could not answer."
+  return ""
+}
+
+/**
+ * The same, with an English sentence when the failure said nothing. For a
+ * host's own logs and tests; the layer's surfaces use `failureReason`.
+ */
+export function failureDetail(error: unknown): string {
+  return failureReason(error) || "The assistant could not answer."
 }

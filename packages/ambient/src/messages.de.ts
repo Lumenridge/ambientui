@@ -54,6 +54,7 @@ export const ambientMessagesDe: AmbientCatalog = {
   sendNow: "Jetzt senden — unterbricht den laufenden Schritt",
   couldNotAnswer: "Keine Antwort möglich",
   couldNotClear: "Unterhaltung konnte nicht geleert werden",
+  unknownFailure: "Der Assistent konnte nicht antworten.",
   emptyAnswer: "Der Assistent hat eine leere Antwort gesendet.",
   generationStopped: "Generierung gestoppt",
   retry: "Erneut versuchen",

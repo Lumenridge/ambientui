@@ -113,7 +113,7 @@ the text as it comes in, and nothing settles until the stream ends.
 | `{ type: "followUps", followUps }` | Sets the offered next questions. |
 | `{ type: "effect", effect }` | Names the workspace effect announced on settle. |
 | `{ type: "answer", answer }` | Replaces everything so far with a complete answer. |
-| `{ type: "error", message }` | Fails the turn. What already arrived stays, with the reason under it. |
+| `{ type: "error", message }` | Fails the turn. What already arrived stays, with the reason under it. An empty `message` is worded by the layer, in the person's language. |
 
 Send evidence before the text that rests on it; the layer renders in
 arrival order. Every event is validated, so one malformed event fails the

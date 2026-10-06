@@ -54,7 +54,7 @@ import {
 import {
   applyAnswerEvent,
   EMPTY_ANSWER,
-  failureDetail,
+  failureReason,
   type AmbientConversationTurn,
 } from "./responder"
 import type { AmbientTurn } from "./responder-schemas"
@@ -467,7 +467,7 @@ export function Assistant({
         setMessages([])
         setConversationId(newConversationId())
       },
-      (error: unknown) => setClearFailed(failureDetail(error))
+      (error: unknown) => setClearFailed(failureReason(error) || t.unknownFailure)
     )
   }
 
@@ -663,7 +663,7 @@ export function Assistant({
         // instruction probably meets the same failure, so the person sees
         // this one first and decides — retry, or send the next deliberately
         endWork()
-        const detail = failureDetail(error)
+        const detail = failureReason(error) || t.unknownFailure
         if (kit)
           // it failed partway: what arrived stays, finished, with the reason
           updateArriving(() => ({ arriving: false, settled: true, failed: detail }))

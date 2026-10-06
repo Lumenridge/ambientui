@@ -1,7 +1,6 @@
 import {
   applyAnswerEvent,
   EMPTY_ANSWER,
-  failureDetail,
   type AmbientApiHandlers,
   type AmbientConversationTurn,
 } from "./responder"
@@ -160,7 +159,8 @@ export function toolCallBlock(
       id: call.id,
       tool: verb,
       target: request,
-      error: call.error ?? failureDetail(undefined),
+      // "" is a failure that gave no reason: the layer words it
+      error: call.error ?? "",
     }
   return {
     kind: "tool",
@@ -425,7 +425,7 @@ export type RunSnapshot = {
   parts: readonly StackPart[]
   /** The run has stopped (it may still be owed a continuation). */
   idle: boolean
-  /** Why the run failed, when it did. */
+  /** Why the run failed, when it did. "" is a failure with no reason given. */
   failure?: string | null
 }
 
@@ -451,7 +451,7 @@ export function createRunPump(
       const open = idle ? unfinishedCalls(parts) : []
       for (const event of read(parts, idle && !open.length)) queue.push(event)
       if (!idle) return
-      if (failure) {
+      if (failure != null) {
         queue.push({ type: "error", message: failure })
         return queue.close()
       }

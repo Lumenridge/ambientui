@@ -54,6 +54,7 @@ export const ambientMessagesAr: AmbientCatalog = {
   sendNow: "أرسل الآن — يقاطع الدور الحالي",
   couldNotAnswer: "تعذّرت الإجابة",
   couldNotClear: "تعذّر مسح المحادثة",
+  unknownFailure: "تعذّر على المساعد الإجابة.",
   emptyAnswer: "أرسل المساعد إجابة فارغة.",
   generationStopped: "توقف الإنشاء",
   retry: "إعادة المحاولة",

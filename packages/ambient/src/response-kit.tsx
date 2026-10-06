@@ -9,6 +9,7 @@ import { Icon, type IconName } from "@ambient-ui/ui/components/icon"
 import { cn } from "@ambient-ui/ui/lib/utils"
 
 import { useAmbientRuntime } from "./ambient-runtime"
+import { failureReason } from "./responder"
 
 import { StageQueueContext, useStageQueue } from "./stage-queue"
 import { useAmbientToolHost, type AmbientToolProps } from "./tool-host"
@@ -448,6 +449,7 @@ function AmbientBlockView({
   staged?: boolean
 }) {
   const host = useAmbientToolHost()
+  const t = useAmbientMessages()
   // the host could not take a waiting call's output: said under the call
   const [respondFailed, setRespondFailed] = React.useState<string | null>(null)
   // A TOOL THE HOST HAS A COMPONENT FOR is drawn by it, under the call's
@@ -465,7 +467,7 @@ function AmbientBlockView({
         if (id === undefined) return
         setRespondFailed(null)
         host.respond?.({ id, output })?.catch((error: unknown) =>
-          setRespondFailed(error instanceof Error && error.message ? error.message : String(error))
+          setRespondFailed(failureReason(error) || t.unknownFailure)
         )
       },
     }

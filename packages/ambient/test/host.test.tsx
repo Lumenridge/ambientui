@@ -212,6 +212,26 @@ describe("when the host cannot take it", () => {
   })
 })
 
+describe("a failure that gave no reason", () => {
+  it("is told in the person's language, for a turn and for a tool", async () => {
+    await mount(
+      {
+        ask: async function* () {
+          yield { type: "evidence", block: { kind: "failure", tool: "searchTasks", error: "" } }
+          yield { type: "error", message: "" }
+        },
+      },
+      { locale: "es" }
+    )
+    await ask("¿qué tareas están atrasadas?")
+    await wait()
+    const said = document.body.textContent ?? ""
+    // once under the failed tool, once as the turn's own reason
+    expect(said.split("El asistente no pudo responder.").length - 1).toBe(2)
+    expect(said).not.toContain("The assistant could not answer.")
+  })
+})
+
 describe("regenerate and clear", () => {
   it("clear clears the host's thread too", async () => {
     const reset = vi.fn()

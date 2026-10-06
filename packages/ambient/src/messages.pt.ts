@@ -54,6 +54,7 @@ export const ambientMessagesPt: AmbientCatalog = {
   sendNow: "Enviar agora — interrompe a vez atual",
   couldNotAnswer: "Não foi possível responder",
   couldNotClear: "Não foi possível limpar a conversa",
+  unknownFailure: "O assistente não conseguiu responder.",
   emptyAnswer: "O assistente enviou uma resposta vazia.",
   generationStopped: "Geração interrompida",
   retry: "Tentar novamente",

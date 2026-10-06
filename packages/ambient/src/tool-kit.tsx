@@ -13,6 +13,7 @@ import { cn } from "@ambient-ui/ui/lib/utils"
 import { useMotionTransition } from "./ambient-runtime"
 
 import { FeedbackDialog } from "./message-kit"
+import { failureReason } from "./responder"
 import { StageSkeleton, StagedItem } from "./staging"
 import { StreamingText } from "./streaming-text"
 import { useElapsedSeconds, useStagedReveal } from "./use-staged-reveal"
@@ -823,6 +824,7 @@ export function ToolFailure({
   onFeedback?: (feedback: { reasons: string[]; note: string }) => void
   className?: string
 }) {
+  const t = useAmbientMessages()
   const [reporting, setReporting] = React.useState(false)
   return (
     <div
@@ -849,7 +851,8 @@ export function ToolFailure({
         )}
       </div>
       <pre className="bg-(--destructive-wash) text-destructive overflow-x-auto rounded-lg px-2.5 py-1.5 font-mono text-xs whitespace-pre-wrap">
-        {error}
+        {/* a failure that gave no reason still says, in the person's language, that it failed */}
+        {error || t.unknownFailure}
       </pre>
       <div className="flex items-center justify-end gap-1.5">
         {onFeedback && (
@@ -944,7 +947,7 @@ export function ToolApproval({
     setFailed(null)
     const undo = (error: unknown) => {
       setChosen(null)
-      setFailed(error instanceof Error && error.message ? error.message : String(error))
+      setFailed(failureReason(error) || t.unknownFailure)
     }
     try {
       Promise.resolve(onDecide?.(approved)).catch(undo)

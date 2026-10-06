@@ -1,4 +1,4 @@
-import { failureDetail, type AmbientConversationTurn } from "./responder"
+import type { AmbientConversationTurn } from "./responder"
 import {
   answerFromParts,
   createRunPump,
@@ -213,9 +213,8 @@ const textOf = (message: AssistantUIMessage) =>
 const failureOf = (message: AssistantUIMessage): string | null => {
   const status = message.status
   if (status?.type !== "incomplete" || status.reason !== "error") return null
-  return status.error === undefined
-    ? failureDetail(undefined)
-    : errorText(status.error)
+  // "" is a failure that gave no reason: the layer words it
+  return status.error === undefined ? "" : errorText(status.error)
 }
 
 /** The layer on an assistant-ui thread. */

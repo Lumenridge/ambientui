@@ -54,6 +54,7 @@ export const ambientMessagesZh: AmbientCatalog = {
   sendNow: "立即发送 — 中断当前轮次",
   couldNotAnswer: "无法回答",
   couldNotClear: "无法清除对话",
+  unknownFailure: "助手无法回答。",
   emptyAnswer: "助手返回了空回答。",
   generationStopped: "已停止生成",
   retry: "重试",

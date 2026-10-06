@@ -1,6 +1,6 @@
 import {
   answerEventsFromSSE,
-  failureDetail,
+  failureReason,
   type AmbientConversationTurn,
 } from "./responder"
 import type {
@@ -429,7 +429,7 @@ export function aiSdkRoute(options: AiSdkRouteOptions): AmbientStack {
           try {
             builder.setOutput(String(call.toolCallId), await tool(call.input))
           } catch (error) {
-            builder.setOutput(String(call.toolCallId), undefined, failureDetail(error))
+            builder.setOutput(String(call.toolCallId), undefined, failureReason(error))
           }
         })
       )
@@ -657,7 +657,7 @@ export function aiSdkChat(
           return {
             parts: uiMessageParts(answerNow()?.parts ?? [], idle),
             idle,
-            failure: chat.status === "error" ? failureDetail(chat.error) : null,
+            failure: chat.status === "error" ? failureReason(chat.error) : null,
           }
         },
         {

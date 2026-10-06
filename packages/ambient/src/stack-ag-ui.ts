@@ -1,4 +1,4 @@
-import { failureDetail, type AmbientConversationTurn } from "./responder"
+import { failureReason, type AmbientConversationTurn } from "./responder"
 import type { AmbientAnswerEvent, AmbientResponse } from "./responder-schemas"
 import {
   ambientDataEvent,
@@ -367,7 +367,7 @@ export function agUIAgent<A extends AgUIAgent>(
           } else if (event.type === "RUN_ERROR") {
             queue.push({
               type: "error",
-              message: failureDetail(event.message),
+              message: failureReason(event.message),
             })
             queue.close()
           } else if (event.type === "RUN_STARTED") {
@@ -425,7 +425,7 @@ export function agUIAgent<A extends AgUIAgent>(
                 agent.addMessage({ ...result, content: stringify(await tool(call.input)) })
               } catch (error) {
                 // AG-UI's own field for a failed tool, so it reads as one
-                const message = failureDetail(error)
+                const message = failureReason(error)
                 agent.addMessage({ ...result, content: message, error: message })
               }
             })
