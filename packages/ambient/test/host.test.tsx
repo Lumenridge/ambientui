@@ -209,6 +209,12 @@ describe("when the host cannot take it", () => {
     expect(document.body.textContent).toContain("Couldn't clear the conversation")
     expect(document.body.textContent).toContain("The thread is locked.")
     expect(document.body.textContent).toContain("anything")
+    // the notice goes once the conversation moves on
+    const input = document.querySelector<HTMLInputElement>("input")!
+    fireEvent.change(input, { target: { value: "something else" } })
+    fireEvent.keyDown(input, { key: "Enter" })
+    await wait()
+    expect(document.body.textContent).not.toContain("Couldn't clear the conversation")
   })
 })
 

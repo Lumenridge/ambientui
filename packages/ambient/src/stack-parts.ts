@@ -438,8 +438,12 @@ export type RunSnapshot = {
 export function createRunPump(
   snapshot: () => RunSnapshot,
   options: StackOptions & {
-    /** True while a continuation of this answer is due; see each adapter. */
-    owes?: () => boolean
+    /**
+     * True while a continuation of this answer is due (see each adapter).
+     * "over" when one was due and nobody made it: the answer ends where it
+     * is, even with a call that was allowed and never ran.
+     */
+    owes?: () => boolean | "over"
   } = {}
 ) {
   const queue = createPushQueue<AmbientAnswerEvent>()
@@ -455,7 +459,10 @@ export function createRunPump(
         queue.push({ type: "error", message: failure })
         return queue.close()
       }
-      if (open.length || options.owes?.()) return
+      // a call that is the person's to answer: nothing is owed until they do
+      if (openCalls(parts).length) return
+      const owed = options.owes?.()
+      if (owed !== "over" && (open.length || owed)) return
       queue.close()
     },
   }
@@ -491,28 +498,41 @@ export function lastAnswerTo<M extends { role: string }>(
 /**
  * THE THREAD AS TURNS, REBUILT CHEAPLY. A stack reports every token, and
  * only the answer being written changes. So the turns are rebuilt only
- * after the stack said something changed (`invalidate`); a finished
- * message keeps the turn it was given the first time (by the message
- * object's identity); and the list handed out is the same array until
- * some turn in it differs.
+ * after the stack said something changed (`invalidate`); a finished turn
+ * keeps the one it was given the first time; and the list handed out is
+ * the same array until some turn in it differs.
+ *
+ * A finished turn is known by a KEY: the message object itself, for a
+ * stack whose messages are replaced when they change, or a string, for a
+ * stack that has to say what a turn is made of (several messages, by id).
+ * String keys that a rebuild did not ask for are forgotten.
  */
-export function createTurnList<M extends object>() {
-  const finished = new WeakMap<M, AmbientConversationTurn>()
+export function createTurnList() {
+  const byObject = new WeakMap<object, AmbientConversationTurn>()
+  let byName = new Map<string, AmbientConversationTurn>()
+  let asked = new Map<string, AmbientConversationTurn>()
   let list: readonly AmbientConversationTurn[] = []
   let stale = true
   return {
-    /** The turn for one message; `live` ones are built every time. */
-    turn(message: M, live: boolean, build: () => AmbientConversationTurn) {
+    /** The turn for one key; `live` ones are built every time. */
+    turn(key: object | string, live: boolean, build: () => AmbientConversationTurn) {
       if (live) return build()
-      let turn = finished.get(message)
-      if (!turn) finished.set(message, (turn = build()))
+      if (typeof key === "string") {
+        const turn = byName.get(key) ?? build()
+        asked.set(key, turn)
+        return turn
+      }
+      let turn = byObject.get(key)
+      if (!turn) byObject.set(key, (turn = build()))
       return turn
     },
     invalidate: () => void (stale = true),
     get(compute: () => AmbientConversationTurn[]) {
       if (!stale) return list
       stale = false
+      asked = new Map()
       const next = compute()
+      byName = asked
       if (next.length !== list.length || next.some((turn, i) => turn !== list[i]))
         list = next
       return list

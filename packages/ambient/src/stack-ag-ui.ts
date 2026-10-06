@@ -5,6 +5,7 @@ import {
   answerFromParts,
   createPartsReader,
   createPushQueue,
+  createTurnList,
   createWaitingRoom,
   MAX_ROUNDS,
   noBrowserTool,
@@ -268,61 +269,47 @@ export function agUIAgent<A extends AgUIAgent>(
   const run = options.run ?? ((agent: A, parameters) => agent.runAgent(parameters))
   const stopRun = options.stop ?? ((agent: A) => agent.abortRun())
 
-  // Finished groups keep their turn between changes. A group is the
-  // messages of one answer, so it is known by their ids (and by how many
-  // interrupts are open, which changes what an unanswered call means).
-  let kept = new Map<string, AmbientConversationTurn>()
-  let list: readonly AmbientConversationTurn[] = []
-  let stale = true
-  const readTurns = () => {
-    if (!stale) return list
-    stale = false
-    const agent = getAgent()
-    const interrupts = agent.pendingInterrupts ?? []
-    const next: AmbientConversationTurn[] = []
-    const seen = new Map<string, AmbientConversationTurn>()
-    const reuse = (key: string, build: () => AmbientConversationTurn) => {
-      const turn = kept.get(key) ?? build()
-      seen.set(key, turn)
-      return turn
-    }
-    let group: AgUIMessage[] = []
-    const flush = (live: boolean) => {
-      if (!group.length) return
-      const messages = group
-      group = []
-      const build = (): AmbientConversationTurn => ({
-        id: messages[0]!.id,
-        role: "assistant",
-        answer: answerFromParts(
-          agUIParts(messages, !live, live ? [] : interrupts, clientCall),
-          !live,
-          options
-        ),
-        running: live,
-      })
-      next.push(
-        live
-          ? build()
-          : reuse(`a:${messages.map((m) => m.id).join(",")}:${interrupts.length}`, build)
-      )
-    }
-    for (const message of agent.messages) {
-      if (message.role === "user") {
-        flush(false)
-        const text = textOf(message.content)
-        next.push(reuse(`u:${message.id}:${text}`, () => ({ id: message.id, role: "user", text })))
-      } else if (message.role !== "system" && message.role !== "developer")
-        group.push(message)
-    }
-    const asked = !group.length && next[next.length - 1]?.role === "user"
-    flush(agent.isRunning)
-    // asked, and nothing has come back yet
-    if (agent.isRunning && asked) next.push(PENDING_TURN)
-    kept = seen
-    if (next.length !== list.length || next.some((turn, i) => turn !== list[i])) list = next
-    return list
-  }
+  // A group is the messages of one answer, so a finished one is known by
+  // their ids (and by how many interrupts are open, which changes what an
+  // unanswered call means).
+  const turns = createTurnList()
+  const readTurns = () =>
+    turns.get(() => {
+      const agent = getAgent()
+      const interrupts = agent.pendingInterrupts ?? []
+      const next: AmbientConversationTurn[] = []
+      let group: AgUIMessage[] = []
+      const flush = (live: boolean) => {
+        if (!group.length) return
+        const messages = group
+        group = []
+        next.push(
+          turns.turn(`a:${messages.map((m) => m.id).join(",")}:${interrupts.length}`, live, () => ({
+            id: messages[0]!.id,
+            role: "assistant",
+            answer: answerFromParts(
+              agUIParts(messages, !live, live ? [] : interrupts, clientCall),
+              !live,
+              options
+            ),
+            running: live,
+          }))
+        )
+      }
+      for (const message of agent.messages) {
+        if (message.role === "user") {
+          flush(false)
+          const text = textOf(message.content)
+          next.push(turns.turn(`u:${message.id}:${text}`, false, () => ({ id: message.id, role: "user", text })))
+        } else if (message.role !== "system" && message.role !== "developer")
+          group.push(message)
+      }
+      const asked = !group.length && next[next.length - 1]?.role === "user"
+      flush(agent.isRunning)
+      // asked, and nothing has come back yet
+      if (agent.isRunning && asked) next.push(PENDING_TURN)
+      return next
+    })
 
   return {
     ask(input, { signal }) {
@@ -480,7 +467,7 @@ export function agUIAgent<A extends AgUIAgent>(
     conversation: {
       subscribe(listener) {
         const changed = () => {
-          stale = true
+          turns.invalidate()
           listener()
         }
         return getAgent().subscribe({

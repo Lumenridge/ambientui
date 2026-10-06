@@ -519,7 +519,8 @@ export type AiSdkChatOptions = StackOptions & {
    * Resubmit the chat when a tool output or an approval is in and nothing
    * continued it. Default true. Pass false when the chat's own
    * `sendAutomaticallyWhen` is asynchronous and can take longer than
-   * CONTINUE_GRACE_MS to decide: both would then submit.
+   * CONTINUE_GRACE_MS to decide: both would then submit. An answer that
+   * nobody continues ends after CONTINUE_TIMEOUT_MS.
    */
   resubmit?: boolean
 }
@@ -531,6 +532,15 @@ export type AiSdkChatOptions = StackOptions & {
  * device, short enough not to read as a stall.
  */
 export const CONTINUE_GRACE_MS = 250
+
+/**
+ * How long an answer waits for a continuation it is owed before it is
+ * treated as over. Whoever continues (the chat's `sendAutomaticallyWhen`,
+ * or the adapter's resubmit) has started long before this; when nobody
+ * does (a predicate that decided not to, with `resubmit: false`), the turn
+ * must still end rather than hold the layer busy.
+ */
+export const CONTINUE_TIMEOUT_MS = 5000
 
 const busy = (chat: AiSdkChat) =>
   chat.status === "submitted" || chat.status === "streaming"
@@ -602,7 +612,7 @@ export function aiSdkChat(
     }
   }
 
-  const turns = createTurnList<UIMessageLike>()
+  const turns = createTurnList()
   const readTurns = () =>
     turns.get(() => {
       const chat = getChat()
@@ -642,6 +652,9 @@ export function aiSdkChat(
       // continuations of this answer: counted once each, capped like rounds
       let continued = 0
       let awaiting = false
+      // nobody continued in time: the answer ends where it is
+      let gaveUp = false
+      let timeout: ReturnType<typeof setTimeout> | undefined
 
       const answerNow = () => {
         const last = chat.messages[chat.messages.length - 1]
@@ -652,6 +665,7 @@ export function aiSdkChat(
           if (busy(chat)) {
             started = true
             awaiting = false
+            clearTimeout(timeout)
           }
           const idle = started && !busy(chat)
           return {
@@ -664,6 +678,7 @@ export function aiSdkChat(
           ...options,
           // outputs are in and the model has not answered them: more is coming
           owes() {
+            if (gaveUp) return "over"
             if (!owesContinuation(answerNow())) return false
             if (awaiting) return true
             if (continued >= MAX_ROUNDS) {
@@ -673,6 +688,11 @@ export function aiSdkChat(
             continued++
             awaiting = true
             if (options.resubmit !== false) continueWhenStalled(chat)
+            timeout = setTimeout(() => {
+              if (busy(chat)) return
+              gaveUp = true
+              pump.update()
+            }, CONTINUE_TIMEOUT_MS)
             return true
           },
         }
@@ -693,6 +713,7 @@ export function aiSdkChat(
           yield* pump.events.drain()
         } finally {
           unsubscribe()
+          clearTimeout(timeout)
           signal.removeEventListener("abort", stop)
         }
       })()

@@ -30,6 +30,7 @@ import type { AmbientQuestion } from "../src/responder-schemas"
 import {
   aiSdkChat,
   aiSdkRoute,
+  CONTINUE_TIMEOUT_MS,
   type AiSdkChat,
   type UIMessageLike,
 } from "../src/stack-ai-sdk"
@@ -919,6 +920,24 @@ describe("assistant-ui, the runtime's own edges", () => {
 })
 
 describe("AI SDK chat, the SDK's own edges", () => {
+  it("with resubmit off and nobody continuing, the answer ends instead of holding the turn", async () => {
+    vi.useFakeTimers()
+    try {
+      const pending = { type: "tool-completeTask", toolCallId: "d", input: { id: 101 }, state: "approval-requested", approval: { id: "ap1" } }
+      const chat = fakeChat([[{ id: "a1", role: "assistant", parts: [pending] }]])
+      const run = start(aiSdkChat(() => chat, { resubmit: false }))
+      await vi.advanceTimersByTimeAsync(50)
+      await run.api.respond({ id: "d", approved: true })
+      // this chat has no sendAutomaticallyWhen, and the adapter was told not to resubmit
+      await vi.advanceTimersByTimeAsync(CONTINUE_TIMEOUT_MS + 50)
+      const kit = await run.done
+      expect(chat.sent).toHaveLength(1)
+      expect(kit.evidence).toMatchObject([{ kind: "tool", id: "d" }])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it("says which hook is missing when the Chat cannot be followed", () => {
     const chat = fakeChat([])
     delete (chat as Record<string, unknown>)["~registerMessagesCallback"]

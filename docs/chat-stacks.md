@@ -115,7 +115,8 @@ chat without `sendAutomaticallyWhen` is resubmitted by the adapter when a
 tool output or an approval is in and the model has not answered it. It
 waits `CONTINUE_GRACE_MS` for the chat to continue by itself first; a chat
 whose `sendAutomaticallyWhen` is asynchronous and slower than that passes
-`resubmit: false`, or both submit.
+`resubmit: false`, or both submit. An answer that nobody continues ends
+after `CONTINUE_TIMEOUT_MS`.
 
 ## assistant-ui
 

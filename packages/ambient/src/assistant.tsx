@@ -783,6 +783,8 @@ export function Assistant({
     if (!text) return
     // asking anything from search brings the conversation back on top
     setSearchOver(false)
+    // a clear that failed is old news once the conversation moves on
+    setClearFailed(null)
     if (busyRef.current) {
       // the agent is mid-run: the new instruction stacks behind it
       setInput("")

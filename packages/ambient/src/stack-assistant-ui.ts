@@ -222,7 +222,7 @@ export function assistantUIThread(
   getThread: () => AssistantUIThread,
   options: AssistantUIOptions = {}
 ): AmbientStack {
-  const turns = createTurnList<AssistantUIMessage>()
+  const turns = createTurnList()
   const readTurns = () =>
     turns.get(() => {
       const { messages, isRunning } = getThread().getState()
