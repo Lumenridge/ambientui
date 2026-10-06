@@ -48,14 +48,20 @@ serves the assistant.
 
 ## The contract
 
-`createAmbientApi` takes up to three async handlers. Only `ask` is
-required.
+`createAmbientApi` takes the handlers below. Only `ask` is required.
 
 | Handler | Receives | Returns |
 |---|---|---|
-| `ask(input, { signal })` | `{ question, conversationId, history, pageChip, chips }` | an `AmbientAnswer` (REST), or an async iterable of `AmbientAnswerEvent`s (a stream) |
+| `ask(input, { signal })` | `{ question, conversationId, history, pageChip, chips, locale, regenerate? }` | an `AmbientAnswer` (REST), or an async iterable of `AmbientAnswerEvent`s (a stream) |
 | `suggestions(input, { signal })` | `{ pageChip }` | `string[]` |
 | `recents({ signal })` | nothing | `{ text, when }[]` |
+| `respond(response)` | `{ id, approved, reason? }` or `{ id, output }` | nothing; the answer in flight continues |
+| `reset()` | nothing | nothing |
+| `conversation` | (an object, not a function) | `{ subscribe, getTurns, stop? }` |
+
+The last three are for a host whose backend keeps state between calls: one
+that pauses for the person, or keeps its own thread. A host on a chat stack
+gets all of them from that stack's adapter ([chat-stacks.md](chat-stacks.md)).
 
 - Handlers may return anything. `createAmbientApi` validates it and
   rejects with an `AmbientApiError` naming the field that failed.
@@ -71,6 +77,18 @@ required.
   the request is actually cancelled.
 - `pageChip` is what the page declared with `setPageChip`. Route on its
   `id` to answer per page.
+- `regenerate` is true when the person asked for an answer again. `history`
+  already ends before the question, so a stateless backend needs nothing
+  more; a backend that keeps a thread replaces its last answer.
+- `respond` receives the person's answer to a waiting block: `approved` for
+  an `approval` block, `output` for a `tool` block whose `status` is
+  `waiting`. `id` is the block's `id`. The `ask` stream that sent the block
+  is still open, and continues from the answer.
+- `reset` runs when the person clears the conversation.
+- `conversation` is the host's own thread, for the layer's transcript to
+  follow: `getTurns()` returns user turns as `{ id, role, text }` and
+  assistant turns as `{ id, role, answer, running? }`, and returns the same
+  array until `subscribe`'s listener has been called.
 - The exported schemas (`ambientAnswerSchema`, `ambientQuestionSchema`,
   `ambientSuggestionsSchema`, `ambientRecentsSchema`) are the same ones the layer checks
   against. Reuse them on the server where the server is TypeScript.
@@ -88,14 +106,14 @@ the text as it comes in, and nothing settles until the stream ends.
 
 | Event | Effect |
 |---|---|
-| `{ type: "evidence", block }` | Adds a block above the prose (reasoning, tool call, search…). |
+| `{ type: "evidence", block }` | Adds a block above the prose (reasoning, tool call, approval, search…). A block whose `id` is already there replaces that block in place. |
 | `{ type: "text", delta }` | Appends to the prose. |
-| `{ type: "artifact", block }` | Adds a block below the prose (diff, terminal, report…). |
+| `{ type: "artifact", block }` | Adds a block below the prose (diff, terminal, report…). The same `id` rule applies. |
 | `{ type: "refs", refs }` | Adds references. |
 | `{ type: "followUps", followUps }` | Sets the offered next questions. |
 | `{ type: "effect", effect }` | Names the workspace effect announced on settle. |
 | `{ type: "answer", answer }` | Replaces everything so far with a complete answer. |
-| `{ type: "error", message }` | Fails the turn. What already arrived stays, with the reason under it. |
+| `{ type: "error", message }` | Fails the turn. What already arrived stays, with the reason under it. An empty `message` is worded by the layer, in the person's language. |
 
 Send evidence before the text that rests on it; the layer renders in
 arrival order. Every event is validated, so one malformed event fails the
@@ -121,9 +139,9 @@ server usually streams.
 
 ## Who this is for
 
-The layer is the presentation. It works with any tool that produces data and
-leaves the UI to us. A tool that brings its own chat UI, or opinions about
-how answers look, overlaps with the layer and is out of scope.
+The layer is the presentation. It works with any tool that produces data,
+and it takes over as the surface for a chat stack that brings a UI of its
+own: the stack's runtime, tools and thread stay, and its chat window goes.
 
 | Tool | Fits? | How |
 |---|---|---|
@@ -132,8 +150,9 @@ how answers look, overlaps with the layer and is out of scope.
 | Vercel AI SDK on the server (`generateObject`, `generateText`) | Yes, closely | `generateObject({ schema: ambientAnswerSchema })` makes the model produce the layer's grammar directly, and the browser validates it again with the same schema. |
 | OpenAI and Anthropic SDKs, LangChain / LangGraph, Mastra, on the server | Yes | The server runs the harness and returns an `AmbientAnswer` as JSON. Model keys never reach the browser. |
 | Any backend language (FastAPI, Rails, Go…) | Yes | Return the same JSON shape. Mirror the schema by hand for now (see the gaps below). |
-| Vercel AI SDK UI (`useChat`) | Not needed | It manages chat state and messages in the browser, which the layer already does. Use the AI SDK on the server instead. |
-| assistant-ui, CopilotKit, other chat UI kits | Out of scope | They have opinions about the presentation layer. A host could still run their backend runtimes behind its own server. |
+| A Vercel AI SDK chat route, or its `Chat` (`useChat`) | Yes, with an adapter | `aiSdkRoute` reads the route's UI message stream; `aiSdkChat` asks through the product's own `Chat` and follows it. [chat-stacks.md](chat-stacks.md) |
+| assistant-ui | Yes, with an adapter | `assistantUIThread` asks through the runtime's thread. The layer replaces `<Thread>`; the runtime and its tools stay. [chat-stacks.md](chat-stacks.md) |
+| CopilotKit, and AG-UI agents (LangGraph, Mastra) | Yes, with an adapter | `agUIAgent` runs the agent and reads its messages. The layer replaces `<CopilotChat>`; frontend tools and human-in-the-loop stay. [chat-stacks.md](chat-stacks.md) |
 
 ## Use the transport the product already has
 
@@ -154,24 +173,24 @@ reports it), then pick the matching example:
 | TanStack Query / SWR over a client | on the client; the layer does its own request state, so no query hook |
 | tRPC or a generated client | as one more procedure or operation |
 | a worker, IPC, or a local engine (`send(name, args)`) | as one more handler in that engine — [local-first](#a-local-first-app-worker-or-ipc) |
-| an AI SDK already (Vercel AI SDK, a provider SDK) | behind its existing route — [AI SDK routes](#a-server-route-with-the-vercel-ai-sdk-whole-answer) |
+| a chat stack in the browser (Vercel AI SDK, assistant-ui, CopilotKit) | on that stack, through its adapter — [chat-stacks.md](chat-stacks.md) |
+| a provider SDK on the server | behind its existing route — [AI SDK routes](#a-server-route-with-the-vercel-ai-sdk-whole-answer) |
 | nothing yet | the default `lib/ambient/api.ts` in start.md |
 
 ## Examples
 
 ### How it relates to the Vercel AI SDK
 
-It works well alongside it, but it isn't the AI SDK's own protocol:
+Two ways, and a product picks by what it already has:
 
-- **Server side, it fits directly.** `generateObject({ schema:
+- **Its chat route as it is.** A route that returns
+  `toUIMessageStreamResponse()` is read by `aiSdkRoute`, with tools,
+  approvals and sources mapped to blocks. Nothing changes on the server.
+  See [chat-stacks.md](chat-stacks.md).
+- **The layer's grammar from the server.** `generateObject({ schema:
   ambientAnswerSchema })` produces an `AmbientAnswer`, and `streamText`'s
-  `textStream` maps one-to-one onto `text` events (examples below).
-- **The wire format is ours.** The SSE events are `AmbientAnswerEvent`s,
-  not the AI SDK's UI message stream, so `toUIMessageStreamResponse()`
-  can't be consumed as-is. The server maps stream parts to events, which is
-  a few lines. An adapter from AI SDK stream parts is listed in the gaps
-  below.
-- **`useChat` isn't needed.** The layer already owns chat state.
+  `textStream` maps one-to-one onto `text` events (examples below). This is
+  for a server that wants to compose the layer's richer blocks itself.
 
 ### With the project's existing HTTP client
 
@@ -346,9 +365,10 @@ shows up as a clear error, not a broken page.
 |---|---|---|
 | **No WebSocket, WebRTC or gRPC adapters.** Only SSE ships a helper. | A host on another transport writes the small adapter itself (messages → async iterable of `AmbientAnswerEvent`s). | Add adapters when a host needs one. The contract doesn't change. |
 | **Evidence blocks keep their staged timing.** Each block type has a built-in reveal (a tool call holds about 2 s, a reasoning block 4 s unless it declares `seconds`), designed for demos that had no real work behind them. | With a real backend, and especially a stream, that timing adds seconds after the work is already done. | Open design decision: let a host choose staged or immediate evidence, likely as a runtime setting. |
-| **Tool calls need translating.** Model tool calls and results are not answer blocks by themselves. | The host maps them to `tool`, `parallel`, `reasoning` or `search` blocks, or events. | `generateObject` with `ambientAnswerSchema` does it for whole answers. A helper for AI SDK stream parts could follow. |
-| **No human-in-the-loop step.** Answers are one-way; `effect` only announces what happened. | A backend can't pause for the person to approve an action. | A later contract addition if hosts need it. |
+| **Tool calls need translating on a backend of the host's own.** Model tool calls and results are not answer blocks by themselves. | The host maps them to `tool`, `parallel`, `reasoning` or `search` blocks, or events. The chat-stack adapters do it for their stacks. | `generateObject` with `ambientAnswerSchema` does it for whole answers. |
 | **No JSON Schema export.** The schemas exist only as zod. | Non-JS servers mirror the shape by hand. | Export `z.toJSONSchema(ambientAnswerSchema)` so any backend can generate its models from it. |
 
 Resolved: conversation history (`history` and `conversationId` on every
-`ask`) and streaming (async iterable of `AmbientAnswerEvent`s, with SSE supported).
+`ask`), streaming (async iterable of `AmbientAnswerEvent`s, with SSE
+supported), and pausing for the person (`approval` blocks and waiting tool
+calls, answered through `respond`).

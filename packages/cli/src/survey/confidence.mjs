@@ -38,7 +38,7 @@ export const FACT_EVIDENCE = {
   fixedBottom: ["fixedBottom"],
   i18n: ["i18n"],
   network: ["network.helper", "network.transports", "network.wrapper", "network.clients", "network"],
-  ai: ["ai", "ai.env", "ai.routes"],
+  ai: ["ai", "ai.stack", "ai.env", "ai.routes"],
   tests: ["tests", "tests.vrt"],
   lint: ["lint.eslint", "lint.oxlint", "lint.biome", "lint.prettier", "lint.oxfmt", "lint"],
   agent: ["agent.claudeMd", "agent.agentsMd", "agent.designMd", "agent"],

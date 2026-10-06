@@ -50,7 +50,10 @@ should not become a second one silently: note what exists.
 **An AI feature the product already has.** A chat sidebar, a "summarize"
 button, an AI route. The assistant should sit behind the same backend and
 model, not beside it. Check `transport.kind` against what you find, and
-correct it.
+correct it. When the kind is `chat-stack`, the product runs a chat stack in
+the browser and the layer goes on top of it: confirm the stack and the chat
+mounts the plan lists, and follow
+[chat-stacks.md](https://github.com/Lumenridge/ambientui/blob/main/docs/chat-stacks.md).
 
 **How requests really authenticate.** The survey sees `credentials`, CSRF
 headers and 401 handling in one or two files. Read the product's own API

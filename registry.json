@@ -216,6 +216,11 @@
           "target": "components/ambient/composer.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/follow-conversation.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/follow-conversation.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/index.ts",
           "type": "registry:lib",
           "target": "components/ambient/index.ts"
@@ -336,6 +341,11 @@
           "target": "components/ambient/stub-audit.ts"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -435,6 +445,11 @@
           "path": ".registry/variants/tailwind-v3/packages/ambient/src/composer.tsx",
           "type": "registry:component",
           "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/follow-conversation.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/follow-conversation.ts"
         },
         {
           "path": ".registry/variants/tailwind-v3/packages/ambient/src/index.ts",
@@ -557,6 +572,11 @@
           "target": "components/ambient/stub-audit.ts"
         },
         {
+          "path": ".registry/variants/tailwind-v3/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/variants/tailwind-v3/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -585,6 +605,63 @@
           "tokens": "hsl-triplet"
         }
       }
+    },
+    {
+      "name": "stack-ag-ui",
+      "type": "registry:lib",
+      "title": "AG-UI adapter (CopilotKit, LangGraph, Mastra)",
+      "description": "Puts the ambient layer on a product that runs CopilotKit or any AG-UI agent: the layer runs its questions on the agent and follows its messages.",
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/stack-ag-ui.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stack-ag-ui.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stack-parts.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stack-parts.ts"
+        }
+      ],
+      "docs": "Needs the ambient layer. Give the provider an API built from the agent:\n\n  const api = createAmbientApi(agUIAgent(() => agent))\n\nInside CopilotKit, run through it, passing the resume entries on so an approval resumes the run:\n\n  agUIAgent(() => agent, {\n    run: (agent, { resume }) => copilotkit.runAgent({ agent, resume }),\n    stop: (agent) => copilotkit.stopAgent({ agent }),\n  })\n\nSee docs/chat-stacks.md."
+    },
+    {
+      "name": "stack-ai-sdk",
+      "type": "registry:lib",
+      "title": "Vercel AI SDK adapter",
+      "description": "Puts the ambient layer on a product that runs the Vercel AI SDK: its chat route, or its Chat instance, answers the layer.",
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/stack-ai-sdk.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stack-ai-sdk.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stack-parts.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stack-parts.ts"
+        }
+      ],
+      "docs": "Needs the ambient layer. Give the provider an API built from the adapter:\n\n  const api = createAmbientApi(aiSdkRoute({ api: \"/api/chat\" }))\n\nor, to share the product's own Chat (its tools, approvals and messages): createAmbientApi(aiSdkChat(() => chat)). See docs/chat-stacks.md."
+    },
+    {
+      "name": "stack-assistant-ui",
+      "type": "registry:lib",
+      "title": "assistant-ui adapter",
+      "description": "Puts the ambient layer on a product that runs an assistant-ui runtime: the layer asks through the runtime's thread and follows it.",
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/stack-assistant-ui.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stack-assistant-ui.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stack-parts.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stack-parts.ts"
+        }
+      ],
+      "docs": "Needs the ambient layer. Give the provider an API built from the runtime:\n\n  const api = createAmbientApi(assistantUIThread(() => runtime.thread))\n\nSee docs/chat-stacks.md."
     },
     {
       "name": "ambient-utils",
@@ -1121,6 +1198,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -1228,6 +1310,11 @@
           "path": ".registry/packages/ambient/src/streaming-text.tsx",
           "type": "registry:component",
           "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
         },
         {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
@@ -1339,6 +1426,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -1446,6 +1538,11 @@
           "path": ".registry/packages/ambient/src/streaming-text.tsx",
           "type": "registry:component",
           "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
         },
         {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
@@ -1557,6 +1654,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -1666,6 +1768,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -1773,6 +1880,11 @@
           "path": ".registry/packages/ambient/src/streaming-text.tsx",
           "type": "registry:component",
           "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
         },
         {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
@@ -1889,6 +2001,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -1996,6 +2113,11 @@
           "path": ".registry/packages/ambient/src/streaming-text.tsx",
           "type": "registry:component",
           "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
         },
         {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
@@ -2107,6 +2229,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -2214,6 +2341,11 @@
           "path": ".registry/packages/ambient/src/streaming-text.tsx",
           "type": "registry:component",
           "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
         },
         {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
@@ -2325,6 +2457,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -2432,6 +2569,11 @@
           "path": ".registry/packages/ambient/src/streaming-text.tsx",
           "type": "registry:component",
           "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
         },
         {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
@@ -2543,6 +2685,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -2650,6 +2797,11 @@
           "path": ".registry/packages/ambient/src/streaming-text.tsx",
           "type": "registry:component",
           "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
         },
         {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
@@ -2761,6 +2913,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -2868,6 +3025,11 @@
           "path": ".registry/packages/ambient/src/streaming-text.tsx",
           "type": "registry:component",
           "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
         },
         {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
@@ -2979,6 +3141,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -3088,6 +3255,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -3098,7 +3270,7 @@
           "target": "components/ambient/use-staged-reveal.ts"
         }
       ],
-      "docs": "WHEN TO USE\n  • Every tool invocation the user should be able to audit.\n\nWHEN NOT TO USE\n  • For several calls that went out together — that is ParallelTools, which collapses them to one row.\n  • For a whole session's activity — that is ToolTimeline.\n\nToolCall ships inside tool-kit.tsx, alongside 7 sibling components (ToolTimeline, TerminalBlock, CodeDiff, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolCall } from \"@/components/ambient/tool-kit\"",
+      "docs": "WHEN TO USE\n  • Every tool invocation the user should be able to audit.\n  • A tool the product already draws with a component of its own: a result card, a picker, a form the model asked the person to fill.\n\nWHEN NOT TO USE\n  • For several calls that went out together — that is ParallelTools, which collapses them to one row.\n  • For a whole session's activity — that is ToolTimeline.\n\nToolCall ships inside tool-kit.tsx, alongside 8 sibling components (ToolTimeline, TerminalBlock, CodeDiff, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolCall } from \"@/components/ambient/tool-kit\"",
       "meta": {
         "vocabulary": "ambient",
         "kit": "tool-kit.tsx"
@@ -3197,6 +3369,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -3207,7 +3384,7 @@
           "target": "components/ambient/use-staged-reveal.ts"
         }
       ],
-      "docs": "WHEN TO USE\n  • After an agent run of more than a couple of steps.\n  • Wherever the user needs to know what was touched before they trust the result.\n\nWHEN NOT TO USE\n  • For a single call, which reads better as a ToolCall.\n  • As a progress indicator during the run — it is a record, not a spinner.\n\nToolTimeline ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, TerminalBlock, CodeDiff, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolTimeline } from \"@/components/ambient/tool-kit\"",
+      "docs": "WHEN TO USE\n  • After an agent run of more than a couple of steps.\n  • Wherever the user needs to know what was touched before they trust the result.\n\nWHEN NOT TO USE\n  • For a single call, which reads better as a ToolCall.\n  • As a progress indicator during the run — it is a record, not a spinner.\n\nToolTimeline ships inside tool-kit.tsx, alongside 8 sibling components (ToolCall, TerminalBlock, CodeDiff, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolTimeline } from \"@/components/ambient/tool-kit\"",
       "meta": {
         "vocabulary": "ambient",
         "kit": "tool-kit.tsx"
@@ -3306,6 +3483,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -3316,7 +3498,7 @@
           "target": "components/ambient/use-staged-reveal.ts"
         }
       ],
-      "docs": "WHEN TO USE\n  • Any command the assistant ran on the user's behalf.\n\nWHEN NOT TO USE\n  • For code the assistant wrote — that is CodeRunner, where the output belongs to a snippet.\n  • For long logs; link to them rather than pasting a thousand lines into a conversation.\n\nTerminalBlock ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, CodeDiff, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { TerminalBlock } from \"@/components/ambient/tool-kit\"",
+      "docs": "WHEN TO USE\n  • Any command the assistant ran on the user's behalf.\n\nWHEN NOT TO USE\n  • For code the assistant wrote — that is CodeRunner, where the output belongs to a snippet.\n  • For long logs; link to them rather than pasting a thousand lines into a conversation.\n\nTerminalBlock ships inside tool-kit.tsx, alongside 8 sibling components (ToolCall, ToolTimeline, CodeDiff, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { TerminalBlock } from \"@/components/ambient/tool-kit\"",
       "meta": {
         "vocabulary": "ambient",
         "kit": "tool-kit.tsx"
@@ -3415,6 +3597,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -3425,7 +3612,7 @@
           "target": "components/ambient/use-staged-reveal.ts"
         }
       ],
-      "docs": "WHEN TO USE\n  • Whenever an answer changed code the user has not seen yet.\n\nWHEN NOT TO USE\n  • When the change still needs the user's approval — that is ReviewableDiff, where each hunk is a decision.\n  • For whole files; a diff is an argument about what changed.\n\nCodeDiff ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { CodeDiff } from \"@/components/ambient/tool-kit\"",
+      "docs": "WHEN TO USE\n  • Whenever an answer changed code the user has not seen yet.\n\nWHEN NOT TO USE\n  • When the change still needs the user's approval — that is ReviewableDiff, where each hunk is a decision.\n  • For whole files; a diff is an argument about what changed.\n\nCodeDiff ships inside tool-kit.tsx, alongside 8 sibling components (ToolCall, ToolTimeline, TerminalBlock, ReviewableDiff, …). They share the stage queue and cannot be separated.\n\n  import { CodeDiff } from \"@/components/ambient/tool-kit\"",
       "meta": {
         "vocabulary": "ambient",
         "kit": "tool-kit.tsx"
@@ -3524,6 +3711,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -3534,7 +3726,7 @@
           "target": "components/ambient/use-staged-reveal.ts"
         }
       ],
-      "docs": "WHEN TO USE\n  • Any change the assistant proposes to files the user owns.\n  • Wherever partial acceptance is genuinely possible.\n\nWHEN NOT TO USE\n  • For changes already applied — showing decisions for a fait accompli is theatre.\n  • When the hunks are not independent; offering per-hunk choice on a change that only works whole invites a broken state.\n\nReviewableDiff ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ReviewableDiff } from \"@/components/ambient/tool-kit\"",
+      "docs": "WHEN TO USE\n  • Any change the assistant proposes to files the user owns.\n  • Wherever partial acceptance is genuinely possible.\n\nWHEN NOT TO USE\n  • For changes already applied — showing decisions for a fait accompli is theatre.\n  • When the hunks are not independent; offering per-hunk choice on a change that only works whole invites a broken state.\n\nReviewableDiff ships inside tool-kit.tsx, alongside 8 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ReviewableDiff } from \"@/components/ambient/tool-kit\"",
       "meta": {
         "vocabulary": "ambient",
         "kit": "tool-kit.tsx"
@@ -3633,6 +3825,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -3643,7 +3840,7 @@
           "target": "components/ambient/use-staged-reveal.ts"
         }
       ],
-      "docs": "WHEN TO USE\n  • Any fan-out — reading several files, querying several sources at once.\n\nWHEN NOT TO USE\n  • For sequential calls, where order carries meaning that a batch hides.\n  • For two calls; a batch of two is just two rows.\n\nParallelTools ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ParallelTools } from \"@/components/ambient/tool-kit\"",
+      "docs": "WHEN TO USE\n  • Any fan-out — reading several files, querying several sources at once.\n\nWHEN NOT TO USE\n  • For sequential calls, where order carries meaning that a batch hides.\n  • For two calls; a batch of two is just two rows.\n\nParallelTools ships inside tool-kit.tsx, alongside 8 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ParallelTools } from \"@/components/ambient/tool-kit\"",
       "meta": {
         "vocabulary": "ambient",
         "kit": "tool-kit.tsx"
@@ -3742,6 +3939,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -3752,7 +3954,121 @@
           "target": "components/ambient/use-staged-reveal.ts"
         }
       ],
-      "docs": "WHEN TO USE\n  • Any tool call that failed inside an otherwise live turn.\n\nWHEN NOT TO USE\n  • When the whole generation stopped — that is ErrorState.\n  • For expected empty results; \"no matches\" is an answer, not a failure.\n\nToolFailure ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolFailure } from \"@/components/ambient/tool-kit\"",
+      "docs": "WHEN TO USE\n  • Any tool call that failed inside an otherwise live turn.\n\nWHEN NOT TO USE\n  • When the whole generation stopped — that is ErrorState.\n  • For expected empty results; \"no matches\" is an answer, not a failure.\n\nToolFailure ships inside tool-kit.tsx, alongside 8 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolFailure } from \"@/components/ambient/tool-kit\"",
+      "meta": {
+        "vocabulary": "ambient",
+        "kit": "tool-kit.tsx"
+      }
+    },
+    {
+      "name": "tool-approval",
+      "type": "registry:ui",
+      "title": "ToolApproval",
+      "description": "The assistant wants to run a tool and asks first: the exact request, and two answers.",
+      "dependencies": [
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@paper-design/shaders-react",
+        "framer-motion",
+        "zod"
+      ],
+      "registryDependencies": [
+        "https://registry.ambientui.ai/r/ambient-styles.json",
+        "https://registry.ambientui.ai/r/ambient-assets.json"
+      ],
+      "files": [
+        {
+          "path": ".registry/packages/ambient/src/ambient-marks.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-marks.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/ambient-runtime.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/ambient-runtime.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/assistant-context.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/assistant-context.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/composer.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/composer.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/kit-vocabulary.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/kit-vocabulary.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/knowledge-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/knowledge-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/message-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/message-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/messages.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/messages.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/orb-character.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/orb-character.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder-schemas.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder-schemas.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/responder.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/responder.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/response-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/response-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/stage-queue.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/stage-queue.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/staging.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/staging.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/streaming-text.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/streaming-text.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
+          "path": ".registry/packages/ambient/src/tool-kit.tsx",
+          "type": "registry:component",
+          "target": "components/ambient/tool-kit.tsx"
+        },
+        {
+          "path": ".registry/packages/ambient/src/use-staged-reveal.ts",
+          "type": "registry:hook",
+          "target": "components/ambient/use-staged-reveal.ts"
+        }
+      ],
+      "docs": "WHEN TO USE\n  • A tool whose effect the person should agree to before it happens: writing, sending, deleting, spending.\n\nWHEN NOT TO USE\n  • For a question that needs more than yes or no — that is a tool the person answers in a component of the product's, drawn inside ToolCall.\n  • For a call that already ran — that is ToolCall, or ToolFailure.\n\nToolApproval ships inside tool-kit.tsx, alongside 8 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { ToolApproval } from \"@/components/ambient/tool-kit\"",
       "meta": {
         "vocabulary": "ambient",
         "kit": "tool-kit.tsx"
@@ -3851,6 +4167,11 @@
           "target": "components/ambient/streaming-text.tsx"
         },
         {
+          "path": ".registry/packages/ambient/src/tool-host.ts",
+          "type": "registry:lib",
+          "target": "components/ambient/tool-host.ts"
+        },
+        {
           "path": ".registry/packages/ambient/src/tool-kit.tsx",
           "type": "registry:component",
           "target": "components/ambient/tool-kit.tsx"
@@ -3861,7 +4182,7 @@
           "target": "components/ambient/use-staged-reveal.ts"
         }
       ],
-      "docs": "WHEN TO USE\n  • Executable snippets the user is meant to try, not just read.\n\nWHEN NOT TO USE\n  • For code that changes files or state — that needs a ReviewableDiff and an explicit apply.\n  • For output with no code behind it; that is a TerminalBlock.\n\nCodeRunner ships inside tool-kit.tsx, alongside 7 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { CodeRunner } from \"@/components/ambient/tool-kit\"",
+      "docs": "WHEN TO USE\n  • Executable snippets the user is meant to try, not just read.\n\nWHEN NOT TO USE\n  • For code that changes files or state — that needs a ReviewableDiff and an explicit apply.\n  • For output with no code behind it; that is a TerminalBlock.\n\nCodeRunner ships inside tool-kit.tsx, alongside 8 sibling components (ToolCall, ToolTimeline, TerminalBlock, CodeDiff, …). They share the stage queue and cannot be separated.\n\n  import { CodeRunner } from \"@/components/ambient/tool-kit\"",
       "meta": {
         "vocabulary": "ambient",
         "kit": "tool-kit.tsx"

@@ -24,6 +24,7 @@ import {
 } from "node:fs"
 import { resolve, dirname } from "node:path"
 import { readCatalog } from "./extract-catalog.mjs"
+import { STACK_DOORS } from "../packages/cli/src/stacks.mjs"
 import { fileURLToPath } from "node:url"
 import { variant } from "./variants/index.mjs"
 import { ICON_LIBRARIES, iconSourceFor } from "./variants/icons.mjs"
@@ -251,9 +252,20 @@ async function stagePreflight() {
 }
 
 const SRC = "packages/ambient/src"
-const layerFiles = readdirSync(resolve(ROOT, SRC))
+const sourceFiles = readdirSync(resolve(ROOT, SRC))
   .filter((f) => f.endsWith(".ts") || f.endsWith(".tsx"))
   .sort()
+
+/**
+ * A CHAT STACK'S ADAPTER IS ITS OWN DOOR. `stack-<name>.ts` connects the
+ * layer to one stack a product may already run; a product takes the door
+ * for the stack it has and no other. `stack-parts.ts` is what they share,
+ * and travels with each.
+ */
+const isStackFile = (f) => f.startsWith("stack-")
+const STACK_SHARED = "stack-parts.ts"
+const layerFiles = sourceFiles.filter((f) => !isStackFile(f))
+const stackFiles = sourceFiles.filter((f) => isStackFile(f) && f !== STACK_SHARED)
 
 // one file, one type: hooks are hooks, plain .ts is lib, .tsx is a component
 const fileType = (f) =>
@@ -642,6 +654,23 @@ const items = [
     docs: 'For a project on Tailwind 3.4 or later that is not moving to v4. Import the material from your entry file, on the line after your global stylesheet:\n\n  import "./index.css"\n  import "./styles/ambient.css"\n\nThen mount it exactly as ambient-layer:\n\n  <AssistantProvider navItems={NAV} onNavigate={(id) => router.push(id)}>\n    {children}\n    <Assistant />\n  </AssistantProvider>\n\nYour tailwind.config must include the installed files in `content` (components/ambient/**) and map the standard shadcn colours as hsl(var(--x)), which `shadcn init` for v3 already does. The door ships its own button (components/ambient/ui/button.tsx) and never replaces yours. Layer only: the Foundation needs Tailwind v4.',
     meta: { base: "ambient-layer", variant: { styling: "tailwind-v3", tokens: "hsl-triplet" } },
   },
+  ...stackFiles.map((f) => {
+    const name = f.replace(/\.ts$/, "")
+    const about = STACK_DOORS[name]
+    if (!about) throw new Error(`${f} has no entry in STACK_DOORS (packages/cli/src/stacks.mjs)`)
+    return {
+      name,
+      type: "registry:lib",
+      title: about.title,
+      description: about.description,
+      files: [f, STACK_SHARED].map((file) => ({
+        path: stage(`${SRC}/${file}`),
+        type: "registry:lib",
+        target: `components/ambient/${file}`,
+      })),
+      docs: about.docs,
+    }
+  }),
   /**
    * THE BASE FOR A PRODUCT WITHOUT shadcn OR TAILWIND. What the layer
    * assumes a shadcn project has, shipped as items instead of a `shadcn init`

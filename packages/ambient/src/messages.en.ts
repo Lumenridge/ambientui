@@ -90,6 +90,8 @@ export const ambientMessagesEn = {
 
   // answers
   couldNotAnswer: "Couldn't answer",
+  couldNotClear: "Couldn't clear the conversation",
+  unknownFailure: "The assistant could not answer.",
   emptyAnswer: "The assistant sent an empty answer.",
   generationStopped: "Generation stopped",
   retry: "Retry",
@@ -133,6 +135,12 @@ export const ambientMessagesEn = {
   run: "Run",
   succeeded: "Succeeded",
   failed: "Failed",
+  approvalNeeded: "Needs your approval",
+  approve: "Approve",
+  deny: "Deny",
+  approved: "Approved",
+  denied: "Denied",
+  waitingForYou: "Waiting for you",
   applied: "Applied",
   applyCount: "Apply {n}",
 }

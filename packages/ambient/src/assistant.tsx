@@ -51,7 +51,12 @@ import {
   FollowUpSuggestions,
   type MessageAttachment,
 } from "./message-kit"
-import { applyAnswerEvent, EMPTY_ANSWER, failureDetail } from "./responder"
+import {
+  applyAnswerEvent,
+  EMPTY_ANSWER,
+  failureReason,
+  type AmbientConversationTurn,
+} from "./responder"
 import type { AmbientTurn } from "./responder-schemas"
 import { AssistantOrb } from "./orb"
 import { Composer } from "./composer"
@@ -69,37 +74,17 @@ import {
   SidebarProvider,
 } from "@ambient-ui/ui/components/sidebar"
 import { MessageQueue } from "./message-kit"
+import {
+  followConversation,
+  nextId,
+  type TranscriptMessage,
+} from "./follow-conversation"
 
-type Msg = {
-  id: number
-  role: "user" | "assistant"
-  text: string
-  /**
-   * Composed response-kit payloads (assistant messages). A list, not one
-   * object: regenerating APPENDS a version rather than overwriting, so the
-   * answer the user may have preferred is still reachable (MessageBranches).
-   */
-  kits?: AmbientAnswer[]
-  /** The question that produced this answer, so it can be asked again. */
-  prompt?: string
-  /**
-   * This answer has finished arriving. It survives the surface changing —
-   * dragging panel → dock remounts the transcript, and without this the
-   * message would perform its stream again. An answer is said once.
-   */
-  settled?: boolean
-  /**
-   * The turn failed, and this is what went wrong. An assistant message can
-   * carry this alone (the first answer never arrived) or beside its kits (a
-   * regenerate failed, and the earlier versions are still worth keeping).
-   */
-  failed?: string
-  /**
-   * The API is still sending this answer (a stream). The prose may catch up
-   * with what has arrived, but it does not settle until this clears.
-   */
-  arriving?: boolean
-}
+type Msg = TranscriptMessage
+
+const subscribeToNothing = () => () => {}
+const NO_TURNS: readonly AmbientConversationTurn[] = []
+const noTurns = () => NO_TURNS
 
 /** A conversation's identity for the API: stable until it is cleared. */
 const newConversationId = () =>
@@ -122,12 +107,18 @@ const historyOf = (list: Msg[]): AmbientTurn[] =>
   )
 
 /**
- * Ids are derived from the list itself, never from a shared counter: a
- * state updater can be invoked more than once for a single update, so
- * `++counter` inside one mints colliding ids — which makes React remount
- * the transcript and replay every settled answer's stream.
+ * A stopped answer's approvals are closed: the tool will not run, so the
+ * question is no longer one the person can answer.
  */
-const nextId = (m: Msg[]) => (m.length ? m[m.length - 1]!.id + 1 : 1)
+const withApprovalsClosed = (kit: AmbientAnswer): AmbientAnswer =>
+  kit.evidence?.some((b) => b.kind === "approval" && !b.decision)
+    ? {
+        ...kit,
+        evidence: kit.evidence.map((b) =>
+          b.kind === "approval" && !b.decision ? { ...b, decision: "denied" } : b
+        ),
+      }
+    : kit
 
 /**
  * What the `+` attaches. A real file picker belongs to the host product, not
@@ -464,9 +455,20 @@ export function Assistant({
   }, [asking, mode, searchOver])
 
   const [conversationId, setConversationId] = React.useState(newConversationId)
+  // why the host could not clear its thread, when it could not
+  const [clearFailed, setClearFailed] = React.useState<string | null>(null)
   const clearConversation = () => {
-    setMessages([])
-    setConversationId(newConversationId())
+    setClearFailed(null)
+    // A host that keeps its own thread clears it first. If it cannot, the
+    // transcript stays: its thread is still there, and following it would
+    // bring a cleared transcript straight back.
+    api.reset().then(
+      () => {
+        setMessages([])
+        setConversationId(newConversationId())
+      },
+      (error: unknown) => setClearFailed(failureReason(error) || t.unknownFailure)
+    )
   }
 
   // AI activation while typing: the moment the input reads as a question
@@ -489,6 +491,41 @@ export function Assistant({
     null
   )
   React.useEffect(() => () => turnRef.current?.abort(), [])
+  // mirrored so the effects below can consult the current state
+  // without taking it as a dependency (which would loop)
+  const orbStateRef = React.useRef(orbState)
+  React.useEffect(() => {
+    orbStateRef.current = orbState
+  })
+  /**
+   * THE HOST'S THREAD, FOLLOWED. When the host keeps the conversation, the
+   * transcript reads from it: a turn the product started elsewhere shows
+   * here as it arrives. While the layer's own turn is in flight the layer
+   * is the one writing, so it waits; what it wrote agrees with the thread
+   * when it looks again. See follow-conversation.ts.
+   */
+  const conversation = api.conversation
+  const hostTurns = React.useSyncExternalStore(
+    conversation?.subscribe ?? subscribeToNothing,
+    conversation?.getTurns ?? noTurns,
+    conversation?.getTurns ?? noTurns
+  )
+  React.useEffect(() => {
+    if (!conversation || turnRef.current) return
+    // the transcript is the layer's own state, because the layer writes to
+    // it as well; following the thread is the other writer
+    setMessages((shown) => followConversation(shown, hostTurns))
+    // the character thinks for a turn the product started, too, and rests
+    // when that turn ends with no transcript open to say it in
+    if (!busyRef.current) {
+      const last = hostTurns[hostTurns.length - 1]
+      const running = last?.role === "assistant" && last.running
+      if (running && !last.answer.text) setOrbState("thinking")
+      else if (!running && orbStateRef.current === "thinking") setOrbState("still")
+    }
+    // `busy` is here for the moment it clears: whatever the thread did
+    // while the layer's own turn was writing is read then
+  }, [conversation, hostTurns, busy, setOrbState])
   // the settled answer's workspace effect, relayed to whichever surface owns
   // the product state — the layer never learns what "fix-composer" means
   const pendingEffect = React.useRef<string | null>(null)
@@ -529,12 +566,6 @@ export function Assistant({
       },
     ])
   }
-  // mirrored so the ambient effect below can consult the current state
-  // without taking it as a dependency (which would loop)
-  const orbStateRef = React.useRef(orbState)
-  React.useEffect(() => {
-    orbStateRef.current = orbState
-  })
   React.useEffect(() => {
     // WHILE THE PIPELINE OWNS THE CHARACTER, THIS EFFECT KEEPS OUT. Typing
     // and surface changes decide listening-vs-still only between turns; a
@@ -577,7 +608,8 @@ export function Assistant({
     question: string,
     history: AmbientTurn[],
     start: (kit: AmbientAnswer) => void,
-    fail: (detail: string) => void
+    fail: (detail: string) => void,
+    regenerate = false
   ) => {
     turnRef.current?.abort()
     const turn = new AbortController()
@@ -595,7 +627,15 @@ export function Assistant({
       let kit: AmbientAnswer | null = null
       try {
         const events = api.ask(
-          { question, conversationId, history, pageChip, chips, locale },
+          {
+            question,
+            conversationId,
+            history,
+            pageChip,
+            chips,
+            locale,
+            ...(regenerate ? { regenerate: true } : {}),
+          },
           { signal: turn.signal }
         )
         for await (const event of events) {
@@ -623,7 +663,7 @@ export function Assistant({
         // instruction probably meets the same failure, so the person sees
         // this one first and decides — retry, or send the next deliberately
         endWork()
-        const detail = failureDetail(error)
+        const detail = failureReason(error) || t.unknownFailure
         if (kit)
           // it failed partway: what arrived stays, finished, with the reason
           updateArriving(() => ({ arriving: false, settled: true, failed: detail }))
@@ -710,7 +750,8 @@ export function Assistant({
           )
         )
       },
-      failMessage(id)
+      failMessage(id),
+      true
     )
   }
 
@@ -742,6 +783,8 @@ export function Assistant({
     if (!text) return
     // asking anything from search brings the conversation back on top
     setSearchOver(false)
+    // a clear that failed is old news once the conversation moves on
+    setClearFailed(null)
     if (busyRef.current) {
       // the agent is mid-run: the new instruction stacks behind it
       setInput("")
@@ -800,10 +843,15 @@ export function Assistant({
    * already said.
    */
   const stop = () => {
+    // a turn the product started is the host's to cancel
+    if (!turnRef.current) api.conversation?.stop?.()
     turnRef.current?.abort()
     turnRef.current = null
     // a stream stopped partway ends where it is: what arrived was said
-    updateArriving(() => ({ arriving: false }))
+    updateArriving((msg) => ({
+      arriving: false,
+      kits: msg.kits?.map(withApprovalsClosed),
+    }))
     busyRef.current = false
     setBusy(false)
     setOrbState("still")
@@ -911,7 +959,13 @@ export function Assistant({
                   // the work is not over when the answer was composed — it
                   // is over when the answer starts being said
                   onAnswerStart={() => setOrbState("answer")}
-                  onRegenerate={() => regenerate(m.id)}
+                  // a thread the host keeps can only redo its last answer
+                  // without losing every turn after it
+                  onRegenerate={
+                    api.conversation && m.id !== messages[messages.length - 1]?.id
+                      ? undefined
+                      : () => regenerate(m.id)
+                  }
                   onFollowUp={(text) => send(text)}
                 />
               )}
@@ -931,6 +985,9 @@ export function Assistant({
               className="block max-w-full text-[13px] leading-relaxed"
             />
           )
+        )}
+        {clearFailed && (
+          <ErrorState title={t.couldNotClear} detail={clearFailed} />
         )}
       </div>
     </div>

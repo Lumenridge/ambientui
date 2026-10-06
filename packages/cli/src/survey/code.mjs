@@ -9,6 +9,7 @@
 import { join } from "node:path"
 
 import { isDir, readJson, readText } from "../util.mjs"
+import { CHAT_STACKS } from "../stacks.mjs"
 import { OURS } from "./styling.mjs"
 
 /** Grep lines across files, skipping the layer's own files. */
@@ -325,7 +326,31 @@ export function detectAi(ctx) {
   const routes = grep(ctx, files, /["'`](?:\/api)?\/(?:ai|chat|assistant|llm|completions?)(?:\/[\w-]*)?["'`]/, { limit: 5 })
   for (const r of routes) ctx.ev("ai.routes", { file: r.file, line: r.line, note: r.text })
   const kind = sdk.length ? "sdk-streaming" : provider.length ? "provider-sdk" : routes.length || envNames.size ? "http-endpoint" : "none"
-  return { kind, sdk, provider, envNames: [...envNames], routes }
+  return { kind, sdk, provider, envNames: [...envNames], routes, stack: detectChatStack(ctx, d, files) }
+}
+
+/**
+ * THE CHAT STACK THE PRODUCT ALREADY RUNS, and where its own chat UI is
+ * mounted. The layer becomes the assistant's surface on top of that stack
+ * (its runtime, tools and thread stay), so the plan needs to know which
+ * adapter door to open and which mounts the layer takes over.
+ *
+ * The stacks, their order and what counts as proof of use are declared in
+ * stacks.mjs.
+ */
+function detectChatStack(ctx, deps, files) {
+  const at = (re) => (re ? grep(ctx, files, re, { limit: 5 }).map((h) => ({ file: h.file, line: h.line, text: h.text })) : [])
+  for (const stack of CHAT_STACKS) {
+    if (!deps.some(stack.pkg)) continue
+    const wiring = at(stack.wiring)
+    const proof = at(stack.proof)
+    // installed is not in use: see `proof` in stacks.mjs
+    if (stack.proof && !wiring.length && !proof.length) continue
+    const chatUi = at(stack.ui)
+    for (const h of [...wiring, ...proof, ...chatUi]) ctx.ev("ai.stack", { file: h.file, line: h.line, note: h.text })
+    return { id: stack.id, door: stack.door, wiring: wiring.length ? wiring : proof, chatUi }
+  }
+  return null
 }
 
 /* ---------------------------- existing install ---------------------------- */

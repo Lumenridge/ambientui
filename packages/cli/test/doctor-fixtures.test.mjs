@@ -322,3 +322,84 @@ describe("no git", () => {
     assert.ok(plan.requiredSteps.some((r) => r.id === "git-init" && /git init/.test(r.command)))
   })
 })
+
+describe("a product already on a chat stack", () => {
+  const app = (deps, files) =>
+    survey(
+      project({
+        "package.json": { name: "helpdesk", scripts: { dev: "vite" }, dependencies: { react: "^19.2.0", "react-dom": "^19.2.0", vite: "^7.0.0", tailwindcss: "^4.0.0", ...deps } },
+        "vite.config.ts": 'import { defineConfig } from "vite"\nexport default defineConfig({})\n',
+        "src/index.css": '@import "tailwindcss";\n',
+        "src/main.tsx": 'import "./index.css"\nimport { App } from "./App"\n',
+        ...files,
+      })
+    )
+
+  it("CopilotKit: names the stack, its provider and the chat UI the layer takes over; plans the AG-UI door", () => {
+    const p = app(
+      { "@copilotkit/react-core": "^1.76.0", "@copilotkit/react-ui": "^1.76.0" },
+      {
+        "src/App.tsx":
+          'import { CopilotKit } from "@copilotkit/react-core"\nimport { CopilotSidebar } from "@copilotkit/react-ui"\nexport const App = () => (\n  <CopilotKit runtimeUrl="/api/copilotkit">\n    <CopilotSidebar />\n  </CopilotKit>\n)\n',
+      }
+    )
+    assert.equal(p.ai.stack.id, "copilotkit")
+    assert.equal(p.ai.stack.door, "stack-ag-ui")
+    assert.equal(p.ai.stack.wiring[0].file, "src/App.tsx")
+    assert.equal(p.ai.stack.chatUi[0].line, 5)
+    assert.equal(ev(p, "ai.stack").file, "src/App.tsx")
+    const plan = buildPlan(p, { path: "layer" })
+    assert.ok(plan.doors.includes("stack-ag-ui"))
+    assert.equal(plan.transport.kind, "chat-stack")
+    assert.match(plan.transport.guidance, /takes over from the product's own chat UI at src\/App\.tsx:5/)
+    assert.ok(plan.commands.some((c) => c.run.endsWith("add @ambientui/stack-ag-ui --yes --overwrite")))
+  })
+
+  it("assistant-ui over the AI SDK: the stack that owns the thread wins", () => {
+    const p = app(
+      { "@assistant-ui/react": "^0.15.0", "@assistant-ui/react-ai-sdk": "^1.4.0", ai: "^7.0.0" },
+      {
+        "src/App.tsx":
+          'import { AssistantRuntimeProvider } from "@assistant-ui/react"\nimport { useChatRuntime } from "@assistant-ui/react-ai-sdk"\nimport { Thread } from "./thread"\nexport function App() {\n  const runtime = useChatRuntime()\n  return <AssistantRuntimeProvider runtime={runtime}><Thread /></AssistantRuntimeProvider>\n}\n',
+      }
+    )
+    assert.equal(p.ai.stack.id, "assistant-ui")
+    assert.equal(p.ai.stack.wiring[0].line, 5)
+    assert.equal(buildPlan(p, { path: "layer" }).transport.door, "stack-assistant-ui")
+  })
+
+  it("the AI SDK alone: its door, and no chat UI to remove", () => {
+    const p = app({ ai: "^7.0.0", "@ai-sdk/react": "^4.0.0" }, { "src/App.tsx": 'import { useChat } from "@ai-sdk/react"\nexport function App() {\n  const chat = useChat()\n  return null\n}\n' })
+    assert.equal(p.ai.stack.id, "ai-sdk")
+    assert.deepEqual(p.ai.stack.chatUi, [])
+    const plan = buildPlan(p, { path: "layer" })
+    assert.ok(plan.doors.includes("stack-ai-sdk"))
+    assert.doesNotMatch(plan.transport.guidance, /takes over/)
+  })
+
+  it("`ai` installed but only used on the server, with no chat stream: not a chat stack", () => {
+    const p = app(
+      { ai: "^7.0.0", "@ai-sdk/openai": "^4.0.0" },
+      { "src/App.tsx": "export const App = () => null\n", "src/server/summarize.ts": 'import { generateObject } from "ai"\nexport const run = () => generateObject({})\n' }
+    )
+    assert.equal(p.ai.stack, null)
+    const plan = buildPlan(p, { path: "layer" })
+    assert.equal(plan.transport.kind, "ai-sdk")
+    assert.ok(!plan.doors.some((d) => d.startsWith("stack-")))
+  })
+
+  it("a chat route that streams UI messages is proof enough, with no useChat in the product", () => {
+    const p = app(
+      { ai: "^7.0.0" },
+      { "src/App.tsx": "export const App = () => null\n", "src/api/chat.ts": 'import { streamText } from "ai"\nexport const POST = () => streamText({}).toUIMessageStreamResponse()\n' }
+    )
+    assert.equal(p.ai.stack.id, "ai-sdk")
+    assert.equal(p.ai.stack.wiring[0].file, "src/api/chat.ts")
+  })
+
+  it("no chat stack: no stack, no extra door", () => {
+    const p = app({}, { "src/App.tsx": "export const App = () => null\n" })
+    assert.equal(p.ai.stack, null)
+    assert.ok(!buildPlan(p, { path: "layer" }).doors.some((d) => d.startsWith("stack-")))
+  })
+})

@@ -866,9 +866,12 @@ name: "ContextChip · ContextChipView",
       "Collapsed by default, EXCEPT on failure: a failure the user has to go looking for is a failure they will miss.",
       "Request and result are quoted verbatim in mono. Evidence is not paraphrased.",
       "With no request or result, the row stops pretending to be expandable.",
+      "A PRODUCT'S OWN COMPONENT FOR THE TOOL goes in as children, in place of the request and result: the row is still the layer's claim, and the component sits open beneath it on the layer's wash, untouched. A host gives it by tool name through `toolComponents` on the provider, or from a chat stack's own registry through `renderTool`.",
+      "A call waiting on the person says so in the row, and the product's component collects the answer and calls `respond`.",
     ],
     whenToUse: [
       "Every tool invocation the user should be able to audit.",
+      "A tool the product already draws with a component of its own: a result card, a picker, a form the model asked the person to fill.",
     ],
     whenNotToUse: [
       "For several calls that went out together — that is ParallelTools, which collapses them to one row.",
@@ -998,6 +1001,27 @@ name: "ContextChip · ContextChipView",
     whenNotToUse: [
       "When the whole generation stopped — that is ErrorState.",
       "For expected empty results; \"no matches\" is an answer, not a failure.",
+    ],
+  },
+  {
+    id: "tool-approval",
+    group: "Tool use",
+    name: "ToolApproval",
+    description:
+      "The assistant wants to run a tool and asks first: the exact request, and two answers.",
+    behavior: [
+      "IT IS THE TOOL CALL'S CLAIM BEFORE THE FACT: the same verb and the same verbatim request, shown open, because the person is being asked to agree to exactly that.",
+      "Two answers, Deny and Approve. Approve is the filled button; neither is destructive-coloured, because the layer does not know what the tool does.",
+      "Once answered it collapses to one row that says what was decided. On approval the call that was allowed takes its place when it runs.",
+      "It lives in the transcript, never in a dialog over it: an approval is part of what happened in the conversation.",
+      "The answer goes to the host through the Ambient API's `respond`; the answer in flight continues from it.",
+    ],
+    whenToUse: [
+      "A tool whose effect the person should agree to before it happens: writing, sending, deleting, spending.",
+    ],
+    whenNotToUse: [
+      "For a question that needs more than yes or no — that is a tool the person answers in a component of the product's, drawn inside ToolCall.",
+      "For a call that already ran — that is ToolCall, or ToolFailure.",
     ],
   },
   {

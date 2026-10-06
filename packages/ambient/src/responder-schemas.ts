@@ -101,52 +101,75 @@ const reportSection: z.ZodType<ReportSection> = z.object({
   sources: z.number().optional(),
 })
 
+const blockId = { id: z.string().optional() }
+
 export const ambientBlockSchema: z.ZodType<AmbientBlock> = z.discriminatedUnion(
   "kind",
   [
     z.object({
+      ...blockId,
       kind: z.literal("reasoning"),
       steps: z.array(reasoningStep),
       seconds: z.number().optional(),
     }),
     z.object({
+      ...blockId,
       kind: z.literal("parallel"),
       summary: z.string(),
       calls: z.array(parallelCall),
     }),
     z.object({
+      ...blockId,
       kind: z.literal("tool"),
       verb: z.string(),
       request: z.string().optional(),
       result: z.string().optional(),
+      name: z.string().optional(),
+      input: z.unknown().optional(),
+      output: z.unknown().optional(),
+      status: z.enum(["running", "waiting", "done"]).optional(),
     }),
     z.object({
+      kind: z.literal("approval"),
+      id: z.string(),
+      tool: z.string(),
+      request: z.string().optional(),
+      reason: z.string().optional(),
+      decision: z.enum(["approved", "denied"]).optional(),
+    }),
+    z.object({
+      ...blockId,
       kind: z.literal("search"),
       query: z.string(),
       sources: z.array(searchSource),
     }),
     z.object({
+      ...blockId,
       kind: z.literal("diff"),
       path: z.string(),
       lines: z.array(diffLine),
     }),
     z.object({
+      ...blockId,
       kind: z.literal("review"),
       path: z.string(),
       hunks: z.array(diffHunk),
     }),
     z.object({
+      ...blockId,
       kind: z.literal("terminal"),
       command: z.string(),
       lines: z.array(z.string()),
       exitCode: z.number().optional(),
     }),
     z.object({
+      ...blockId,
       kind: z.literal("timeline"),
       steps: z.array(timelineStep),
       files: z.array(fileStat).optional(),
     }),
     z.object({
+      ...blockId,
       kind: z.literal("failure"),
       tool: z.string(),
       target: z.string().optional(),
@@ -155,6 +178,7 @@ export const ambientBlockSchema: z.ZodType<AmbientBlock> = z.discriminatedUnion(
       attempts: z.number().optional(),
     }),
     z.object({
+      ...blockId,
       kind: z.literal("report"),
       title: z.string(),
       sections: z.array(reportSection),
@@ -198,6 +222,12 @@ export const ambientQuestionSchema = z.object({
    * already in it; this lets the host answer in it too.
    */
   locale: z.string().optional(),
+  /**
+   * The person asked for this answer again. A stateless server needs
+   * nothing more (`history` already ends before the question); a host that
+   * keeps its own thread replaces its last answer rather than appending.
+   */
+  regenerate: z.boolean().optional(),
 })
 export type AmbientQuestion = z.infer<typeof ambientQuestionSchema>
 
@@ -228,6 +258,16 @@ export const ambientAnswerEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("error"), message: z.string() }),
 ])
 export type AmbientAnswerEvent = z.infer<typeof ambientAnswerEventSchema>
+
+/**
+ * What the person tells a waiting block: yes or no to an approval, or the
+ * output a waiting tool call was holding for. `id` is the block's id.
+ */
+export const ambientResponseSchema = z.union([
+  z.object({ id: z.string(), approved: z.boolean(), reason: z.string().optional() }),
+  z.object({ id: z.string(), output: z.unknown() }),
+])
+export type AmbientResponse = z.infer<typeof ambientResponseSchema>
 
 export const ambientRecentSchema = z.object({ text: z.string(), when: z.string() })
 export const ambientRecentsSchema = z.array(ambientRecentSchema)
