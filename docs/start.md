@@ -26,7 +26,8 @@ where the plan is silent, this guide applies.
 message to the person with their next action — one line, **bold**, at the
 very bottom, nothing after it. A next step buried in the middle of a long
 answer gets lost; the person should be able to read only your last line
-and know what to do.
+and know what to do. The one exception is the last message of the install,
+which ends with the outro in step 7.
 
 ## 1. Survey the project (mandatory)
 
@@ -435,17 +436,47 @@ npx -y @ambient-ui/cli end --commit
 That is ONE commit, marked `Ambientui-Install: 1`, and it is what makes the
 install removable later.
 
-Then the reveal. If the notes list judgement calls, say so first, in one
-line, and point at `AMBIENTUI-NOTES.md`. Then do not describe the ambient
-layer. Show it: tell the person the app is running, give them the URL, and
-say the hotkey the plan chose:
+Then the reveal. Do not describe the ambient layer; show it. Leave the dev
+server running, and take three screenshots of the app as it is now: the
+resting orb, the open command palette, and the design system page.
 
-> Press Cmd-K.
+**The outro — the last message of every install, in exactly this form.**
+If the notes list judgement calls, say so first, in one line, and point at
+`AMBIENTUI-NOTES.md`. Then the block below, starting with its horizontal
+rule and ending with the screenshots. Nothing comes after them; this
+message is the one exception to ending on a bold next action, because the
+list is the next action.
 
-That keystroke opens the spotlight: search over their own product, with
-the assistant behind it. Tell them to drag the orb to the right edge to
-dock the panel, and to the top to get the palette. Then stop. The moment
-belongs to them.
+```markdown
+---
+
+Everything's set up for you now! I've got the server running, visit this link <url> or open the app on the sidebar.
+
+1. Hit <hotkey> on any page to see your control panel come up
+2. Click on the orb to start a chat with your agent
+3. Open <url>/ds to see your design system. Here you can also update your theme and save it.
+4. Update/create the DS on Figma by simply pasting the link
+
+<screenshot: the orb>
+<screenshot: the command palette>
+<screenshot: the design system page>
+```
+
+Fill it from what is true of this install, and change nothing else:
+
+- `<url>` is the running app's address, as a link.
+- `<hotkey>` is the plan's (`plan.provider.hotkey`), written as keys: ⌘+K, or ⌘+J
+  when the product keeps its own ⌘K. Say Ctrl in place of ⌘ when the
+  person is not on a Mac.
+- `/ds` is the route the design system page really has (step 5 may have
+  picked `/foundation`).
+- Attach the screenshots as images, in that order.
+
+Leave a line out only when it would be false, and renumber the rest:
+line 1 when the plan's hotkey is off, lines 3 and 4 and the third
+screenshot on the layer-only path, which has no design system page. If you
+cannot take screenshots, say so in one line under the list instead of
+attaching them. Then stop. The moment belongs to them.
 
 ## 8. Removing it, when asked
 
