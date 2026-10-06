@@ -1,5 +1,11 @@
 # @ambient-ui/docs
 
+## 0.3.1
+
+### Patch Changes
+
+- `framer-motion` 14 is accepted as a peer, beside 13 (`^13 || ^14`), so `npm i ambientui` works next to the current release. The layer builds and passes its tests on 14.0.0. The docs package now carries the install's fixed outro in `start.md`.
+
 ## 0.3.0
 
 ### Minor Changes

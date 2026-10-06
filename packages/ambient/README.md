@@ -74,7 +74,7 @@ hooks). The orb's shader shapes ship as static files under
 `ambientui/assets/*`; serve them from your public root.
 
 Requires React 19, Tailwind CSS v4 and the standard shadcn variables.
-`framer-motion` is a peer dependency.
+`framer-motion` is a peer dependency (13 or 14).
 
 ## The rest of the system
 
